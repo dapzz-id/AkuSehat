@@ -94,9 +94,18 @@
         }
     </style>
 
-    <div class="bg-white p-4 rounded-lg shadow-sm">
-        <h2 class="text-2xl font-bold text-[#1a472a]">Dashboard Admin PMR</h2>
-        <p class="text-[#388e3c]">Selamat datang, {{ auth()->user()->nama }}</p>
+    <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-dashboard text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-[#1a472a]">Dashboard Admin PMR</h2>
+                    <p class="text-[#388e3c]">Selamat datang, {{ auth()->user()->nama }}</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Stats Cards -->

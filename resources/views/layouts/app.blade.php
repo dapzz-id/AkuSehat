@@ -57,8 +57,15 @@
         <div class="fixed inset-y-0 left-0 z-50 flex flex-col w-64 text-white transition-transform duration-300 ease-in-out transform -translate-x-full bg-[#308a34] shadow-medium lg:relative lg:translate-x-0" id="sidebar">
             <div class="flex items-center justify-between px-6 py-4 bg-[#1B5E20] shadow-soft">
                 <div class="w-full">
-                    {{-- <i class="fas fa-heartbeat text-red-400 text-xl"></i> --}}
-                    <img src="{{ asset('src/healthy_icon_white.png') }}" alt="Yaztech Logo" class="w-auto h-12 mx-auto">
+                    {{-- Logo untuk layar besar (lg ke atas) --}}
+                    <img src="{{ asset('src/healthy_icon_white.png') }}" 
+                        alt="Healthy Icon White" 
+                        class="w-auto h-12 mx-auto hidden lg:block">
+
+                    {{-- Logo untuk layar kecil & medium (sm, md) --}}
+                    <img src="{{ asset('src/healthy_logo.png') }}" 
+                        alt="Healthy Logo" 
+                        class="w-auto h-12 mx-auto block lg:hidden">
                 </div>
                 <button class="z-30 text-white lg:hidden hover:text-primary-200" id="btnNav">
                     <i class="text-lg fas fa-times"></i>
