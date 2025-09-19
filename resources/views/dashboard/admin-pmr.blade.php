@@ -26,7 +26,7 @@
             --primary-dark: #005fa3;
         }
 
-        .mm {
+        .dkv {
             --primary: #cc0066; /* magenta */
             --primary-dark: #99004d;
         }
@@ -97,8 +97,8 @@
     <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-dashboard text-red-600 text-xl"></i>
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-dashboard text-[#1b5e20] text-xl"></i>
                 </div>
                 <div>
                     <h2 class="text-2xl font-bold text-[#1a472a]">Dashboard Admin PMR</h2>

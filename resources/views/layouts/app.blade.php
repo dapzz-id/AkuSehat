@@ -1,22 +1,63 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <!-- Required Meta Tags -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>@yield('title', 'Sistem Kesehatan SMK')</title>
+
+    <!-- Page Title -->
+    <title>
+        @hasSection('title')
+            @yield('title') | Healthy+
+        @else
+            Healthy+
+        @endif
+    </title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="@yield('meta_description', 'Sistem Informasi Kesehatan Siswa/i SMA/K dan SMP di Indonesia')">
+    <meta name="author" content="raadeveloperz">
+    <meta name="keywords" content="sistem kesehatan, kesehatan siswa, smk, sma, smp, indonesia, kesehatan pelajar, pmr, bimbingan konseling, healthy+, raadeveloperz">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#2e7d32">
+    <meta name="msapplication-TileColor" content="#1b5e20">
+    <meta name="msapplication-TileImage" content="{{ asset('src/healthy_icon_white.png') }}">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Healthy+">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Healthy+">
+
+    <!-- Favicons -->
+    <link rel="icon" href="{{ asset('src/healthy_logo.png') }}" type="image/png">
+    <link rel="shortcut icon" href="{{ asset('src/healthy_logo.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ asset('src/healthy_logo.png') }}">
+
+    <!-- Tailwind CSS -->
     @vite('resources/css/app.css')
+
+    <!-- Google Fonts & Font Awesome -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <!-- JQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <!-- Tom Select -->
     <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+
+    <!-- CSRF Token for AJAX -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- Custom Styles -->
     @stack('styles')
+
+    <!-- Custom Styles for Tom Select -->
     <style>
         /* Wrapper & Control fix */
         .ts-wrapper,
@@ -119,7 +160,7 @@
                     <div class="flex items-center space-x-4">
                         <div class="flex items-center px-3 py-2 rounded-full bg-[#1B5E20]">
                             <div class="flex items-center justify-center w-8 h-8 bg-white rounded-full lg:mr-2">
-                                <span class="text-sm font-semibold text-secondary-600">
+                                <span class="text-sm font-semibold text-[#1b5e20]">
                                     {{ strtoupper(substr(auth()->user()->nama, 0, 1)) }}
                                 </span>
                             </div>
@@ -176,8 +217,9 @@
             toggleSidebar();
         }
     });
-
-    @stack('scripts')
 </script>
+
+<!-- Additional Scripts -->
+@stack('scripts')
 </body>
 </html>

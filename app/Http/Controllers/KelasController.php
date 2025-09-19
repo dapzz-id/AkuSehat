@@ -33,4 +33,36 @@ class KelasController extends Controller
         return redirect()->route('admin.kelas.index')
             ->with('success', 'Kelas berhasil ditambahkan.');
     }
+
+    public function update(Request $request, Kelas $kelas)
+    {
+        try {
+            $validated = $request->validate([
+                'kelas' => 'required|string|max:35|unique:kelas,kelas,' . $kelas->id,
+                'jurusan' => 'required|string|max:20',
+            ], [
+                'kelas.unique' => 'Nama kelas sudah ada.',
+                'jurusan.required' => 'Jurusan harus diisi.',
+                'jurusan.max' => 'Jurusan maksimal 20 karakter.',
+                'kelas.required' => 'Kelas harus diisi.',
+                'kelas.max' => 'Kelas maksimal 35 karakter.'
+            ]);
+
+            Kelas::updateOrCreate([
+                'id' => $kelas->id,
+            ], [
+                'kelas' => $request->kelas,
+                'jurusan' => $request->jurusan,
+            ]);
+
+            return redirect()->route('admin.kelas.index')
+                ->with('success', 'Kelas berhasil diperbarui.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->route('admin.kelas.index')
+                ->with('error', implode(', ', collect($e->errors())->flatten()->toArray()));
+        } catch (\Exception $e) {
+            return redirect()->route('admin.kelas.index')
+                ->with('error', 'Terjadi kesalahan saat memperbarui kelas: ' . $e->getMessage());
+        }
+    }
 }

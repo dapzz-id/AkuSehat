@@ -7,7 +7,7 @@ use App\Models\User;
 
 class UserController extends Controller
 {
-    public function indexSiswa(Request $request)
+    public function index(Request $request)
     {
         $query = User::with(['kelas', 'kesehatan'])
             ->where('level', 'Siswa')

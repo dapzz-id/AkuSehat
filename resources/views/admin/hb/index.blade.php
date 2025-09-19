@@ -8,8 +8,8 @@
     <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-tint text-red-600 text-xl"></i>
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-tint text-[#1b5e20] text-xl"></i>
                 </div>
                 <div>
                     <h2 class="text-2xl font-bold text-[#1a472a]">Data Hemoglobin (HB)</h2>
@@ -101,24 +101,24 @@
                             <td class="px-4 md:px-6 py-4">
                                 <div class="flex items-center justify-center text-base">
                                     <a href="{{ route('admin.hb.edit', $item->id_hb) }}" 
-                                       class="text-[#2e7d32] hover:text-[#1b5e20] transition-colors duration-200 p-2 rounded-full hover:bg-green-50"
+                                       class="text-[#2e7d32] hover:text-[#1b5e20] transition-colors duration-200 p-1 rounded-full hover:bg-green-50"
                                        title="Edit">
-                                        <i class="fas fa-edit"></i>
+                                        <i class="fas fa-edit text-lg"></i>
                                     </a>
                                     <form action="{{ route('admin.hb.destroy', $item->id_hb) }}" method="POST" 
                                           onsubmit="return confirm('Yakin ingin menghapus data HB ini?')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
-                                                class="text-[#d32f2f] hover:text-[#b71c1c] transition-colors duration-200 p-2 rounded-full hover:bg-red-50"
+                                                class="text-[#d32f2f] hover:text-[#b71c1c] transition-colors duration-200 p-1 rounded-full hover:bg-red-50"
                                                 title="Hapus">
-                                            <i class="fas fa-trash"></i>
+                                            <i class="fas fa-trash text-lg"></i>
                                         </button>
                                     </form>
                                     <a href="#" 
-                                       class="text-[#0288d1] hover:text-[#01579b] transition-colors duration-200 p-2 rounded-full hover:bg-blue-50"
+                                       class="text-[#0288d1] hover:text-[#01579b] transition-colors duration-200 p-1 rounded-full hover:bg-blue-50"
                                        title="Detail">
-                                        <i class="fas fa-eye"></i>
+                                        <i class="fas fa-eye text-lg"></i>
                                     </a>
                                 </div>
                             </td>
@@ -146,7 +146,7 @@
         </div>
 
         <!-- Custom Pagination -->
-        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between px-6 py-4">
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between px-6 py-4 bg-[#f9fafb] border-t border-gray-200"">
             <div>
                 <p class="text-sm text-gray-700 ">
                     Showing <span class="font-medium">{{ $hb->firstItem() }}</span>
@@ -190,7 +190,7 @@
                     {{-- Halaman pertama --}}
                     @if ($start > 1)
                         <a href="{{ $hb->url(1) }}"
-                            class="relative inline-flex items-center px-4 py-2 border border-gray-300  text-sm font-medium {{ $currentPage == 1 ? 'bg-primary-500 text-white' : 'bg-white  text-gray-500  hover:bg-gray-50 ' }}">
+                            class="relative inline-flex items-center px-4 py-2 border border-gray-300  text-sm font-medium {{ $currentPage == 1 ? 'bg-[#2e7d32] text-white' : 'bg-white  text-gray-500  hover:bg-gray-50 ' }}">
                             1
                         </a>
                         @if ($start > 2)
@@ -203,7 +203,7 @@
                     @for ($page = $start; $page <= $end; $page++)
                         @if ($page == $currentPage)
                             <span
-                                class="z-10 bg-primary-50 dark:bg-primary-900 border-primary-500 dark:border-primary-500 text-primary-600 dark:text-primary-200 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                class="z-10 bg-success-50 dark:bg-[#1b5e20] border-[#2e7d32] text-[#2e7d32] dark:text-white relative inline-flex items-center px-4 py-2 border text-sm font-medium">
                                 {{ $page }}
                             </span>
                         @else
@@ -221,7 +221,7 @@
                                 class="relative inline-flex items-center px-4 py-2 border border-gray-300  bg-gray-100  text-sm font-medium text-gray-500 dark:text-gray-400">…</span>
                         @endif
                         <a href="{{ $hb->url($lastPage) }}"
-                            class="relative inline-flex items-center px-4 py-2 border border-gray-300  text-sm font-medium {{ $currentPage == $lastPage ? 'bg-primary-500 text-white' : 'bg-white  text-gray-500  hover:bg-gray-50 ' }}">
+                            class="relative inline-flex items-center px-4 py-2 border border-gray-300  text-sm font-medium {{ $currentPage == $lastPage ? 'bg-[#2e7d32] text-white' : 'bg-white  text-gray-500  hover:bg-gray-50 ' }}">
                             {{ $lastPage }}
                         </a>
                     @endif
@@ -253,59 +253,4 @@
         </div>
     </div>
 </div>
-
-<style>
-    /* Custom pagination styling */
-    .pagination {
-        display: flex;
-        justify-content: center;
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .pagination li {
-        margin: 0 0.25rem;
-    }
-    
-    .pagination li a,
-    .pagination li span {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 2rem;
-        height: 2rem;
-        padding: 0 0.5rem;
-        border: 1px solid #e5e7eb;
-        border-radius: 0.375rem;
-        color: #4b5563;
-        font-size: 0.875rem;
-        text-decoration: none;
-        transition: all 0.2s;
-    }
-    
-    .pagination li a:hover {
-        background-color: #e8f5e9;
-        border-color: #2e7d32;
-        color: #2e7d32;
-    }
-    
-    .pagination li.active span {
-        background-color: #2e7d32;
-        border-color: #2e7d32;
-        color: white;
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 640px) {
-        .pagination {
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        
-        .pagination li {
-            margin: 0;
-        }
-    }
-</style>
 @endsection
