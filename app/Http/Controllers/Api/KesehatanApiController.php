@@ -11,24 +11,70 @@ use Illuminate\Support\Facades\Http;
 
 class KesehatanApiController extends Controller
 {
-    public function getKesehantanSiswa(Request $request, $id)
+    // public function getKesehatanMember(Request $request, $id)
+    // {
+    //     $user = $request->user();
+        
+    //     if ($user->isMember() && $user->id != $id) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Akses tidak diperbolehkan.'
+    //         ], 403);
+    //     }
+
+    //     $kesehatan = Kesehatan::where('id_user', $id)
+    //         ->orderBy('tgl', 'desc')
+    //         ->get();
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => $kesehatan
+    //     ]);
+    // }
+
+    public function getKesehatanMember(Request $request, $id)
     {
         $user = $request->user();
         
-        if ($user->isSiswa() && $user->id != $id) {
+        if ($user->isMember() && $user->id != $id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses tidak diperbolehkan.'
             ], 403);
         }
 
+        // 🩺 Ambil semua data kesehatan user
         $kesehatan = Kesehatan::where('id_user', $id)
             ->orderBy('tgl', 'desc')
-            ->paginate(10);
+            ->get();
+
+        // 🗓️ Kelompokkan berdasarkan tahun dan bulan
+        $grouped = $kesehatan->groupBy(function ($item) {
+            return \Carbon\Carbon::parse($item->tgl)->format('Y');
+        })->map(function ($yearGroup) {
+            return $yearGroup->groupBy(function ($item) {
+                return \Carbon\Carbon::parse($item->tgl)->format('m');
+            })->map(function ($monthGroup, $month) {
+                // Format nama bulan biar enak dibaca
+                $monthName = \Carbon\Carbon::createFromFormat('m', $month)->locale('id')->translatedFormat('F');
+                return [
+                    'month' => strtolower($monthName), // jadi huruf kecil semua
+                    'data' => $monthGroup->values(),   // isi data kesehatan per bulan
+                ];
+            })->values();
+        });
+
+        // 🔁 Ubah struktur supaya rapi
+        $formatted = $grouped->map(function ($months, $year) {
+            return [
+                'year' => (int) $year,
+                'months' => $months,
+            ];
+        })->values();
 
         return response()->json([
             'success' => true,
-            'data' => $kesehatan
+            'data' => $formatted
         ]);
     }
 
@@ -36,19 +82,19 @@ class KesehatanApiController extends Controller
     {
         $user = $request->user();
         
-        if (!$user->isGuruOlahraga()) {
+        if (!$user->isHealthConsultant()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses tidak diperbolehkan.'
             ], 403);
         }
 
-        $siswaIds = User::where('level', 'Siswa')
+        $memberIds = User::where('level', 'Member')
             ->where('id_kelas', $id)
             ->pluck('id');
 
         $kesehatan = Kesehatan::with('user')
-            ->whereIn('id_user', $siswaIds)
+            ->whereIn('id_user', $memberIds)
             ->orderBy('tgl', 'desc')
             ->paginate(15);
 
@@ -62,22 +108,22 @@ class KesehatanApiController extends Controller
     {
         $user = $request->user();
         
-        if (!$user->isGuruOlahraga()) {
+        if (!$user->isHealthConsultant()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses tidak diperbolehkan.'
             ], 403);
         }
 
-        $siswaIds = User::where('level', 'Siswa')
+        $memberIds = User::where('level', 'Member')
             ->where('id_kelas', $kelas_id)
             ->pluck('id');
 
-        $statistik = Kesehatan::whereIn('id_user', $siswaIds)
-            ->whereIn('id_kesehatan', function($query) use ($siswaIds) {
+        $statistik = Kesehatan::whereIn('id_user', $memberIds)
+            ->whereIn('id_kesehatan', function($query) use ($memberIds) {
                 $query->select(DB::raw('MAX(id_kesehatan)'))
                     ->from('kesehatan')
-                    ->whereIn('id_user', $siswaIds)
+                    ->whereIn('id_user', $memberIds)
                     ->groupBy('id_user');
             })
             ->select('status', DB::raw('count(*) as total'))
@@ -112,7 +158,7 @@ class KesehatanApiController extends Controller
                 ], 500);
             }
 
-            $prompt = "Berikan saran kesehatan untuk siswa dengan data berikut:\n" .
+            $prompt = "Berikan saran kesehatan untuk member dengan data berikut:\n" .
                      "Nama: {$request->nama}\n" .
                      "Jenis Kelamin: " . ($request->jk === 'L' ? 'Laki-laki' : 'Perempuan') . "\n" .
                      "Umur: {$request->umur} tahun\n" .

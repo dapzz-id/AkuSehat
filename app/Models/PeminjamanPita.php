@@ -17,6 +17,7 @@ class PeminjamanPita extends Model
         'tanggal_pinjam',
         'tanggal_kembali',
         'jumlah_pita',
+        'verified',
         'status',
         'estimasi_selesai_haid',
         'keterangan'
@@ -25,7 +26,8 @@ class PeminjamanPita extends Model
     protected $casts = [
         'tanggal_pinjam' => 'date',
         'tanggal_kembali' => 'date',
-        'estimasi_selesai_haid' => 'date'
+        'estimasi_selesai_haid' => 'date',
+        'verified' => 'boolean',
     ];
 
     public function user()
@@ -48,6 +50,6 @@ class PeminjamanPita extends Model
             return 0;
         }
 
-        return Carbon::now()->diffInDays($this->estimasi_selesai_haid);
+        return Carbon::parse($this->estimasi_selesai_haid)->diffInDays(Carbon::now());
     }
 }

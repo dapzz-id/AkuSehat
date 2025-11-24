@@ -29,7 +29,7 @@ class AuthController extends Controller
             $request->session()->regenerate();
             
             $user = Auth::user();
-            if (in_array($user->level, ['Admin PMR', 'Guru BK'])) {
+            if (in_array($user->level, ['Admin', 'SuperAdmin'])) {
                 return redirect()->intended('/dashboard');
             } else {
                 Auth::logout();

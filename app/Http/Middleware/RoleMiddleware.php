@@ -19,7 +19,7 @@ class RoleMiddleware
             return redirect('/login');
         }
 
-        if (auth()->user()->level !== $role) {
+        if (auth()->user()->level !== $role || $role !== 'Admin' && $role !== 'SuperAdmin') {
             abort(403, 'Unauthorized');
         }
 

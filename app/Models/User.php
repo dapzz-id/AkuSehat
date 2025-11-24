@@ -16,6 +16,8 @@ class User extends Authenticatable
     
     protected $fillable = [
         'id_kelas',
+        'sekolah_id',
+        'license_key_id',
         'tgl',
         'nis',
         'username',
@@ -28,10 +30,6 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
-    ];
-
-    protected $casts = [
-        'email_verified_at' => 'datetime',
     ];
 
     public function kelas()
@@ -59,24 +57,39 @@ class User extends Authenticatable
         return $this->hasMany(DataHaid::class, 'id_user');
     }
 
-    public function isAdminPMR()
+    public function sekolah()
     {
-        return $this->level === 'Admin PMR';
+        return $this->belongsTo(Sekolah::class, 'sekolah_id');
     }
 
-    public function isGuruBK()
+    public function licenseKey()
     {
-        return $this->level === 'Guru BK';
+        return $this->belongsTo(LicenseKey::class, 'license_key_id');
     }
 
-    public function isGuruOlahraga()
+    public function isAdmin()
     {
-        return $this->level === 'Guru Olahraga';
+        return $this->level === 'Admin';
     }
 
-    public function isSiswa()
+    public function isSuperAdmin()
     {
-        return $this->level === 'Siswa';
+        return $this->level === 'SuperAdmin';
+    }
+
+    public function isHealthMonitor()
+    {
+        return $this->level === 'Health Monitor';
+    }
+
+    public function isHealthConsultant()
+    {
+        return $this->level === 'Health Consultant';
+    }
+
+    public function isMember()
+    {
+        return $this->level === 'Member';
     }
 
     public function isPerempuan()

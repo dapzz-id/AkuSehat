@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::create('data_haid', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('id_user');
-            $table->date('tanggal_mulai');
+            $table->unsignedBigInteger('id_user')->index();
+            $table->date('tanggal_mulai')->nullable();
             $table->date('tanggal_selesai')->nullable();
             $table->integer('durasi_hari')->nullable();
             $table->enum('status', ['berlangsung', 'selesai']);
             $table->text('catatan')->nullable();
             $table->timestamps();
 
-            $table->foreign('id_user')->references('id')->on('users');
+            $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

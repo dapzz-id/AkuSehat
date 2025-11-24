@@ -13,9 +13,8 @@ return new class extends Migration
     {
         Schema::create('kesehatan', function (Blueprint $table) {
             $table->id('id_kesehatan');
-            $table->unsignedBigInteger('id_user');
-            $table->unsignedBigInteger('id_kelas');
-            $table->date('tgl');
+            $table->unsignedBigInteger('id_user')->index();
+            $table->date('tgl')->index();
             $table->string('bb', 30); // Berat Badan
             $table->string('tb', 30); // Tinggi Badan
             $table->string('sistol', 30);
@@ -25,8 +24,6 @@ return new class extends Migration
             $table->string('status', 30);
             $table->text('pesan_imt');
             $table->text('pesan_tkd'); // Pesan Tekanan Darah
-            
-            // Tambahan field baru
             $table->string('kondisi_telinga')->nullable();
             $table->string('kondisi_gigi')->nullable();
             $table->text('perilaku_beresiko')->nullable();
@@ -34,8 +31,7 @@ return new class extends Migration
             
             $table->timestamps();
 
-            $table->foreign('id_user')->references('id')->on('users');
-            $table->foreign('id_kelas')->references('id')->on('kelas');
+            $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

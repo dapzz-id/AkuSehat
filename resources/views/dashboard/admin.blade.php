@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Admin PMR')
+@section('title', 'Dashboard Admin')
 
 @section('content')
 <div class="space-y-6">
@@ -101,7 +101,7 @@
                     <i class="fas fa-dashboard text-[#1b5e20] text-xl"></i>
                 </div>
                 <div>
-                    <h2 class="text-2xl font-bold text-[#1a472a]">Dashboard Admin PMR</h2>
+                    <h2 class="text-2xl font-bold text-[#1a472a]">Dashboard Admin</h2>
                     <p class="text-[#388e3c]">Selamat datang, {{ auth()->user()->nama }}</p>
                 </div>
             </div>
@@ -116,8 +116,8 @@
                     <i class="fas fa-users text-white text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Total Siswa</p>
-                    <p class="text-2xl font-semibold text-[#1a472a]">{{ $data['total_siswa'] }}</p>
+                    <p class="text-sm font-medium text-gray-600">Total Member</p>
+                    <p class="text-2xl font-semibold text-[#1a472a]">{{ $data['total_member'] }}</p>
                 </div>
             </div>
         </div>
@@ -128,7 +128,7 @@
                     <i class="fas fa-school text-white text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Total Kelas</p>
+                    <p class="text-sm font-medium text-gray-600">Total Divisi</p>
                     <p class="text-2xl font-semibold text-[#1a472a]">{{ $data['total_kelas'] }}</p>
                 </div>
             </div>
@@ -179,12 +179,12 @@
                 <span class="font-medium text-green-800">Tambah Data HB</span>
             </a>
             
-            <a href="{{ route('admin.siswa.index') }}" 
+            <a href="{{ route('admin.member.index') }}" 
                class="flex items-center p-4 bg-green-50 rounded-lg quick-action">
                 <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
                     <i class="fas fa-list text-green-600"></i>
                 </div>
-                <span class="font-medium text-green-800">Lihat Data Siswa</span>
+                <span class="font-medium text-green-800">Lihat Data Member</span>
             </a>
             
             <a href="{{ route('admin.kelas.index') }}" 
@@ -192,7 +192,7 @@
                 <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
                     <i class="fas fa-list text-green-600"></i>
                 </div>
-                <span class="font-medium text-green-800">Lihat Data Kelas</span>
+                <span class="font-medium text-green-800">Lihat Data Divisi</span>
             </a>
         </div>
     </div>
@@ -213,17 +213,17 @@
 
             <div class="health-card {{ $classColor }} w-full h-48 rounded-xl flex items-center justify-between p-6 text-white card-hover">
                 <div>
-                    <div class="text-5xl font-bold glow">{{ $item->siswa }}</div>
+                    <div class="text-5xl font-bold glow">{{ $item->member }}</div>
                     <div class="text-xl font-semibold mt-2">{{ $item->kelas }}</div>
-                    <p class="mt-1 text-sm">Kesehatan: {{ $item->kesehatan->count() }}</p>
-                    <p class="text-sm">HB: {{ $item->hb->count() }}</p>
+                    <p class="mt-1 text-sm">Kesehatan: {{ $item->users->sum(fn($u) => $u->kesehatan->count()) }}</p>
+                    <p class="text-sm">HB: {{ $item->users->sum(fn($u) => $u->hb->count()) }}</p>
                 </div>
                 <div class="flex flex-col items-end">
-                    <svg class="w-14 h-14 transition duration-300 ease-in-out transform hover:scale-105" onclick="window.location='{{ route('admin.siswa.index') }}?kelas={{ $item->id }}'" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    <svg class="w-14 h-14 transition duration-300 ease-in-out transform hover:scale-105" onclick="window.location='{{ route('admin.member.index') }}?kelas={{ $item->id }}'" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                          xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                     </svg>
-                    <a href="{{ route('admin.siswa.index') }}?kelas={{ $item->id }}" 
+                    <a href="{{ route('admin.member.index') }}?kelas={{ $item->id }}" 
                         class="mt-3 {{ $classColor }} text-white font-semibold py-2 px-5 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">
                         Detail &gt;
                     </a>

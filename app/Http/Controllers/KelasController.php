@@ -3,15 +3,16 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Kelas;
 
 class KelasController extends Controller
 {
     public function index()
     {
-        $kelas = Kelas::withCount(['users as jumlah_siswa' => function($query) {
-            $query->where('level', 'Siswa');
-        }])->paginate(10);
+        $kelas = Kelas::withCount(['users as jumlah_member' => function($query) {
+            $query->where('level', 'Member')->whereNotNull('sekolah_id')->where('sekolah_id', Auth::user()->sekolah_id);
+        }])->where('sekolah_id', Auth::user()->sekolah_id)->paginate(10);
 
         return view('admin.kelas.index', compact('kelas'));
     }
@@ -23,7 +24,14 @@ class KelasController extends Controller
             'jurusan' => 'required|string|max:20',
         ]);
 
+        // Cek apakah user sudah memiliki sekolah terkait
+        if (!Auth::user()->sekolah_id) {
+            return redirect()->route('admin.kelas.index')
+                ->with('error', 'Anda tidak memiliki sekolah terkait. Silakan hubungi administrator.');
+        }
+
         Kelas::create([
+            'sekolah_id' => Auth::user()->sekolah_id,
             'tgl' => now()->format('Y-m-d'),
             'kelas' => $request->kelas,
             'jurusan' => $request->jurusan,
@@ -48,8 +56,15 @@ class KelasController extends Controller
                 'kelas.max' => 'Kelas maksimal 35 karakter.'
             ]);
 
+            // Cek apakah user sudah memiliki sekolah terkait
+            if (!Auth::user()->sekolah_id) {
+                return redirect()->route('admin.kelas.index')
+                    ->with('error', 'Anda tidak memiliki sekolah terkait. Silakan hubungi administrator.');
+            }
+
             Kelas::updateOrCreate([
                 'id' => $kelas->id,
+                'sekolah_id' => Auth::user()->sekolah_id,
             ], [
                 'kelas' => $request->kelas,
                 'jurusan' => $request->jurusan,

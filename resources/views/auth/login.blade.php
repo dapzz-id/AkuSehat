@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sistem Kesehatan SMK</title>
+    <title>Login | Aku Sehat</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -91,7 +91,7 @@
         <div class="bg-white rounded-2xl card-shadow overflow-hidden transition-all duration-300 hover:shadow-xl">
             <div class="bg-gradient-to-r from-[#308a34] to-[#1B5E20] p-4 text-center">
                 <div class="w-max px-5 py-1.5 mt-3 h-30 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 pulse-animation">
-                    <img src="{{ asset('src/healthy_icon_white.png') }}" class="w-36 h-auto" alt="">
+                    <img src="{{ asset('src/aku_sehat_white_icon.png') }}" class="w-36 h-auto mt-1" alt="">
                 </div>
                 <p class="text-blue-100 mt-2">Masuk ke akun Anda</p>
             </div>
@@ -157,7 +157,7 @@
 
                 <div class="mt-8 pt-5 border-t border-gray-200">
                     <p class="text-xs text-center text-gray-500">
-                        Healthy+ © {{ date('Y') }} | raadeveloperz <br> All rights reserved.
+                        Aku Sehat © {{ date('Y') }} | raadeveloperz <br> All rights reserved.
                     </p>
                 </div>
             </div>

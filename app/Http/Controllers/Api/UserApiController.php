@@ -8,46 +8,46 @@ use App\Models\User;
 
 class UserApiController extends Controller
 {
-    public function getSiswa(Request $request)
+    public function getMember(Request $request)
     {
         $user = $request->user();
         
-        if (!$user->isGuruOlahraga()) {
+        if (!$user->isHealthConsultant()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses tidak diperbolehkan.'
             ], 403);
         }
 
-        $siswa = User::with('kelas')
-            ->where('level', 'Siswa')
+        $member = User::with('kelas')
+            ->where('level', 'Member')
             ->paginate(15);
 
         return response()->json([
             'success' => true,
-            'data' => $siswa
+            'data' => $member
         ]);
     }
 
-    public function getSiswaByKelas(Request $request, $kelas_id)
+    public function getMemberByKelas(Request $request, $kelas_id)
     {
         $user = $request->user();
         
-        if (!$user->isGuruOlahraga()) {
+        if (!$user->isHealthConsultant()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses tidak diperbolehkan.'
             ], 403);
         }
 
-        $siswa = User::with('kelas')
-            ->where('level', 'Siswa')
+        $member = User::with('kelas')
+            ->where('level', 'Member')
             ->where('id_kelas', $kelas_id)
             ->get();
 
         return response()->json([
             'success' => true,
-            'data' => $siswa
+            'data' => $member
         ]);
     }
 }

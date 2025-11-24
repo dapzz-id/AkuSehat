@@ -12,11 +12,11 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardApiController extends Controller
 {
-    public function guruOlahraga(Request $request)
+    public function healthConsultant(Request $request)
     {
         $user = $request->user();
         
-        if (!$user->isGuruOlahraga()) {
+        if (!$user->isHealthConsultant()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses tidak diperbolehkan.'
@@ -24,7 +24,7 @@ class DashboardApiController extends Controller
         }
 
         // Statistik umum
-        $totalSiswa = User::where('level', 'Siswa')->count();
+        $totalMember = User::where('level', 'Member')->count();
         $totalKelas = Kelas::count();
         
         // Statistik IMT
@@ -35,16 +35,16 @@ class DashboardApiController extends Controller
 
         // Data per kelas
         $dataKelas = Kelas::with(['users' => function($query) {
-            $query->where('level', 'Siswa');
+            $query->where('level', 'Member');
         }])->get()->map(function($kelas) {
-            $siswaIds = $kelas->users->pluck('id');
+            $memberIds = $kelas->users->pluck('id');
             
-            $kesehatanTerbaru = Kesehatan::whereIn('id_user', $siswaIds)
+            $kesehatanTerbaru = Kesehatan::whereIn('id_user', $memberIds)
                 ->select('id_user', 'status')
-                ->whereIn('id_kesehatan', function($query) use ($siswaIds) {
+                ->whereIn('id_kesehatan', function($query) use ($memberIds) {
                     $query->select(DB::raw('MAX(id_kesehatan)'))
                         ->from('kesehatan')
-                        ->whereIn('id_user', $siswaIds)
+                        ->whereIn('id_user', $memberIds)
                         ->groupBy('id_user');
                 })
                 ->get()
@@ -54,7 +54,7 @@ class DashboardApiController extends Controller
                 'id' => $kelas->id,
                 'kelas' => $kelas->kelas,
                 'jurusan' => $kelas->jurusan,
-                'total_siswa' => $kelas->users->count(),
+                'total_member' => $kelas->users->count(),
                 'statistik' => [
                     'normal' => $kesehatanTerbaru->get('Normal', collect())->count(),
                     'kurus' => $kesehatanTerbaru->get('Kurus', collect())->count(),
@@ -68,7 +68,7 @@ class DashboardApiController extends Controller
             'success' => true,
             'data' => [
                 'statistik_umum' => [
-                    'total_siswa' => $totalSiswa,
+                    'total_member' => $totalMember,
                     'total_kelas' => $totalKelas,
                     'statistik_imt' => $statistikIMT,
                 ],
@@ -77,23 +77,23 @@ class DashboardApiController extends Controller
         ]);
     }
 
-    public function siswaDetail(Request $request, $id)
+    public function memberDetail(Request $request, $id)
     {
         $user = $request->user();
         
-        if ($user->isSiswa() && $user->id != $id) {
+        if ($user->isMember() && $user->id != $id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses tidak diperbolehkan.'
             ], 403);
         }
 
-        $siswa = User::with('kelas')->find($id);
+        $member = User::with('kelas')->find($id);
         
-        if (!$siswa || $siswa->level !== 'Siswa') {
+        if (!$member || $member->level !== 'Member') {
             return response()->json([
                 'success' => false,
-                'message' => 'Data siswa tidak ditemukan.'
+                'message' => 'Data Member tidak ditemukan.'
             ], 404);
         }
 
@@ -122,7 +122,7 @@ class DashboardApiController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'siswa' => $siswa,
+                'member' => $member,
                 'kesehatan_terbaru' => $kesehatanTerbaru,
                 'hb_terbaru' => $hbTerbaru,
                 'riwayat_kesehatan' => $riwayatKesehatan,

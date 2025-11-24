@@ -13,14 +13,30 @@
                 </div>
                 <div>
                     <h2 class="text-2xl font-bold text-[#1a472a]">Data Kesehatan</h2>
-                    <p class="text-[#388e3c]">Manajemen data kesehatan siswa</p>
+                    <p class="text-[#388e3c]">Manajemen data kesehatan member</p>
                 </div>
             </div>   
-            <a href="{{ route('admin.kesehatan.create') }}" 
-               class="bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
-                <i class="fas fa-plus mr-2"></i>
-                Tambah Data
-            </a>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <!-- Export Buttons -->
+                <div class="flex gap-2">
+                    <a href="{{ route('admin.kesehatan.export.excel') }}" 
+                       class="bg-[#4caf50] hover:bg-[#388e3c] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+                        <i class="fas fa-file-excel mr-2"></i>
+                        Export Excel
+                    </a>
+                    <a href="{{ route('admin.kesehatan.export.pdf') }}" 
+                       class="bg-[#f44336] hover:bg-[#d32f2f] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+                        <i class="fas fa-file-pdf mr-2"></i>
+                        Export PDF
+                    </a>
+                </div>
+                <!-- Tambah Data Button -->
+                <a href="{{ route('admin.kesehatan.create') }}" 
+                   class="bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+                    <i class="fas fa-plus mr-2"></i>
+                    Tambah Data
+                </a>
+            </div>
         </div>
     </div>
 
@@ -31,10 +47,10 @@
                 <thead class="bg-[#e8f5e9]">
                     <tr>
                         <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
-                            Siswa
+                            Member
                         </th>
                         <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider hidden md:table-cell">
-                            Kelas
+                            Divisi
                         </th>
                         <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
                             Tanggal
@@ -46,7 +62,10 @@
                             IMT
                         </th>
                         <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
-                            Status
+                            Status BMI
+                        </th>
+                        <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
+                            Status Tekanan Darah
                         </th>
                         <th class="px-4 md:px-6 py-3 text-center text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
                             Aksi
@@ -59,18 +78,18 @@
                             <td class="px-4 md:px-6 py-4">
                                 <div class="text-sm font-medium text-gray-900">{{ $item->user->nama }}</div>
                                 <div class="text-sm text-gray-500">{{ $item->user->nis }}</div>
-                                <div class="text-sm text-gray-500 md:hidden mt-1">
-                                    Kelas: {{ $item->kelas->kelas }}
+                                <div class="text-sm text-gray-500 md:hidden mt-2">
+                                    Divisi: {{ $item->user->kelas->kelas }}
                                 </div>
-                                <div class="text-sm text-gray-500 sm:hidden mt-1">
+                                <div class="text-sm text-gray-500 sm:hidden mt-2">
                                     BB/TB: {{ $item->bb }}kg / {{ $item->tb }}cm
                                 </div>
-                                <div class="text-sm text-gray-500 lg:hidden mt-1">
+                                <div class="text-sm text-gray-500 lg:hidden mt-2">
                                     IMT: {{ $item->imt }}
                                 </div>
                             </td>
                             <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">
-                                {{ $item->kelas->kelas }}
+                                {{ $item->user->kelas->kelas }}
                             </td>
                             <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ $item->tgl->format('d/m/Y') }}
@@ -84,15 +103,34 @@
                             <td class="px-4 md:px-6 py-4 whitespace-nowrap">
                                 @php
                                     $statusClass = match($item->status) {
+                                        'Underweight' => 'bg-[#fff9c4] text-[#f57f17]',
                                         'Normal' => 'bg-[#c8e6c9] text-[#1b5e20]',
-                                        'Kurus' => 'bg-[#fff9c4] text-[#f57f17]',
                                         'Overweight' => 'bg-[#ffe0b2] text-[#ef6c00]',
-                                        'Obesitas' => 'bg-[#ffcdd2] text-[#c62828]',
+                                        'Obesitas Level 1' => 'bg-[#ffcdd2] text-[#c62828]',
+                                        'Obesitas Level 2' => 'bg-[#f44336] text-white',
+                                        'Obesitas Level 3' => 'bg-[#b71c1c] text-white',
                                         default => 'bg-gray-100 text-gray-800'
                                     };
                                 @endphp
                                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClass }}">
                                     {{ $item->status }}
+                                </span>
+                            </td>
+
+                            <td class="px-4 md:px-6 py-4 whitespace-nowrap">
+                                @php
+                                    $statusClass = match($item->status_darah) {
+                                        'Hipotensi' => 'bg-[#bbdefb] text-[#0d47a1]',
+                                        'Normal' => 'bg-[#c8e6c9] text-[#1b5e20]',
+                                        'Elevasi' => 'bg-[#fff9c4] text-[#f57f17]',
+                                        'Hipertensi Tahap 1' => 'bg-[#ffe0b2] text-[#ef6c00]',
+                                        'Hipertensi Tahap 2' => 'bg-[#ffcdd2] text-[#c62828]',
+                                        'Krisis' => 'bg-[#b71c1c] text-white',
+                                        default => 'bg-gray-100 text-gray-800'
+                                    };
+                                @endphp
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClass }}">
+                                    {{ $item->status_darah }}
                                 </span>
                             </td>
                             <td class="px-4 md:px-6 py-4 text-base whitespace-nowrap font-medium">
@@ -112,11 +150,6 @@
                                             <i class="fas fa-trash text-lg"></i>
                                         </button>
                                     </form>
-                                    <a href="#" 
-                                       class="text-[#0288d1] hover:text-[#01579b] p-1 transition-colors duration-200"
-                                       title="Detail">
-                                        <i class="fas fa-eye text-lg"></i>
-                                    </a>
                                 </div>
                             </td>
                         </tr>

@@ -13,16 +13,17 @@ return new class extends Migration
     {
         Schema::create('peminjaman_pita', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('id_user');
+            $table->unsignedBigInteger('id_user')->index();
             $table->date('tanggal_pinjam');
             $table->date('tanggal_kembali')->nullable();
             $table->integer('jumlah_pita');
+            $table->tinyInteger('verified')->default(0);
             $table->enum('status', ['dipinjam', 'dikembalikan', 'terlambat']);
             $table->date('estimasi_selesai_haid');
             $table->text('keterangan')->nullable();
             $table->timestamps();
 
-            $table->foreign('id_user')->references('id')->on('users');
+            $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

@@ -13,16 +13,15 @@ return new class extends Migration
     {
         Schema::create('hb', function (Blueprint $table) {
             $table->id('id_hb');
-            $table->unsignedBigInteger('id_user');
-            $table->unsignedBigInteger('id_kelas');
-            $table->date('tgl');
+            $table->unsignedBigInteger('id_user')->index();
+            $table->unsignedBigInteger('id_kelas')->index();
+            $table->date('tgl')->index();
             $table->string('hb', 30); // Kadar Hemoglobin
             $table->string('status', 30);
             $table->text('pesan');
             $table->timestamps();
 
-            $table->foreign('id_user')->references('id')->on('users');
-            $table->foreign('id_kelas')->references('id')->on('kelas');
+            $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

@@ -16,11 +16,27 @@
                     <p class="text-[#388e3c]">Manajemen data hemoglobin siswa</p>
                 </div>
             </div>
-            <a href="{{ route('admin.hb.create') }}" 
-               class="bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
-                <i class="fas fa-plus mr-2"></i>
-                Tambah Data HB
-            </a>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <!-- Export Buttons -->
+                <div class="flex gap-2">
+                    <a href="{{ route('admin.hb.export.excel') }}" 
+                       class="bg-[#4caf50] hover:bg-[#388e3c] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+                        <i class="fas fa-file-excel mr-2"></i>
+                        Export Excel
+                    </a>
+                    <a href="{{ route('admin.hb.export.pdf') }}" 
+                       class="bg-[#f44336] hover:bg-[#d32f2f] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+                        <i class="fas fa-file-pdf mr-2"></i>
+                        Export PDF
+                    </a>
+                </div>
+                <!-- Tambah Data Button -->
+                <a href="{{ route('admin.hb.create') }}" 
+                   class="bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+                    <i class="fas fa-plus mr-2"></i>
+                    Tambah Data HB
+                </a>
+            </div>
         </div>
     </div>
 
@@ -44,9 +60,6 @@
                         </th>
                         <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
                             Status
-                        </th>
-                        <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider hidden lg:table-cell">
-                            Pesan
                         </th>
                         <th class="px-4 md:px-6 py-3 text-center text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
                             Aksi
@@ -94,9 +107,9 @@
                                 </span>
                             </td>
                             <!-- Pesan -->
-                            <td class="px-4 md:px-6 py-4 text-gray-600 max-w-xs hidden lg:table-cell" title="{{ $item->pesan }}">
+                            {{-- <td class="px-4 md:px-6 py-4 text-gray-600 max-w-xs hidden lg:table-cell" title="{{ $item->pesan }}">
                                 {{ $item->pesan }}
-                            </td>
+                            </td> --}}
                             <!-- Aksi -->
                             <td class="px-4 md:px-6 py-4">
                                 <div class="flex items-center justify-center text-base">
@@ -115,11 +128,6 @@
                                             <i class="fas fa-trash text-lg"></i>
                                         </button>
                                     </form>
-                                    <a href="#" 
-                                       class="text-[#0288d1] hover:text-[#01579b] transition-colors duration-200 p-1 rounded-full hover:bg-blue-50"
-                                       title="Detail">
-                                        <i class="fas fa-eye text-lg"></i>
-                                    </a>
                                 </div>
                             </td>
                         </tr>

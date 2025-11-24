@@ -17,15 +17,15 @@
         Data HB
     </a>
     
-    <a href="{{ route('admin.siswa.index') }}" 
-       class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('admin.siswa.*') ? 'bg-[#1B5E20] text-white shadow-soft' : 'text-primary-100 hover:bg-[#1B5E20] hover:text-white' }}">
+    <a href="{{ route('admin.member.index') }}" 
+       class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('admin.member.*') ? 'bg-[#1B5E20] text-white shadow-soft' : 'text-primary-100 hover:bg-[#1B5E20] hover:text-white' }}">
         <i class="fas fa-users mr-3"></i>
-        Data Siswa
+        Data Member
     </a>
     
     <a href="{{ route('admin.kelas.index') }}" 
        class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('admin.kelas.*') ? 'bg-[#1B5E20] text-white shadow-soft' : 'text-primary-100 hover:bg-[#1B5E20] hover:text-white' }}">
         <i class="fas fa-school mr-3"></i>
-        Data Kelas
+        Data Divisi
     </a>
 </nav>

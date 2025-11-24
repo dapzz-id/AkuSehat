@@ -6,7 +6,7 @@
 <div class="space-y-6">
     <div class="bg-white p-8 rounded-lg shadow-sm">
         <h2 class="text-2xl font-bold text-gray-900">Edit Data Kesehatan</h2>
-        <p class="text-gray-600">Perbarui data kesehatan siswa</p>
+        <p class="text-gray-600">Perbarui data kesehatan member</p>
     </div>
 
     <div class="bg-white shadow-sm rounded-lg">
@@ -16,11 +16,11 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label for="siswa-select" class="block text-sm font-medium text-gray-700 mb-2">Siswa</label>
-                    <select id="siswa-select" name="id_user" required
+                    <label for="member-select" class="block text-sm font-medium text-gray-700 mb-2">Member</label>
+                    <select id="member-select" name="id_user" required
                         class="w-full border border-gray-300 rounded-md px-3 py-2">
-                        <option value="">Pilih Siswa</option>
-                        @foreach($siswa as $s)
+                        <option value="">Pilih Member</option>
+                        @foreach($member as $s)
                             <option value="{{ $s->id }}" {{ old('id_user', $kesehatan->id_user) == $s->id ? 'selected' : '' }}>
                                 {{ $s->nama }} ({{ $s->nis }}) - {{ $s->jk === 'L' ? 'Laki-laki' : 'Perempuan' }}
                             </option>
@@ -28,16 +28,6 @@
                     </select>
                     
                     @error('id_user')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal</label>
-                    <input type="date" name="tgl" value="{{ old('tgl', $kesehatan->tgl->format('Y-m-d')) }}" required
-                           class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-
-                    @error('tgl')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
@@ -90,7 +80,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Kondisi Telinga</label>
                     <input type="text" name="kondisi_telinga" value="{{ old('kondisi_telinga', $kesehatan->kondisi_telinga) }}"
                            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Normal / Ada gangguan">
+                           placeholder="Normal / Ada gangguan (kosongkan jika tidak ada)">
 
                     @error('kondisi_telinga')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -101,25 +91,25 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Kondisi Gigi</label>
                     <input type="text" name="kondisi_gigi" value="{{ old('kondisi_gigi', $kesehatan->kondisi_gigi) }}"
                            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Sehat / Ada karies / dll">
+                           placeholder="Sehat / Ada karies / dll (kosongkan jika tidak ada)">
 
                     @error('kondisi_gigi')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Perilaku Beresiko</label>
+                    <input name="perilaku_beresiko"
+                              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Merokok, alkohol, dll (kosongkan jika tidak ada)">{{ old('perilaku_beresiko', $kesehatan->perilaku_beresiko) }}</input>
+                    @error('perilaku_beresiko')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
             </div>
 
             <div class="grid grid-cols-1 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Perilaku Beresiko</label>
-                    <textarea name="perilaku_beresiko" rows="3"
-                              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="Merokok, alkohol, dll (kosongkan jika tidak ada)">{{ old('perilaku_beresiko', $kesehatan->perilaku_beresiko) }}</textarea>
-                    @error('perilaku_beresiko')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Gangguan Reproduksi</label>
                     <textarea name="gangguan_reproduksi" rows="3"
@@ -169,3 +159,13 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+    <script>
+        new TomSelect("#member-select", {
+    placeholder: "Cari member...",
+    allowEmptyOption: true,
+    maxOptions: 1000,
+});
+    </script>
+@endpush

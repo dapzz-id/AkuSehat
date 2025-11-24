@@ -12,6 +12,7 @@ class Kelas extends Model
     protected $table = 'kelas';
 
     protected $fillable = [
+        'sekolah_id',
         'tgl',
         'kelas',
         'jurusan',
@@ -23,13 +24,13 @@ class Kelas extends Model
         return $this->hasMany(User::class, 'id_kelas');
     }
 
-    public function kesehatan()
-    {
-        return $this->hasMany(Kesehatan::class, 'id_kelas');
-    }
-
      public function hb()
     {
         return $this->hasMany(Hb::class, 'id_kelas');
+    }
+
+    public function sekolah()
+    {
+        return $this->belongsTo(Sekolah::class, 'sekolah_id');
     }
 }

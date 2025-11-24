@@ -7,9 +7,14 @@
     <!-- Header -->
     <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-100">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <h2 class="text-2xl font-bold text-[#1a472a]">Data Kelas</h2>
-                <p class="text-[#388e3c]">Manajemen data kelas dan jurusan</p>
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-school text-[#1b5e20] text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-[#1a472a]">Data Kelas</h2>
+                    <p class="text-[#388e3c]">Manajemen data kelas dan jurusan</p>
+                </div>
             </div>
             <button onclick="openModal()" 
                     class="bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
@@ -271,7 +276,7 @@
 </div>
 
 <!-- Modal Tambah/Edit Kelas -->
-<div id="kelasModal" class="fixed inset-0 bg-gray-600/40 bg-opacity-50 hidden z-50 flex items-center justify-center p-4" onclick="closeModal()">
+<div id="kelasModal" class="fixed inset-0 bg-black/40 hidden z-50 flex items-center justify-center p-4" onclick="closeModal()">
     <div class="bg-white rounded-lg max-w-md w-full mx-auto shadow-xl transform transition-all" onclick="event.stopPropagation()">
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center">

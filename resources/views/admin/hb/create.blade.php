@@ -6,7 +6,7 @@
 <div class="space-y-6">
     <div class="bg-white p-8 rounded-lg shadow-sm">
         <h2 class="text-2xl font-bold text-gray-900">Tambah Data Hemoglobin (HB)</h2>
-        <p class="text-gray-600">Masukkan data kadar hemoglobin siswa</p>
+        <p class="text-gray-600">Masukkan data kadar hemoglobin member</p>
     </div>
 
     <div class="bg-white shadow-sm rounded-lg">
@@ -15,11 +15,11 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label for="siswa-select" class="block text-sm font-medium text-gray-700 mb-2">Siswa</label>
-                    <select id="siswa-select" name="id_user" required
+                    <label for="member-select" class="block text-sm font-medium text-gray-700 mb-2">Member</label>
+                    <select id="member-select" name="id_user" required
                         class="w-full border border-gray-300 rounded-md px-3 py-2">
-                        <option value="">Pilih Siswa</option>
-                        @foreach($siswa as $s)
+                        <option value="">Pilih Member</option>
+                        @foreach($member as $s)
                             <option value="{{ $s->id }}" {{ old('id_user') == $s->id ? 'selected' : '' }}>
                                 {{ $s->nama }} ({{ $s->nis }}) - {{ $s->jk === 'L' ? 'Laki-laki' : 'Perempuan' }}
                             </option>
@@ -31,25 +31,16 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Pemeriksaan</label>
-                    <input type="date" name="tgl" value="{{ old('tgl', date('Y-m-d')) }}" required
-                           class="w-full border border-gray-300 rounded-md px-3 py-3 focus:outline-none focus:ring-2 focus:ring-red-500">
-                    @error('tgl')
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Kadar HB (g/dL)
+                    </label>
+                    <input type="number" step="0.1" name="hb" value="{{ old('hb') }}" required
+                        class="w-full border border-gray-300 rounded-md px-3 py-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        placeholder="Contoh: 12.5" min="0" max="25">
+                    @error('hb')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Kadar HB (g/dL)
-                </label>
-                <input type="number" step="0.1" name="hb" value="{{ old('hb') }}" required
-                       class="w-full border border-gray-300 rounded-md px-3 py-3 focus:outline-none focus:ring-2 focus:ring-red-500"
-                       placeholder="Contoh: 12.5" min="0" max="25">
-                @error('hb')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
             </div>
 
             <div class="bg-blue-50 p-4 rounded-md">
@@ -88,8 +79,8 @@
 @endsection
 
 @push('scripts')
-new TomSelect("#siswa-select", {
-    placeholder: "Cari siswa...",
+new TomSelect("#member-select", {
+    placeholder: "Cari member...",
     allowEmptyOption: true,
     maxOptions: 1000,
 });

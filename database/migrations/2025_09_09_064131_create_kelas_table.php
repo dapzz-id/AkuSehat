@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('kelas', function (Blueprint $table) {
             $table->id();
-            $table->string('tgl', 20);
-            $table->string('kelas', 35);
-            $table->string('jurusan', 20);
+            $table->unsignedBigInteger('sekolah_id')->index();
+            $table->string('tgl', 20)->index();
+            $table->string('kelas', 35)->index();
+            $table->string('jurusan', 70)->nullable()->index();
             $table->integer('count_kesehatan')->default(0);
             $table->timestamps();
         });

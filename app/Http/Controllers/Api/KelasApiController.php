@@ -12,15 +12,15 @@ class KelasApiController extends Controller
     {
         $user = $request->user();
         
-        if (!$user->isGuruOlahraga()) {
+        if (!$user->isHealthConsultant()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses tidak diperbolehkan.'
             ], 403);
         }
 
-        $kelas = Kelas::withCount(['users as jumlah_siswa' => function($query) {
-            $query->where('level', 'Siswa');
+        $kelas = Kelas::withCount(['users as jumlah_member' => function($query) {
+            $query->where('level', 'Member');
         }])->get();
 
         return response()->json([

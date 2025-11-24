@@ -14,7 +14,6 @@ class Kesehatan extends Model
 
     protected $fillable = [
         'id_user',
-        'id_kelas',
         'tgl',
         'bb',
         'tb',
@@ -38,11 +37,6 @@ class Kesehatan extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'id_user');
-    }
-
-    public function kelas()
-    {
-        return $this->belongsTo(Kelas::class, 'id_kelas');
     }
 
     public function hitungIMT()
