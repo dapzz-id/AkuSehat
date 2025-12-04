@@ -137,7 +137,7 @@ class DatabaseSeeder extends Seeder
                 'license_key_id' => 1,
                 'tgl' => '2024-01-01',
                 'nomor_induk' => str_pad($i, 6, '0', STR_PAD_LEFT),
-                'username' => 'siswa' . $i,
+                'username' => 'member' . $i,
                 'password' => Hash::make('password123'),
                 'nama' => $firstName . ' ' . $lastName,
                 'jk' => $gender

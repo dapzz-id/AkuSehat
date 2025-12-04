@@ -1,16 +1,16 @@
 # Sistem Manajemen Kesehatan Siswa/i - Healthy+
 
-Sistem manajemen kesehatan sekolah dengan fitur lengkap untuk Admin PMR dan Guru BK, serta API untuk aplikasi mobile Guru Olahraga dan Siswa.
+Sistem manajemen kesehatan dengan fitur lengkap untuk Admin Kesehatan, Health Consultant, Health Monitor, dan Member.
 
 ## Fitur Utama
 
 ### Web Application
-- **Admin PMR**: Manajemen data kesehatan siswa (TB, BB, HB, Telinga, Gigi, Perilaku beresiko, Gangguan reproduksi)
-- **Guru BK**: Manajemen peminjaman pita dengan sistem warning otomatis
+- **Admin**: Manajemen data kesehatan member (TB, BB, HB, Telinga, Gigi, Perilaku beresiko, Gangguan reproduksi)
 
 ### Mobile API
-- **Guru Olahraga**: Monitoring kesehatan semua siswa dan statistik kelas
-- **Siswa**: Melihat rekap data pribadi dan mendapat rekomendasi AI
+- **Health Consultant**: Monitoring kesehatan semua member dan statistik divisi
+- **Health Monitor**: Manajemen peminjaman pita dengan sistem warning otomatis
+- **Member**: Melihat rekap data pribadi dan mendapat pesan rekomendasi AI singkat
 
 ## Teknologi
 
@@ -23,10 +23,10 @@ Sistem manajemen kesehatan sekolah dengan fitur lengkap untuk Admin PMR dan Guru
 
 ## Default Credentials
 
-- **Admin PMR**: username: `adminpmr`, password: `password123`
-- **Guru BK**: username: `gurubk`, password: `password123`
-- **Guru Olahraga**: username: `guriolahraga`, password: `password123`
-- **Siswa**: username: `siswa1-siswa50`, password: `password123`
+- **Admin**: username: `admin`, password: `password123`
+- **Health Monitor**: username: `healthmonitor`, password: `password123`
+- **Health Consultant**: username: `healthconsultant`, password: `password123`
+- **Member**: username: `member1-member50`, password: `password123`
 
 ## Fitur Keamanan
 
