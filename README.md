@@ -1,4 +1,4 @@
-# Sistem Manajemen Kesehatan Siswa/i - Healthy+
+# Sistem Manajemen Kesehatan - Aku Sehat
 
 Sistem manajemen kesehatan dengan fitur lengkap untuk Admin Kesehatan, Health Consultant, Health Monitor, dan Member.
 
@@ -35,10 +35,6 @@ Sistem manajemen kesehatan dengan fitur lengkap untuk Admin Kesehatan, Health Co
 - Input validation
 - Password hashing
 - API rate limiting
-
-## AI Integration
-
-Sistem terintegrasi dengan Google Gemini AI untuk memberikan rekomendasi kesehatan personal berdasarkan data BMI, jenis kelamin, dan kondisi kesehatan siswa.
 
 ## Responsive Design
 
