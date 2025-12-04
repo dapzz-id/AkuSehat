@@ -109,8 +109,8 @@ const HomeScreenMember = () => {
   const slideMount = useRef(new Animated.Value(16)).current
   const fadeTab = useRef(new Animated.Value(1)).current
   const [tabs, setTabs] = useState<TabItem[]>([
-    { key: "ringkasan", icon: <Icon name="activity" size={22} color="#444" />, label: "Ringkasan" },
-    { key: "profil", icon: <Icon name="user" size={22} color="#444" />, label: "Profil" }
+    { key: "ringkasan", icon: <Icon name="activity" size={22} color="#444" /> },
+    { key: "profil", icon: <Icon name="user" size={22} color="#444" /> }
   ])
   const { width } = useWindowDimensions()
   const isSmallScreen = width < 375
@@ -329,10 +329,10 @@ const HomeScreenMember = () => {
         const profileData = meRes?.data?.data || meRes?.data || null;
         setProfile(profileData);
         setTabs([
-          { key: "ringkasan", icon: <Icon name="activity" size={22} color="#444" />, label: "Ringkasan" },
-          { key: "kesehatan", icon: <Icon name="heart" size={22} color="#444" />, label: "Kesehatan" },
-          { key: "hemoglobin", icon: <Icon name="droplet" size={22} color="#444" />, label: "Hemoglobin" },
-          { key: "profil", icon: <Icon name="user" size={22} color="#444" />, label: "Profil" },
+          { key: "ringkasan", icon: <Icon name="activity" size={22} color="#444" /> },
+          { key: "kesehatan", icon: <Icon name="heart" size={22} color="#444" /> },
+          { key: "hemoglobin", icon: <Icon name="droplet" size={22} color="#444" /> },
+          { key: "profil", icon: <Icon name="user" size={22} color="#444" /> },
         ]);
         if (profileData?.jk === "P") {
           setLoadingHaid(true);
