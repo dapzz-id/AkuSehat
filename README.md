@@ -18,7 +18,7 @@ Sistem manajemen kesehatan dengan fitur lengkap untuk Admin Kesehatan, Health Co
 - MySQL Database
 - Tailwind CSS (Responsive Design)
 - Laravel Sanctum (API Authentication)
-- Google Gemini AI Integration
+- React Native
 - Alpine.js untuk interaktivitas
 
 ## Default Credentials
