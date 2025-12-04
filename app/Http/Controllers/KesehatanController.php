@@ -6,40 +6,114 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Kesehatan;
 use App\Models\User;
-use App\Models\Kelas;
+use App\Models\Divisi;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Color;
+use Carbon\Carbon;
 use PDF;
 
 class KesehatanController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $kesehatan = Kesehatan::with('user')
+        $query = Kesehatan::with(['user', 'user.divisi'])
             ->whereHas('user', function($query) {
-                $query->where('level', 'Member')->whereNotNull('sekolah_id')->where('sekolah_id', Auth::user()->sekolah_id);
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
-        
-        return view('admin.kesehatan.index', compact('kesehatan'));
+                $query->where('level', 'Member')->whereNotNull('instansi_id')->where('instansi_id', Auth::user()->instansi_id);
+            });
+
+        if (!empty($request->search)) {
+            $search = $request->search;
+
+            $query->where(function($q) use ($search) {
+                $q->whereHas('user', function($u) use ($search) {
+                    $u->where('nama', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_induk', 'like', '%' . $search . '%')
+                    ->orWhereHas('divisi', function($d) use ($search) {
+                        $d->where('divisi_name', 'like', '%' . $search . '%');
+                    });
+                })->orWhere('status', 'like', '%' . $search . '%')
+                ->orWhere('status_darah', 'like', '%' . $search . '%');
+            });
+        }
+
+        if (!empty($request->year)) {
+            if ($request->year !== 'all') {
+                $query->whereYear('tgl', $request->year);
+            }
+        }else{
+            $query->whereYear('tgl', Carbon::now()->year);
+        }
+
+        $kesehatan = $query->where('tgl', '!=', null)
+                    ->orderBy('tgl', 'desc')
+                    ->paginate(15)
+                    ->withQueryString();
+
+        $years = Kesehatan::whereHas('user', function($query) {
+                    $query->where('level', 'Member')
+                        ->whereNotNull('instansi_id')
+                        ->where('instansi_id', Auth::user()->instansi_id);
+                })
+                ->selectRaw('YEAR(tgl) as year')
+                ->whereNotNull('tgl')
+                ->groupBy('year')
+                ->pluck('year')
+                ->toArray();
+
+        $currentYear = now()->year;
+        if (!in_array($currentYear, $years)) {
+            $years[] = $currentYear;
+        }
+
+        rsort($years);
+
+        $divisi = Divisi::where('instansi_id', Auth::user()->instansi_id)->get();
+
+        return view('admin.kesehatan.index', compact('kesehatan', 'divisi', 'years'));
     }
 
-    public function exportExcel()
+    public function exportExcel(Request $request)
     {
         try {
-            $kesehatan = Kesehatan::with(['user', 'user.kelas'])
-                ->whereHas('user', function($query) {
-                    $query->where('level', 'Member')
-                          ->whereNotNull('sekolah_id')
-                          ->where('sekolah_id', Auth::user()->sekolah_id);
-                })
-                ->orderBy('created_at', 'desc')
-                ->get();
+            $filterType = $request->input('filter_type', 'all');
+
+            $query = Kesehatan::with(['user', 'user.divisi'])
+                ->select('kesehatan.*')
+                ->join('users', 'kesehatan.id_user', '=', 'users.id')
+                ->join('divisi', 'users.id_divisi', '=', 'divisi.id')
+                ->where('users.level', 'Member')
+                ->whereNotNull('users.instansi_id')
+                ->where('users.instansi_id', Auth::user()->instansi_id)
+                ->where('kesehatan.tgl', '!=', null)
+                ->orderBy('divisi.divisi_name', 'asc')
+                ->orderBy('users.nama', 'asc');
+
+            if (in_array($filterType, ['divisi', 'divisi_tanggal']) && $request->filled('divisi')) {
+                $query->where('users.id_divisi', $request->divisi);
+            }
+
+            if (in_array($filterType, ['tanggal', 'divisi_tanggal'])) {
+                if ($request->filled('from')) {
+                    $query->whereDate('kesehatan.tgl', '>=', $request->from);
+                }
+                if ($request->filled('to')) {
+                    $query->whereDate('kesehatan.tgl', '<=', $request->to);
+                }
+                
+                if (!$request->filled('from') && !$request->filled('to')) {
+                    $query->whereYear('kesehatan.tgl', now()->year);
+                }
+            }
+
+            if (in_array($filterType, ['all', 'divisi'])) {
+                $query->whereYear('kesehatan.tgl', now()->year);
+            }
+
+            $kesehatan = $query->orderBy('kesehatan.tgl', 'desc')->get();
 
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
@@ -54,7 +128,7 @@ class KesehatanController extends Controller
                 'Berat Badan (kg)',
                 'Tinggi Badan (cm)', 
                 'IMT',
-                'Status Gizi',
+                'Status BMI',
                 'Tekanan Darah Sistol',
                 'Tekanan Darah Diastol',
                 'Status Tekanan Darah',
@@ -72,8 +146,8 @@ class KesehatanController extends Controller
             foreach ($kesehatan as $item) {
                 $sheet->setCellValue('A' . $row, $no);
                 $sheet->setCellValue('B' . $row, $item->user->nama ?? '-');
-                $sheet->setCellValue('C' . $row, $item->user->nis ?? '-');
-                $sheet->setCellValue('D' . $row, $item->user->kelas->kelas ?? '-');
+                $sheet->setCellValue('C' . $row, $item->user->nomor_induk ?? '-');
+                $sheet->setCellValue('D' . $row, $item->user->divisi->divisi_name ?? '-');
                 $sheet->setCellValue('E' . $row, $item->tgl->format('d/m/Y'));
                 $sheet->setCellValue('F' . $row, $item->bb);
                 $sheet->setCellValue('G' . $row, $item->tb);
@@ -107,6 +181,99 @@ class KesehatanController extends Controller
             return redirect()->back()->with('error', 'Terjadi kesalahan saat export Excel: ' . $e->getMessage());
         }
     }
+
+    // public function exportExcel(Request $request)
+    // {
+    //     try {
+    //         $query = Kesehatan::with(['user', 'user.divisi'])
+    //             ->whereHas('user', function($q) {
+    //                 $q->where('level', 'Member')
+    //                   ->whereNotNull('instansi_id')
+    //                   ->where('instansi_id', Auth::user()->instansi_id);
+    //             });
+
+    //         if ($request->has('divisi') && $request->divisi) {
+    //             $query->whereHas('user', function($q) use ($request) {
+    //                 $q->where('id_divisi', $request->divisi);
+    //             });
+    //         }
+
+    //         if ($request->has('from') && $request->from) {
+    //             $query->whereDate('tgl', '>=', $request->from);
+    //         }
+
+    //         if ($request->has('to') && $request->to) {
+    //             $query->whereDate('tgl', '<=', $request->to);
+    //         }
+
+    //         $kesehatan = $query->orderBy('created_at', 'desc')->get();
+
+    //         $spreadsheet = new Spreadsheet();
+    //         $sheet = $spreadsheet->getActiveSheet();
+    //         $sheet->setTitle('Data Kesehatan');
+            
+    //         $headers = [
+    //             'No',
+    //             'Nama Member',
+    //             'Nomor Induk',
+    //             'Divisi', 
+    //             'Tanggal Pemeriksaan',
+    //             'Berat Badan (kg)',
+    //             'Tinggi Badan (cm)', 
+    //             'IMT',
+    //             'Status Gizi',
+    //             'Tekanan Darah Sistol',
+    //             'Tekanan Darah Diastol',
+    //             'Status Tekanan Darah',
+    //             'Kondisi Telinga',
+    //             'Kondisi Gigi',
+    //             'Perilaku Berisiko',
+    //             'Gangguan Reproduksi'
+    //         ];
+
+    //         $sheet->fromArray($headers, null, 'A1');
+
+    //         $row = 2;
+    //         $no = 1;
+            
+    //         foreach ($kesehatan as $item) {
+    //             $sheet->setCellValue('A' . $row, $no);
+    //             $sheet->setCellValue('B' . $row, $item->user->nama ?? '-');
+    //             $sheet->setCellValue('C' . $row, $item->user->nomor_induk ?? '-');
+    //             $sheet->setCellValue('D' . $row, $item->user->divisi->divisi_name ?? '-');
+    //             $sheet->setCellValue('E' . $row, $item->tgl->format('d/m/Y'));
+    //             $sheet->setCellValue('F' . $row, $item->bb);
+    //             $sheet->setCellValue('G' . $row, $item->tb);
+    //             $sheet->setCellValue('H' . $row, $item->imt);
+    //             $sheet->setCellValue('I' . $row, $item->status);
+    //             $sheet->setCellValue('J' . $row, $item->sistol);
+    //             $sheet->setCellValue('K' . $row, $item->diastol);
+    //             $sheet->setCellValue('L' . $row, $item->status_darah);
+    //             $sheet->setCellValue('M' . $row, $item->kondisi_telinga ?? '-');
+    //             $sheet->setCellValue('N' . $row, $item->kondisi_gigi ?? '-');
+    //             $sheet->setCellValue('O' . $row, $item->perilaku_beresiko ?? '-');
+    //             $sheet->setCellValue('P' . $row, $item->gangguan_reproduksi ?? '-');
+                
+    //             $row++;
+    //             $no++;
+    //         }
+
+    //         $this->applyExcelStyles($sheet, count($kesehatan));
+
+    //         $writer = new Xlsx($spreadsheet);
+    //         $filename = 'data-kesehatan-' . date('Y-m-d') . '.xlsx';
+            
+    //         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    //         header('Content-Disposition: attachment;filename="' . $filename . '"');
+    //         header('Cache-Control: max-age=0');
+            
+    //         $writer->save('php://output');
+    //         exit;
+
+    //     } catch (\Exception $e) {
+    //         return redirect()->back()->with('error', 'Terjadi kesalahan saat export Excel: ' . $e->getMessage());
+    //     }
+    // }
 
     private function applyExcelStyles($sheet, $dataCount)
     {
@@ -165,29 +332,122 @@ class KesehatanController extends Controller
         $sheet->getRowDimension(1)->setRowHeight(25);
     }
 
-    public function exportPdf()
+    public function exportPdf(Request $request)
     {
-        $kesehatan = Kesehatan::with('user')
-            ->whereHas('user', function($query) {
-                $query->where('level', 'Member')->whereNotNull('sekolah_id')->where('sekolah_id', Auth::user()->sekolah_id);
-            })
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $filterType = $request->input('filter_type', 'all');
 
-        $namaSekolah = Auth::user()->sekolah->nama_sekolah ?? 'Sekolah Tidak Diketahui';
-        $ikonPath = public_path('src/raadeveloperz_crc.png');
+        $query = Kesehatan::with(['user', 'user.divisi'])
+            ->select('kesehatan.*')
+            ->join('users', 'kesehatan.id_user', '=', 'users.id')
+            ->join('divisi', 'users.id_divisi', '=', 'divisi.id')
+            ->where('users.level', 'Member')
+            ->whereNotNull('users.instansi_id')
+            ->where('users.instansi_id', Auth::user()->instansi_id)
+            ->where('kesehatan.tgl', '!=', null)
+            ->orderBy('divisi.divisi_name', 'asc')
+            ->orderBy('users.nama', 'asc');
 
-        $pdf = PDF::loadView('admin.kesehatan.export-pdf', compact('kesehatan', 'namaSekolah', 'ikonPath'));
+        if (in_array($filterType, ['divisi', 'divisi_tanggal']) && $request->filled('divisi')) {
+            $query->where('users.id_divisi', $request->divisi);
+        }
+
+        if (in_array($filterType, ['tanggal', 'divisi_tanggal'])) {
+            if ($request->filled('from')) {
+                $query->whereDate('kesehatan.tgl', '>=', $request->from);
+            }
+            if ($request->filled('to')) {
+                $query->whereDate('kesehatan.tgl', '<=', $request->to);
+            }
+            
+            if (!$request->filled('from') && !$request->filled('to')) {
+                $query->whereYear('kesehatan.tgl', now()->year);
+            }
+        }
+
+        if (in_array($filterType, ['all', 'divisi'])) {
+            $query->whereYear('kesehatan.tgl', now()->year);
+        }
+
+        $kesehatan = $query->orderBy('kesehatan.tgl', 'desc')->get();
+
+        $namaInstansi = Auth::user()->instansi->nama_instansi ?? 'Instansi Tidak Diketahui';
+        $ikonPath = public_path('src/aku_sehat_icon.png');
+        $raadeveloperz_cr = public_path('src/raadeveloperz_crc.png');
+
+        $pdf = PDF::loadView('admin.kesehatan.export-pdf', compact('kesehatan', 'namaInstansi', 'ikonPath', 'raadeveloperz_cr'));
         $pdf->setPaper('A4', 'landscape');
         
         return $pdf->download('data-kesehatan-' . date('Y-m-d') . '.pdf');
     }
 
+    // public function exportPdf(Request $request)
+    // {
+    //     $filterType = $request->input('filter_type', 'all'); // Default 'all' jika kosong
+
+    //     $query = Kesehatan::with(['user', 'user.divisi'])
+    //         ->whereHas('user', function($q) {
+    //             $q->where('level', 'Member')
+    //             ->whereNotNull('instansi_id')
+    //             ->where('instansi_id', Auth::user()->instansi_id)
+    //             ->whereHas('divisi', function($q2) {
+    //                 $q2->orderBy('divisi_name', 'asc');
+    //             })
+    //             ->orderBy('nama', 'asc');
+    //         })
+    //         ->where('tgl', '!=', null);
+
+    //     // Filter divisi hanya jika relevan
+    //     if (in_array($filterType, ['divisi', 'divisi_tanggal']) && $request->filled('divisi')) {
+    //         $query->whereHas('user', function($q) use ($request) {
+    //             $q->where('id_divisi', $request->divisi);
+    //         });
+    //     }
+
+    //     // Filter tanggal hanya jika relevan
+    //     if (in_array($filterType, ['tanggal', 'divisi_tanggal'])) {
+    //         if ($request->filled('from')) {
+    //             $query->whereDate('tgl', '>=', $request->from);
+    //         }
+    //         if ($request->filled('to')) {
+    //             $query->whereDate('tgl', '<=', $request->to);
+    //         }
+            
+    //         if (!$request->filled('from') && !$request->filled('to')) {
+    //             $query->whereYear('tgl', now()->year);
+    //         }
+    //     }
+
+    //     // Untuk 'all' atau 'divisi' tanpa tanggal spesifik, bisa tambah default tahun jika perlu
+    //     if (in_array($filterType, ['all', 'divisi'])) {
+    //         $query->whereYear('tgl', now()->year); // Opsional, sesuaikan kebutuhan
+    //     }
+
+    //     $kesehatan = $query->orderBy('tgl', 'desc')->get();
+
+    //     $namaInstansi = Auth::user()->instansi->nama_instansi ?? 'Instansi Tidak Diketahui';
+    //     $ikonPath = public_path('src/aku_sehat_icon.png');
+    //     $raadeveloperz_cr = public_path('src/raadeveloperz_crc.png');
+
+    //     $pdf = PDF::loadView('admin.kesehatan.export-pdf', compact('kesehatan', 'namaInstansi', 'ikonPath', 'raadeveloperz_cr'));
+    //     $pdf->setPaper('A4', 'landscape');
+        
+    //     return $pdf->download('data-kesehatan-' . date('Y-m-d') . '.pdf');
+    // }
+
     public function create()
     {
-        $member = User::where('level', 'Member')->whereNotNull('sekolah_id')->where('sekolah_id', Auth::user()->sekolah_id)->get();
-        $kelas = Kelas::where('sekolah_id', Auth::user()->sekolah_id)->get();
-        return view('admin.kesehatan.create', compact('member', 'kelas'));
+        $member = User::with('divisi')
+                ->select('users.*')
+                ->leftJoin('divisi', 'divisi.id', '=', 'users.id_divisi')
+                ->where('users.level', 'Member')
+                ->whereNotNull('users.instansi_id')
+                ->whereNotNull('users.id_divisi')
+                ->where('users.instansi_id', Auth::user()->instansi_id)
+                ->orderBy('divisi.divisi_name', 'asc')
+                ->orderBy('users.nama', 'asc')
+                ->get();
+        $divisi = Divisi::where('instansi_id', Auth::user()->instansi_id)->get();
+        return view('admin.kesehatan.create', compact('member', 'divisi'));
     }
 
     public function store(Request $request)
@@ -262,6 +522,8 @@ class KesehatanController extends Controller
             'kondisi_gigi' => $request->kondisi_gigi ?? null,
             'perilaku_beresiko' => $request->perilaku_beresiko ?? null,
             'gangguan_reproduksi' => $request->gangguan_reproduksi ?? null,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         return redirect()->route('admin.kesehatan.index')
@@ -303,9 +565,20 @@ class KesehatanController extends Controller
     public function edit($id)
     {
         $kesehatan = Kesehatan::findOrFail($id);
-        $member = User::where('level', 'Member')->whereNotNull('sekolah_id')->where('sekolah_id', Auth::user()->sekolah_id)->get();
-        $kelas = Kelas::where('sekolah_id', Auth::user()->sekolah_id)->get();
-        return view('admin.kesehatan.edit', compact('kesehatan', 'member', 'kelas'));
+        $member = User::with('divisi')
+                ->select('users.*')
+                ->leftJoin('divisi', 'divisi.id', '=', 'users.id_divisi')
+                ->where('users.level', 'Member')
+                ->whereNotNull('users.instansi_id')
+                ->whereNotNull('users.id_divisi')
+                ->where('users.instansi_id', Auth::user()->instansi_id)
+                ->orderBy('divisi.divisi_name', 'asc')
+                ->orderBy('users.nama', 'asc')
+                ->get();
+
+        $divisi = Divisi::where('instansi_id', Auth::user()->instansi_id)->get();
+
+        return view('admin.kesehatan.edit', compact('kesehatan', 'member', 'divisi'));
     }
 
     public function update(Request $request, $id)
@@ -314,7 +587,6 @@ class KesehatanController extends Controller
 
         $request->validate([
             'id_user' => 'required|exists:users,id',
-            'tgl' => 'required|date',
             'bb' => 'required|numeric',
             'tb' => 'required|numeric',
             'sistol' => 'required|numeric',
@@ -326,8 +598,6 @@ class KesehatanController extends Controller
         ],[
             'id_user.required' => 'Member wajib dipilih.',
             'id_user.exists' => 'Member tidak ditemukan.',
-            'tgl.required' => 'Tanggal pemeriksaan wajib diisi.',
-            'tgl.date' => 'Tanggal pemeriksaan tidak valid.',
             'bb.required' => 'Berat badan wajib diisi.',
             'bb.numeric' => 'Berat badan harus berupa angka.',
             'tb.required' => 'Tinggi badan wajib diisi.',
@@ -385,7 +655,7 @@ class KesehatanController extends Controller
 
         $kesehatan->update([
             'id_user' => $request->id_user,
-            'tgl' => $request->tgl,
+            'tgl' => $kesehatan->tgl,
             'bb' => $request->bb,
             'tb' => $request->tb,
             'sistol' => $request->sistol,
@@ -399,6 +669,7 @@ class KesehatanController extends Controller
             'kondisi_gigi' => $request->kondisi_gigi ?? null,
             'perilaku_beresiko' => $request->perilaku_beresiko ?? null,
             'gangguan_reproduksi' => $request->gangguan_reproduksi ?? null,
+            'updated_at' => now(),
         ]);
 
         return redirect()->route('admin.kesehatan.index')
@@ -412,5 +683,30 @@ class KesehatanController extends Controller
 
         return redirect()->route('admin.kesehatan.index')
             ->with('success', 'Data kesehatan berhasil dihapus.');
+    }
+
+    public function mass_destroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:kesehatan,id_kesehatan',
+        ]);
+
+        $deletedCount = 0;
+
+        try {
+            foreach ($request->ids as $id) {
+                $kesehatan = Kesehatan::find($id);
+                if ($kesehatan && $kesehatan->user->instansi_id === Auth::user()->instansi_id) {
+                    $kesehatan->delete();
+                    $deletedCount++;
+                }
+            }
+
+            return redirect()->route('admin.kesehatan.index')
+                ->with('success', "$deletedCount data kesehatan berhasil dihapus.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error saat menghapus: ' . $e->getMessage());
+        }
     }
 }

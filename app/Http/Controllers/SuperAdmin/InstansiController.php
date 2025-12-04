@@ -4,29 +4,29 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Sekolah;
+use App\Models\Instansi;
 use Illuminate\Support\Facades\Http;
 use App\Models\User;
 
-class SekolahController extends Controller
+class InstansiController extends Controller
 {
     public function index()
     {
-        $sekolah = Sekolah::with(['licenseKey'])->latest()->paginate(10);
-        return view('superadmin.sekolah.index', compact('sekolah'));
+        $instansi = Instansi::with(['licenseKey'])->latest()->paginate(10);
+        return view('superadmin.instansi.index', compact('instansi'));
     }
 
     public function create()
     {
         $province = $this->getProvinsi();
-        return view('superadmin.sekolah.create', compact('province'));
+        return view('superadmin.instansi.create', compact('province'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'nama_sekolah' => 'required|string|max:255',
-            'npsn' => 'required|string|max:20|unique:sekolah,npsn',
+            'nama_instansi' => 'required|string|max:255',
+            'npsn' => 'required|string|max:20|unique:instansi,npsn',
             'alamat' => 'required|string',
             'kota' => 'required|string|max:100',
             'provinsi' => 'required|string|max:100',
@@ -45,11 +45,11 @@ class SekolahController extends Controller
             'website.max' => 'Website maksimal 100 karakter.',
             'email.max' => 'Email maksimal 100 karakter.',
             'email.email' => 'Format email tidak valid.',
-            'npsn.unique' => 'NPSN sudah terdaftar pada sekolah lain.',
-            'nama_sekolah.required' => 'Nama sekolah harus diisi.',
-            'nama_sekolah.max' => 'Nama sekolah maksimal 255 karakter.',
-            'alamat.required' => 'Alamat sekolah harus diisi.',
-            'alamat.string' => 'Alamat sekolah harus berupa teks.',
+            'npsn.unique' => 'NPSN sudah terdaftar pada instansi lain.',
+            'nama_instansi.required' => 'Nama instansi harus diisi.',
+            'nama_instansi.max' => 'Nama instansi maksimal 255 karakter.',
+            'alamat.required' => 'Alamat instansi harus diisi.',
+            'alamat.string' => 'Alamat instansi harus berupa teks.',
             'kota.string' => 'Kota/Kabupaten harus berupa teks.',
             'kota.max' => 'Kota/Kabupaten maksimal 100 karakter.',
             'provinsi.string' => 'Provinsi harus berupa teks.',
@@ -59,39 +59,39 @@ class SekolahController extends Controller
             'npsn.max' => 'NPSN maksimal 20 karakter.',
         ]);
 
-        $sekolah = Sekolah::create($request->only([
-            'nama_sekolah', 'npsn', 'alamat', 'kota', 'provinsi',
+        $instansi = Instansi::create($request->only([
+            'nama_instansi', 'npsn', 'alamat', 'kota', 'provinsi',
             'kode_pos', 'telepon', 'website', 'email', 'jenjang'
         ]));
 
         User::create([
-            'nama' => $sekolah->nama_sekolah,
-            'username' => $sekolah->npsn,
+            'nama' => $instansi->nama_instansi,
+            'username' => $instansi->npsn,
             'password' => bcrypt('password123'),
-            'level' => 'Admin Sekolah',
-            'sekolah_id' => $sekolah->id,
+            'level' => 'Admin Instansi',
+            'instansi_id' => $instansi->id,
             'jk' => 'L',
             'tgl' => now(),
             'nis' => null,
-            'id_kelas' => null,
+            'id_divisi' => null,
             'license_key_id' => null
         ]);
 
-        return redirect()->route('superadmin.sekolah.index')
-            ->with('success', "Data sekolah '{$sekolah->nama_sekolah}' berhasil ditambahkan.");
+        return redirect()->route('superadmin.instansi.index')
+            ->with('success', "Data instansi '{$instansi->nama_instansi}' berhasil ditambahkan.");
     }
 
-    public function edit(Sekolah $sekolah)
+    public function edit(Instansi $instansi)
     {
         $province = $this->getProvinsi();
-        return view('superadmin.sekolah.edit', compact('sekolah', 'province'));
+        return view('superadmin.instansi.edit', compact('instansi', 'province'));
     }
 
-    public function update(Request $request, Sekolah $sekolah)
+    public function update(Request $request, Instansi $instansi)
     {
         $request->validate([
-            'nama_sekolah' => 'required|string|max:255',
-            'npsn' => 'required|string|max:20|unique:sekolah,npsn,' . $sekolah->id,
+            'nama_instansi' => 'required|string|max:255',
+            'npsn' => 'required|string|max:20|unique:instansi,npsn,' . $instansi->id,
             'alamat' => 'required|string',
             'kota' => 'required|string|max:100',
             'provinsi' => 'required|string|max:100',
@@ -110,11 +110,11 @@ class SekolahController extends Controller
             'website.max' => 'Website maksimal 100 karakter.',
             'email.max' => 'Email maksimal 100 karakter.',
             'email.email' => 'Format email tidak valid.',
-            'npsn.unique' => 'NPSN sudah terdaftar pada sekolah lain.',
-            'nama_sekolah.required' => 'Nama sekolah harus diisi.',
-            'nama_sekolah.max' => 'Nama sekolah maksimal 255 karakter.',
-            'alamat.required' => 'Alamat sekolah harus diisi.',
-            'alamat.string' => 'Alamat sekolah harus berupa teks.',
+            'npsn.unique' => 'NPSN sudah terdaftar pada instansi lain.',
+            'nama_instansi.required' => 'Nama instansi harus diisi.',
+            'nama_instansi.max' => 'Nama instansi maksimal 255 karakter.',
+            'alamat.required' => 'Alamat instansi harus diisi.',
+            'alamat.string' => 'Alamat instansi harus berupa teks.',
             'kota.string' => 'Kota/Kabupaten harus berupa teks.',
             'kota.max' => 'Kota/Kabupaten maksimal 100 karakter.',
             'provinsi.string' => 'Provinsi harus berupa teks.',
@@ -124,26 +124,26 @@ class SekolahController extends Controller
             'npsn.max' => 'NPSN maksimal 20 karakter.',
         ]);
 
-        $sekolah->update($request->only([
-            'nama_sekolah', 'npsn', 'alamat', 'kota', 'provinsi',
+        $instansi->update($request->only([
+            'nama_instansi', 'npsn', 'alamat', 'kota', 'provinsi',
             'kode_pos', 'telepon', 'website', 'email', 'jenjang'
         ]));
 
-        return redirect()->route('superadmin.sekolah.index')
-            ->with('success', "Data sekolah '{$sekolah->nama_sekolah}' berhasil diupdate.");
+        return redirect()->route('superadmin.instansi.index')
+            ->with('success', "Data instansi '{$instansi->nama_instansi}' berhasil diupdate.");
     }
 
-    public function destroy(Sekolah $sekolah)
+    public function destroy(Instansi $instansi)
     {
-        if ($sekolah->users()->exists()) {
-            $sekolah->users()->delete();
+        if ($instansi->users()->exists()) {
+            $instansi->users()->delete();
         }
 
-        $nama = $sekolah->nama_sekolah;
-        $sekolah->delete();
+        $nama = $instansi->nama_instansi;
+        $instansi->delete();
 
-        return redirect()->route('superadmin.sekolah.index')
-            ->with('success', "Data sekolah '{$nama}' berhasil dihapus.");
+        return redirect()->route('superadmin.instansi.index')
+            ->with('success', "Data instansi '{$nama}' berhasil dihapus.");
     }
 
     // ✅ Ambil daftar provinsi

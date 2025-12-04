@@ -2,57 +2,43 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Data Hemoglobin - {{ date('d/m/Y') }}</title>
+    <title>Data Hemoglobin Report</title>
     <style>
-        @page {
-            margin: 20px;
-        }
         body {
-            font-family: 'DejaVu Sans', Arial, sans-serif;
-            font-size: 10px;
-            line-height: 1.4;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #2e7d32;
-            padding-bottom: 8px;
+
+        hr {
+            border: 1.5px solid black;
         }
-        .header h1 {
-            color: #2e7d32;
-            margin: 0;
-            font-size: 16px;
-        }
-        .header p {
-            color: #666;
-            margin: 3px 0 0 0;
-            font-size: 10px;
-        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 8px;
-            page-break-inside: auto;
         }
-        th, td {
+
+        .kop-container table {
+            border: none !important;
+        }
+
+        th,
+        td {
             border: 1px solid #ddd;
-            padding: 5px;
-            text-align: left;
-            font-size: 9px;
+            padding: 8px;
+            text-align: center;
         }
+
         th {
             background-color: #e8f5e9;
             color: #1b5e20;
             font-weight: bold;
-            text-align: center;
         }
-        tr {
-            page-break-inside: avoid;
-            page-break-after: auto;
-        }
+
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+
         .badge {
             padding: 1px 4px;
             border-radius: 8px;
@@ -62,75 +48,114 @@
             text-align: center;
             min-width: 50px;
         }
-        .badge-normal { background-color: #c8e6c9; color: #1b5e20; }
-        .badge-anemia { background-color: #ffcdd2; color: #c62828; }
-        .badge-tinggi { background-color: #ffe0b2; color: #ef6c00; }
+
+        .badge-normal {
+            background-color: #c8e6c9;
+            color: #1b5e20;
+        }
+
+        .badge-anemia {
+            background-color: #ffcdd2;
+            color: #c62828;
+        }
+
+        .badge-tinggi {
+            background-color: #ffe0b2;
+            color: #ef6c00;
+        }
+
         .footer {
             margin-top: 15px;
             text-align: right;
             color: #666;
             font-size: 8px;
         }
+
         .no {
             text-align: center;
             width: 30px;
         }
+
         .number {
             text-align: center;
         }
+
         .center {
             text-align: center;
         }
     </style>
 </head>
+
 <body>
-    <div class="header">
-        <table align="center" style="border: none; border-collapse: collapse; width: auto; margin: 0 auto;">
+    <div class="kop-container" style="margin-bottom: 10px;">
+        <table style="width:100%; border:none; border-collapse:collapse;">
             <tr>
-                <td style="border: none; vertical-align: middle; text-align: right; padding-right: 5px;">
-                    <img src="{{ $ikonPath }}" alt="Ikon Sehat" style="width:40px; height:40px;">
+                <!-- Logo Kiri -->
+                <td style="width:120px; text-align:center; border:none;">
+                    <img src="{{ $raadeveloperz_cr }}" style="width:90px; height:auto;">
                 </td>
-                <td style="border: none; vertical-align: middle; text-align: left;">
-                    <h1 style="color: #2e7d32; margin: 0; padding: 0;">AKU SEHAT</h1>
+
+                <!-- Teks Kop -->
+                <td style="text-align:center; border:none; line-height:1.3;">
+                    <div style="font-size:22px; font-weight:bold;">RADEVELOPERZ</div>
+                    <div style="font-size:14px; font-weight:bold;">
+                        Innovative Digital Solutions for Modern Challenges
+                    </div>
+                    <div style="font-size:12px;">
+                        Taman Puri Cendana, Grand Mawar, Blok A4 no 10<br>
+                        Tambun Selatan, Kabupaten Bekasi, 17510
+                    </div>
+                    <div style="font-size:12px; margin-top:3px;">
+                        WhatsApp: +62895383107479 |
+                        Email: raadeveloperz@gmail.com<br>
+                        Website: www.raadeveloperz.web.id
+                    </div>
+                </td>
+
+                <!-- Logo Kanan -->
+                <td style="width:120px; text-align:center; border:none;">
+                    <img src="{{ $ikonPath }}" style="width:90px; height:auto; margin-bottom:4px;">
                 </td>
             </tr>
         </table>
 
-        <h3 style="margin-top: 0px">(DATA HEMOGLOBIN {{ $namaSekolah }})</h3>
-        <p>Dicetak pada: {{ date('d/m/Y H:i') }}</p>
+        <hr>
+    </div>
+
+    <div style="text-align:center; margin-top: 20px; margin-bottom: 22px;">
+        <h3 style="margin: 0;">DATA KESEHATAN {{ $namaInstansi }}</h3>
+        <p style="margin: 0; font-size: 11px; margin-top:2px;">Dicetak pada: {{ date('d/m/Y H:i') }}</p>
     </div>
 
     <table>
         <thead>
             <tr>
                 <th class="no">No</th>
-                <th>Nama Siswa</th>
-                <th>NIS</th>
-                <th>JK</th>
-                <th>Kelas</th>
+                <th>Nama Member</th>
+                <th>Nomor Induk</th>
+                <th>Jenis Kelamin</th>
+                <th>Divisi</th>
                 <th>Tanggal</th>
                 <th>HB (g/dL)</th>
                 <th>Status</th>
-                <th>Pesan</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($hb as $index => $item)
-            <tr>
-                <td class="no">{{ $index + 1 }}</td>
-                <td>{{ $item->user->nama }}</td>
-                <td>{{ $item->user->nis }}</td>
-                <td class="center">{{ $item->user->jk === 'L' ? 'L' : 'P' }}</td>
-                <td>{{ $item->kelas->kelas ?? '-' }}</td>
-                <td class="center">{{ $item->tgl->format('d/m/Y') }}</td>
-                <td class="number">{{ $item->hb }}</td>
-                <td class="center">
-                    <span class="badge badge-{{ strtolower($item->status) }}">
-                        {{ $item->status }}
-                    </span>
-                </td>
-                <td>{{ $item->pesan }}</td>
-            </tr>
+            @foreach ($hb as $index => $item)
+                <tr>
+                    <td class="no">{{ $index + 1 }}</td>
+                    <td>{{ $item->user->nama }}</td>
+                    <td>{{ $item->user->nomor_induk }}</td>
+                    <td class="center">{{ $item->user->jk === 'L' ? 'L' : 'P' }}</td>
+                    <td>{{ $item->divisi->divisi_name ?? '-' }}</td>
+                    <td class="center">{{ $item->tgl->format('d/m/Y') }}</td>
+                    <td class="number">{{ $item->hb }}</td>
+                    <td class="center">
+                        <span class="badge badge-{{ strtolower($item->status) }}">
+                            {{ $item->status }}
+                        </span>
+                    </td>
+                </tr>
             @endforeach
         </tbody>
     </table>

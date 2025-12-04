@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Kelas;
+use App\Models\Divisi;
 
-class KelasApiController extends Controller
+class DivisiApiController extends Controller
 {
-    public function getAllKelas(Request $request)
+    public function getAllDivisi(Request $request)
     {
         $user = $request->user();
         
@@ -19,13 +19,13 @@ class KelasApiController extends Controller
             ], 403);
         }
 
-        $kelas = Kelas::withCount(['users as jumlah_member' => function($query) {
+        $divisi = Divisi::withCount(['users as jumlah_member' => function($query) {
             $query->where('level', 'Member');
         }])->get();
 
         return response()->json([
             'success' => true,
-            'data' => $kelas
+            'data' => $divisi
         ]);
     }
 }

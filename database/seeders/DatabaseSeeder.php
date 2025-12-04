@@ -4,45 +4,53 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use App\Models\Kelas;
+use App\Models\Divisi;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     public function run()
     {
-        // Create Kelas
-        $kelas = [
-            ['sekolah_id' => 1, 'tgl' => '2024-01-01', 'kelas' => 'X TKJ 1', 'jurusan' => 'TKJ', 'count_kesehatan' => 0],
-            ['sekolah_id' => 1, 'tgl' => '2024-01-01', 'kelas' => 'X TKJ 2', 'jurusan' => 'TKJ', 'count_kesehatan' => 0],
-            ['sekolah_id' => 1, 'tgl' => '2024-01-01', 'kelas' => 'XI TKJ 1', 'jurusan' => 'TKJ', 'count_kesehatan' => 0],
-            ['sekolah_id' => 1, 'tgl' => '2024-01-01', 'kelas' => 'XI TKJ 2', 'jurusan' => 'TKJ', 'count_kesehatan' => 0],
-            ['sekolah_id' => 1, 'tgl' => '2024-01-01', 'kelas' => 'XII TKJ 1', 'jurusan' => 'TKJ', 'count_kesehatan' => 0],
-            ['sekolah_id' => 1, 'tgl' => '2024-01-01', 'kelas' => 'X RPL 1', 'jurusan' => 'RPL', 'count_kesehatan' => 0],
-            ['sekolah_id' => 1, 'tgl' => '2024-01-01', 'kelas' => 'X RPL 2', 'jurusan' => 'RPL', 'count_kesehatan' => 0],
-            ['sekolah_id' => 1, 'tgl' => '2024-01-01', 'kelas' => 'XI RPL 1', 'jurusan' => 'RPL', 'count_kesehatan' => 0],
+        \App\Models\LicenseKey::create([
+            'key' => 'FREE-TRIAL-2024',
+            'kuota_pengguna' => 800,
+            'status' => \App\Models\LicenseKey::STATUS_ACTIVE,
+            'tanggal_berakhir' => now()->addDays(15)
+        ]);
+        
+        // Create Divisi
+        $divisi = [
+            ['instansi_id' => 1, 'tgl' => '2024-01-01', 'divisi_name' => 'X TKJ 1'],
+            ['instansi_id' => 1, 'tgl' => '2024-01-01', 'divisi_name' => 'X TKJ 2'],
+            ['instansi_id' => 1, 'tgl' => '2024-01-01', 'divisi_name' => 'XI TKJ 1'],
+            ['instansi_id' => 1, 'tgl' => '2024-01-01', 'divisi_name' => 'XI TKJ 2'],
+            ['instansi_id' => 1, 'tgl' => '2024-01-01', 'divisi_name' => 'XII TKJ 1'],
+            ['instansi_id' => 1, 'tgl' => '2024-01-01', 'divisi_name' => 'X RPL 1'],
+            ['instansi_id' => 1, 'tgl' => '2024-01-01', 'divisi_name' => 'X RPL 2'],
+            ['instansi_id' => 1, 'tgl' => '2024-01-01', 'divisi_name' => 'XI RPL 1'],
         ];
 
-        \App\Models\Sekolah::create([
-            'npsn' => '20253675',
-            'nama_sekolah' => 'SMK TELEKOMUNIKASI TELESANDI BEKASI',
+        \App\Models\Instansi::create([
+            'nama_instansi' => 'SMK TELEKOMUNIKASI TELESANDI BEKASI',
             'alamat' => 'Jl. KH. Mochamad, Mekarsari, Kecamatan Tambun Selatan, Kabupaten Bekasi',
             'kota' => 'Bekasi',
             'provinsi' => 'Jawa Barat',
-            'kode_pos' => '17510'
+            'kode_pos' => '17510',
+            'license_id_active' => 1,
         ]);
 
-        foreach ($kelas as $k) {
-            Kelas::create($k);
+        foreach ($divisi as $k) {
+            Divisi::create($k);
         }
 
         // Create Users
         $users = [
             [
-                'id_kelas' => null,
-                'sekolah_id' => 1,
+                'id_divisi' => null,
+                'license_key_id' => 1,
+                'instansi_id' => 1,
                 'tgl' => '2024-01-01',
-                'nis' => null,
+                'nomor_induk' => null,
                 'username' => 'admin',
                 'password' => Hash::make('password123'),
                 'nama' => 'Admin',
@@ -50,10 +58,11 @@ class DatabaseSeeder extends Seeder
                 'jk' => 'L'
             ],
             [
-                'id_kelas' => null,
-                'sekolah_id' => 1,
+                'id_divisi' => null,
+                'license_key_id' => 1,
+                'instansi_id' => 1,
                 'tgl' => '2024-01-01',
-                'nis' => null,
+                'nomor_induk' => null,
                 'username' => 'healthmonitor',
                 'password' => Hash::make('password123'),
                 'nama' => 'Health Monitor',
@@ -61,10 +70,11 @@ class DatabaseSeeder extends Seeder
                 'jk' => 'P'
             ],
             [
-                'id_kelas' => null,
-                'sekolah_id' => 1,
+                'id_divisi' => null,
+                'license_key_id' => 1,
+                'instansi_id' => 1,
                 'tgl' => '2024-01-01',
-                'nis' => null,
+                'nomor_induk' => null,
                 'username' => 'healthconsultant',
                 'password' => Hash::make('password123'),
                 'nama' => 'Health Consultant',
@@ -72,10 +82,10 @@ class DatabaseSeeder extends Seeder
                 'jk' => 'L'
             ],
             [
-                'id_kelas' => null,
-                'sekolah_id' => null,
+                'id_divisi' => null,
+                'instansi_id' => null,
                 'tgl' => '2024-01-01',
-                'nis' => null,
+                'nomor_induk' => null,
                 'username' => 'superadmin',
                 'password' => Hash::make('password123'),
                 'nama' => 'Super Admin',
@@ -83,14 +93,14 @@ class DatabaseSeeder extends Seeder
                 'jk' => 'L'
             ],
             [
-                'id_kelas' => null,
-                'sekolah_id' => 1,
+                'id_divisi' => null,
+                'instansi_id' => 1,
                 'tgl' => '2024-01-01',
-                'nis' => null,
-                'username' => 'adminsekolah',
+                'nomor_induk' => null,
+                'username' => 'admininstansi',
                 'password' => Hash::make('password123'),
-                'nama' => 'Admin Sekolah',
-                'level' => 'Admin Sekolah',
+                'nama' => 'Admin Instansi',
+                'level' => 'Admin Instansi',
                 'jk' => 'P'
             ]
         ];
@@ -111,13 +121,6 @@ class DatabaseSeeder extends Seeder
             'status' => 'active'
         ]);
 
-        \App\Models\LicenseKey::create([
-            'key' => 'FREE-TRIAL-2024',
-            'kuota_pengguna' => 800,
-            'status' => \App\Models\LicenseKey::STATUS_ACTIVE,
-            'tanggal_berakhir' => now()->addDays(15)
-        ]);
-
         // Create sample students
         $firstNames = ['Ahmad', 'Budi', 'Citra', 'Dewi', 'Eka', 'Fajar', 'Gita', 'Hadi', 'Indah', 'Joko'];
         $lastNames = ['Pratama', 'Sari', 'Putra', 'Putri', 'Wijaya', 'Kusuma', 'Handoko', 'Lestari'];
@@ -126,14 +129,14 @@ class DatabaseSeeder extends Seeder
             $firstName = $firstNames[array_rand($firstNames)];
             $lastName = $lastNames[array_rand($lastNames)];
             $gender = ($i % 2 == 0) ? 'P' : 'L';
-            $kelasId = rand(1, 8);
+            $divisiId = rand(1, 8);
             
             $users[] = [
-                'id_kelas' => $kelasId,
-                'sekolah_id' => 1,
+                'id_divisi' => $divisiId,
+                'instansi_id' => 1,
                 'license_key_id' => 1,
                 'tgl' => '2024-01-01',
-                'nis' => str_pad($i, 6, '0', STR_PAD_LEFT),
+                'nomor_induk' => str_pad($i, 6, '0', STR_PAD_LEFT),
                 'username' => 'siswa' . $i,
                 'password' => Hash::make('password123'),
                 'nama' => $firstName . ' ' . $lastName,
@@ -147,7 +150,7 @@ class DatabaseSeeder extends Seeder
 
         $this->command->info('Database seeded successfully!');
         $this->command->info('Login credentials:');
-        $this->command->info('1. Admin Sekolah - username: adminsekolah, password: password123');
+        $this->command->info('1. Admin Instansi - username: admininstansi, password: password123');
         $this->command->info('2. Admin - username: admin, password: password123');
         $this->command->info('3. Health Monitor - username: healthmonitor, password: password123');
         $this->command->info('4. Health Consultant - username: healthconsultant, password: password123');

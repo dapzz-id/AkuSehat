@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('license_keys', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('sekolah_id')->nullable()->index();
+            $table->unsignedBigInteger('instansi_id')->nullable()->index();
             $table->string('key', 20)->unique();
             $table->integer('kuota_pengguna')->default(200)->index();
             $table->enum('status', ['active', 'expired'])->default('active')->index();

@@ -78,7 +78,7 @@ class KesehatanApiController extends Controller
         ]);
     }
 
-    public function getKesehatanKelas(Request $request, $id)
+    public function getKesehatanDivisi(Request $request, $id)
     {
         $user = $request->user();
         
@@ -90,7 +90,7 @@ class KesehatanApiController extends Controller
         }
 
         $memberIds = User::where('level', 'Member')
-            ->where('id_kelas', $id)
+            ->where('id_divisi', $id)
             ->pluck('id');
 
         $kesehatan = Kesehatan::with('user')
@@ -104,7 +104,7 @@ class KesehatanApiController extends Controller
         ]);
     }
 
-    public function getStatistikKelas(Request $request, $kelas_id)
+    public function getStatistikDivisi(Request $request, $divisi_id)
     {
         $user = $request->user();
         
@@ -116,7 +116,7 @@ class KesehatanApiController extends Controller
         }
 
         $memberIds = User::where('level', 'Member')
-            ->where('id_kelas', $kelas_id)
+            ->where('id_divisi', $divisi_id)
             ->pluck('id');
 
         $statistik = Kesehatan::whereIn('id_user', $memberIds)

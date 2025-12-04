@@ -4,19 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Sekolah extends Model
+class Instansi extends Model
 {
-    protected $table = 'sekolah';
+    protected $table = 'instansi';
 
     protected $fillable = [
-        'npsn',
-        'nama_sekolah',
+        'nama_instansi',
         'alamat',
         'email',
         'telepon',
         'license_id_active',
         'website',
-        'jenjang',
         'kota',
         'provinsi',
         'kode_pos'
@@ -24,7 +22,7 @@ class Sekolah extends Model
 
     public function users()
     {
-        return $this->hasMany(User::class, 'sekolah_id');
+        return $this->hasMany(User::class, 'instansi_id');
     }
 
     public function licenseKey()
@@ -32,14 +30,9 @@ class Sekolah extends Model
         return $this->belongsTo(LicenseKey::class, 'license_id_active');
     }
 
-    public function sekolah()
+    public function divisi()
     {
-        return $this->hasMany(Sekolah::class, 'sekolah_id');
-    }
-
-    public function kelas()
-    {
-        return $this->hasMany(Kelas::class, 'sekolah_id');
+        return $this->hasMany(Divisi::class, 'instansi_id');
     }
 
     public function getActiveLicense()

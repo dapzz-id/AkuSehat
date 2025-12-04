@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('kelas', function (Blueprint $table) {
+        Schema::create('divisi', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('sekolah_id')->index();
+            $table->unsignedBigInteger('instansi_id')->index();
             $table->string('tgl', 20)->index();
-            $table->string('kelas', 35)->index();
-            $table->string('jurusan', 70)->nullable()->index();
-            $table->integer('count_kesehatan')->default(0);
+            $table->string('divisi_name', 100)->index();
+            $table->string('color_cover')->default('#2e7d32');
             $table->timestamps();
+
+            $table->foreign('instansi_id')->references('id')->on('instansi')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('kelas');
+        Schema::dropIfExists('divisi');
     }
 };

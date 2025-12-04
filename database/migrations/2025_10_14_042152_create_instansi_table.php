@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('kode_pos', 10)->nullable();
             $table->timestamps();
 
-            $table->foreign('license_id_active')->references('id')->on('license_keys')->onDelete('set null');
+            $table->foreign('license_id_active')->references('id')->on('license_keys')->onDelete('set null')->onUpdate('cascade');
         });
     }
 

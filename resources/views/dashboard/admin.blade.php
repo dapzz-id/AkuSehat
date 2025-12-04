@@ -14,27 +14,6 @@
             --text-primary: #1a472a;
             --text-secondary: #388e3c;
         }
-
-        /* Warna khusus per jurusan */
-        .rpl {
-            --primary: #e0b300; /* kuning lebih soft */
-            --primary-dark: #b38f00;
-        }
-
-        .tkj {
-            --primary: #007acc; /* biru */
-            --primary-dark: #005fa3;
-        }
-
-        .dkv {
-            --primary: #cc0066; /* magenta */
-            --primary-dark: #99004d;
-        }
-
-        .transmisi {
-            --primary: #28a745; /* hijau */
-            --primary-dark: #1e7e34;
-        }
         
         .card-hover {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -129,7 +108,7 @@
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-600">Total Divisi</p>
-                    <p class="text-2xl font-semibold text-[#1a472a]">{{ $data['total_kelas'] }}</p>
+                    <p class="text-2xl font-semibold text-[#1a472a]">{{ $data['total_divisi'] }}</p>
                 </div>
             </div>
         </div>
@@ -140,8 +119,8 @@
                     <i class="fas fa-stethoscope text-white text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Data Kesehatan (Bulan Ini)</p>
-                    <p class="text-2xl font-semibold text-[#1a472a]">{{ $data['data_kesehatan_bulan_ini'] }}</p>
+                    <p class="text-sm font-medium text-gray-600">Kesehatan ({{ now()->year }})</p>
+                    <p class="text-2xl font-semibold text-[#1a472a]">{{ $data['data_kesehatan_tahun_ini'] }}</p>
                 </div>
             </div>
         </div>
@@ -152,8 +131,8 @@
                     <i class="fas fa-tint text-white text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Data HB (Bulan Ini)</p>
-                    <p class="text-2xl font-semibold text-[#1a472a]">{{ $data['data_hb_bulan_ini'] }}</p>
+                    <p class="text-sm font-medium text-gray-600">Hemoglobin ({{ now()->year }})</p>
+                    <p class="text-2xl font-semibold text-[#1a472a]">{{ $data['data_hb_tahun_ini'] }}</p>
                 </div>
             </div>
         </div>
@@ -179,7 +158,7 @@
                 <span class="font-medium text-green-800">Tambah Data HB</span>
             </a>
             
-            <a href="{{ route('admin.member.index') }}" 
+            <a href="{{ route('admin.users.index') }}" 
                class="flex items-center p-4 bg-green-50 rounded-lg quick-action">
                 <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
                     <i class="fas fa-list text-green-600"></i>
@@ -187,7 +166,7 @@
                 <span class="font-medium text-green-800">Lihat Data Member</span>
             </a>
             
-            <a href="{{ route('admin.kelas.index') }}" 
+            <a href="{{ route('admin.divisi.index') }}" 
                class="flex items-center p-4 bg-green-50 rounded-lg quick-action">
                 <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
                     <i class="fas fa-list text-green-600"></i>
@@ -203,34 +182,40 @@
     <!-- Health Summary Card -->
     <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-4 gap-6">
         @forelse ($dataByClass as $item)
-            @php
-                $classColor = '';
-                if (str_contains(strtolower($item->kelas), 'rpl')) $classColor = 'rpl';
-                elseif (str_contains(strtolower($item->kelas), 'tkj')) $classColor = 'tkj';
-                elseif (str_contains(strtolower($item->kelas), 'dkv')) $classColor = 'dkv';
-                elseif (str_contains(strtolower($item->kelas), 'transmisi')) $classColor = 'transmisi';
-            @endphp
 
-            <div class="health-card {{ $classColor }} w-full h-48 rounded-xl flex items-center justify-between p-6 text-white card-hover">
+            <div style="--primary: {{ $item->color_cover }}; --primary-dark: {{ $item->color_cover }};" class="health-card w-full h-48 rounded-xl flex items-center justify-between p-6 text-white card-hover">
                 <div>
                     <div class="text-5xl font-bold glow">{{ $item->member }}</div>
-                    <div class="text-xl font-semibold mt-2">{{ $item->kelas }}</div>
-                    <p class="mt-1 text-sm">Kesehatan: {{ $item->users->sum(fn($u) => $u->kesehatan->count()) }}</p>
-                    <p class="text-sm">HB: {{ $item->users->sum(fn($u) => $u->hb->count()) }}</p>
+                    <div class="text-xl font-semibold mt-2">{{ $item->divisi_name }}</div>
+                    <p class="mt-1 text-sm">Member: {{ $item->total_member }}</p>
+                    <p class="text-sm">
+                        Kesehatan: 
+                        {{ $item->users->sum(fn($u) =>
+                            $u->kesehatan->filter(fn($k) => \Carbon\Carbon::parse($k->tgl)->year == now()->year)->count()
+                        ) }}
+                    </p>
+
+                    <p class="text-sm">
+                        HB:
+                        {{ $item->users->sum(fn($u) =>
+                            $u->hb->filter(fn($h) => \Carbon\Carbon::parse($h->tgl)->year == now()->year)->count()
+                        ) }}
+                    </p>
                 </div>
                 <div class="flex flex-col items-end">
-                    <svg class="w-14 h-14 transition duration-300 ease-in-out transform hover:scale-105" onclick="window.location='{{ route('admin.member.index') }}?kelas={{ $item->id }}'" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    <svg class="w-14 h-14 transition duration-300 ease-in-out transform hover:scale-105" onclick="window.location='{{ route('admin.users.index') }}?divisi={{ $item->id }}'" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                          xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                     </svg>
-                    <a href="{{ route('admin.member.index') }}?kelas={{ $item->id }}" 
-                        class="mt-3 {{ $classColor }} text-white font-semibold py-2 px-5 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">
+                    <a href="{{ route('admin.users.index') }}?divisi={{ $item->id }}"
+                        style="--primary: {{ $item->color_cover }}; --primary-dark: {{ $item->color_cover }};"
+                        class="mt-3 text-white font-semibold py-2 px-5 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">
                         Detail &gt;
                     </a>
                 </div>
             </div>
         @empty
-            <p class="text-gray-600">Belum ada data kelas.</p>
+            <p class="text-gray-600">Belum ada data divisi.</p>
         @endforelse
     </div>
 </div>

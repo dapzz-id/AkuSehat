@@ -18,12 +18,12 @@ return new class extends Migration
             $table->date('tanggal_kembali')->nullable();
             $table->integer('jumlah_pita');
             $table->tinyInteger('verified')->default(0);
-            $table->enum('status', ['dipinjam', 'dikembalikan', 'terlambat']);
+            $table->enum('status', ['menunggu', 'dipinjam', 'dikembalikan', 'ditolak', 'terlambat']);
             $table->date('estimasi_selesai_haid');
             $table->text('keterangan')->nullable();
             $table->timestamps();
 
-            $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 

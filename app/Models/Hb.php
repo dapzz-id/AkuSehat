@@ -14,7 +14,7 @@ class Hb extends Model
 
     protected $fillable = [
         'id_user',
-        'id_kelas',
+        'id_divisi',
         'tgl',
         'hb',
         'status',
@@ -30,9 +30,9 @@ class Hb extends Model
         return $this->belongsTo(User::class, 'id_user');
     }
 
-    public function kelas()
+    public function divisi()
     {
-        return $this->belongsTo(Kelas::class, 'id_kelas');
+        return $this->belongsTo(Divisi::class, 'id_divisi');
     }
 
     public function statusHb()

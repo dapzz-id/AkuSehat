@@ -21,20 +21,20 @@ class HealthMonitorApiController extends Controller
         $peminjaman = PeminjamanPita::with('user')
             ->whereHas('user', function ($query) {
                 $query->where('jk', 'P')
-                      ->where('sekolah_id', Auth::user()->sekolah_id);
+                      ->where('instansi_id', Auth::user()->instansi_id);
             })
             ->orderBy('created_at', 'desc')
             ->get();
 
         $menungguVerifikasi = PeminjamanPita::where('verified', 0)
             ->whereHas('user', function($query) {
-                $query->where('sekolah_id', Auth::user()->sekolah_id);
+                $query->where('instansi_id', Auth::user()->instansi_id);
             })
             ->count();
 
-        $totalSiswi = User::where('level', 'Member')
+        $totalMember = User::where('level', 'Member')
             ->where('jk', 'P')
-            ->where('sekolah_id', Auth::user()->sekolah_id)
+            ->where('instansi_id', Auth::user()->instansi_id)
             ->count();
 
         return response()->json([
@@ -42,7 +42,7 @@ class HealthMonitorApiController extends Controller
             'message' => 'Data peminjaman pita berhasil dimuat.',
             'data' => $peminjaman,
             'menunggu_verifikasi' => $menungguVerifikasi,
-            'total_siswi' => $totalSiswi,
+            'total_member' => $totalMember,
         ]);
     }
 
@@ -53,7 +53,7 @@ class HealthMonitorApiController extends Controller
     public function acceptVerifikasi($id)
     {
         $peminjaman = PeminjamanPita::findOrFail($id);
-        $peminjaman->update(['verified' => 1]);
+        $peminjaman->update(['verified' => 1, 'status' => 'dipinjam']);
 
         return response()->json([
             'status' => true,
@@ -66,10 +66,17 @@ class HealthMonitorApiController extends Controller
      * PUT /api/peminjaman-pita/{id}/reject-verifikasi
      * Tolak peminjaman pita
      */
-    public function rejectVerifikasi($id)
+    public function rejectVerifikasi($id, Request $request)
     {
+        $request->validate([
+            'alasan_penolakan' => 'nullable|string|min:12',
+        ],[
+            'alasan_penolakan.string' => 'Alasan penolakan harus berupa teks.',
+            'alasan_penolakan.min' => 'Alasan penolakan minimal 12 karakter.',
+        ]);
+
         $peminjaman = PeminjamanPita::findOrFail($id);
-        $peminjaman->update(['verified' => 0]);
+        $peminjaman->update(['verified' => 1, 'status' => 'ditolak', 'keterangan' => $request->alasan_penolakan ?? $peminjaman->keterangan]);
 
         return response()->json([
             'status' => true,
@@ -87,13 +94,12 @@ class HealthMonitorApiController extends Controller
         $request->validate([
             'id_user' => 'required|exists:users,id',
             'tanggal_pinjam' => 'required|date',
-            'jumlah_pita' => 'required|integer|min:1',
-            'estimasi_selesai_haid' => 'required|date|after:tanggal_pinjam',
             'keterangan' => 'nullable|string',
         ], [
             'id_user.exists' => 'Data member tidak ditemukan.',
-            'estimasi_selesai_haid.after' => 'Estimasi selesai haid harus setelah tanggal pinjam.',
-            'jumlah_pita.min' => 'Jumlah pita minimal 1 peminjaman.',
+            'id_user.required' => 'Member wajib dipilih.',
+            'tanggal_pinjam.required' => 'Tanggal pinjam wajib diisi.',
+            'tanggal_pinjam.date' => 'Tanggal pinjam tidak valid.',
         ]);
 
         $dataUser = User::with('dataHaid')->find($request->id_user);
@@ -101,14 +107,13 @@ class HealthMonitorApiController extends Controller
         $peminjaman = PeminjamanPita::create([
             'id_user' => $dataUser->id,
             'tanggal_pinjam' => $request->tanggal_pinjam,
-            'jumlah_pita' => $request->jumlah_pita,
+            'jumlah_pita' => 1,
             'status' => 'dipinjam',
             'verified' => $dataUser->level === 'Health Monitor' ? 1 : 0,
-            'estimasi_selesai_haid' => $request->estimasi_selesai_haid ?? now()->addDays(7),
+            'estimasi_selesai_haid' => $dataHaid = DataHaid::where('id_user', $dataUser->id)->latest()->first() ? $dataHaid->estimasi_mulai->addDays(7)->format('Y-m-d') : Carbon::parse(now())->addDays(7)->format('Y-m-d'),
             'keterangan' => $request->keterangan,
         ]);
 
-        // Update catatan di data_haid
         DataHaid::updateOrCreate(
             ['id_user' => $dataUser->id],
             ['catatan' => 'Peminjaman pita: ' . $request->jumlah_pita . ' buah']
@@ -121,11 +126,11 @@ class HealthMonitorApiController extends Controller
         ], 201);
     }
 
-    public function getSiswiSedangHaid()
+    public function getMemberSedangHaid()
     {
-        // Ambil siswi perempuan yang memiliki data haid aktif
+        // Ambil member perempuan yang memiliki data haid aktif
         // Data haid dianggap aktif jika tanggal_mulai dalam 2 hari terakhir
-        $siswi = User::with(['dataHaid', 'peminjamanPita'])
+        $member = User::with(['dataHaid', 'peminjamanPita'])
             ->where('level', 'Member')
             ->where('jk', 'P')
             ->whereHas('dataHaid', function($query) {
@@ -134,15 +139,15 @@ class HealthMonitorApiController extends Controller
             })
             ->whereDoesntHave('peminjamanPita', function($query) {
                 $query->whereNull('tanggal_kembali')
-                    ->where('status', 'dipinjam');
+                    ->whereIn('status', ['dipinjam', 'menunggu', 'terlambat']);
             })
             ->orderBy('nama', 'asc')
             ->get();
 
         return response()->json([
             'status' => true,
-            'message' => 'Data siswi berhasil dimuat.',
-            'data' => $siswi
+            'message' => 'Data member berhasil dimuat.',
+            'data' => $member
         ]);
     }
 
@@ -245,7 +250,7 @@ class HealthMonitorApiController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Data siswi yang terlambat berhasil dimuat.',
+            'message' => 'Data member yang terlambat berhasil dimuat.',
             'data' => $terlambat
         ]);
     }

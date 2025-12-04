@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Kelas;
+use App\Models\Divisi;
 use App\Models\User;
 use App\Models\Sekolah;
 use App\Models\LicenseKey;
@@ -48,8 +48,8 @@ class UserController extends Controller
     public function create()
     {
         $sekolah = Sekolah::where('status', 'aktif')->get();
-        $kelas = Kelas::all();
-        return view('superadmin.users.create', compact('sekolah', 'kelas'));
+        $divisi = Divisi::all();
+        return view('superadmin.users.create', compact('sekolah', 'divisi'));
     }
 
     /**
@@ -66,7 +66,7 @@ class UserController extends Controller
             'sekolah_id' => 'required|exists:sekolah,id',
             'nis' => 'nullable|string|max:30',
             'tgl' => 'nullable|date',
-            'id_kelas' => 'nullable|exists:kelas,id',
+            'id_divisi' => 'nullable|exists:divisi,id',
             'license_key' => 'nullable|exists:license_keys,key',
         ],[
             'nama.required' => 'Nama lengkap wajib diisi.',
@@ -82,7 +82,7 @@ class UserController extends Controller
             'sekolah_id.exists' => 'Sekolah yang dipilih tidak valid.',
             'nis.max' => 'NIS maksimal 30 karakter.',
             'tgl.date' => 'Tanggal tidak valid.',
-            'id_kelas.exists' => 'Kelas yang dipilih tidak valid.',
+            'id_divisi.exists' => 'Divisi yang dipilih tidak valid.',
             'license_key.exists' => 'License key tidak valid.',
         ]);
 
@@ -95,7 +95,7 @@ class UserController extends Controller
             'sekolah_id' => $request->sekolah_id,
             'nis' => $request->nis,
             'tgl' => $request->tgl,
-            'id_kelas' => $request->id_kelas,
+            'id_divisi' => $request->id_divisi,
         ];
 
         if ($request->filled('license_key')) {
@@ -129,8 +129,8 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $sekolah = Sekolah::all();
-        $kelas = Kelas::all();
-        return view('superadmin.users.edit', compact('user', 'sekolah', 'kelas'));
+        $divisi = Divisi::all();
+        return view('superadmin.users.edit', compact('user', 'sekolah', 'divisi'));
     }
 
     /**
@@ -147,7 +147,7 @@ class UserController extends Controller
             'sekolah_id' => 'required|exists:sekolah,id',
             'nis' => 'nullable|string|max:30',
             'tgl' => 'nullable|date',
-            'id_kelas' => 'nullable|exists:kelas,id',
+            'id_divisi' => 'nullable|exists:divisi,id',
             'license_key' => 'nullable|exists:license_keys,key',
         ],[
             'nama.required' => 'Nama lengkap wajib diisi.',
@@ -162,7 +162,7 @@ class UserController extends Controller
             'sekolah_id.exists' => 'Sekolah yang dipilih tidak valid.',
             'nis.max' => 'NIS maksimal 30 karakter.',
             'tgl.date' => 'Tanggal tidak valid.',
-            'id_kelas.exists' => 'Kelas yang dipilih tidak valid.',
+            'id_divisi.exists' => 'Divisi yang dipilih tidak valid.',
             'license_key.exists' => 'License key tidak valid.',
         ]);
 
@@ -174,7 +174,7 @@ class UserController extends Controller
             'sekolah_id' => $request->sekolah_id,
             'nis' => $request->nis,
             'tgl' => $request->tgl,
-            'id_kelas' => $request->id_kelas,
+            'id_divisi' => $request->id_divisi,
         ];
         
         // Only update password if provided

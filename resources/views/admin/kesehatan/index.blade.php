@@ -3,277 +3,659 @@
 @section('title', 'Data Kesehatan')
 
 @section('content')
-<div class="space-y-6">
-    <!-- Header Section -->
-    <div class="bg-white p-4 md:p-6 rounded-lg shadow-sm">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-stethoscope text-[#1b5e20] text-xl"></i>
+    <div class="space-y-4 md:space-y-6">
+        <!-- Header Section -->
+        <div class="bg-white p-3 md:p-6 rounded-lg shadow-sm border border-gray-100">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 md:gap-4">
+                <div class="flex items-center gap-2 md:gap-3">
+                    <div
+                        class="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-stethoscope text-[#1b5e20] text-lg md:text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl md:text-2xl font-bold text-[#1a472a]">Data Kesehatan</h2>
+                        <p class="text-xs md:text-sm text-[#388e3c]">Manajemen data kesehatan member</p>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2 w-full lg:w-auto">
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="openExportModal('excel')"
+                            class="flex-1 sm:flex-none bg-[#4caf50] hover:bg-[#388e3c] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center">
+                            <i class="fas fa-file-excel text-xs md:text-sm mr-1.5 md:mr-2"></i>
+                            <span>Export Excel</span>
+                        </button>
+                        <button onclick="openExportModal('pdf')"
+                            class="flex-1 sm:flex-none bg-[#f44336] hover:bg-[#d32f2f] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center">
+                            <i class="fas fa-file-pdf text-xs md:text-sm mr-1.5 md:mr-2"></i>
+                            <span>Export PDF</span>
+                        </button>
+                        <button onclick="window.location.href='{{ route('admin.kesehatan.create') }}'"
+                            class="w-32 flex-1 sm:flex-none bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center">
+                            <i class="fas fa-plus text-xs md:text-sm mr-1.5 md:mr-2"></i>
+                            <span>Tambah</span>
+                        </button>
+                        <button type="submit" form="bulkDeleteForm" id="bulkDeleteBtn"
+                            class="w-40 flex-1 sm:flex-none bg-[#d32f2f] hover:bg-[#b71c1c] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
+                            <i class="fas fa-trash text-xs md:text-sm mr-1.5 md:mr-2"></i>
+                            <span>Hapus Terpilih</span>
+                        </button>
+                    </div>
+                    <form id="searchForm" action="{{ route('admin.kesehatan.index') }}" method="GET"
+                        class="w-full flex-1 mt-1 flex flex-col sm:flex-row gap-2">
+                        <div class="relative w-full sm:flex-1">
+                            <input type="text" name="search" id="searchInput" value="{{ request('search') }}"
+                                placeholder="Cari data Kesehatan..."
+                                class="w-full text-sm md:text-base pl-9 md:pl-10 pr-9 md:pr-10 py-1.5 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e7d32] focus:border-[#2e7d32] transition-colors">
+                            <div class="absolute inset-y-0 left-0 pl-2.5 md:pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400 text-xs md:text-sm"></i>
+                            </div>
+                            <div id="clearSearch"
+                                class="absolute inset-y-0 right-0 pr-2.5 md:pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600"
+                                style="display: none;">
+                                <i class="fas fa-times text-xs md:text-sm"></i>
+                            </div>
+                        </div>
+                        <select name="year"
+                            class="w-full sm:w-auto text-sm md:text-base px-3 py-1.5 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e7d32] focus:border-[#2e7d32] transition-colors">
+                            <option value="all">Semua Tahun</option>
+                            @foreach ($years as $y)
+                                <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>
+                                    {{ $y }}</option>
+                            @endforeach
+                        </select>
+                        <button type="submit"
+                            class="w-full sm:w-auto bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center">
+                            Cari
+                        </button>
+                        <a href="{{ route('admin.kesehatan.index') }}"
+                            class="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center">
+                            Reset
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
+            <form id="bulkDeleteForm" action="{{ route('admin.kesehatan.mass_destroy') }}" method="POST"
+                onsubmit="return confirm('Yakin ingin menghapus data kesehatan yang dipilih?')">
+                @csrf
+                @method('DELETE')
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-[#e8f5e9]">
+                            <tr>
+                                <th class="w-10 px-2 sm:px-3 md:px-6 py-2 md:py-3 text-center">
+                                    <input type="checkbox" id="selectAll"
+                                        class="rounded border-gray-300 text-[#2e7d32] focus:ring-[#2e7d32]">
+                                </th>
+                                <th
+                                    class="px-2 sm:px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
+                                    Member
+                                </th>
+                                <th
+                                    class="px-2 sm:px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider hidden md:table-cell">
+                                    Divisi
+                                </th>
+                                <th
+                                    class="px-2 sm:px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
+                                    Tanggal
+                                </th>
+                                <th
+                                    class="px-2 sm:px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider hidden sm:table-cell">
+                                    BB/TB
+                                </th>
+                                <th
+                                    class="px-2 sm:px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider hidden lg:table-cell">
+                                    IMT
+                                </th>
+                                <th
+                                    class="px-2 sm:px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
+                                    Status BMI
+                                </th>
+                                <th
+                                    class="px-2 sm:px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
+                                    Status Tekanan Darah
+                                </th>
+                                <th
+                                    class="px-2 sm:px-3 md:px-6 py-2 md:py-3 text-center text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
+                                    Aksi
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @forelse($kesehatan as $item)
+                                <tr class="hover:bg-[#f1f8e9] transition-colors duration-150">
+                                    <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 text-center">
+                                        <input type="checkbox" name="ids[]" value="{{ $item->id_kesehatan }}"
+                                            class="rowCheckbox rounded border-gray-300 text-[#2e7d32] focus:ring-[#2e7d32]">
+                                    </td>
+                                    <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4">
+                                        <div class="text-xs md:text-sm font-medium text-gray-900">{{ $item->user->nama }}
+                                        </div>
+                                        <div class="text-xs text-gray-500">{{ $item->user->nomor_induk }}</div>
+                                        <div class="text-xs text-gray-500 md:hidden mt-0.5">
+                                            Divisi: {{ $item->user->divisi->divisi_name ?? '-' }}
+                                        </div>
+                                        <div class="text-xs text-gray-500 sm:hidden mt-0.5">
+                                            BB/TB: {{ $item->bb }}kg / {{ $item->tb }}cm
+                                        </div>
+                                        <div class="text-xs text-gray-500 lg:hidden mt-0.5">
+                                            IMT: {{ $item->imt }}
+                                        </div>
+                                    </td>
+                                    <td
+                                        class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 text-xs md:text-sm text-gray-900 hidden md:table-cell">
+                                        {{ $item->user->divisi->divisi_name ?? '-' }}
+                                    </td>
+                                    <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 text-xs md:text-sm text-gray-900">
+                                        {{ $item->tgl->format('d/m/Y') }}
+                                    </td>
+                                    <td
+                                        class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 text-xs md:text-sm text-gray-900 hidden sm:table-cell">
+                                        {{ $item->bb }}kg / {{ $item->tb }}cm
+                                    </td>
+                                    <td
+                                        class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 text-xs md:text-sm text-gray-900 hidden lg:table-cell">
+                                        {{ $item->imt }}
+                                    </td>
+                                    <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4">
+                                        @php
+                                            $statusClass = match ($item->status) {
+                                                'Underweight' => 'bg-[#fff9c4] text-[#f57f17]',
+                                                'Normal' => 'bg-[#c8e6c9] text-[#1b5e20]',
+                                                'Overweight' => 'bg-[#ffe0b2] text-[#ef6c00]',
+                                                'Obesitas Level 1' => 'bg-[#ffcdd2] text-[#c62828]',
+                                                'Obesitas Level 2' => 'bg-[#f44336] text-white',
+                                                'Obesitas Level 3' => 'bg-[#b71c1c] text-white',
+                                                default => 'bg-gray-100 text-gray-800',
+                                            };
+                                        @endphp
+                                        <span
+                                            class="px-1 py-0.5 sm:px-2 sm:py-1 inline-flex text-xs leading-4 md:leading-5 font-semibold rounded-full {{ $statusClass }}">
+                                            {{ $item->status }}
+                                        </span>
+                                    </td>
+                                    <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4">
+                                        @php
+                                            $statusClass = match ($item->status_darah) {
+                                                'Hipotensi' => 'bg-[#bbdefb] text-[#0d47a1]',
+                                                'Normal' => 'bg-[#c8e6c9] text-[#1b5e20]',
+                                                'Elevasi' => 'bg-[#fff9c4] text-[#f57f17]',
+                                                'Hipertensi Tahap 1' => 'bg-[#ffe0b2] text-[#ef6c00]',
+                                                'Hipertensi Tahap 2' => 'bg-[#ffcdd2] text-[#c62828]',
+                                                'Krisis' => 'bg-[#b71c1c] text-white',
+                                                default => 'bg-gray-100 text-gray-800',
+                                            };
+                                        @endphp
+                                        <span
+                                            class="px-1 py-0.5 sm:px-2 sm:py-1 inline-flex text-xs leading-4 md:leading-5 font-semibold rounded-full {{ $statusClass }}">
+                                            {{ $item->status_darah }}
+                                        </span>
+                                    </td>
+                                    <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap">
+                                        <div class="flex items-center justify-center gap-1 md:gap-2">
+                                            <a href="#" class="view-detail text-[#388e3c] hover:text-[#2e7d32] p-1 transition-colors duration-200"
+                                                data-nama="{{ $item->user->nama }}"
+                                                data-nomor-induk="{{ $item->user->nomor_induk }}"
+                                                data-divisi="{{ $item->user->divisi->divisi_name ?? '-' }}"
+                                                data-tanggal="{{ $item->tgl->format('d/m/Y') }}"
+                                                data-bb="{{ $item->bb }}"
+                                                data-tb="{{ $item->tb }}"
+                                                data-sistol="{{ $item->sistol }}"
+                                                data-diastol="{{ $item->diastol }}"
+                                                data-status-darah="{{ $item->status_darah }}"
+                                                data-imt="{{ $item->imt }}"
+                                                data-status="{{ $item->status }}"
+                                                data-pesan-imt="{{ $item->pesan_imt ?? '-' }}"
+                                                data-pesan-tkd="{{ $item->pesan_tkd ?? '-' }}"
+                                                data-kondisi-telinga="{{ $item->kondisi_telinga ?? '-' }}"
+                                                data-kondisi-gigi="{{ $item->kondisi_gigi ?? '-' }}"
+                                                data-perilaku-beresiko="{{ $item->perilaku_beresiko ?? '-' }}"
+                                                data-gangguan-reproduksi="{{ $item->gangguan_reproduksi ?? '-' }}"
+                                                data-created-at="{{ $item->created_at ? $item->created_at->format('d/m/Y H:i:s') : '-' }}"
+                                                data-updated-at="{{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i:s') : '-' }}"
+                                                title="Lihat Detail">
+                                                <i class="fas fa-eye text-sm md:text-base"></i>
+                                            </a>
+                                            <a href="{{ route('admin.kesehatan.edit', $item->id_kesehatan) }}"
+                                                class="text-[#2e7d32] hover:text-[#1b5e20] p-1 transition-colors duration-200"
+                                                title="Edit">
+                                                <i class="fas fa-edit text-sm md:text-base"></i>
+                                            </a>
+                                            <form action="{{ route('admin.kesehatan.destroy', $item->id_kesehatan) }}"
+                                                method="POST" class="inline"
+                                                onsubmit="return confirm('Yakin ingin menghapus data kesehatan ini?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                    class="text-[#d32f2f] hover:text-[#b71c1c] p-1 transition-colors duration-200"
+                                                    title="Hapus">
+                                                    <i class="fas fa-trash text-sm md:text-base"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="9" class="px-4 md:px-6 py-6 md:py-8 text-center">
+                                        <div class="flex flex-col items-center justify-center text-gray-400">
+                                            <div
+                                                class="w-12 h-12 md:w-16 md:h-16 bg-gray-100 rounded-full flex items-center justify-center mb-2 md:mb-3">
+                                                <i class="fas fa-stethoscope text-gray-300 text-xl md:text-2xl"></i>
+                                            </div>
+                                            <p class="text-sm md:text-lg font-medium text-gray-600">Tidak ada data
+                                                kesehatan</p>
+                                            <p class="text-xs md:text-sm mt-1 text-gray-500">Klik "Tambah Data" untuk
+                                                menambahkan data baru</p>
+                                            <a href="{{ route('admin.kesehatan.create') }}"
+                                                class="mt-3 inline-flex items-center bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-4 py-2 rounded-md text-xs md:text-sm font-medium transition-colors">
+                                                <i class="fas fa-plus mr-1.5 md:mr-2 text-xs"></i>
+                                                Tambah Data Kesehatan
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+
+            <!-- Custom Pagination -->
+            <div
+                class="px-4 py-3 sm:px-6 sm:py-4 bg-[#f9fafb] border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
+                <div>
+                    <p class="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
+                        Showing <span class="font-medium">{{ $kesehatan->firstItem() }}</span>
+                        to <span class="font-medium">{{ $kesehatan->lastItem() }}</span>
+                        of <span class="font-medium">{{ $kesehatan->total() }}</span> results
+                    </p>
                 </div>
                 <div>
-                    <h2 class="text-2xl font-bold text-[#1a472a]">Data Kesehatan</h2>
-                    <p class="text-[#388e3c]">Manajemen data kesehatan member</p>
-                </div>
-            </div>   
-            <div class="flex flex-col sm:flex-row gap-2">
-                <!-- Export Buttons -->
-                <div class="flex gap-2">
-                    <a href="{{ route('admin.kesehatan.export.excel') }}" 
-                       class="bg-[#4caf50] hover:bg-[#388e3c] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
-                        <i class="fas fa-file-excel mr-2"></i>
-                        Export Excel
-                    </a>
-                    <a href="{{ route('admin.kesehatan.export.pdf') }}" 
-                       class="bg-[#f44336] hover:bg-[#d32f2f] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
-                        <i class="fas fa-file-pdf mr-2"></i>
-                        Export PDF
-                    </a>
-                </div>
-                <!-- Tambah Data Button -->
-                <a href="{{ route('admin.kesehatan.create') }}" 
-                   class="bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
-                    <i class="fas fa-plus mr-2"></i>
-                    Tambah Data
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Table Section -->
-    <div class="bg-white shadow-sm rounded-lg overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-[#e8f5e9]">
-                    <tr>
-                        <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
-                            Member
-                        </th>
-                        <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider hidden md:table-cell">
-                            Divisi
-                        </th>
-                        <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
-                            Tanggal
-                        </th>
-                        <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider hidden sm:table-cell">
-                            BB/TB
-                        </th>
-                        <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider hidden lg:table-cell">
-                            IMT
-                        </th>
-                        <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
-                            Status BMI
-                        </th>
-                        <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
-                            Status Tekanan Darah
-                        </th>
-                        <th class="px-4 md:px-6 py-3 text-center text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
-                            Aksi
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($kesehatan as $item)
-                        <tr class="hover:bg-[#f1f8e9] transition-colors duration-150">
-                            <td class="px-4 md:px-6 py-4">
-                                <div class="text-sm font-medium text-gray-900">{{ $item->user->nama }}</div>
-                                <div class="text-sm text-gray-500">{{ $item->user->nis }}</div>
-                                <div class="text-sm text-gray-500 md:hidden mt-2">
-                                    Divisi: {{ $item->user->kelas->kelas }}
-                                </div>
-                                <div class="text-sm text-gray-500 sm:hidden mt-2">
-                                    BB/TB: {{ $item->bb }}kg / {{ $item->tb }}cm
-                                </div>
-                                <div class="text-sm text-gray-500 lg:hidden mt-2">
-                                    IMT: {{ $item->imt }}
-                                </div>
-                            </td>
-                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">
-                                {{ $item->user->kelas->kelas }}
-                            </td>
-                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $item->tgl->format('d/m/Y') }}
-                            </td>
-                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">
-                                {{ $item->bb }}kg / {{ $item->tb }}cm
-                            </td>
-                            <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">
-                                {{ $item->imt }}
-                            </td>
-                            <td class="px-4 md:px-6 py-4 whitespace-nowrap">
-                                @php
-                                    $statusClass = match($item->status) {
-                                        'Underweight' => 'bg-[#fff9c4] text-[#f57f17]',
-                                        'Normal' => 'bg-[#c8e6c9] text-[#1b5e20]',
-                                        'Overweight' => 'bg-[#ffe0b2] text-[#ef6c00]',
-                                        'Obesitas Level 1' => 'bg-[#ffcdd2] text-[#c62828]',
-                                        'Obesitas Level 2' => 'bg-[#f44336] text-white',
-                                        'Obesitas Level 3' => 'bg-[#b71c1c] text-white',
-                                        default => 'bg-gray-100 text-gray-800'
-                                    };
-                                @endphp
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClass }}">
-                                    {{ $item->status }}
-                                </span>
-                            </td>
-
-                            <td class="px-4 md:px-6 py-4 whitespace-nowrap">
-                                @php
-                                    $statusClass = match($item->status_darah) {
-                                        'Hipotensi' => 'bg-[#bbdefb] text-[#0d47a1]',
-                                        'Normal' => 'bg-[#c8e6c9] text-[#1b5e20]',
-                                        'Elevasi' => 'bg-[#fff9c4] text-[#f57f17]',
-                                        'Hipertensi Tahap 1' => 'bg-[#ffe0b2] text-[#ef6c00]',
-                                        'Hipertensi Tahap 2' => 'bg-[#ffcdd2] text-[#c62828]',
-                                        'Krisis' => 'bg-[#b71c1c] text-white',
-                                        default => 'bg-gray-100 text-gray-800'
-                                    };
-                                @endphp
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClass }}">
-                                    {{ $item->status_darah }}
-                                </span>
-                            </td>
-                            <td class="px-4 md:px-6 py-4 text-base whitespace-nowrap font-medium">
-                                <div class="flex items-center justify-center text-base">
-                                    <a href="{{ route('admin.kesehatan.edit', $item->id_kesehatan) }}" 
-                                       class="text-[#2e7d32] hover:text-[#1b5e20] p-1 transition-colors duration-200"
-                                       title="Edit">
-                                        <i class="fas fa-edit text-lg"></i>
-                                    </a>
-                                    <form action="{{ route('admin.kesehatan.destroy', $item->id_kesehatan) }}" 
-                                          method="POST" class="inline"
-                                          onsubmit="return confirm('Yakin ingin menghapus data kesehatan ini?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-[#d32f2f] hover:text-[#b71c1c] p-1 transition-colors duration-200"
-                                                title="Hapus">
-                                            <i class="fas fa-trash text-lg"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="px-6 py-8 text-center">
-                                <div class="flex flex-col items-center justify-center text-gray-400">
-                                    <i class="fas fa-clipboard-list text-4xl mb-3"></i>
-                                    <p class="text-lg font-medium">Tidak ada data kesehatan</p>
-                                    <p class="text-sm mt-1">Klik "Tambah Data" untuk menambahkan data baru</p>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Custom Pagination -->
-        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between px-6 py-4 bg-[#f9fafb] border-t border-gray-200"">
-            <div>
-                <p class="text-sm text-gray-700 ">
-                    Showing <span class="font-medium">{{ $kesehatan->firstItem() }}</span>
-                    to <span class="font-medium">{{ $kesehatan->lastItem() }}</span>
-                    of <span class="font-medium">{{ $kesehatan->total() }}</span> results
-                </p>
-            </div>
-            <div>
-                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                    {{-- Tombol Previous --}}
-                    @if ($kesehatan->onFirstPage())
-                        <span
-                            class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300  bg-gray-100  text-sm font-medium text-gray-500 dark:text-gray-400">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </span>
-                    @else
-                        <a href="{{ $kesehatan->previousPageUrl() }}"
-                            class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300  bg-white  text-sm font-medium text-gray-500  hover:bg-gray-50 ">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </a>
-                    @endif
-
-                    {{-- Nomor Halaman dengan Ellipses --}}
-                    @php
-                        $currentPage = $kesehatan->currentPage();
-                        $lastPage = $kesehatan->lastPage();
-                        $start = max($currentPage - 2, 1);
-                        $end = min($currentPage + 2, $lastPage);
-                    @endphp
-
-                    {{-- Halaman pertama --}}
-                    @if ($start > 1)
-                        <a href="{{ $kesehatan->url(1) }}"
-                            class="relative inline-flex items-center px-4 py-2 border border-gray-300  text-sm font-medium {{ $currentPage == 1 ? 'bg-[#2e7d32] text-white' : 'bg-white  text-gray-500  hover:bg-gray-50 ' }}">
-                            1
-                        </a>
-                        @if ($start > 2)
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        {{-- Tombol Previous --}}
+                        @if ($kesehatan->onFirstPage())
                             <span
-                                class="relative inline-flex items-center px-4 py-2 border border-gray-300  bg-gray-100  text-sm font-medium text-gray-500 dark:text-gray-400">…</span>
-                        @endif
-                    @endif
-
-                    {{-- Halaman di sekitar current --}}
-                    @for ($page = $start; $page <= $end; $page++)
-                        @if ($page == $currentPage)
-                            <span
-                                class="z-10 bg-success-50 dark:bg-[#1b5e20] border-[#2e7d32] text-[#1b5e20] dark:text-white relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                                {{ $page }}
+                                class="relative inline-flex items-center px-2 py-1 sm:py-2 rounded-l-md border border-gray-300 bg-gray-100 text-xs sm:text-sm font-medium text-gray-500">
+                                <svg class="h-4 w-4 sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                    viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                        clip-rule="evenodd" />
+                                </svg>
                             </span>
                         @else
-                            <a href="{{ $kesehatan->url($page) }}"
-                                class="bg-white  border-gray-300  text-gray-500  hover:bg-gray-50  relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                                {{ $page }}
+                            <a href="{{ $kesehatan->previousPageUrl() }}"
+                                class="relative inline-flex items-center px-2 py-1 sm:py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <svg class="h-4 w-4 sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                    viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                        clip-rule="evenodd" />
+                                </svg>
                             </a>
                         @endif
-                    @endfor
 
-                    {{-- Halaman terakhir --}}
-                    @if ($end < $lastPage)
-                        @if ($end < $lastPage - 1)
-                            <span
-                                class="relative inline-flex items-center px-4 py-2 border border-gray-300  bg-gray-100  text-sm font-medium text-gray-500 dark:text-gray-400">…</span>
+                        {{-- Nomor Halaman dengan Ellipses --}}
+                        @php
+                            $currentPage = $kesehatan->currentPage();
+                            $lastPage = $kesehatan->lastPage();
+                            $start = max($currentPage - 1, 1);
+                            $end = min($currentPage + 1, $lastPage);
+                        @endphp
+
+                        {{-- Halaman pertama --}}
+                        @if ($start > 1)
+                            <a href="{{ $kesehatan->url(1) }}"
+                                class="relative inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium {{ $currentPage == 1 ? 'bg-[#2e7d32] text-white' : 'bg-white text-gray-500 hover:bg-gray-50' }}">
+                                1
+                            </a>
+                            @if ($start > 2)
+                                <span
+                                    class="relative inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 border border-gray-300 bg-gray-100 text-xs sm:text-sm font-medium text-gray-500">…</span>
+                            @endif
                         @endif
-                        <a href="{{ $kesehatan->url($lastPage) }}"
-                            class="relative inline-flex items-center px-4 py-2 border border-gray-300  text-sm font-medium {{ $currentPage == $lastPage ? 'bg-[#2e7d32] text-white' : 'bg-white  text-gray-500  hover:bg-gray-50 ' }}">
-                            {{ $lastPage }}
-                        </a>
-                    @endif
 
-                    {{-- Tombol Next --}}
-                    @if ($kesehatan->hasMorePages())
-                        <a href="{{ $kesehatan->nextPageUrl() }}"
-                            class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300  bg-white  text-sm font-medium text-gray-500  hover:bg-gray-50 ">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </a>
-                    @else
-                        <span
-                            class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300  bg-gray-100  text-sm font-medium text-gray-500 dark:text-gray-400">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </span>
-                    @endif
-                </nav>
+                        {{-- Halaman di sekitar current --}}
+                        @for ($page = $start; $page <= $end; $page++)
+                            @if ($page == $currentPage)
+                                <span
+                                    class="z-10 bg-[#2e7d32] text-white relative inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 border border-[#2e7d32] text-xs sm:text-sm font-medium">
+                                    {{ $page }}
+                                </span>
+                            @else
+                                <a href="{{ $kesehatan->url($page) }}"
+                                    class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 border text-xs sm:text-sm font-medium">
+                                    {{ $page }}
+                                </a>
+                            @endif
+                        @endfor
+
+                        {{-- Halaman terakhir --}}
+                        @if ($end < $lastPage)
+                            @if ($end < $lastPage - 1)
+                                <span
+                                    class="relative inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 border border-gray-300 bg-gray-100 text-xs sm:text-sm font-medium text-gray-500">…</span>
+                            @endif
+                            <a href="{{ $kesehatan->url($lastPage) }}"
+                                class="relative inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium {{ $currentPage == $lastPage ? 'bg-[#2e7d32] text-white' : 'bg-white text-gray-500 hover:bg-gray-50' }}">
+                                {{ $lastPage }}
+                            </a>
+                        @endif
+
+                        {{-- Tombol Next --}}
+                        @if ($kesehatan->hasMorePages())
+                            <a href="{{ $kesehatan->nextPageUrl() }}"
+                                class="relative inline-flex items-center px-2 py-1 sm:py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <svg class="h-4 w-4 sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                    viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        @else
+                            <span
+                                class="relative inline-flex items-center px-2 py-1 sm:py-2 rounded-r-md border border-gray-300 bg-gray-100 text-xs sm:text-sm font-medium text-gray-500">
+                                <svg class="h-4 w-4 sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                    viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                        @endif
+                    </nav>
+                </div>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="fixed inset-0 bg-black/40 hidden z-50 flex items-center justify-center p-4"
+        onclick="closeExportModal()">
+        <div class="relative bg-white rounded-lg shadow-xl w-full max-w-md sm:max-w-lg" onclick="event.stopPropagation()">
+            <div class="p-4 md:p-6">
+                <div class="flex items-start gap-3 md:gap-4">
+                    <div
+                        class="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-file-export text-blue-600 text-sm md:text-base"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4" id="exportModalTitle">
+                            Export Data Kesehatan
+                        </h3>
+                        <form id="exportForm" method="GET">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-2">Filter
+                                        Export</label>
+                                    <select name="filter_type" id="filterType"
+                                        class="w-full text-xs md:text-sm px-3 py-1.5 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e7d32]">
+                                        <option value="all">Export Semua Data</option>
+                                        <option value="divisi">Per Divisi</option>
+                                        <option value="tanggal">Per Tanggal</option>
+                                        <option value="divisi_tanggal">Per Divisi dan Tanggal</option>
+                                    </select>
+                                </div>
+                                <div id="divisiSection" class="hidden">
+                                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-2">Pilih
+                                        Divisi</label>
+                                    <select name="divisi"
+                                        class="w-full text-xs md:text-sm px-3 py-1.5 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e7d32]">
+                                        @foreach ($divisi as $d)
+                                            <option value="{{ $d->id }}">{{ $d->divisi_name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div id="tanggalSection" class="hidden space-y-2">
+                                    <div>
+                                        <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Dari
+                                            Tanggal</label>
+                                        <input type="date" name="from"
+                                            class="w-full text-xs md:text-sm px-3 py-1.5 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e7d32]">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Sampai
+                                            Tanggal</label>
+                                        <input type="date" name="to"
+                                            class="w-full text-xs md:text-sm px-3 py-1.5 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e7d32]">
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 md:px-6 flex flex-col-reverse sm:flex-row justify-end gap-2">
+                <button type="button" onclick="closeExportModal()"
+                    class="w-full sm:w-auto px-4 py-2 text-xs md:text-sm font-medium rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50">
+                    Batal
+                </button>
+                <button type="submit" form="exportForm"
+                    class="w-full sm:w-auto px-4 py-2 text-xs md:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    <i class="fas fa-download mr-1.5 text-xs"></i>
+                    Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="fixed inset-0 bg-black/40 hidden z-50 flex items-center justify-center p-4"
+        onclick="closeDetailModal()">
+        <div class="relative bg-white rounded-lg shadow-xl w-full max-w-4xl" onclick="event.stopPropagation()">
+            <div class="p-4 md:p-6 max-h-[70vh] overflow-y-auto">
+                <div class="flex items-start gap-3 md:gap-4 mb-4 md:mb-6">
+                    <div
+                        class="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-info-circle text-[#388e3c] text-sm md:text-base"></i>
+                    </div>
+                    <h3 class="text-base md:text-lg font-semibold text-gray-900">Detail Data Kesehatan</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Member</label>
+                        <p id="detailNama" class="text-sm text-gray-900"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Induk</label>
+                        <p id="detailNomorInduk" class="text-sm text-gray-900"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
+                        <p id="detailDivisi" class="text-sm text-gray-900"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                        <p id="detailTanggal" class="text-sm text-gray-900"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Berat Badan</label>
+                        <p id="detailBb" class="text-sm text-gray-900"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tinggi Badan</label>
+                        <p id="detailTb" class="text-sm text-gray-900"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sistol</label>
+                        <p id="detailSistol" class="text-sm text-gray-900"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Diastol</label>
+                        <p id="detailDiastol" class="text-sm text-gray-900"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status Tekanan Darah</label>
+                        <p id="detailStatusDarah" class="text-sm text-gray-900"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">IMT</label>
+                        <p id="detailImt" class="text-sm text-gray-900"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status BMI</label>
+                        <p id="detailStatus" class="text-sm text-gray-900"></p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Pesan IMT</label>
+                        <p id="detailPesanImt" class="text-sm text-gray-900 whitespace-pre-wrap"></p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Pesan Tekanan Darah</label>
+                        <p id="detailPesanTkd" class="text-sm text-gray-900 whitespace-pre-wrap"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kondisi Telinga</label>
+                        <p id="detailKondisiTelinga" class="text-sm text-gray-900"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kondisi Gigi</label>
+                        <p id="detailKondisiGigi" class="text-sm text-gray-900"></p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Perilaku Beresiko</label>
+                        <p id="detailPerilakuBeresiko" class="text-sm text-gray-900 whitespace-pre-wrap"></p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Gangguan Reproduksi</label>
+                        <p id="detailGangguanReproduksi" class="text-sm text-gray-900 whitespace-pre-wrap"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Created At</label>
+                        <p id="detailCreatedAt" class="text-sm text-gray-900"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Updated At</label>
+                        <p id="detailUpdatedAt" class="text-sm text-gray-900"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 md:px-6 flex justify-end">
+                <button type="button" onclick="closeDetailModal()"
+                    class="px-4 py-2 text-xs md:text-sm font-medium rounded-md text-white bg-[#2e7d32] hover:bg-[#1b5e20]">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let exportType = '';
+
+        function openExportModal(type) {
+            exportType = type;
+            document.getElementById('exportModalTitle').textContent = `Export Data Kesehatan (${type.toUpperCase()})`;
+            document.getElementById('exportForm').action = type === 'excel' ?
+                '{{ route('admin.kesehatan.export.excel') }}' : '{{ route('admin.kesehatan.export.pdf') }}';
+            document.getElementById('exportModal').classList.remove('hidden');
+            toggleFilterSections();
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.add('hidden');
+        }
+
+        document.getElementById('filterType').addEventListener('change', toggleFilterSections);
+
+        function toggleFilterSections() {
+            const filterType = document.getElementById('filterType').value;
+            
+            const divisiSection = document.getElementById('divisiSection');
+            const tanggalSection = document.getElementById('tanggalSection');
+            
+            const showDivisi = ['divisi', 'divisi_tanggal'].includes(filterType);
+            divisiSection.classList.toggle('hidden', !showDivisi);
+            if (!showDivisi) {
+                document.querySelector('select[name="divisi"]').value = '';
+            }
+            
+            const showTanggal = ['tanggal', 'divisi_tanggal'].includes(filterType);
+            tanggalSection.classList.toggle('hidden', !showTanggal);
+            if (!showTanggal) {
+                document.querySelector('input[name="from"]').value = '';
+                document.querySelector('input[name="to"]').value = '';
+            }
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        const viewButtons = document.querySelectorAll('.view-detail');
+        viewButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('detailNama').textContent = this.dataset.nama;
+                document.getElementById('detailNomorInduk').textContent = this.dataset.nomorInduk;
+                document.getElementById('detailDivisi').textContent = this.dataset.divisi;
+                document.getElementById('detailTanggal').textContent = this.dataset.tanggal;
+                document.getElementById('detailBb').textContent = this.dataset.bb + ' kg';
+                document.getElementById('detailTb').textContent = this.dataset.tb + ' cm';
+                document.getElementById('detailSistol').textContent = this.dataset.sistol;
+                document.getElementById('detailDiastol').textContent = this.dataset.diastol;
+                document.getElementById('detailStatusDarah').textContent = this.dataset.statusDarah;
+                document.getElementById('detailImt').textContent = this.dataset.imt;
+                document.getElementById('detailStatus').textContent = this.dataset.status;
+                document.getElementById('detailPesanImt').textContent = this.dataset.pesanImt;
+                document.getElementById('detailPesanTkd').textContent = this.dataset.pesanTkd;
+                document.getElementById('detailKondisiTelinga').textContent = this.dataset.kondisiTelinga;
+                document.getElementById('detailKondisiGigi').textContent = this.dataset.kondisiGigi;
+                document.getElementById('detailPerilakuBeresiko').textContent = this.dataset.perilakuBeresiko;
+                document.getElementById('detailGangguanReproduksi').textContent = this.dataset.gangguanReproduksi;
+                document.getElementById('detailCreatedAt').textContent = this.dataset.createdAt;
+                document.getElementById('detailUpdatedAt').textContent = this.dataset.updatedAt;
+                document.getElementById('detailModal').classList.remove('hidden');
+            });
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeExportModal();
+                closeDetailModal();
+            }
+        });
+
+        const selectAll = document.getElementById('selectAll');
+        const rowCheckboxes = document.querySelectorAll('.rowCheckbox');
+        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+
+        selectAll.addEventListener('change', function() {
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            toggleBulkDeleteBtn();
+        });
+
+        rowCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', toggleBulkDeleteBtn);
+        });
+
+        function toggleBulkDeleteBtn() {
+            const checkedCount = document.querySelectorAll('.rowCheckbox:checked').length;
+            bulkDeleteBtn.disabled = checkedCount === 0;
+        }
+
+        const searchInput = document.getElementById('searchInput');
+        const clearSearch = document.getElementById('clearSearch');
+        const searchForm = document.getElementById('searchForm');
+
+        function toggleClearIcon() {
+            clearSearch.style.display = searchInput.value.trim() !== '' ? 'flex' : 'none';
+        }
+
+        toggleClearIcon();
+
+        searchInput.addEventListener('input', toggleClearIcon);
+
+        clearSearch.addEventListener('click', function() {
+            searchInput.value = '';
+            toggleClearIcon();
+        });
+    </script>
 @endsection

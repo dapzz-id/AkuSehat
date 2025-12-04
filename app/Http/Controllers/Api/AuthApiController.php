@@ -21,7 +21,7 @@ class AuthApiController extends Controller
             'password' => 'required|string|min:6',
             'jenis_kelamin' => 'required|in:L,P',
             'kelas_id' => 'required|exists:kelas,id',
-            'nis' => 'required|string|max:10|unique:users,nis',
+            'nomor_induk' => 'required|string|max:10|unique:users,nomor_induk',
         ],[
             'nama.required' => 'Nama wajib diisi.',
             'username.required' => 'Username wajib diisi.', 
@@ -32,9 +32,9 @@ class AuthApiController extends Controller
             'jenis_kelamin.in' => 'Jenis kelamin tidak valid.',
             'kelas_id.required' => 'Kelas wajib dipilih.',
             'kelas_id.exists' => 'Kelas tidak ditemukan.',
-            'nis.required' => 'NIS wajib diisi.',
-            'nis.unique' => 'NIS sudah terdaftar.',
-            'nis.max' => 'NIS maksimal 10 karakter.',
+            'nomor_induk.required' => 'Nomor Induk wajib diisi.',
+            'nomor_induk.unique' => 'Nomor Induk sudah terdaftar.',
+            'nomor_induk.max' => 'Nomor Induk maksimal 10 karakter.',
         ]);
 
         $user = User::create([
@@ -76,7 +76,6 @@ class AuthApiController extends Controller
         if (! Hash::check($validated['password'], $user->password)) {
             return response()->json([
                 'status' => false,
-                'license' => false,
                 'message' => 'Username atau password salah'
             ], 200);
         }
@@ -86,14 +85,12 @@ class AuthApiController extends Controller
             if ($user->licenseKey->isExpired()) {
                 return response()->json([
                     'status' => false,
-                    'license' => true,
                     'message' => 'License key tidak aktif atau telah kedaluwarsa. Silakan hubungi administrator untuk memperbarui license key.'
                 ], 200);
             }
         } else {
             return response()->json([
                 'status' => false,
-                'license' => true,
                 'message' => 'Tidak ada license key yang terhubung dengan akun ini. Silakan hubungi administrator untuk mendapatkan license key.'
             ], 200);
         }
@@ -105,7 +102,6 @@ class AuthApiController extends Controller
 
         return response()->json([
             'status' => true,
-            'license' => false,
             'message' => 'Login berhasil!',
             'user' => $user,
             'token' => $token,
@@ -133,6 +129,20 @@ class AuthApiController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Logout berhasil.',
+        ]);
+    }
+
+    /**
+     * Cek otentikasi token.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function checkAuth(Request $request)
+    {
+        return response()->json([
+            'status' => true,
+            'message' => 'Token valid',
         ]);
     }
 }

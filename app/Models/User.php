@@ -15,8 +15,8 @@ class User extends Authenticatable
     protected $table = 'users';
     
     protected $fillable = [
-        'id_kelas',
-        'sekolah_id',
+        'id_divisi',
+        'instansi_id',
         'license_key_id',
         'tgl',
         'nis',
@@ -24,7 +24,8 @@ class User extends Authenticatable
         'password',
         'nama',
         'level',
-        'jk'
+        'jk',
+        'nomor_induk',
     ];
 
     protected $hidden = [
@@ -32,9 +33,9 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    public function kelas()
+    public function divisi()
     {
-        return $this->belongsTo(Kelas::class, 'id_kelas');
+        return $this->belongsTo(Divisi::class, 'id_divisi');
     }
 
     public function kesehatan()
@@ -57,9 +58,9 @@ class User extends Authenticatable
         return $this->hasMany(DataHaid::class, 'id_user');
     }
 
-    public function sekolah()
+    public function instansi()
     {
-        return $this->belongsTo(Sekolah::class, 'sekolah_id');
+        return $this->belongsTo(Instansi::class, 'instansi_id');
     }
 
     public function licenseKey()

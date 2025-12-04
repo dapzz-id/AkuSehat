@@ -11,36 +11,60 @@ use Illuminate\Support\Facades\Auth;
 
 class HealthConsultantApiController extends Controller
 {
-    public function healthSummary(Request $req) {
-        // hitung status berdasarkan BMI dari pemeriksaan terakhir tiap member
-        $latest = DB::table('kesehatan as k')
-            ->select('k.*')
-            ->join(DB::raw('(select id_user, max(tgl) as max_tgl from kesehatan group by id_user) as lastk'),
-                function($join) { $join->on('k.id_user', '=', 'lastk.id_user')->on('k.tgl','=','lastk.max_tgl'); })
+    public function healthSummary(Request $req)
+    {
+        $latest = Kesehatan::query()
+            ->whereHas('user', function($q) {
+                $q->where('level', 'Member')
+                ->where('instansi_id', Auth::user()->instansi_id);
+            })
+            ->whereYear('tgl', now()->year)
+            ->join(DB::raw('(select id_user, max(tgl) as max_tgl 
+                            from kesehatan 
+                            group by id_user) as lastk'),
+                function($join) {
+                    $join->on('kesehatan.id_user', '=', 'lastk.id_user')
+                        ->on('kesehatan.tgl', '=', 'lastk.max_tgl');
+                }
+            )
+            ->select('kesehatan.*')
             ->get();
 
-        $total=0; $ob=0; $kr=0; $nm=0;
+        $total = 0; $ob = 0; $kr = 0; $nm = 0;
+
         foreach ($latest as $row) {
             $total++;
             $bb = floatval($row->bb ?? 0);
-            $tb = floatval($row->tb ?? 0)/100.0;
-            $bmi = $tb>0 ? $bb/($tb*$tb):null;
-            if ($bmi===null) continue;
+            $tb = floatval($row->tb ?? 0) / 100;
+            $bmi = $tb > 0 ? $bb / ($tb * $tb) : null;
+
+            if ($bmi === null) continue;
+
             if ($bmi >= 27) $ob++;
             else if ($bmi < 18.5) $kr++;
             else $nm++;
         }
-        return response()->json(['status'=>true,'data'=>[
-            'total'=>$total,'obesitas'=>$ob,'kurus'=>$kr,'normal'=>$nm
-        ]]);
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'total' => $total,
+                'obesitas' => $ob,
+                'kurus' => $kr,
+                'normal' => $nm,
+            ]
+        ]);
     }
 
-    public function healthByClass(Request $req)
+    public function healthByDivision(Request $req)
     {
         $rows = DB::table('users as u')
-            ->leftJoin('kelas as c', 'c.id', '=', 'u.id_kelas')
-            ->select('u.id', 'u.id_kelas', 'c.kelas', 'c.jurusan', 'u.nama', 'u.nis', 'u.jk', 'u.username')
+            ->leftJoin('divisi as c', 'c.id', '=', 'u.id_divisi')
+            ->select('u.id', 'u.id_divisi', 'c.divisi_name', 'u.nama', 'u.nomor_induk', 'u.jk', 'u.username')
+            ->where('u.instansi_id', Auth::user()->instansi_id)
             ->where('u.level', 'Member')
+            ->orderBy('c.divisi_name', 'asc')
+            ->orderBy('u.nama', 'asc')
             ->get();
 
         $result = [];
@@ -55,19 +79,18 @@ class HealthConsultantApiController extends Controller
         ];
 
         foreach ($rows as $u) {
-            $key = $u->id_kelas ?: 0;
+            $key = $u->id_divisi ?: 0;
 
             if (!isset($result[$key])) {
                 $result[$key] = [
-                    'id' => $u->id_kelas ?: 0,
-                    'kelas' => $u->kelas ?: 'Belum ditentukan',
-                    'jurusan' => $u->jurusan ?: '-',
+                    'id' => $u->id_divisi ?: 0,
+                    'divisi' => $u->divisi_name ?: 'Belum ditentukan',
                     'obesitas' => 0,
                     'kurus' => 0,
                     'normal' => 0,
                     'total_member' => \App\Models\User::where('level', 'Member')
-                        ->where('id_kelas', $u->id_kelas)
-                        ->where('sekolah_id', Auth::user()->sekolah_id)
+                        ->where('id_divisi', $u->id_divisi)
+                        ->where('instansi_id', Auth::user()->instansi_id)
                         ->count(),
                     'data_member' => []
                 ];
@@ -75,10 +98,14 @@ class HealthConsultantApiController extends Controller
 
             // Ambil semua data kesehatan member
             $kesehatanList = Kesehatan::where('id_user', $u->id)
-                ->orderBy('tgl', 'asc')
+                ->whereHas('user', function ($q) {
+                    $q->where('instansi_id', Auth::user()->instansi_id);
+                })
+                ->whereYear('tgl', now()->year)
+                ->orderBy('tgl', 'desc')
                 ->get();
 
-            // Hitung status BMI terakhir untuk akumulasi per kelas
+            // Hitung status BMI terakhir untuk akumulasi per divisi
             $last = $kesehatanList->last();
             if ($last) {
                 $bb = floatval($last->bb ?? 0);
@@ -126,7 +153,8 @@ class HealthConsultantApiController extends Controller
             $result[$key]['data_member'][] = [
                 'id' => $u->id,
                 'nama' => $u->nama,
-                'nis' => $u->nis,
+                'nomor_induk' => $u->nomor_induk,
+                'divisi' => $u->divisi_name ?: 'Belum ditentukan',
                 'jk' => $u->jk,
                 'username' => $u->username,
                 'pemeriksaan_terakhir' => $last?->updated_at,
@@ -145,7 +173,9 @@ class HealthConsultantApiController extends Controller
         $kesehatan = Kesehatan::with('user:id,nama,level')
         ->whereHas('user', function ($q) {
             $q->where('level', 'Member');
+            $q->where('instansi_id', Auth::user()->instansi_id);
         })
+        ->whereYear('tgl', now()->year)
         ->where(function ($query) {
             $query
                 ->where(function ($q) {
@@ -159,12 +189,12 @@ class HealthConsultantApiController extends Controller
                 ->orWhere(function ($q) {
                     $q->whereNotNull('perilaku_beresiko')
                     ->whereRaw('TRIM(COALESCE(perilaku_beresiko, "")) != ""')
-                    ->whereRaw('LOWER(TRIM(perilaku_beresiko)) != ?', ['sehat']);
+                    ->whereNotIn(DB::raw('LOWER(TRIM(perilaku_beresiko))'), ['sehat', 'normal', 'tidak ada']);
                 })
                 ->orWhere(function ($q) {
                     $q->whereNotNull('gangguan_reproduksi')
                     ->whereRaw('TRIM(COALESCE(gangguan_reproduksi, "")) != ""')
-                    ->whereRaw('LOWER(TRIM(gangguan_reproduksi)) != ?', ['sehat']);
+                    ->whereNotIn(DB::raw('LOWER(TRIM(gangguan_reproduksi))'), ['sehat', 'normal', 'tidak ada']);
                 });
         })
         ->orderBy('tgl', 'desc')

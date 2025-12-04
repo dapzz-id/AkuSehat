@@ -36,7 +36,10 @@
     <link rel="apple-touch-icon" href="{{ asset('src/aku_sehat_icon.png') }}">
 
     <!-- Tailwind CSS -->
-    @vite('resources/css/app.css')
+    @vite([
+        'resources/css/app.css',
+        'resources/js/app.js'
+    ])
 
     <!-- Google Fonts & Font Awesome -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

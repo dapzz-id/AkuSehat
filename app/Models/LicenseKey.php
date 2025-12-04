@@ -11,7 +11,7 @@ class LicenseKey extends Model
     const STATUS_EXPIRED = 'expired';
 
     protected $fillable = [
-        'sekolah_id',
+        'instansi_id',
         'key',
         'kuota_pengguna',
         'status',
@@ -24,12 +24,12 @@ class LicenseKey extends Model
 
     public function licenseKey()
     {
-        return $this->hasMany(Sekolah::class, 'license_id_active');
+        return $this->hasMany(Instansi::class, 'license_id_active');
     }
 
-    public function sekolah()
+    public function instansi()
     {
-        return $this->belongsTo(Sekolah::class, 'sekolah_id');
+        return $this->belongsTo(Instansi::class, 'instansi_id');
     }
 
     public function users()
@@ -72,12 +72,12 @@ class LicenseKey extends Model
     }
 
     /**
-     * Scope: Get license aktif untuk sekolah tertentu
-     * Satu sekolah bisa punya banyak license, tapi hanya 1 yang aktif
+     * Scope: Get license aktif untuk instansi tertentu
+     * Satu instansi bisa punya banyak license, tapi hanya 1 yang aktif
      */
-    public static function getActiveLicenseBySekolah($sekolahId)
+    public static function getActiveLicenseByInstansi($instansiId)
     {
-        return self::where('sekolah_id', $sekolahId)
+        return self::where('instansi_id', $instansiId)
             ->where('status', self::STATUS_ACTIVE)
             ->where('tanggal_berakhir', '>=', \Carbon\Carbon::now())
             ->orderBy('tanggal_berakhir', 'desc')
@@ -85,32 +85,32 @@ class LicenseKey extends Model
     }
 
     /**
-     * Check apakah sekolah memiliki license yang aktif
+     * Check apakah instansi memiliki license yang aktif
      */
-    public static function hasActiveLicense($sekolahId)
+    public static function hasActiveLicense($instansiId)
     {
-        return self::getActiveLicenseBySekolah($sekolahId) !== null;
+        return self::getActiveLicenseByInstansi($instansiId) !== null;
     }
 
     /**
-     * Get riwayat license untuk sekolah tertentu
+     * Get riwayat license untuk instansi tertentu
      */
-    public static function getHistoryBySekolah($sekolahId)
+    public static function getHistoryByInstansi($instansiId)
     {
-        return self::where('sekolah_id', $sekolahId)
+        return self::where('instansi_id', $instansiId)
             ->orderBy('created_at', 'desc')
             ->get();
     }
 
     /**
-     * Nonaktifkan semua license aktif sekolah sebelum buat yang baru
+     * Nonaktifkan semua license aktif instansi sebelum buat yang baru
      * Ini opsional, tergantung business logic:
-     * - Jika 1 sekolah hanya boleh 1 license aktif: gunakan ini
+     * - Jika 1 instansi hanya boleh 1 license aktif: gunakan ini
      * - Jika boleh overlap: skip fungsi ini
      */
-    public static function deactivateOtherLicenses($sekolahId, $exceptLicenseId = null)
+    public static function deactivateOtherLicenses($instansiId, $exceptLicenseId = null)
     {
-        $query = self::where('sekolah_id', $sekolahId)
+        $query = self::where('instansi_id', $instansiId)
             ->where('status', self::STATUS_ACTIVE);
         
         if ($exceptLicenseId) {

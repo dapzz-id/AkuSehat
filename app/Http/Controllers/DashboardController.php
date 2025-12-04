@@ -8,8 +8,8 @@ use App\Models\User;
 use App\Models\Kesehatan;
 use App\Models\Hb;
 use App\Models\PeminjamanPita;
-use App\Models\Kelas;
-use App\Models\Sekolah;
+use App\Models\Divisi;
+use App\Models\Instansi;
 use App\Models\LicenseKey;
 use App\Models\SoftwareApp;
 use App\Models\MaintenanceMode;
@@ -22,7 +22,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         if ($user->isSuperAdmin()) {
-            $totalSekolah = Sekolah::count();
+            $totalInstansi = Instansi::count();
 
             $licenseAktif = LicenseKey::where('status', 'aktif')
                 ->where('tanggal_berakhir', '>=', now())
@@ -34,11 +34,11 @@ class DashboardController extends Controller
             // License yang akan expired dalam 30 hari
             $licenseAkanExpired = LicenseKey::where('status', 'active')
                 ->whereBetween('tanggal_berakhir', [now(), now()->addDays(30)])
-                ->with('sekolah')
+                ->with('instansi')
                 ->get();
 
-            // Sekolah terbaru
-            $sekolahTerbaru = Sekolah::orderBy('created_at', 'desc')
+            // Instansi terbaru
+            $instansiTerbaru = Instansi::orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get();
 
@@ -50,12 +50,12 @@ class DashboardController extends Controller
             $maintenanceMobile = MaintenanceMode::isMobileInMaintenance();
             
             return view('dashboard.superadmin', compact(
-                'totalSekolah',
+                'totalInstansi',
                 'licenseAktif',
                 'licenseExpired',
                 'totalUsers',
                 'licenseAkanExpired',
-                'sekolahTerbaru',
+                'instansiTerbaru',
                 'latestUpdate',
                 'maintenanceWeb',
                 'maintenanceMobile'
@@ -65,37 +65,42 @@ class DashboardController extends Controller
         if(!app()->isDownForMaintenance()){
             if ($user->isAdmin()) {
                 $data = [
-                    'total_member' => User::where('level', 'Member')->whereNotNull('sekolah_id')->where('sekolah_id', Auth::user()->sekolah_id)->count(),
-                    'total_kelas' => Kelas::where('sekolah_id', Auth::user()->sekolah_id)->count(),
-                    'data_kesehatan_bulan_ini' => Kesehatan::whereMonth('created_at', now()->month)->count(),
-                    'data_hb_bulan_ini' => Hb::whereMonth('created_at', now()->month)->count(),
+                    'total_member' => User::where('level', '!=', 'Admin Instansi')
+                                    ->whereNotNull('instansi_id')
+                                    ->where('instansi_id', Auth::user()->instansi_id)->count(),
+
+                    'total_divisi' => Divisi::where('instansi_id', Auth::user()->instansi_id)->count(),
+
+                    'data_kesehatan_tahun_ini' => Kesehatan::whereHas('user', function ($q) {
+                                                    $q->where('level', '!=', 'Admin Instansi')
+                                                    ->where('instansi_id', Auth::user()->instansi_id);
+                                                })
+                                                ->whereYear('tgl', now()->year)->count(),
+                    'data_hb_tahun_ini' => Hb::whereHas('user', function ($q) {
+                                                    $q->where('level', '!=', 'Admin Instansi')
+                                                    ->where('instansi_id', Auth::user()->instansi_id);
+                                                })
+                                                ->whereYear('tgl', now()->year)->count(),
                 ];
 
-                $dataByClass = Kelas::withCount([
+                $dataByClass = Divisi::withCount([
                     'users as total_member' => function ($query) {
-                        $query->where('level', 'Member')->whereNotNull('sekolah_id')->where('sekolah_id', Auth::user()->sekolah_id);
+                        $query->where('level', '=', 'Member')
+                        ->whereNotNull('instansi_id')
+                        ->where('instansi_id', Auth::user()->instansi_id);
                     },
                 ])
-                ->whereNotNull('sekolah_id')->where('sekolah_id', Auth::user()->sekolah_id)
+                ->whereNotNull('instansi_id')
+                ->where('instansi_id', Auth::user()->instansi_id)
                 ->with(['users' => function ($q) {
-                    $q->where('level', 'Member')->whereNotNull('sekolah_id')->where('sekolah_id', Auth::user()->sekolah_id)->with('kesehatan');
+                    $q->where('level', '!=', 'Admin Instansi')
+                    ->whereNotNull('instansi_id')
+                    ->where('instansi_id', Auth::user()->instansi_id)->with('kesehatan');
                 }])
+                ->orderBy('divisi_name', 'asc')
                 ->get();
 
                 return view('dashboard.admin', compact('data', 'dataByClass'));
-            }
-            
-            if ($user->isHealthMonitor()) {
-                $data = [
-                    'total_siswi' => User::where('level', 'Member')->where('jk', 'P')->whereNotNull('sekolah_id')->where('sekolah_id', Auth::user()->sekolah_id)->count(),
-                    'pinjaman_aktif' => PeminjamanPita::with('user')->where('status', 'dipinjam')->whereHas('user', function ($query) {
-                        $query->whereNotNull('sekolah_id')->where('sekolah_id', Auth::user()->sekolah_id);
-                    })->count(),
-                    'warning_count' => PeminjamanPita::with('user')->whereIn('status', ['dipinjam', 'terlambat'])->whereHas('user', function ($query) {
-                        $query->whereNotNull('sekolah_id')->where('sekolah_id', Auth::user()->sekolah_id);
-                    })->where('estimasi_selesai_haid', '<', now())->count(),
-                ];
-                return view('dashboard.guru-bk', compact('data'));
             }
 
             return redirect('/login');

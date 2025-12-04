@@ -17,14 +17,14 @@
         Data HB
     </a>
     
-    <a href="{{ route('admin.member.index') }}" 
-       class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('admin.member.*') ? 'bg-[#1B5E20] text-white shadow-soft' : 'text-primary-100 hover:bg-[#1B5E20] hover:text-white' }}">
+    <a href="{{ route('admin.users.index') }}" 
+       class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('admin.users.*') ? 'bg-[#1B5E20] text-white shadow-soft' : 'text-primary-100 hover:bg-[#1B5E20] hover:text-white' }}">
         <i class="fas fa-users mr-3"></i>
-        Data Member
+        Data Users
     </a>
     
-    <a href="{{ route('admin.kelas.index') }}" 
-       class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('admin.kelas.*') ? 'bg-[#1B5E20] text-white shadow-soft' : 'text-primary-100 hover:bg-[#1B5E20] hover:text-white' }}">
+    <a href="{{ route('admin.divisi.index') }}" 
+       class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('admin.divisi.*') ? 'bg-[#1B5E20] text-white shadow-soft' : 'text-primary-100 hover:bg-[#1B5E20] hover:text-white' }}">
         <i class="fas fa-school mr-3"></i>
         Data Divisi
     </a>

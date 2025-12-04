@@ -19,7 +19,7 @@ class UserApiController extends Controller
             ], 403);
         }
 
-        $member = User::with('kelas')
+        $member = User::with('divisi')
             ->where('level', 'Member')
             ->paginate(15);
 
@@ -29,7 +29,7 @@ class UserApiController extends Controller
         ]);
     }
 
-    public function getMemberByKelas(Request $request, $kelas_id)
+    public function getMemberByDivisi(Request $request, $divisi_id)
     {
         $user = $request->user();
         
@@ -40,9 +40,9 @@ class UserApiController extends Controller
             ], 403);
         }
 
-        $member = User::with('kelas')
+        $member = User::with('divisi')
             ->where('level', 'Member')
-            ->where('id_kelas', $kelas_id)
+            ->where('id_divisi', $divisi_id)
             ->get();
 
         return response()->json([
