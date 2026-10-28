@@ -148,6 +148,22 @@ const HomeScreenMember = () => {
       Animated.timing(slideMount, { toValue: 0, duration: 400, useNativeDriver: true }),
     ]).start();
   }, [fadeMount, slideMount]);
+
+  // Animated continuous light sweep (cahaya berjalan ke kanan)
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerAnim, {
+          toValue: 1,
+          duration: 2600,
+          useNativeDriver: true,
+        }),
+        Animated.delay(1600),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [shimmerAnim]);
   const hasFetchedKesehatan = useRef<string | null>(null);
   const hasFetchedHb = useRef<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -833,34 +849,36 @@ const HomeScreenMember = () => {
                 opacity: isAtlas ? (isDark ? 0.08 : 0.05) : (hasDivisi ? 0.04 : 0),
               }} 
             />
+            {/* Animated Light Sweep (cahaya berjalan ke samping kanan) */}
+            <Animated.View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  width: SCREEN_WIDTH * 0.95,
+                  opacity: shimmerOpacity,
+                  transform: [
+                    { translateX: shimmerTranslateX },
+                    { skewX: '-22deg' },
+                  ],
+                },
+              ]}
+            >
+              <Svg height="100%" width="100%">
+                <Defs>
+                  <SvgLinearGradient id="shimmerBeamMember" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <Stop offset="0%" stopColor={isAtlas ? effectivePrimary : tertiaryColor} stopOpacity="0" />
+                    <Stop offset="25%" stopColor={isAtlas ? effectiveSecondary : tertiaryColor} stopOpacity={isAtlas ? (isDark ? "0.25" : "0.18") : "0.12"} />
+                    <Stop offset="50%" stopColor="#ffffff" stopOpacity={isDark ? "0.70" : "0.90"} />
+                    <Stop offset="75%" stopColor={isAtlas ? effectivePrimary : tertiaryColor} stopOpacity={isAtlas ? (isDark ? "0.30" : "0.20") : "0.15"} />
+                    <Stop offset="100%" stopColor={isAtlas ? effectiveSecondary : tertiaryColor} stopOpacity="0" />
+                  </SvgLinearGradient>
+                </Defs>
+                <Rect x="0" y="0" width="100%" height="100%" fill="url(#shimmerBeamMember)" />
+              </Svg>
+            </Animated.View>
           </View>
           <View style={styles.headerRow}>
             <View style={styles.greetingContainer}>
-              {isAtlas && (
-                <View style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  alignSelf: 'flex-start',
-                  gap: horizontalScale(5),
-                  paddingHorizontal: horizontalScale(8),
-                  paddingVertical: verticalScale(2.5),
-                  borderRadius: moderateScale(12),
-                  backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF',
-                  borderWidth: 1,
-                  borderColor: isDark ? 'rgba(99, 102, 241, 0.45)' : '#C7D2FE',
-                  marginBottom: verticalScale(4),
-                }}>
-                  <Icon name="grid" size={10} color={isDark ? '#818CF8' : '#4F46E5'} />
-                  <Text style={{
-                    fontSize: moderateScale(10),
-                    fontWeight: '800',
-                    color: isDark ? '#A5B4FC' : '#4338CA',
-                    letterSpacing: 0.6,
-                  }}>
-                    ATLAS NEO PORTAL
-                  </Text>
-                </View>
-              )}
               {active === "profil" ? (
                 <View style={[styles.profileHeroTag, { backgroundColor: `${effectivePrimary}15` }]}>
                   <Icon name="user-check" size={11} color={effectivePrimary} />
@@ -2667,73 +2685,101 @@ const LauncherTile = ({
 }) => {
   const { theme, themeId, isDark } = useTheme();
   const isAtlas = themeId === 'atlas_modern';
+
+  if (!isAtlas) {
+    // EMERALD CLASSIC:
+    // Pure classic medical UI with soft circular pastel icon container and friendly card
+    return (
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.menuGridItem,
+          pressed && styles.menuGridItemPressed,
+        ]}
+      >
+        <View style={[styles.menuGridIconContainer, { backgroundColor: iconBgLight }]}>
+          <Icon name={icon as any} size={22} color={iconColor} />
+        </View>
+        <Text style={styles.menuGridItemTitle} numberOfLines={1}>
+          {title}
+        </Text>
+        <Text style={styles.menuGridItemSub} numberOfLines={1}>
+          {subtitle}
+        </Text>
+      </Pressable>
+    );
+  }
+
+  // ATLAS NEO MODERN:
+  // High-tech cyber squircle tile with glowing neon border, tech typography, and top-right micro-pill indicator
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
-        isAtlas
-          ? {
-              width: '31%',
-              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.7)' : '#FFFFFF',
-              borderRadius: moderateScale(16),
-              paddingVertical: verticalScale(14),
-              paddingHorizontal: horizontalScale(6),
-              alignItems: 'center',
-              borderWidth: 1.2,
-              borderColor: isDark ? 'rgba(99, 102, 241, 0.22)' : '#E0E7FF',
-              shadowColor: isDark ? '#000000' : 'rgba(79, 70, 229, 0.1)',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: isDark ? 0.3 : 0.08,
-              shadowRadius: 8,
-              elevation: 2,
-            }
-          : styles.menuGridItem,
-        pressed && (isAtlas ? { opacity: 0.8, transform: [{ scale: 0.95 }] } : styles.menuGridItemPressed),
+        {
+          width: '31%',
+          backgroundColor: isDark ? 'rgba(30, 41, 59, 0.75)' : '#FFFFFF',
+          borderRadius: moderateScale(18),
+          paddingVertical: verticalScale(13),
+          paddingHorizontal: horizontalScale(6),
+          alignItems: 'center',
+          position: 'relative',
+          borderWidth: 1.2,
+          borderColor: isDark ? 'rgba(99, 102, 241, 0.32)' : '#E0E7FF',
+          shadowColor: isDark ? '#000000' : 'rgba(79, 70, 229, 0.12)',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDark ? 0.35 : 0.08,
+          shadowRadius: 8,
+          elevation: 2,
+        },
+        pressed && { opacity: 0.82, transform: [{ scale: 0.95 }] },
       ]}
     >
       <View
-        style={[
-          isAtlas
-            ? {
-                width: moderateScale(46),
-                height: moderateScale(46),
-                borderRadius: moderateScale(14),
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: isDark ? iconBgDark : iconBgLight,
-                marginBottom: verticalScale(6),
-              }
-            : [styles.menuGridIconContainer, { backgroundColor: iconBgLight }],
-        ]}
+        style={{
+          position: 'absolute',
+          top: verticalScale(7),
+          right: horizontalScale(8),
+          opacity: isDark ? 0.75 : 0.55,
+        }}
       >
-        <Icon name={icon as any} size={22} color={iconColor} />
+        <Icon name="arrow-up-right" size={11} color={isDark ? '#22D3EE' : '#6366F1'} />
+      </View>
+      <View
+        style={{
+          width: moderateScale(46),
+          height: moderateScale(46),
+          borderRadius: moderateScale(14),
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: isDark ? iconBgDark : iconBgLight,
+          marginBottom: verticalScale(6),
+          borderWidth: isDark ? 1 : 0,
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+        }}
+      >
+        <Icon name={icon as any} size={21} color={iconColor} />
       </View>
       <Text
-        style={[
-          isAtlas
-            ? {
-                fontSize: moderateScale(12),
-                fontWeight: '700',
-                color: theme.text,
-                textAlign: 'center',
-              }
-            : styles.menuGridItemTitle,
-        ]}
+        style={{
+          fontSize: moderateScale(12),
+          fontWeight: '800',
+          color: theme.text,
+          textAlign: 'center',
+          letterSpacing: -0.2,
+        }}
         numberOfLines={1}
       >
         {title}
       </Text>
       <Text
-        style={[
-          isAtlas
-            ? {
-                fontSize: moderateScale(10),
-                color: theme.textSecondary,
-                textAlign: 'center',
-                marginTop: verticalScale(1),
-              }
-            : styles.menuGridItemSub,
-        ]}
+        style={{
+          fontSize: moderateScale(9.5),
+          fontWeight: '600',
+          color: theme.textSecondary,
+          textAlign: 'center',
+          marginTop: verticalScale(2),
+        }}
         numberOfLines={1}
       >
         {subtitle}
@@ -3825,9 +3871,9 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.97 }],
   },
   menuGridIconContainer: {
-    width: moderateScale(44),
-    height: moderateScale(44),
-    borderRadius: moderateScale(12),
+    width: moderateScale(46),
+    height: moderateScale(46),
+    borderRadius: moderateScale(23), // CIRCULAR for Emerald Classic
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: verticalScale(6),
