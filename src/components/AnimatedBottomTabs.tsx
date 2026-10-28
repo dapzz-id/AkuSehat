@@ -50,9 +50,10 @@ export default function AnimatedBottomTabs({ items, activeKey, onChange, themeCo
   const { width } = useWindowDimensions()
   const isTabletOrLandscape = width >= 600
   const isSmall = width < 360
-  const { theme, isDark } = useTheme()
+  const { theme, themeId, isDark } = useTheme()
 
-  const primaryColor = themeColor || theme.primary || Colors.primary
+  const isAtlas = themeId === 'atlas_modern'
+  const primaryColor = isAtlas ? theme.tabBarActive : (themeColor || theme.primary || Colors.primary)
   const bottomSafe = Math.max(insets.bottom, Platform.OS === 'ios' ? 16 : 8)
 
   return (
@@ -62,7 +63,9 @@ export default function AnimatedBottomTabs({ items, activeKey, onChange, themeCo
           styles.container,
           {
             backgroundColor: isDark ? (theme.tabBarBg || theme.surface || '#0F172A') : Colors.white,
-            borderTopColor: isDark ? (theme.tabBarBorder || theme.border || '#1E293B') : '#F1F5F9',
+            borderTopColor: isDark ? (theme.tabBarBorder || theme.border || '#1E293B') : (isAtlas ? '#E0E7FF' : '#F1F5F9'),
+            borderTopWidth: isAtlas ? 1.5 : 1,
+            shadowColor: isAtlas ? (isDark ? '#000000' : 'rgba(79, 70, 229, 0.25)') : '#0F172A',
             paddingBottom: bottomSafe,
             maxWidth: isTabletOrLandscape ? 680 : "100%",
             alignSelf: "center",

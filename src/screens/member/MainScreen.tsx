@@ -692,6 +692,12 @@ const HomeScreenMember = () => {
   const hasDivisi = Boolean(profile?.divisi || profile?.id_divisi);
   const tertiaryColor = profile?.color_cover || profile?.tertiary_color || Colors.defaultTertiary || '#2e7d32';
 
+  const isAtlas = themeId === 'atlas_modern';
+  const effectivePrimary = isAtlas ? (isDark ? '#6366F1' : '#4F46E5') : tertiaryColor;
+  const effectiveSecondary = isAtlas ? (isDark ? '#22D3EE' : '#06B6D4') : '#10B981';
+  const effectiveAccent = isAtlas ? (isDark ? '#A78BFA' : '#8B5CF6') : '#14B8A6';
+  const effectiveGlow = isAtlas ? theme.glow : tertiaryColor;
+
   const shimmerTranslateX = shimmerAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [-SCREEN_WIDTH * 0.9, SCREEN_WIDTH * 1.3],
@@ -728,57 +734,95 @@ const HomeScreenMember = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[tertiaryColor, Colors.primary]}
-            tintColor={tertiaryColor}
+            colors={[effectivePrimary, effectiveSecondary]}
+            tintColor={effectivePrimary}
           />
         }
       >
         <View style={[
           styles.header, 
           { 
-            shadowColor: isDark ? "#000" : (hasDivisi ? tertiaryColor : "#000"),
-            shadowOpacity: isDark ? 0.3 : (hasDivisi ? 0.16 : 0.08),
-            shadowRadius: 14,
-            borderColor: isDark ? (theme.border || '#334155') : (hasDivisi ? tertiaryColor + '30' : theme.border),
-            borderWidth: hasDivisi ? 1.2 : StyleSheet.hairlineWidth,
+            shadowColor: isDark ? "#000" : (isAtlas ? effectivePrimary : (hasDivisi ? tertiaryColor : "#000")),
+            shadowOpacity: isDark ? 0.35 : (isAtlas ? 0.18 : (hasDivisi ? 0.16 : 0.08)),
+            shadowRadius: isAtlas ? 16 : 14,
+            borderRadius: isAtlas ? moderateScale(22) : moderateScale(16),
+            borderColor: isDark ? (theme.border || '#334155') : (isAtlas ? '#E0E7FF' : (hasDivisi ? tertiaryColor + '30' : theme.border)),
+            borderWidth: isAtlas ? 1.5 : (hasDivisi ? 1.2 : StyleSheet.hairlineWidth),
             backgroundColor: theme.surface,
           }
         ]}>
-          {hasDivisi && (
-            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <View style={StyleSheet.absoluteFill} pointerEvents="none">
+            <View 
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: isAtlas ? 3.5 : 2.5,
+                backgroundColor: isAtlas ? effectivePrimary : (hasDivisi ? tertiaryColor : 'transparent'),
+                borderTopLeftRadius: isAtlas ? moderateScale(22) : moderateScale(16),
+                borderTopRightRadius: isAtlas ? moderateScale(22) : moderateScale(16),
+                opacity: 0.95,
+              }} 
+            />
+            {isAtlas && (
               <View 
                 style={{
                   position: 'absolute',
                   top: 0,
-                  left: 0,
                   right: 0,
-                  height: 2.5,
-                  backgroundColor: tertiaryColor,
-                  borderTopLeftRadius: moderateScale(16),
-                  borderTopRightRadius: moderateScale(16),
+                  width: '45%',
+                  height: 3.5,
+                  backgroundColor: effectiveSecondary,
+                  borderTopRightRadius: moderateScale(22),
                   opacity: 0.9,
                 }} 
               />
-              <View 
-                style={{
-                  position: 'absolute',
-                  top: -moderateScale(35),
-                  right: -moderateScale(25),
-                  width: moderateScale(160),
-                  height: moderateScale(160),
-                  borderRadius: moderateScale(80),
-                  backgroundColor: tertiaryColor,
-                  opacity: 0.04,
-                }} 
-              />
-            </View>
-          )}
+            )}
+            <View 
+              style={{
+                position: 'absolute',
+                top: -moderateScale(35),
+                right: -moderateScale(25),
+                width: moderateScale(160),
+                height: moderateScale(160),
+                borderRadius: moderateScale(80),
+                backgroundColor: effectivePrimary,
+                opacity: isAtlas ? (isDark ? 0.08 : 0.05) : (hasDivisi ? 0.04 : 0),
+              }} 
+            />
+          </View>
           <View style={styles.headerRow}>
             <View style={styles.greetingContainer}>
+              {isAtlas && (
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  alignSelf: 'flex-start',
+                  gap: horizontalScale(5),
+                  paddingHorizontal: horizontalScale(8),
+                  paddingVertical: verticalScale(2.5),
+                  borderRadius: moderateScale(12),
+                  backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF',
+                  borderWidth: 1,
+                  borderColor: isDark ? 'rgba(99, 102, 241, 0.45)' : '#C7D2FE',
+                  marginBottom: verticalScale(4),
+                }}>
+                  <Icon name="grid" size={10} color={isDark ? '#818CF8' : '#4F46E5'} />
+                  <Text style={{
+                    fontSize: moderateScale(10),
+                    fontWeight: '800',
+                    color: isDark ? '#A5B4FC' : '#4338CA',
+                    letterSpacing: 0.6,
+                  }}>
+                    ATLAS NEO PORTAL
+                  </Text>
+                </View>
+              )}
               {active === "profil" ? (
-                <View style={[styles.profileHeroTag, { backgroundColor: `${tertiaryColor}15` }]}>
-                  <Icon name="user-check" size={11} color={tertiaryColor} />
-                  <Text style={[styles.profileHeroTagText, { color: tertiaryColor }]}>
+                <View style={[styles.profileHeroTag, { backgroundColor: `${effectivePrimary}15` }]}>
+                  <Icon name="user-check" size={11} color={effectivePrimary} />
+                  <Text style={[styles.profileHeroTagText, { color: effectivePrimary }]}>
                     Profil Pengguna
                   </Text>
                 </View>
@@ -795,14 +839,14 @@ const HomeScreenMember = () => {
                   <View style={[
                     styles.divisiBadge, 
                     {
-                      backgroundColor: tertiaryColor + '14', 
-                      borderColor: tertiaryColor + '38',
+                      backgroundColor: isAtlas ? (isDark ? 'rgba(34, 211, 238, 0.15)' : 'rgba(6, 182, 212, 0.12)') : tertiaryColor + '14', 
+                      borderColor: isAtlas ? (isDark ? 'rgba(34, 211, 238, 0.4)' : 'rgba(6, 182, 212, 0.35)') : tertiaryColor + '38',
                       borderWidth: 1,
                       marginTop: 0,
                     }
                   ]}>
-                    <View style={[styles.divisiDot, { backgroundColor: tertiaryColor }]} />
-                    <Text style={[styles.divisiBadgeText, { color: tertiaryColor }]} numberOfLines={1}>
+                    <View style={[styles.divisiDot, { backgroundColor: isAtlas ? (isDark ? '#22D3EE' : '#0891B2') : tertiaryColor }]} />
+                    <Text style={[styles.divisiBadgeText, { color: isAtlas ? (isDark ? '#22D3EE' : '#0891B2') : tertiaryColor }]} numberOfLines={1}>
                       {profile.divisi}
                     </Text>
                   </View>
@@ -811,73 +855,116 @@ const HomeScreenMember = () => {
                   <View style={[
                     styles.divisiBadge,
                     {
-                      backgroundColor: '#0d948815',
-                      borderColor: '#0d948835',
+                      backgroundColor: isAtlas ? (isDark ? 'rgba(167, 139, 250, 0.18)' : '#F3E8FF') : '#0d948815',
+                      borderColor: isAtlas ? (isDark ? 'rgba(167, 139, 250, 0.4)' : '#DDD6FE') : '#0d948835',
                       borderWidth: 1,
                       marginTop: 0,
                     }
                   ]}>
-                    <Icon name="shield" size={10} color="#0d9488" />
-                    <Text style={[styles.divisiBadgeText, { color: '#0d9488' }]} numberOfLines={1}>
+                    <Icon name="shield" size={10} color={isAtlas ? (isDark ? '#C084FC' : '#7C3AED') : '#0d9488'} />
+                    <Text style={[styles.divisiBadgeText, { color: isAtlas ? (isDark ? '#C084FC' : '#7C3AED') : '#0d9488' }]} numberOfLines={1}>
                       {profile?.level || 'Member'}
                     </Text>
                   </View>
                 )}
               </View>
             </View>
-            <Pressable 
-              onPress={() => {
-                if (active === "profil") {
-                  setEditProfileModalVisible(true);
-                } else {
-                  setActive("profil");
-                }
-              }}
-              style={({ pressed }) => [
-                styles.profileBadge, 
-                { 
-                  backgroundColor: tertiaryColor + '12', 
-                  borderColor: tertiaryColor + '40',
-                  borderWidth: 1.5,
-                  shadowColor: tertiaryColor,
-                  shadowOpacity: 0.15,
-                  shadowRadius: 6,
-                  overflow: 'hidden' 
-                },
-                pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] }
-              ]}
-            >
-              {profile?.avatar ? (
-                <Image source={{ uri: profile.avatar }} style={{ width: '100%', height: '100%' }} />
-              ) : (
-                <Icon name="user" size={20} color={tertiaryColor} />
-              )}
-              {active === "profil" && (
-                <View style={[styles.avatarEditIconBadge, { backgroundColor: tertiaryColor }]}>
-                  <Icon name="camera" size={9} color={Colors.white} />
-                </View>
-              )}
-            </Pressable>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: horizontalScale(8) }}>
+              <Pressable
+                onPress={() => setThemeHubModalVisible(true)}
+                style={({ pressed }) => [
+                  {
+                    width: moderateScale(42),
+                    height: moderateScale(42),
+                    borderRadius: moderateScale(21),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: isAtlas ? (isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF') : '#ECFDF5',
+                    borderWidth: 1.5,
+                    borderColor: isAtlas ? (isDark ? 'rgba(99, 102, 241, 0.5)' : '#C7D2FE') : '#A7F3D0',
+                    shadowColor: effectivePrimary,
+                    shadowOpacity: isAtlas ? 0.25 : 0.1,
+                    shadowRadius: 4,
+                  },
+                  pressed && { opacity: 0.8, transform: [{ scale: 0.94 }] },
+                ]}
+              >
+                <Icon
+                  name={isAtlas ? (isDark ? 'moon' : 'sun') : 'layout'}
+                  size={18}
+                  color={effectivePrimary}
+                />
+              </Pressable>
+              <Pressable 
+                onPress={() => {
+                  if (active === "profil") {
+                    setEditProfileModalVisible(true);
+                  } else {
+                    setActive("profil");
+                  }
+                }}
+                style={({ pressed }) => [
+                  styles.profileBadge, 
+                  { 
+                    backgroundColor: isAtlas ? (isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF') : tertiaryColor + '12', 
+                    borderColor: isAtlas ? (isDark ? '#6366F1' : '#4F46E5') : tertiaryColor + '40',
+                    borderWidth: isAtlas ? 2 : 1.5,
+                    shadowColor: isAtlas ? (isDark ? '#6366F1' : '#4F46E5') : tertiaryColor,
+                    shadowOpacity: isAtlas ? 0.35 : 0.15,
+                    shadowRadius: isAtlas ? 8 : 6,
+                    overflow: 'hidden' 
+                  },
+                  pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] }
+                ]}
+              >
+                {profile?.avatar ? (
+                  <Image source={{ uri: profile.avatar }} style={{ width: '100%', height: '100%' }} />
+                ) : (
+                  <Icon name="user" size={20} color={effectivePrimary} />
+                )}
+                {active === "profil" && (
+                  <View style={[styles.avatarEditIconBadge, { backgroundColor: effectivePrimary }]}>
+                    <Icon name="camera" size={9} color={Colors.white} />
+                  </View>
+                )}
+              </Pressable>
+            </View>
           </View>
         </View>
 
         <Animated.View style={{ opacity: fadeTab }}>
           {active === "ringkasan" && (
             <View style={{ gap: verticalScale(12) }}>
-              <Card style={{ padding: isSmallScreen ? moderateScale(20) : moderateScale(24), borderTopWidth: 3.5, borderTopColor: tertiaryColor }}>
+              <Card style={{ padding: isSmallScreen ? moderateScale(20) : moderateScale(24), borderTopWidth: 3.5, borderTopColor: effectivePrimary }}>
                 <Pressable
                   onPress={() => setIsSummaryOpen(prev => !prev)}
                   style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: isSummaryOpen ? verticalScale(6) : 0 }}
                 >
-                  <Text style={styles.cardTitle}>Ringkasan Kesehatan</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(8) }}>
+                    <Text style={[styles.cardTitle, isAtlas && { color: theme.text }]}>Ringkasan Kesehatan</Text>
+                    {isAtlas && (
+                      <View style={{
+                        paddingHorizontal: horizontalScale(6),
+                        paddingVertical: verticalScale(2),
+                        borderRadius: moderateScale(6),
+                        backgroundColor: isDark ? 'rgba(34, 211, 238, 0.15)' : 'rgba(6, 182, 212, 0.12)',
+                        borderWidth: 1,
+                        borderColor: isDark ? 'rgba(34, 211, 238, 0.35)' : 'rgba(6, 182, 212, 0.25)',
+                      }}>
+                        <Text style={{ fontSize: moderateScale(9), fontWeight: '800', color: isDark ? '#22D3EE' : '#0891B2', textTransform: 'uppercase' }}>
+                          TELEMETRI
+                        </Text>
+                      </View>
+                    )}
+                  </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(8) }}>
                     {profile?.divisi ? (
-                      <View style={[styles.divisiPillSmall, { backgroundColor: tertiaryColor + '18' }]}>
-                        <Text style={[styles.divisiPillSmallText, { color: tertiaryColor }]}>{profile.divisi}</Text>
+                      <View style={[styles.divisiPillSmall, { backgroundColor: isAtlas ? (isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF') : tertiaryColor + '18' }]}>
+                        <Text style={[styles.divisiPillSmallText, { color: effectivePrimary }]}>{profile.divisi}</Text>
                       </View>
                     ) : null}
-                    <View style={[styles.collapseArrowBtn, { backgroundColor: tertiaryColor + '15' }]}>
-                      <Icon name={isSummaryOpen ? "chevron-up" : "chevron-down"} size={18} color={tertiaryColor} />
+                    <View style={[styles.collapseArrowBtn, { backgroundColor: isAtlas ? (isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF') : tertiaryColor + '15' }]}>
+                      <Icon name={isSummaryOpen ? "chevron-up" : "chevron-down"} size={18} color={effectivePrimary} />
                     </View>
                   </View>
                 </Pressable>
@@ -923,11 +1010,11 @@ const HomeScreenMember = () => {
                   ]}
                 >
                   <View style={{ flex: 1, paddingRight: moderateScale(10) }}>
-                    <Text style={styles.cardTitle}>Layanan & Fitur</Text>
-                    <Text style={styles.menuGridSubtitle}>Akses cepat fitur kesehatan Anda</Text>
+                    <Text style={[styles.cardTitle, isAtlas && { color: theme.text }]}>Layanan & Fitur</Text>
+                    <Text style={[styles.menuGridSubtitle, isAtlas && { color: theme.textSecondary }]}>Akses cepat fitur kesehatan Anda</Text>
                   </View>
-                  <View style={[styles.collapseArrowBtn, { backgroundColor: tertiaryColor + '15' }]}>
-                    <Icon name={isMenuGridOpen ? "chevron-up" : "chevron-down"} size={18} color={tertiaryColor} />
+                  <View style={[styles.collapseArrowBtn, { backgroundColor: isAtlas ? (isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF') : tertiaryColor + '15' }]}>
+                    <Icon name={isMenuGridOpen ? "chevron-up" : "chevron-down"} size={18} color={effectivePrimary} />
                   </View>
                 </Pressable>
 
@@ -1244,9 +1331,9 @@ const HomeScreenMember = () => {
                     </Pressable>
                     <Pressable
                       onPress={() => setIsChartOpen(prev => !prev)}
-                      style={[styles.collapseArrowBtn, { backgroundColor: tertiaryColor + '15' }]}
+                      style={[styles.collapseArrowBtn, { backgroundColor: isAtlas ? (isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF') : tertiaryColor + '15' }]}
                     >
-                      <Icon name={isChartOpen ? "chevron-up" : "chevron-down"} size={18} color={tertiaryColor} />
+                      <Icon name={isChartOpen ? "chevron-up" : "chevron-down"} size={18} color={effectivePrimary} />
                     </Pressable>
                   </View>
                 </View>
@@ -1259,8 +1346,8 @@ const HomeScreenMember = () => {
             <View style={{ gap: verticalScale(12) }}>
               <View style={styles.subScreenHeader}>
                 <Pressable onPress={() => setActive('ringkasan')} style={styles.backButton}>
-                  <Icon name="arrow-left" size={18} color={tertiaryColor} />
-                  <Text style={[styles.backButtonText, { color: tertiaryColor }]}>Ringkasan</Text>
+                  <Icon name="arrow-left" size={18} color={effectivePrimary} />
+                  <Text style={[styles.backButtonText, { color: effectivePrimary }]}>Ringkasan</Text>
                 </Pressable>
                 <Text style={styles.subScreenTitle}>Pusat Rekam Medis</Text>
               </View>
@@ -1270,7 +1357,7 @@ const HomeScreenMember = () => {
                 {isModActive('kesehatan') && (
                   <Pressable
                     onPress={() => setKesehatanSubTab('klinis')}
-                    style={[styles.subTabButton, kesehatanSubTab === 'klinis' && { backgroundColor: tertiaryColor }]}
+                    style={[styles.subTabButton, kesehatanSubTab === 'klinis' && { backgroundColor: effectivePrimary }]}
                   >
                     <Text style={[styles.subTabButtonText, kesehatanSubTab === 'klinis' && styles.subTabButtonTextActive]}>
                       Klinis
@@ -1280,7 +1367,7 @@ const HomeScreenMember = () => {
                 {isModActive('hemoglobin') && (
                   <Pressable
                     onPress={() => setKesehatanSubTab('hemoglobin')}
-                    style={[styles.subTabButton, kesehatanSubTab === 'hemoglobin' && { backgroundColor: tertiaryColor }]}
+                    style={[styles.subTabButton, kesehatanSubTab === 'hemoglobin' && { backgroundColor: effectivePrimary }]}
                   >
                     <Text style={[styles.subTabButtonText, kesehatanSubTab === 'hemoglobin' && styles.subTabButtonTextActive]}>
                       Hemoglobin
@@ -1290,7 +1377,7 @@ const HomeScreenMember = () => {
                 {isModActive('vitalitas') && (
                   <Pressable
                     onPress={() => setKesehatanSubTab('vital')}
-                    style={[styles.subTabButton, kesehatanSubTab === 'vital' && { backgroundColor: tertiaryColor }]}
+                    style={[styles.subTabButton, kesehatanSubTab === 'vital' && { backgroundColor: effectivePrimary }]}
                   >
                     <Text style={[styles.subTabButtonText, kesehatanSubTab === 'vital' && styles.subTabButtonTextActive]}>
                       Vitalitas
@@ -1459,8 +1546,8 @@ const HomeScreenMember = () => {
             <View style={{ gap: verticalScale(12) }}>
               <View style={styles.subScreenHeader}>
                 <Pressable onPress={() => setActive('ringkasan')} style={styles.backButton}>
-                  <Icon name="arrow-left" size={18} color={tertiaryColor} />
-                  <Text style={[styles.backButtonText, { color: tertiaryColor }]}>Ringkasan</Text>
+                  <Icon name="arrow-left" size={18} color={effectivePrimary} />
+                  <Text style={[styles.backButtonText, { color: effectivePrimary }]}>Ringkasan</Text>
                 </Pressable>
                 <Text style={styles.subScreenTitle}>Olahraga & Kebugaran</Text>
               </View>
@@ -1472,12 +1559,12 @@ const HomeScreenMember = () => {
             <View style={{ gap: verticalScale(12) }}>
               <View style={styles.subScreenHeader}>
                 <Pressable onPress={() => setActive('ringkasan')} style={styles.backButton}>
-                  <Icon name="arrow-left" size={18} color={tertiaryColor} />
-                  <Text style={[styles.backButtonText, { color: tertiaryColor }]}>Ringkasan</Text>
+                  <Icon name="arrow-left" size={18} color={effectivePrimary} />
+                  <Text style={[styles.backButtonText, { color: effectivePrimary }]}>Ringkasan</Text>
                 </Pressable>
                 <Text style={styles.subScreenTitle}>Konseling Kesehatan</Text>
               </View>
-              <CounselingMemberView themeColor={tertiaryColor} profile={profile} />
+              <CounselingMemberView themeColor={effectivePrimary} profile={profile} />
             </View>
           )}
 
@@ -1485,8 +1572,8 @@ const HomeScreenMember = () => {
             <View style={{ gap: verticalScale(12) }}>
               <View style={styles.subScreenHeader}>
                 <Pressable onPress={() => setActive('ringkasan')} style={styles.backButton}>
-                  <Icon name="arrow-left" size={18} color={tertiaryColor} />
-                  <Text style={[styles.backButtonText, { color: tertiaryColor }]}>Ringkasan</Text>
+                  <Icon name="arrow-left" size={18} color={effectivePrimary} />
+                  <Text style={[styles.backButtonText, { color: effectivePrimary }]}>Ringkasan</Text>
                 </Pressable>
                 <Text style={styles.subScreenTitle}>Ergonomi & Peregangan Postur</Text>
               </View>
@@ -1498,8 +1585,8 @@ const HomeScreenMember = () => {
             <View style={{ gap: verticalScale(12) }}>
               <View style={styles.subScreenHeader}>
                 <Pressable onPress={() => setActive('ringkasan')} style={styles.backButton}>
-                  <Icon name="arrow-left" size={18} color={tertiaryColor} />
-                  <Text style={[styles.backButtonText, { color: tertiaryColor }]}>Ringkasan</Text>
+                  <Icon name="arrow-left" size={18} color={effectivePrimary} />
+                  <Text style={[styles.backButtonText, { color: effectivePrimary }]}>Ringkasan</Text>
                 </Pressable>
                 <Text style={styles.subScreenTitle}>Skrining Burnout & Stres</Text>
               </View>
@@ -1511,8 +1598,8 @@ const HomeScreenMember = () => {
             <View style={{ gap: verticalScale(12) }}>
               <View style={styles.subScreenHeader}>
                 <Pressable onPress={() => setActive('ringkasan')} style={styles.backButton}>
-                  <Icon name="arrow-left" size={18} color={tertiaryColor} />
-                  <Text style={[styles.backButtonText, { color: tertiaryColor }]}>Ringkasan</Text>
+                  <Icon name="arrow-left" size={18} color={effectivePrimary} />
+                  <Text style={[styles.backButtonText, { color: effectivePrimary }]}>Ringkasan</Text>
                 </Pressable>
                 <Text style={styles.subScreenTitle}>Nutrisi & Pola Makan</Text>
               </View>
@@ -1524,8 +1611,8 @@ const HomeScreenMember = () => {
             <View style={{ gap: verticalScale(12) }}>
               <View style={styles.subScreenHeader}>
                 <Pressable onPress={() => setActive('ringkasan')} style={styles.backButton}>
-                  <Icon name="arrow-left" size={18} color={tertiaryColor} />
-                  <Text style={[styles.backButtonText, { color: tertiaryColor }]}>Ringkasan</Text>
+                  <Icon name="arrow-left" size={18} color={effectivePrimary} />
+                  <Text style={[styles.backButtonText, { color: effectivePrimary }]}>Ringkasan</Text>
                 </Pressable>
                 <Text style={styles.subScreenTitle}>Paspor Vaksinasi Digital</Text>
               </View>
@@ -1551,11 +1638,11 @@ const HomeScreenMember = () => {
 
                   {/* Card 2: Divisi */}
                   <View style={[styles.profileStatCard, { backgroundColor: theme.surface, borderColor: isDark ? theme.border : '#E2E8F0' }]}>
-                    <View style={[styles.profileStatIconBox, { backgroundColor: `${tertiaryColor}15` }]}>
-                      <Icon name="layers" size={15} color={tertiaryColor} />
+                    <View style={[styles.profileStatIconBox, { backgroundColor: `${effectivePrimary}15` }]}>
+                      <Icon name="layers" size={15} color={effectivePrimary} />
                     </View>
                     <Text style={[styles.profileStatLabel, { color: theme.textSecondary }]}>DIVISI</Text>
-                    <Text style={[styles.profileStatValue, { color: tertiaryColor }]} numberOfLines={1}>
+                    <Text style={[styles.profileStatValue, { color: effectivePrimary }]} numberOfLines={1}>
                       {profile.divisi || '-'}
                     </Text>
                   </View>
@@ -1592,15 +1679,15 @@ const HomeScreenMember = () => {
                         paddingHorizontal: horizontalScale(10),
                         paddingVertical: verticalScale(6),
                         borderRadius: moderateScale(8),
-                        backgroundColor: `${tertiaryColor}14`,
+                        backgroundColor: `${effectivePrimary}14`,
                         borderWidth: 1,
-                        borderColor: `${tertiaryColor}32`,
+                        borderColor: `${effectivePrimary}32`,
                       },
                       pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
                     ]}
                   >
-                    <Icon name="edit-3" size={12} color={tertiaryColor} />
-                    <Text style={{ fontSize: moderateScale(11.5), fontWeight: '700', color: tertiaryColor }}>Edit Profil</Text>
+                    <Icon name="edit-3" size={12} color={effectivePrimary} />
+                    <Text style={{ fontSize: moderateScale(11.5), fontWeight: '700', color: effectivePrimary }}>Edit Profil</Text>
                   </Pressable>
                 </View>
 
@@ -2157,7 +2244,7 @@ const HomeScreenMember = () => {
             avatar: updated.avatar,
           }));
         }}
-        themeColor={tertiaryColor}
+        themeColor={effectivePrimary}
       />
 
       {/* Modal Catatan Pembaruan (Changelog) */}
@@ -2220,18 +2307,29 @@ const HomeScreenMember = () => {
           </View>
         </View>
       </Modal>
-      <AnimatedBottomTabs items={tabs} activeKey={currentTabKey} onChange={setActive} themeColor={tertiaryColor} />
+      <AnimatedBottomTabs items={tabs} activeKey={currentTabKey} onChange={setActive} themeColor={isAtlas ? theme.tabBarActive : tertiaryColor} />
     </SafeAreaView>
   )
 }
 // Komponen helper
 const Card = ({ children, style }: { children: React.ReactNode; style?: any }) => {
-  const { theme, isDark } = useTheme();
+  const { theme, themeId, isDark } = useTheme();
+  const isAtlas = themeId === 'atlas_modern';
   return (
     <View
       style={[
         styles.card,
-        {
+        isAtlas ? {
+          backgroundColor: theme.surface,
+          borderRadius: moderateScale(22),
+          borderWidth: 1.2,
+          borderColor: isDark ? '#2A3854' : '#E0E7FF',
+          shadowColor: isDark ? '#000000' : 'rgba(79, 70, 229, 0.22)',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: isDark ? 0.35 : 0.12,
+          shadowRadius: 14,
+          elevation: 4,
+        } : {
           backgroundColor: theme.surface,
           borderColor: isDark ? (theme.border || '#334155') : theme.border,
           shadowColor: isDark ? '#000000' : '#0F172A',
@@ -2246,11 +2344,66 @@ const Card = ({ children, style }: { children: React.ReactNode; style?: any }) =
 };
 
 const Metric = ({ label, value, unit }: { label: string; value: string; unit: string }) => {
-  const { theme } = useTheme();
+  const { theme, themeId, isDark } = useTheme();
+  const isAtlas = themeId === 'atlas_modern';
+
+  if (isAtlas) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: isDark ? 'rgba(30, 41, 59, 0.55)' : '#F1F5F999',
+          borderRadius: moderateScale(14),
+          borderWidth: 1,
+          borderColor: isDark ? 'rgba(99, 102, 241, 0.25)' : '#E0E7FF',
+          paddingVertical: verticalScale(10),
+          paddingHorizontal: horizontalScale(4),
+          marginHorizontal: horizontalScale(2),
+        }}
+      >
+        <Text
+          style={{
+            color: isDark ? '#818CF8' : '#4F46E5',
+            fontSize: moderateScale(20),
+            fontWeight: '800',
+            letterSpacing: -0.5,
+          }}
+        >
+          {value}
+        </Text>
+        <Text
+          style={{
+            color: isDark ? '#22D3EE' : '#0891B2',
+            fontSize: moderateScale(10),
+            fontWeight: '700',
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+            marginTop: verticalScale(1),
+            marginBottom: verticalScale(2),
+          }}
+        >
+          {unit || ' '}
+        </Text>
+        <Text
+          style={{
+            color: theme.textSecondary,
+            fontSize: moderateScale(11),
+            fontWeight: '600',
+          }}
+          numberOfLines={1}
+        >
+          {label}
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.metric}>
-      <Text style={[styles.metricValue, { color: theme.primary }]}>{value}</Text>{/* */}
-      <Text style={[styles.metricUnit, { color: theme.textSecondary }]}>{unit}</Text>{/* */}
+      <Text style={[styles.metricValue, { color: theme.primary }]}>{value}</Text>
+      <Text style={[styles.metricUnit, { color: theme.textSecondary }]}>{unit}</Text>
       <Text style={[styles.metricLabel, { color: theme.text }]}>{label}</Text>
     </View>
   );
