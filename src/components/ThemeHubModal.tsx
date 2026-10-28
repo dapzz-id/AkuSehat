@@ -5,6 +5,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   ScrollView,
   ActivityIndicator,
   TextInput,
@@ -94,6 +95,9 @@ export const ThemeHubModal: React.FC<ThemeHubModalProps> = ({ visible, onClose }
       statusBarTranslucent={true}
     >
       <View style={styles.overlay}>
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={StyleSheet.absoluteFillObject} />
+        </TouchableWithoutFeedback>
         <View style={[styles.modalCard, { backgroundColor: theme.surface }]}>
           {/* Header */}
           <View style={[styles.headerRow, { borderBottomColor: theme.border }]}>
@@ -109,7 +113,7 @@ export const ThemeHubModal: React.FC<ThemeHubModalProps> = ({ visible, onClose }
             <TouchableOpacity
               onPress={onClose}
               style={[styles.closeBtn, { backgroundColor: theme.surfaceSubtle }]}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <Feather name="x" size={moderateScale(18)} color={theme.textSecondary} />
             </TouchableOpacity>
@@ -225,14 +229,12 @@ export const ThemeHubModal: React.FC<ThemeHubModalProps> = ({ visible, onClose }
               <Text style={[styles.sectionTitle, { color: theme.text }]}>Pilihan Tema</Text>
 
               {/* Theme 1: Emerald Classic (Bawaan) */}
-              <TouchableOpacity
+              <View
                 style={[
                   styles.themeCard,
                   { backgroundColor: theme.card, borderColor: themeId === 'emerald' ? '#059669' : theme.cardBorder },
                   themeId === 'emerald' && styles.themeCardActive,
                 ]}
-                onPress={() => setTheme('emerald')}
-                activeOpacity={0.88}
               >
                 <View style={styles.themeCardHeader}>
                   <View style={styles.themeBadgeBawaan}>
@@ -259,7 +261,41 @@ export const ThemeHubModal: React.FC<ThemeHubModalProps> = ({ visible, onClose }
                   <View style={[styles.swatchCircle, { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#CBD5E1' }]} />
                   <Text style={[styles.swatchLabel, { color: theme.muted }]}>4 Palet Utama</Text>
                 </View>
-              </TouchableOpacity>
+
+                {/* Actions: Apply Emerald */}
+                <View style={{ marginTop: verticalScale(12) }}>
+                  {themeId === 'emerald' ? (
+                    <View
+                      style={[
+                        styles.applyThemeBtn,
+                        styles.applyThemeBtnDisabled,
+                        { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0', borderWidth: 1 },
+                      ]}
+                    >
+                      <Feather name="check" size={moderateScale(15)} color="#059669" />
+                      <Text style={[styles.applyThemeBtnText, { color: '#059669' }]}>
+                        Sedang Digunakan
+                      </Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.applyThemeBtn, { backgroundColor: '#059669' }]}
+                      onPress={async () => {
+                        const success = await setTheme('emerald');
+                        if (success) {
+                          Alert.alert('Tema Diterapkan', 'Tema Emerald Classic berhasil diaktifkan.', [
+                            { text: 'OK' },
+                          ]);
+                        }
+                      }}
+                      activeOpacity={0.85}
+                    >
+                      <Feather name="check-circle" size={moderateScale(15)} color="#FFFFFF" />
+                      <Text style={styles.applyThemeBtnText}>Gunakan Tema Emerald</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
 
               {/* Theme 2: Atlas Neo Modern (Download On-Demand) */}
               <View
@@ -333,20 +369,36 @@ export const ThemeHubModal: React.FC<ThemeHubModalProps> = ({ visible, onClose }
                   </View>
                 ) : isDownloaded ? (
                   <View style={styles.downloadedActionsRow}>
-                    <TouchableOpacity
-                      style={[
-                        styles.applyThemeBtn,
-                        themeId === 'atlas_modern' && styles.applyThemeBtnDisabled,
-                      ]}
-                      onPress={() => setTheme('atlas_modern')}
-                      disabled={themeId === 'atlas_modern'}
-                      activeOpacity={0.85}
-                    >
-                      <Feather name="check" size={moderateScale(15)} color="#FFFFFF" />
-                      <Text style={styles.applyThemeBtnText}>
-                        {themeId === 'atlas_modern' ? 'Sedang Digunakan' : 'Terapkan Tema'}
-                      </Text>
-                    </TouchableOpacity>
+                    {themeId === 'atlas_modern' ? (
+                      <View
+                        style={[
+                          styles.applyThemeBtn,
+                          styles.applyThemeBtnDisabled,
+                          { backgroundColor: '#EEF2FF', borderColor: '#C7D2FE', borderWidth: 1 },
+                        ]}
+                      >
+                        <Feather name="check" size={moderateScale(15)} color="#4F46E5" />
+                        <Text style={[styles.applyThemeBtnText, { color: '#4F46E5' }]}>
+                          Sedang Digunakan
+                        </Text>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        style={[styles.applyThemeBtn, { backgroundColor: '#4F46E5' }]}
+                        onPress={async () => {
+                          const success = await setTheme('atlas_modern');
+                          if (success) {
+                            Alert.alert('Tema Diterapkan', 'Tema Atlas Neo Modern berhasil diaktifkan.', [
+                              { text: 'OK' },
+                            ]);
+                          }
+                        }}
+                        activeOpacity={0.85}
+                      >
+                        <Feather name="check-circle" size={moderateScale(15)} color="#FFFFFF" />
+                        <Text style={styles.applyThemeBtnText}>Gunakan Tema Atlas Neo</Text>
+                      </TouchableOpacity>
+                    )}
 
                     <TouchableOpacity
                       style={styles.deleteThemeBtn}
@@ -406,6 +458,21 @@ export const ThemeHubModal: React.FC<ThemeHubModalProps> = ({ visible, onClose }
                 )}
               </View>
             </View>
+
+            {/* Bottom Close Button */}
+            <TouchableOpacity
+              style={[
+                styles.bottomCloseBtn,
+                { backgroundColor: theme.surfaceSubtle, borderColor: theme.border },
+              ]}
+              onPress={onClose}
+              activeOpacity={0.8}
+            >
+              <Feather name="x" size={moderateScale(15)} color={theme.textSecondary} />
+              <Text style={[styles.bottomCloseBtnText, { color: theme.textSecondary }]}>
+                Tutup Jendela
+              </Text>
+            </TouchableOpacity>
           </ScrollView>
         </View>
       </View>
@@ -699,6 +766,20 @@ const styles = StyleSheet.create({
   urlTextInput: {
     fontSize: moderateScale(11),
     padding: 0,
+  },
+  bottomCloseBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: scale(6),
+    paddingVertical: verticalScale(12),
+    borderRadius: moderateScale(12),
+    borderWidth: 1,
+    marginTop: verticalScale(8),
+  },
+  bottomCloseBtnText: {
+    fontSize: moderateScale(12.5),
+    fontWeight: '700',
   },
 });
 

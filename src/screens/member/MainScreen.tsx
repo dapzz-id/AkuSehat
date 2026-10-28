@@ -1709,7 +1709,7 @@ const HomeScreenMember = () => {
                     subtitle={
                       themeId === 'atlas_modern'
                         ? `Atlas Neo Modern • Mode ${isDark ? 'Gelap' : 'Terang'}`
-                        : `Emerald Classic • Mode ${isDark ? 'Gelap' : 'Terang'}`
+                        : `Emerald Classic • Mode Terang (Bawaan)`
                     }
                     onPress={() => setThemeHubModalVisible(true)}
                   />
