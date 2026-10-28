@@ -135,10 +135,19 @@ const moderateScale = (size: number, factor = 0.5) => size + (horizontalScale(si
 const HomeScreenMember = () => {
   const navigation = useNavigation<any>();
   const [active, setActive] = useState("ringkasan")
-  const fadeMount = useRef(new Animated.Value(0)).current
-  const slideMount = useRef(new Animated.Value(16)).current
+  const fadeMount = useRef(new Animated.Value(1)).current
+  const slideMount = useRef(new Animated.Value(0)).current
   const fadeTab = useRef(new Animated.Value(1)).current
   const shimmerAnim = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    fadeMount.setValue(0);
+    slideMount.setValue(12);
+    Animated.parallel([
+      Animated.timing(fadeMount, { toValue: 1, duration: 400, useNativeDriver: true }),
+      Animated.timing(slideMount, { toValue: 0, duration: 400, useNativeDriver: true }),
+    ]).start();
+  }, [fadeMount, slideMount]);
   const hasFetchedKesehatan = useRef<string | null>(null);
   const hasFetchedHb = useRef<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -229,7 +238,7 @@ const HomeScreenMember = () => {
   const [editProfileModalVisible, setEditProfileModalVisible] = useState(false)
   // State untuk theme hub modal
   const [themeHubModalVisible, setThemeHubModalVisible] = useState(false)
-  const { themeId, isDark } = useTheme()
+  const { theme, themeId, isDark } = useTheme()
   // State untuk changelog modal
   const [changelogModalVisible, setChangelogModalVisible] = useState(false)
   // State untuk check update modal
@@ -701,11 +710,12 @@ const HomeScreenMember = () => {
   }, [active, tabs]);
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={[styles.safe, { flex: 1 }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.bg} />
+    <SafeAreaView edges={["top", "left", "right"]} style={[styles.safe, { flex: 1, backgroundColor: theme.bg }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={theme.bg} />
       <ScrollView
         contentContainerStyle={[styles.scroll, {
           flexGrow: 1,
+          backgroundColor: theme.bg,
           paddingBottom: verticalScale(120),
           paddingTop: verticalScale(30),
           paddingHorizontal: isSmallScreen ? horizontalScale(12) : horizontalScale(16)
@@ -723,21 +733,19 @@ const HomeScreenMember = () => {
           />
         }
       >
-        <Animated.View style={[
+        <View style={[
           styles.header, 
           { 
-            opacity: fadeMount, 
-            transform: [{ translateY: slideMount }],
-            shadowColor: hasDivisi ? tertiaryColor : "#000",
-            shadowOpacity: hasDivisi ? 0.16 : 0.08,
+            shadowColor: isDark ? "#000" : (hasDivisi ? tertiaryColor : "#000"),
+            shadowOpacity: isDark ? 0.3 : (hasDivisi ? 0.16 : 0.08),
             shadowRadius: 14,
-            borderColor: hasDivisi ? tertiaryColor + '30' : Colors.border,
+            borderColor: isDark ? (theme.border || '#334155') : (hasDivisi ? tertiaryColor + '30' : theme.border),
             borderWidth: hasDivisi ? 1.2 : StyleSheet.hairlineWidth,
+            backgroundColor: theme.surface,
           }
         ]}>
           {hasDivisi && (
             <View style={StyleSheet.absoluteFill} pointerEvents="none">
-              {/* Subtle top accent line with rounded corners */}
               <View 
                 style={{
                   position: 'absolute',
@@ -751,7 +759,6 @@ const HomeScreenMember = () => {
                   opacity: 0.9,
                 }} 
               />
-              {/* Soft ambient glow in top right */}
               <View 
                 style={{
                   position: 'absolute',
@@ -764,37 +771,8 @@ const HomeScreenMember = () => {
                   opacity: 0.04,
                 }} 
               />
-              {/* Animated Light Sweep (cahaya berjalan ke samping sesuai warna divisi) */}
-              <Animated.View
-                style={[
-                  StyleSheet.absoluteFill,
-                  {
-                    width: SCREEN_WIDTH * 0.85,
-                    opacity: shimmerOpacity,
-                    transform: [
-                      { translateX: shimmerTranslateX },
-                      { skewX: '-22deg' },
-                    ],
-                  },
-                ]}
-              >
-                <Svg height="100%" width="100%">
-                  <Defs>
-                    <SvgLinearGradient id="shimmerBeam" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <Stop offset="0%" stopColor={tertiaryColor} stopOpacity="0" />
-                      <Stop offset="30%" stopColor={tertiaryColor} stopOpacity="0.10" />
-                      <Stop offset="48%" stopColor="#ffffff" stopOpacity="0.65" />
-                      <Stop offset="52%" stopColor={tertiaryColor} stopOpacity="0.30" />
-                      <Stop offset="70%" stopColor={tertiaryColor} stopOpacity="0.12" />
-                      <Stop offset="100%" stopColor={tertiaryColor} stopOpacity="0" />
-                    </SvgLinearGradient>
-                  </Defs>
-                  <Rect x="0" y="0" width="100%" height="100%" fill="url(#shimmerBeam)" />
-                </Svg>
-              </Animated.View>
             </View>
           )}
-
           <View style={styles.headerRow}>
             <View style={styles.greetingContainer}>
               {active === "profil" ? (
@@ -805,11 +783,11 @@ const HomeScreenMember = () => {
                   </Text>
                 </View>
               ) : (
-                <Text style={styles.greet}>
+                <Text style={[styles.greet, { color: theme.textSecondary }]}>
                   {getGreetingTime()},
                 </Text>
               )}
-              <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">
+              <Text style={[styles.name, { color: theme.text }]} numberOfLines={2} ellipsizeMode="tail">
                 {profile?.nama || "Member"}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: horizontalScale(6), flexWrap: 'wrap', marginTop: verticalScale(3) }}>
@@ -881,7 +859,7 @@ const HomeScreenMember = () => {
               )}
             </Pressable>
           </View>
-        </Animated.View>
+        </View>
 
         <Animated.View style={{ opacity: fadeTab }}>
           {active === "ringkasan" && (
@@ -1561,34 +1539,34 @@ const HomeScreenMember = () => {
               {profile && (
                 <View style={styles.profileStatGrid}>
                   {/* Card 1: Peran */}
-                  <View style={styles.profileStatCard}>
+                  <View style={[styles.profileStatCard, { backgroundColor: theme.surface, borderColor: isDark ? theme.border : '#E2E8F0' }]}>
                     <View style={[styles.profileStatIconBox, { backgroundColor: '#f0fdf4' }]}>
                       <Icon name="shield" size={15} color="#0d9488" />
                     </View>
-                    <Text style={styles.profileStatLabel}>PERAN</Text>
-                    <Text style={styles.profileStatValue} numberOfLines={1}>
+                    <Text style={[styles.profileStatLabel, { color: theme.textSecondary }]}>PERAN</Text>
+                    <Text style={[styles.profileStatValue, { color: theme.text }]} numberOfLines={1}>
                       {profile.level || 'Member'}
                     </Text>
                   </View>
 
                   {/* Card 2: Divisi */}
-                  <View style={styles.profileStatCard}>
+                  <View style={[styles.profileStatCard, { backgroundColor: theme.surface, borderColor: isDark ? theme.border : '#E2E8F0' }]}>
                     <View style={[styles.profileStatIconBox, { backgroundColor: `${tertiaryColor}15` }]}>
                       <Icon name="layers" size={15} color={tertiaryColor} />
                     </View>
-                    <Text style={styles.profileStatLabel}>DIVISI</Text>
+                    <Text style={[styles.profileStatLabel, { color: theme.textSecondary }]}>DIVISI</Text>
                     <Text style={[styles.profileStatValue, { color: tertiaryColor }]} numberOfLines={1}>
                       {profile.divisi || '-'}
                     </Text>
                   </View>
 
                   {/* Card 3: Nomor Induk */}
-                  <View style={styles.profileStatCard}>
+                  <View style={[styles.profileStatCard, { backgroundColor: theme.surface, borderColor: isDark ? theme.border : '#E2E8F0' }]}>
                     <View style={[styles.profileStatIconBox, { backgroundColor: '#eff6ff' }]}>
                       <Icon name="credit-card" size={15} color="#2563eb" />
                     </View>
-                    <Text style={styles.profileStatLabel}>NO. INDUK</Text>
-                    <Text style={styles.profileStatValue} numberOfLines={1}>
+                    <Text style={[styles.profileStatLabel, { color: theme.textSecondary }]}>NO. INDUK</Text>
+                    <Text style={[styles.profileStatValue, { color: theme.text }]} numberOfLines={1}>
                       {profile.nomor_induk || '-'}
                     </Text>
                   </View>
@@ -1599,8 +1577,8 @@ const HomeScreenMember = () => {
               <Card>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: verticalScale(8) }}>
                   <View style={{ flex: 1, marginRight: horizontalScale(8) }}>
-                    <Text style={styles.cardTitle}>Informasi Pribadi</Text>
-                    <Text style={{ fontSize: moderateScale(11), color: Colors.muted, marginTop: verticalScale(1) }}>
+                    <Text style={[styles.cardTitle, { color: theme.text }]}>Informasi Pribadi</Text>
+                    <Text style={{ fontSize: moderateScale(11), color: theme.textSecondary, marginTop: verticalScale(1) }}>
                       Data identitas dan keanggotaan institusi
                     </Text>
                   </View>
@@ -1684,8 +1662,8 @@ const HomeScreenMember = () => {
               {/* Card 2: Pengaturan & Keamanan */}
               <Card>
                 <View style={{ marginBottom: verticalScale(6) }}>
-                  <Text style={styles.cardTitle}>Akun & Keamanan</Text>
-                  <Text style={{ fontSize: moderateScale(11), color: Colors.muted, marginTop: verticalScale(1) }}>
+                  <Text style={[styles.cardTitle, { color: theme.text }]}>Akun & Keamanan</Text>
+                  <Text style={{ fontSize: moderateScale(11), color: theme.textSecondary, marginTop: verticalScale(1) }}>
                     Kelola kata sandi dan sesi akun Anda
                   </Text>
                 </View>
@@ -2247,16 +2225,37 @@ const HomeScreenMember = () => {
   )
 }
 // Komponen helper
-const Card = ({ children, style }: { children: React.ReactNode; style?: any }) => (
-  <View style={[styles.card, style]}>{children}</View>
-)
-const Metric = ({ label, value, unit }: { label: string; value: string; unit: string }) => (
-  <View style={styles.metric}>
-    <Text style={styles.metricValue}>{value}</Text>{/* */}
-    <Text style={styles.metricUnit}>{unit}</Text>{/* */}
-    <Text style={styles.metricLabel}>{label}</Text>
-  </View>
-)
+const Card = ({ children, style }: { children: React.ReactNode; style?: any }) => {
+  const { theme, isDark } = useTheme();
+  return (
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.surface,
+          borderColor: isDark ? (theme.border || '#334155') : theme.border,
+          shadowColor: isDark ? '#000000' : '#0F172A',
+          shadowOpacity: isDark ? 0.3 : 0.08,
+        },
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
+};
+
+const Metric = ({ label, value, unit }: { label: string; value: string; unit: string }) => {
+  const { theme } = useTheme();
+  return (
+    <View style={styles.metric}>
+      <Text style={[styles.metricValue, { color: theme.primary }]}>{value}</Text>{/* */}
+      <Text style={[styles.metricUnit, { color: theme.textSecondary }]}>{unit}</Text>{/* */}
+      <Text style={[styles.metricLabel, { color: theme.text }]}>{label}</Text>
+    </View>
+  );
+};
+
 interface ProfileRowProps {
   icon: string;
   iconBg: string;
@@ -2280,15 +2279,16 @@ const ProfileRow = ({
   isLast = false,
   numberOfLines = 1,
 }: ProfileRowProps) => {
+  const { theme } = useTheme();
   const displayVal = value && value.trim() !== '' && value !== '-' ? value : null;
 
   return (
-    <View style={[styles.profileRowContainer, !isLast && styles.profileRowDivider]}>
+    <View style={[styles.profileRowContainer, !isLast && [styles.profileRowDivider, { borderBottomColor: theme.divider || theme.border }]]}>
       <View style={styles.profileRowLeft}>
         <View style={[styles.profileRowIconBox, { backgroundColor: iconBg }]}>
           <Icon name={icon as any} size={16} color={iconColor} />
         </View>
-        <Text style={styles.profileRowLabel} numberOfLines={1}>
+        <Text style={[styles.profileRowLabel, { color: theme.textSecondary }]} numberOfLines={1}>
           {label}
         </Text>
       </View>
@@ -2313,8 +2313,7 @@ const ProfileRow = ({
         ) : (
           <Text
             style={[
-              styles.profileRowValue,
-              !displayVal && styles.profileRowValueEmpty,
+              displayVal ? [styles.profileRowValue, { color: theme.text }] : [styles.profileRowValueEmpty, { color: theme.muted }],
             ]}
             numberOfLines={numberOfLines}
             ellipsizeMode="tail"
@@ -2347,34 +2346,37 @@ const AccountActionItem = ({
   onPress,
   isDanger = false,
   isLast = false,
-}: AccountActionItemProps) => (
-  <Pressable
-    onPress={onPress}
-    style={({ pressed }) => [
-      styles.actionItem,
-      !isLast && styles.actionItemDivider,
-      pressed && styles.actionItemPressed,
-    ]}
-  >
-    <View style={[styles.actionIconBox, { backgroundColor: iconBg }]}>
-      <Icon name={icon as any} size={18} color={iconColor} />
-    </View>
-    <View style={styles.actionTextBox}>
-      <Text style={[styles.actionTitle, isDanger && { color: '#dc2626' }]} numberOfLines={1}>
-        {title}
-      </Text>
-      <Text style={[styles.actionSubtitle, isDanger && { color: '#ef4444' }]} numberOfLines={1}>
-        {subtitle}
-      </Text>
-    </View>
-    <Icon
-      name="chevron-right"
-      size={18}
-      color={isDanger ? '#f87171' : Colors.muted}
-      style={{ opacity: 0.6 }}
-    />
-  </Pressable>
-);
+}: AccountActionItemProps) => {
+  const { theme, isDark } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.actionItem,
+        !isLast && [styles.actionItemDivider, { borderBottomColor: theme.divider || theme.border }],
+        pressed && [styles.actionItemPressed, { backgroundColor: isDark ? '#33415550' : '#F8FAFC' }],
+      ]}
+    >
+      <View style={[styles.actionIconBox, { backgroundColor: iconBg }]}>
+        <Icon name={icon as any} size={18} color={iconColor} />
+      </View>
+      <View style={styles.actionTextBox}>
+        <Text style={[styles.actionTitle, { color: isDanger ? '#dc2626' : theme.text }]} numberOfLines={1}>
+          {title}
+        </Text>
+        <Text style={[styles.actionSubtitle, { color: isDanger ? '#ef4444' : theme.textSecondary }]} numberOfLines={1}>
+          {subtitle}
+        </Text>
+      </View>
+      <Icon
+        name="chevron-right"
+        size={18}
+        color={isDanger ? '#f87171' : theme.muted}
+        style={{ opacity: 0.6 }}
+      />
+    </Pressable>
+  );
+};
 const TipCard = ({ title, text, style }: { title: string; text: string; style?: any }) => (
   <View style={[styles.tipCard, style]}>
     <Icon name="info" size={20} color={Colors.white} />{/* */}

@@ -13,6 +13,7 @@ import {
 import { Colors } from "../settings/Colors"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { moderateScale, horizontalScale, verticalScale } from "../utils/responsive"
+import { useTheme } from "../theme/ThemeContext"
 
 export type TabItem = {
   key: string
@@ -49,8 +50,9 @@ export default function AnimatedBottomTabs({ items, activeKey, onChange, themeCo
   const { width } = useWindowDimensions()
   const isTabletOrLandscape = width >= 600
   const isSmall = width < 360
+  const { theme, isDark } = useTheme()
 
-  const primaryColor = themeColor || Colors.primary
+  const primaryColor = themeColor || theme.primary || Colors.primary
   const bottomSafe = Math.max(insets.bottom, Platform.OS === 'ios' ? 16 : 8)
 
   return (
@@ -59,6 +61,8 @@ export default function AnimatedBottomTabs({ items, activeKey, onChange, themeCo
         style={[
           styles.container,
           {
+            backgroundColor: isDark ? (theme.tabBarBg || theme.surface || '#0F172A') : Colors.white,
+            borderTopColor: isDark ? (theme.tabBarBorder || theme.border || '#1E293B') : '#F1F5F9',
             paddingBottom: bottomSafe,
             maxWidth: isTabletOrLandscape ? 680 : "100%",
             alignSelf: "center",
@@ -143,7 +147,8 @@ function TabButton({
     outputRange: ["rgba(241, 245, 249, 0)", primaryColor + "14"], // 8% opacity tint
   })
 
-  const iconTint = active ? primaryColor : Colors.muted
+  const { theme, isDark } = useTheme()
+  const iconTint = active ? primaryColor : (isDark ? theme.textSecondary : Colors.muted)
 
   return (
     <Pressable
@@ -187,7 +192,7 @@ function TabButton({
             styles.tabLabel,
             {
               fontSize: isSmall ? moderateScale(9.5) : moderateScale(11),
-              color: active ? primaryColor : Colors.muted,
+              color: active ? primaryColor : (isDark ? theme.textSecondary : Colors.muted),
               fontWeight: active ? "700" : "500",
             },
           ]}

@@ -69,12 +69,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return emeraldTheme;
   }, [themeId, modernThemeDef]);
 
-  // Current active color palette
+  // Current active color palette: Emerald is strictly Light Mode; Dark Mode is exclusive to Atlas Neo Modern
   const theme: ThemeColorPalette = useMemo(() => {
-    return mode === 'dark' ? currentThemeDef.dark : currentThemeDef.light;
-  }, [currentThemeDef, mode]);
+    const effectiveMode = themeId === 'atlas_modern' ? mode : 'light';
+    return effectiveMode === 'dark' ? currentThemeDef.dark : currentThemeDef.light;
+  }, [currentThemeDef, mode, themeId]);
 
-  const isDark = mode === 'dark';
+  const isDark = themeId === 'atlas_modern' && mode === 'dark';
 
   // Switch Theme
   const setTheme = useCallback(
@@ -106,6 +107,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           );
           return false;
         }
+      } else {
+        // When switching back to Emerald Classic, always reset to Light Mode
+        setModeState('light');
+        await saveThemeMode('light');
       }
 
       setThemeIdState(newId);
@@ -115,16 +120,35 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     [modernThemeDef]
   );
 
-  // Switch Mode (light / dark)
-  const setMode = useCallback(async (newMode: ThemeMode) => {
-    setModeState(newMode);
-    await saveThemeMode(newMode);
-  }, []);
+  // Switch Mode (light / dark) - Dark Mode is exclusive to Atlas Neo Modern
+  const setMode = useCallback(
+    async (newMode: ThemeMode) => {
+      if (themeId !== 'atlas_modern' && newMode === 'dark') {
+        Alert.alert(
+          'Mode Gelap Eksklusif',
+          'Mode Gelap hanya tersedia untuk tema Atlas Neo Modern. Silakan terapkan tema Atlas Neo Modern terlebih dahulu.',
+          [{ text: 'Mengerti' }]
+        );
+        return;
+      }
+      setModeState(newMode);
+      await saveThemeMode(newMode);
+    },
+    [themeId]
+  );
 
   const toggleDarkMode = useCallback(async () => {
+    if (themeId !== 'atlas_modern') {
+      Alert.alert(
+        'Mode Gelap Eksklusif',
+        'Mode Gelap hanya tersedia untuk tema Atlas Neo Modern. Silakan terapkan tema Atlas Neo Modern terlebih dahulu.',
+        [{ text: 'Mengerti' }]
+      );
+      return;
+    }
     const nextMode = mode === 'dark' ? 'light' : 'dark';
     await setMode(nextMode);
-  }, [mode, setMode]);
+  }, [themeId, mode, setMode]);
 
   // Download Theme from GitHub / Custom URL
   const downloadTheme = useCallback(
