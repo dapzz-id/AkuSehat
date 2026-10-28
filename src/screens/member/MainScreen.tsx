@@ -715,6 +715,48 @@ const HomeScreenMember = () => {
     return 'ringkasan';
   }, [active, tabs]);
 
+  const bmiInfo = useMemo(() => {
+    const val = summary?.bmi ?? 0;
+    if (val === 0) {
+      return {
+        val: 0,
+        status: "Belum Ada Data",
+        color: theme.textSecondary,
+        bg: isDark ? "rgba(148, 163, 184, 0.15)" : "#F1F5F9",
+      };
+    }
+    if (val < 18.5) {
+      return {
+        val,
+        status: "Kurang Berat",
+        color: isDark ? "#FBBF24" : "#D97706",
+        bg: isDark ? "rgba(245, 158, 11, 0.18)" : "#FFFBEB",
+      };
+    }
+    if (val <= 24.9) {
+      return {
+        val,
+        status: "Optimal / Normal",
+        color: isDark ? "#34D399" : "#059669",
+        bg: isDark ? "rgba(16, 185, 129, 0.18)" : "#ECFDF5",
+      };
+    }
+    if (val <= 29.9) {
+      return {
+        val,
+        status: "Kelebihan Berat",
+        color: isDark ? "#FB923C" : "#EA580C",
+        bg: isDark ? "rgba(249, 115, 22, 0.18)" : "#FFF7ED",
+      };
+    }
+    return {
+      val,
+      status: "Obesitas",
+      color: isDark ? "#F87171" : "#DC2626",
+      bg: isDark ? "rgba(239, 68, 68, 0.18)" : "#FEF2F2",
+    };
+  }, [summary?.bmi, isDark, theme.textSecondary]);
+
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={[styles.safe, { flex: 1, backgroundColor: theme.bg }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={theme.bg} />
@@ -935,58 +977,317 @@ const HomeScreenMember = () => {
         <Animated.View style={{ opacity: fadeTab }}>
           {active === "ringkasan" && (
             <View style={{ gap: verticalScale(12) }}>
-              <Card style={{ padding: isSmallScreen ? moderateScale(20) : moderateScale(24), borderTopWidth: 3.5, borderTopColor: effectivePrimary }}>
+              <Card
+                style={{
+                  padding: isSmallScreen ? moderateScale(18) : moderateScale(22),
+                  borderTopWidth: isAtlas ? 0 : 3.5,
+                  borderTopColor: effectivePrimary,
+                  overflow: 'hidden',
+                }}
+              >
                 <Pressable
                   onPress={() => setIsSummaryOpen(prev => !prev)}
-                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: isSummaryOpen ? verticalScale(6) : 0 }}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: isSummaryOpen ? verticalScale(10) : 0 }}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(8) }}>
-                    <Text style={[styles.cardTitle, isAtlas && { color: theme.text }]}>Ringkasan Kesehatan</Text>
                     {isAtlas && (
                       <View style={{
-                        paddingHorizontal: horizontalScale(6),
-                        paddingVertical: verticalScale(2),
-                        borderRadius: moderateScale(6),
-                        backgroundColor: isDark ? 'rgba(34, 211, 238, 0.15)' : 'rgba(6, 182, 212, 0.12)',
-                        borderWidth: 1,
-                        borderColor: isDark ? 'rgba(34, 211, 238, 0.35)' : 'rgba(6, 182, 212, 0.25)',
-                      }}>
-                        <Text style={{ fontSize: moderateScale(9), fontWeight: '800', color: isDark ? '#22D3EE' : '#0891B2', textTransform: 'uppercase' }}>
-                          TELEMETRI
-                        </Text>
-                      </View>
+                        width: moderateScale(4),
+                        height: moderateScale(18),
+                        borderRadius: moderateScale(2),
+                        backgroundColor: isDark ? '#818CF8' : '#4F46E5',
+                      }} />
                     )}
+                    <Text style={[styles.cardTitle, isAtlas && { color: theme.text, fontSize: moderateScale(17), fontWeight: '800', letterSpacing: -0.3 }]}>
+                      Ringkasan Kesehatan
+                    </Text>
                   </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(8) }}>
-                    {profile?.divisi ? (
-                      <View style={[styles.divisiPillSmall, { backgroundColor: isAtlas ? (isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF') : tertiaryColor + '18' }]}>
-                        <Text style={[styles.divisiPillSmallText, { color: effectivePrimary }]}>{profile.divisi}</Text>
-                      </View>
-                    ) : null}
-                    <View style={[styles.collapseArrowBtn, { backgroundColor: isAtlas ? (isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF') : tertiaryColor + '15' }]}>
-                      <Icon name={isSummaryOpen ? "chevron-up" : "chevron-down"} size={18} color={effectivePrimary} />
-                    </View>
+                  <View style={[styles.collapseArrowBtn, { backgroundColor: isAtlas ? (isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF') : tertiaryColor + '15' }]}>
+                    <Icon name={isSummaryOpen ? "chevron-up" : "chevron-down"} size={18} color={effectivePrimary} />
                   </View>
                 </Pressable>
                 {isSummaryOpen && (
                   <>
                     {loadingSummary ? (
                       <View style={styles.centerRow}>
-                        <ActivityIndicator color={Colors.primary} />{/* */}
+                        <ActivityIndicator color={effectivePrimary} />
                         <Text style={styles.mutedText}>Memuat...</Text>
                       </View>
                     ) : errorSummary ? (
                       <Text style={[styles.mutedText, { color: "#dc2626" }]}>{errorSummary}</Text>
+                    ) : isAtlas ? (
+                      <View style={{ gap: verticalScale(12), marginTop: verticalScale(4) }}>
+                        {/* HERO BENTO CARD: IMT / BMI VITALITY */}
+                        <View
+                          style={{
+                            backgroundColor: isDark ? 'rgba(30, 41, 59, 0.75)' : '#F8FAFC',
+                            borderRadius: moderateScale(18),
+                            padding: moderateScale(16),
+                            borderWidth: 1.2,
+                            borderColor: isDark ? 'rgba(99, 102, 241, 0.25)' : '#E0E7FF',
+                            shadowColor: isDark ? '#000000' : 'rgba(79, 70, 229, 0.1)',
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: isDark ? 0.3 : 0.08,
+                            shadowRadius: 10,
+                            elevation: 2,
+                          }}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: verticalScale(10) }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: horizontalScale(6) }}>
+                              <View style={{
+                                width: moderateScale(26),
+                                height: moderateScale(26),
+                                borderRadius: moderateScale(8),
+                                backgroundColor: isDark ? 'rgba(99, 102, 241, 0.25)' : '#EEF2FF',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}>
+                                <Icon name="activity" size={14} color={isDark ? '#818CF8' : '#4F46E5'} />
+                              </View>
+                              <Text style={{
+                                fontSize: moderateScale(11),
+                                fontWeight: '700',
+                                color: theme.textSecondary,
+                                letterSpacing: 0.8,
+                                textTransform: 'uppercase',
+                              }}>
+                                Indeks Massa Tubuh
+                              </Text>
+                            </View>
+
+                            <View
+                              style={{
+                                paddingHorizontal: horizontalScale(10),
+                                paddingVertical: verticalScale(4),
+                                borderRadius: moderateScale(20),
+                                backgroundColor: bmiInfo.bg,
+                                borderWidth: 1,
+                                borderColor: `${bmiInfo.color}40`,
+                              }}
+                            >
+                              <Text style={{ fontSize: moderateScale(11), fontWeight: '700', color: bmiInfo.color }}>
+                                {bmiInfo.status}
+                              </Text>
+                            </View>
+                          </View>
+
+                          <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: verticalScale(12) }}>
+                            <Text style={{
+                              fontSize: moderateScale(34),
+                              fontWeight: '900',
+                              color: theme.text,
+                              letterSpacing: -1,
+                            }}>
+                              {(summary?.bmi ?? 0).toFixed(1)}
+                            </Text>
+                            <Text style={{
+                              fontSize: moderateScale(14),
+                              fontWeight: '700',
+                              color: isDark ? '#22D3EE' : '#0891B2',
+                              marginLeft: horizontalScale(6),
+                            }}>
+                              kg/m²
+                            </Text>
+                            <View style={{ flex: 1 }} />
+                            <Text style={{
+                              fontSize: moderateScale(11),
+                              color: theme.textSecondary,
+                              fontWeight: '500',
+                            }}>
+                              Rentang Ideal: 18.5 - 24.9
+                            </Text>
+                          </View>
+
+                          {/* 4-Segment Spectrum Bar */}
+                          <View style={{ flexDirection: 'row', gap: horizontalScale(4), height: verticalScale(6), borderRadius: moderateScale(3), overflow: 'hidden' }}>
+                            <View style={{ flex: 1, backgroundColor: bmiInfo.val > 0 && bmiInfo.val < 18.5 ? '#F59E0B' : (isDark ? 'rgba(245, 158, 11, 0.25)' : '#FDE68A'), borderRadius: moderateScale(3) }} />
+                            <View style={{ flex: 1.5, backgroundColor: bmiInfo.val >= 18.5 && bmiInfo.val <= 24.9 ? '#10B981' : (isDark ? 'rgba(16, 185, 129, 0.25)' : '#A7F3D0'), borderRadius: moderateScale(3) }} />
+                            <View style={{ flex: 1, backgroundColor: bmiInfo.val > 24.9 && bmiInfo.val <= 29.9 ? '#F97316' : (isDark ? 'rgba(249, 115, 22, 0.25)' : '#FDBA74'), borderRadius: moderateScale(3) }} />
+                            <View style={{ flex: 1, backgroundColor: bmiInfo.val > 29.9 ? '#EF4444' : (isDark ? 'rgba(239, 68, 68, 0.25)' : '#FECACA'), borderRadius: moderateScale(3) }} />
+                          </View>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: verticalScale(4) }}>
+                            <Text style={{ fontSize: moderateScale(9), color: theme.textSecondary, fontWeight: '600' }}>Kurus</Text>
+                            <Text style={{ fontSize: moderateScale(9), color: isDark ? '#34D399' : '#059669', fontWeight: '700' }}>Normal</Text>
+                            <Text style={{ fontSize: moderateScale(9), color: theme.textSecondary, fontWeight: '600' }}>Berlebih</Text>
+                            <Text style={{ fontSize: moderateScale(9), color: theme.textSecondary, fontWeight: '600' }}>Obesitas</Text>
+                          </View>
+                        </View>
+
+                        {/* TRIPLE TELEMETRY TILES */}
+                        <View style={{ flexDirection: 'row', gap: horizontalScale(8) }}>
+                          {/* Tekanan Darah */}
+                          <View
+                            style={{
+                              flex: 1,
+                              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.65)' : '#FFFFFF',
+                              borderRadius: moderateScale(16),
+                              padding: moderateScale(12),
+                              borderWidth: 1.2,
+                              borderColor: isDark ? 'rgba(244, 63, 94, 0.25)' : '#FFE4E6',
+                              shadowColor: '#F43F5E',
+                              shadowOpacity: isDark ? 0.2 : 0.05,
+                              shadowRadius: 6,
+                              elevation: 2,
+                            }}
+                          >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: verticalScale(8) }}>
+                              <View style={{
+                                width: moderateScale(28),
+                                height: moderateScale(28),
+                                borderRadius: moderateScale(8),
+                                backgroundColor: isDark ? 'rgba(244, 63, 94, 0.18)' : '#FFE4E6',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}>
+                                <Icon name="heart" size={14} color="#F43F5E" />
+                              </View>
+                              <Text style={{
+                                fontSize: moderateScale(9),
+                                fontWeight: '800',
+                                color: '#F43F5E',
+                                textTransform: 'uppercase',
+                              }}>
+                                DARAH
+                              </Text>
+                            </View>
+                            <Text
+                              style={{
+                                fontSize: moderateScale(15),
+                                fontWeight: '800',
+                                color: theme.text,
+                                letterSpacing: -0.3,
+                              }}
+                              numberOfLines={1}
+                            >
+                              {`${summary?.sistol ?? 0}/${summary?.diastol ?? 0}`}
+                            </Text>
+                            <Text style={{ fontSize: moderateScale(10), color: '#F43F5E', fontWeight: '700', marginTop: verticalScale(1) }}>
+                              mmHg
+                            </Text>
+                            <Text style={{ fontSize: moderateScale(10), color: theme.textSecondary, fontWeight: '500', marginTop: verticalScale(2) }}>
+                              Sistol / Diastol
+                            </Text>
+                          </View>
+
+                          {/* Postur Tubuh */}
+                          <View
+                            style={{
+                              flex: 1,
+                              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.65)' : '#FFFFFF',
+                              borderRadius: moderateScale(16),
+                              padding: moderateScale(12),
+                              borderWidth: 1.2,
+                              borderColor: isDark ? 'rgba(99, 102, 241, 0.25)' : '#E0E7FF',
+                              shadowColor: '#6366F1',
+                              shadowOpacity: isDark ? 0.2 : 0.05,
+                              shadowRadius: 6,
+                              elevation: 2,
+                            }}
+                          >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: verticalScale(8) }}>
+                              <View style={{
+                                width: moderateScale(28),
+                                height: moderateScale(28),
+                                borderRadius: moderateScale(8),
+                                backgroundColor: isDark ? 'rgba(99, 102, 241, 0.18)' : '#EEF2FF',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}>
+                                <Icon name="user" size={14} color={isDark ? '#818CF8' : '#4F46E5'} />
+                              </View>
+                              <Text style={{
+                                fontSize: moderateScale(9),
+                                fontWeight: '800',
+                                color: isDark ? '#818CF8' : '#4F46E5',
+                                textTransform: 'uppercase',
+                              }}>
+                                POSTUR
+                              </Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: horizontalScale(2) }}>
+                              <Text style={{ fontSize: moderateScale(13), fontWeight: '800', color: theme.text }}>
+                                {summary?.tinggi ?? 0}
+                              </Text>
+                              <Text style={{ fontSize: moderateScale(9), color: theme.textSecondary, fontWeight: '600' }}>cm</Text>
+                              <Text style={{ fontSize: moderateScale(11), color: theme.textSecondary, opacity: 0.5 }}>•</Text>
+                              <Text style={{ fontSize: moderateScale(13), fontWeight: '800', color: theme.text }}>
+                                {summary?.berat ?? 0}
+                              </Text>
+                              <Text style={{ fontSize: moderateScale(9), color: theme.textSecondary, fontWeight: '600' }}>kg</Text>
+                            </View>
+                            <Text style={{ fontSize: moderateScale(10), color: isDark ? '#818CF8' : '#4F46E5', fontWeight: '700', marginTop: verticalScale(1) }}>
+                              TB • BB
+                            </Text>
+                            <Text style={{ fontSize: moderateScale(10), color: theme.textSecondary, fontWeight: '500', marginTop: verticalScale(2) }}>
+                              Tinggi & Berat
+                            </Text>
+                          </View>
+
+                          {/* Hb */}
+                          <View
+                            style={{
+                              flex: 1,
+                              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.65)' : '#FFFFFF',
+                              borderRadius: moderateScale(16),
+                              padding: moderateScale(12),
+                              borderWidth: 1.2,
+                              borderColor: isDark ? 'rgba(236, 72, 153, 0.25)' : '#FCE7F3',
+                              shadowColor: '#EC4899',
+                              shadowOpacity: isDark ? 0.2 : 0.05,
+                              shadowRadius: 6,
+                              elevation: 2,
+                            }}
+                          >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: verticalScale(8) }}>
+                              <View style={{
+                                width: moderateScale(28),
+                                height: moderateScale(28),
+                                borderRadius: moderateScale(8),
+                                backgroundColor: isDark ? 'rgba(236, 72, 153, 0.18)' : '#FCE7F3',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}>
+                                <Icon name="droplet" size={14} color="#EC4899" />
+                              </View>
+                              <Text style={{
+                                fontSize: moderateScale(9),
+                                fontWeight: '800',
+                                color: '#EC4899',
+                                textTransform: 'uppercase',
+                              }}>
+                                HB
+                              </Text>
+                            </View>
+                            <Text
+                              style={{
+                                fontSize: moderateScale(15),
+                                fontWeight: '800',
+                                color: theme.text,
+                                letterSpacing: -0.3,
+                              }}
+                              numberOfLines={1}
+                            >
+                              {`${summary?.hb ?? 0}`}
+                            </Text>
+                            <Text style={{ fontSize: moderateScale(10), color: '#EC4899', fontWeight: '700', marginTop: verticalScale(1) }}>
+                              g/dL
+                            </Text>
+                            <Text style={{ fontSize: moderateScale(10), color: theme.textSecondary, fontWeight: '500', marginTop: verticalScale(2) }}>
+                              Hemoglobin
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
                     ) : (
                       <>
                         <View style={styles.metrics}>
-                          <Metric label="IMT" value={(summary?.bmi ?? 0).toFixed(1)} unit="" />{/* */}
-                          <Metric label="Tinggi" value={`${summary?.tinggi ?? 0}`} unit="cm" />{/* */}
+                          <Metric label="IMT" value={(summary?.bmi ?? 0).toFixed(1)} unit="" />
+                          <Metric label="Tinggi" value={`${summary?.tinggi ?? 0}`} unit="cm" />
                           <Metric label="Berat" value={`${summary?.berat ?? 0}`} unit="kg" />
-                        </View>{/* */}
+                        </View>
                         <View style={styles.metrics}>
-                          <Metric label="Sistol" value={`${summary?.sistol ?? 0}`} unit="mmHg" />{/* */}
-                          <Metric label="Diastol" value={`${summary?.diastol ?? 0}`} unit="mmHg" />{/* */}
+                          <Metric label="Sistol" value={`${summary?.sistol ?? 0}`} unit="mmHg" />
+                          <Metric label="Diastol" value={`${summary?.diastol ?? 0}`} unit="mmHg" />
                           <Metric label="Hb" value={`${summary?.hb ?? 0}`} unit="g/dL" />
                         </View>
                       </>
@@ -1009,9 +1310,23 @@ const HomeScreenMember = () => {
                     }
                   ]}
                 >
-                  <View style={{ flex: 1, paddingRight: moderateScale(10) }}>
-                    <Text style={[styles.cardTitle, isAtlas && { color: theme.text }]}>Layanan & Fitur</Text>
-                    <Text style={[styles.menuGridSubtitle, isAtlas && { color: theme.textSecondary }]}>Akses cepat fitur kesehatan Anda</Text>
+                  <View style={{ flex: 1, paddingRight: moderateScale(10), flexDirection: 'row', alignItems: 'center', gap: moderateScale(8) }}>
+                    {isAtlas && (
+                      <View style={{
+                        width: moderateScale(4),
+                        height: moderateScale(18),
+                        borderRadius: moderateScale(2),
+                        backgroundColor: isDark ? '#22D3EE' : '#0891B2',
+                      }} />
+                    )}
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.cardTitle, isAtlas && { color: theme.text, fontSize: moderateScale(17), fontWeight: '800', letterSpacing: -0.3 }]}>
+                        Layanan & Fitur
+                      </Text>
+                      <Text style={[styles.menuGridSubtitle, isAtlas && { color: theme.textSecondary }]}>
+                        Akses cepat fitur kesehatan Anda
+                      </Text>
+                    </View>
                   </View>
                   <View style={[styles.collapseArrowBtn, { backgroundColor: isAtlas ? (isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF') : tertiaryColor + '15' }]}>
                     <Icon name={isMenuGridOpen ? "chevron-up" : "chevron-down"} size={18} color={effectivePrimary} />
@@ -1019,146 +1334,136 @@ const HomeScreenMember = () => {
                 </Pressable>
 
                 {isMenuGridOpen && (
-                  <View style={styles.menuGrid}>
-                  {isModActive('kesehatan') && (
-                    <Pressable
-                      onPress={() => {
-                        setKesehatanSubTab('klinis');
-                        setActive('kesehatan');
-                      }}
-                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
-                    >
-                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#fef2f2' }]}>
-                        <Icon name="heart" size={22} color="#dc2626" />
-                      </View>
-                      <Text style={styles.menuGridItemTitle}>Klinis</Text>
-                      <Text style={styles.menuGridItemSub}>Cek Fisik</Text>
-                    </Pressable>
-                  )}
+                  <View style={[styles.menuGrid, isAtlas && { rowGap: verticalScale(10) }]}>
+                    {isModActive('kesehatan') && (
+                      <LauncherTile
+                        icon="heart"
+                        iconColor="#dc2626"
+                        iconBgLight="#fef2f2"
+                        iconBgDark="rgba(220, 38, 38, 0.18)"
+                        title="Klinis"
+                        subtitle="Cek Fisik"
+                        onPress={() => {
+                          setKesehatanSubTab('klinis');
+                          setActive('kesehatan');
+                        }}
+                      />
+                    )}
 
-                  {isModActive('olahraga') && (
-                    <Pressable
-                      onPress={() => setActive('olahraga')}
-                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
-                    >
-                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#ecfdf5' }]}>
-                        <Icon name="zap" size={22} color="#059669" />
-                      </View>
-                      <Text style={styles.menuGridItemTitle}>Olahraga</Text>
-                      <Text style={styles.menuGridItemSub}>Lacak Lari</Text>
-                    </Pressable>
-                  )}
+                    {isModActive('olahraga') && (
+                      <LauncherTile
+                        icon="zap"
+                        iconColor="#059669"
+                        iconBgLight="#ecfdf5"
+                        iconBgDark="rgba(5, 150, 105, 0.18)"
+                        title="Olahraga"
+                        subtitle="Lacak Lari"
+                        onPress={() => setActive('olahraga')}
+                      />
+                    )}
 
-                  {isModActive('hemoglobin') && (
-                    <Pressable
-                      onPress={() => {
-                        setKesehatanSubTab('hemoglobin');
-                        setActive('kesehatan');
-                      }}
-                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
-                    >
-                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#fff1f2' }]}>
-                        <Icon name="droplet" size={22} color="#e11d48" />
-                      </View>
-                      <Text style={styles.menuGridItemTitle}>Hb Darah</Text>
-                      <Text style={styles.menuGridItemSub}>Kadar Hb</Text>
-                    </Pressable>
-                  )}
+                    {isModActive('hemoglobin') && (
+                      <LauncherTile
+                        icon="droplet"
+                        iconColor="#e11d48"
+                        iconBgLight="#fff1f2"
+                        iconBgDark="rgba(225, 29, 72, 0.18)"
+                        title="Hb Darah"
+                        subtitle="Kadar Hb"
+                        onPress={() => {
+                          setKesehatanSubTab('hemoglobin');
+                          setActive('kesehatan');
+                        }}
+                      />
+                    )}
 
-                  {isModActive('vitalitas') && (
-                    <Pressable
-                      onPress={() => {
-                        setKesehatanSubTab('vital');
-                        setActive('kesehatan');
-                      }}
-                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
-                    >
-                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#fffbeb' }]}>
-                        <Icon name="sun" size={22} color="#d97706" />
-                      </View>
-                      <Text style={styles.menuGridItemTitle}>Vitalitas</Text>
-                      <Text style={styles.menuGridItemSub}>Log Harian</Text>
-                    </Pressable>
-                  )}
+                    {isModActive('vitalitas') && (
+                      <LauncherTile
+                        icon="sun"
+                        iconColor="#d97706"
+                        iconBgLight="#fffbeb"
+                        iconBgDark="rgba(217, 119, 6, 0.18)"
+                        title="Vitalitas"
+                        subtitle="Log Harian"
+                        onPress={() => {
+                          setKesehatanSubTab('vital');
+                          setActive('kesehatan');
+                        }}
+                      />
+                    )}
 
-                  {isModActive('konsultasi') && (
-                    <Pressable
-                      onPress={() => setActive('konseling')}
-                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
-                    >
-                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#eff6ff' }]}>
-                        <Icon name="message-square" size={22} color="#2563eb" />
-                      </View>
-                      <Text style={styles.menuGridItemTitle}>Konseling</Text>
-                      <Text style={styles.menuGridItemSub}>Konsultasi</Text>
-                    </Pressable>
-                  )}
+                    {isModActive('konsultasi') && (
+                      <LauncherTile
+                        icon="message-square"
+                        iconColor="#2563eb"
+                        iconBgLight="#eff6ff"
+                        iconBgDark="rgba(37, 99, 235, 0.18)"
+                        title="Konseling"
+                        subtitle="Konsultasi"
+                        onPress={() => setActive('konseling')}
+                      />
+                    )}
 
-                  {profile?.jk === "P" && isModActive('haid_pita') && (
-                    <Pressable
-                      onPress={() => setRiwayatHaidModalVisible(true)}
-                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
-                    >
-                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#f5f3ff' }]}>
-                        <Icon name="calendar" size={22} color="#7c3aed" />
-                      </View>
-                      <Text style={styles.menuGridItemTitle}>Pita & Haid</Text>
-                      <Text style={styles.menuGridItemSub}>Siklus & UKS</Text>
-                    </Pressable>
-                  )}
+                    {profile?.jk === "P" && isModActive('haid_pita') && (
+                      <LauncherTile
+                        icon="calendar"
+                        iconColor="#7c3aed"
+                        iconBgLight="#f5f3ff"
+                        iconBgDark="rgba(124, 58, 237, 0.18)"
+                        title="Pita & Haid"
+                        subtitle="Siklus & UKS"
+                        onPress={() => setRiwayatHaidModalVisible(true)}
+                      />
+                    )}
 
-                  {isModActive('nutrisi') && (
-                    <Pressable
-                      onPress={() => setActive('nutrisi')}
-                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
-                    >
-                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#fef3c7' }]}>
-                        <Icon name="coffee" size={22} color="#d97706" />
-                      </View>
-                      <Text style={styles.menuGridItemTitle}>Nutrisi</Text>
-                      <Text style={styles.menuGridItemSub}>Pola Makan</Text>
-                    </Pressable>
-                  )}
+                    {isModActive('nutrisi') && (
+                      <LauncherTile
+                        icon="coffee"
+                        iconColor="#d97706"
+                        iconBgLight="#fef3c7"
+                        iconBgDark="rgba(217, 119, 6, 0.18)"
+                        title="Nutrisi"
+                        subtitle="Pola Makan"
+                        onPress={() => setActive('nutrisi')}
+                      />
+                    )}
 
-                  {isModActive('burnout') && (
-                    <Pressable
-                      onPress={() => setActive('burnout')}
-                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
-                    >
-                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#f3e8ff' }]}>
-                        <Icon name="activity" size={22} color="#9333ea" />
-                      </View>
-                      <Text style={styles.menuGridItemTitle}>Burnout</Text>
-                      <Text style={styles.menuGridItemSub}>Cek Stres</Text>
-                    </Pressable>
-                  )}
+                    {isModActive('burnout') && (
+                      <LauncherTile
+                        icon="activity"
+                        iconColor="#9333ea"
+                        iconBgLight="#f3e8ff"
+                        iconBgDark="rgba(147, 51, 234, 0.18)"
+                        title="Burnout"
+                        subtitle="Cek Stres"
+                        onPress={() => setActive('burnout')}
+                      />
+                    )}
 
-                  {isModActive('ergonomi') && (
-                    <Pressable
-                      onPress={() => setActive('ergonomi')}
-                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
-                    >
-                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#ecfeff' }]}>
-                        <Icon name="crosshair" size={22} color="#0891b2" />
-                      </View>
-                      <Text style={styles.menuGridItemTitle}>Ergonomi</Text>
-                      <Text style={styles.menuGridItemSub}>Postur Duduk</Text>
-                    </Pressable>
-                  )}
+                    {isModActive('ergonomi') && (
+                      <LauncherTile
+                        icon="crosshair"
+                        iconColor="#0891b2"
+                        iconBgLight="#ecfeff"
+                        iconBgDark="rgba(8, 145, 178, 0.18)"
+                        title="Ergonomi"
+                        subtitle="Postur Duduk"
+                        onPress={() => setActive('ergonomi')}
+                      />
+                    )}
 
-                  {isModActive('vaksinasi') && (
-                    <Pressable
-                      onPress={() => setActive('vaksinasi')}
-                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
-                    >
-                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#eff6ff' }]}>
-                        <Icon name="shield" size={22} color="#2563eb" />
-                      </View>
-                      <Text style={styles.menuGridItemTitle}>Vaksinasi</Text>
-                      <Text style={styles.menuGridItemSub}>Paspor Imunisasi</Text>
-                    </Pressable>
-                  )}
-                </View>
+                    {isModActive('vaksinasi') && (
+                      <LauncherTile
+                        icon="shield"
+                        iconColor="#2563eb"
+                        iconBgLight="#eff6ff"
+                        iconBgDark="rgba(37, 99, 235, 0.18)"
+                        title="Vaksinasi"
+                        subtitle="Paspor Imunisasi"
+                        onPress={() => setActive('vaksinasi')}
+                      />
+                    )}
+                  </View>
                 )}
               </Card>
 
@@ -2340,6 +2645,100 @@ const Card = ({ children, style }: { children: React.ReactNode; style?: any }) =
     >
       {children}
     </View>
+  );
+};
+
+const LauncherTile = ({
+  icon,
+  iconColor,
+  iconBgLight,
+  iconBgDark,
+  title,
+  subtitle,
+  onPress,
+}: {
+  icon: string;
+  iconColor: string;
+  iconBgLight: string;
+  iconBgDark: string;
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+}) => {
+  const { theme, themeId, isDark } = useTheme();
+  const isAtlas = themeId === 'atlas_modern';
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        isAtlas
+          ? {
+              width: '31%',
+              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.7)' : '#FFFFFF',
+              borderRadius: moderateScale(16),
+              paddingVertical: verticalScale(14),
+              paddingHorizontal: horizontalScale(6),
+              alignItems: 'center',
+              borderWidth: 1.2,
+              borderColor: isDark ? 'rgba(99, 102, 241, 0.22)' : '#E0E7FF',
+              shadowColor: isDark ? '#000000' : 'rgba(79, 70, 229, 0.1)',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isDark ? 0.3 : 0.08,
+              shadowRadius: 8,
+              elevation: 2,
+            }
+          : styles.menuGridItem,
+        pressed && (isAtlas ? { opacity: 0.8, transform: [{ scale: 0.95 }] } : styles.menuGridItemPressed),
+      ]}
+    >
+      <View
+        style={[
+          isAtlas
+            ? {
+                width: moderateScale(46),
+                height: moderateScale(46),
+                borderRadius: moderateScale(14),
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: isDark ? iconBgDark : iconBgLight,
+                marginBottom: verticalScale(6),
+              }
+            : [styles.menuGridIconContainer, { backgroundColor: iconBgLight }],
+        ]}
+      >
+        <Icon name={icon as any} size={22} color={iconColor} />
+      </View>
+      <Text
+        style={[
+          isAtlas
+            ? {
+                fontSize: moderateScale(12),
+                fontWeight: '700',
+                color: theme.text,
+                textAlign: 'center',
+              }
+            : styles.menuGridItemTitle,
+        ]}
+        numberOfLines={1}
+      >
+        {title}
+      </Text>
+      <Text
+        style={[
+          isAtlas
+            ? {
+                fontSize: moderateScale(10),
+                color: theme.textSecondary,
+                textAlign: 'center',
+                marginTop: verticalScale(1),
+              }
+            : styles.menuGridItemSub,
+        ]}
+        numberOfLines={1}
+      >
+        {subtitle}
+      </Text>
+    </Pressable>
   );
 };
 
