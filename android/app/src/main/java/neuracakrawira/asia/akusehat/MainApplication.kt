@@ -1,4 +1,4 @@
-package com.akusehatmobile
+package neuracakrawira.asia.akusehat
 
 import android.app.Application
 import com.facebook.react.PackageList

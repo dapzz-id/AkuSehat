@@ -1,4 +1,4 @@
-package com.akusehatmobile
+package neuracakrawira.asia.akusehat
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

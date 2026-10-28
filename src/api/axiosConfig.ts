@@ -10,37 +10,55 @@ const api = axios.create({
   withCredentials: Config.AXIOS_CREDENTIALS,
 })
 
+// Default headers to guarantee Laravel recognizes API requests
+api.defaults.headers.common['Accept'] = 'application/json';
+
 api.interceptors.request.use(async (config) => {
   try {
-    const token = await AsyncStorage.getItem("sanctum_token")
-    if (token) {
-      if (config.headers) {
+    if (config.headers) {
+      config.headers['Accept'] = 'application/json';
+      if (!config.headers['Content-Type'] && !(config.data instanceof FormData)) {
+        config.headers['Content-Type'] = 'application/json';
+      }
+
+      const token = await AsyncStorage.getItem('sanctum_token');
+      if (token) {
         config.headers['Authorization'] = `Bearer ${token}`;
-        config.headers['Accept'] = "application/json";
-        config.headers['Content-Type'] = "application/json";
       }
     }
   } catch (e) {
-    console.log("Error getting token", e)
+    console.log('Error preparing request headers', e);
   }
-  return config
-})
+  return config;
+});
 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error?.response?.status === 401) {
-      await AsyncStorage.multiRemove(['sanctum_token', 'user']);
+    const status = error?.response?.status;
+    const data = error?.response?.data;
+
+    if (status === 401) {
+      // Clear all stored credentials and authorization header
+      await AsyncStorage.multiRemove(['sanctum_token', 'user', 'userData', 'userToken']);
+      delete api.defaults.headers.common['Authorization'];
+
+      const serverMessage = data?.message || 'Sesi Anda telah berakhir. Silakan login kembali.';
 
       if (navigationRef.isReady()) {
         navigationRef.reset({
           index: 0,
           routes: [{ name: 'Login' }],
         });
-      } else {
-        Alert.alert('Sesi Berakhir', 'Silakan login kembali.');
       }
+      Alert.alert('Sesi Berakhir', serverMessage);
+    } else if (status === 403) {
+      const forbiddenMessage = data?.message || 'Akses ditolak: Peran Anda tidak memiliki wewenang untuk aksi ini.';
+      Alert.alert('Akses Dibatasi', forbiddenMessage);
+    } else if (error.code === 'ECONNABORTED' || !error.response) {
+      console.warn('Network timeout or connection error:', error.message);
     }
+
     return Promise.reject(error);
   }
 );

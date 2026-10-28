@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef } from "react"
 import {
   Animated,
   Pressable,
@@ -8,221 +8,282 @@ import {
   Text,
   View,
   useWindowDimensions,
-  Dimensions,
+  Platform,
 } from "react-native"
 import { Colors } from "../settings/Colors"
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { moderateScale, horizontalScale, verticalScale } from "../utils/responsive"
 
-export type TabItem = { key: string; icon?: React.ReactNode }
+export type TabItem = {
+  key: string
+  label?: string
+  icon?: React.ReactNode
+  badgeCount?: number
+}
 
 type Props = {
   items: TabItem[]
   activeKey: string
   onChange: (key: string) => void
+  themeColor?: string
 }
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const guidelineBaseWidth = 375;
+// Default Indonesian human-friendly labels for all ages
+const DEFAULT_LABELS: Record<string, string> = {
+  ringkasan: "Ringkasan",
+  dashboard: "Dasbor",
+  olahraga: "Aktivitas",
+  vital: "Vitalitas",
+  kesehatan: "Kesehatan",
+  hemoglobin: "Hb",
+  konseling: "Konseling",
+  divisi: "Divisi",
+  notifikasi: "Notifikasi",
+  peminjaman: "Pita UKS",
+  warning: "Peringatan",
+  profil: "Profil",
+}
 
-const horizontalScale = (size: number) => (SCREEN_WIDTH / guidelineBaseWidth) * size;
-const moderateScale = (size: number, factor = 0.5) => size + (horizontalScale(size) - size) * factor;
-
-export default function AnimatedBottomTabs({ items, activeKey, onChange }: Props) {
-  const [expanded, setExpanded] = useState(false)
-  const slideAnim = useRef(new Animated.Value(0)).current
-  const scaleAnim = useRef(new Animated.Value(1)).current
-
+export default function AnimatedBottomTabs({ items, activeKey, onChange, themeColor }: Props) {
   const insets = useSafeAreaInsets()
-  const { width, height } = useWindowDimensions()
-  const isLandscape = width > height
+  const { width } = useWindowDimensions()
+  const isTabletOrLandscape = width >= 600
+  const isSmall = width < 360
 
-  const bottomSafe = insets.bottom > 0 ? insets.bottom : 10
-  const collapsedHeight = 60
-
-  const expandedHeight = isLandscape
-    ? collapsedHeight + 90 + bottomSafe
-    : collapsedHeight + 100 + bottomSafe
-
-  const translateY = slideAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [expandedHeight - collapsedHeight, 0],
-  })
-
-  useEffect(() => {
-    Animated.spring(slideAnim, {
-      toValue: expanded ? 1 : 0,
-      useNativeDriver: true,
-      friction: 8,
-      tension: 100,
-    }).start()
-  }, [expanded])
-
-  const toggleExpanded = () => setExpanded((prev) => !prev)
-
-  const handleItemPress = (key: string) => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, { toValue: 0.92, duration: 100, useNativeDriver: true }),
-      Animated.timing(scaleAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
-    ]).start()
-    onChange(key)
-  }
+  const primaryColor = themeColor || Colors.primary
+  const bottomSafe = Math.max(insets.bottom, Platform.OS === 'ios' ? 16 : 8)
 
   return (
-    <SafeAreaView
-      edges={["bottom"]}
-      style={{
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-      }}
-    >
-      <Animated.View
+    <View pointerEvents="box-none" style={styles.outerWrapper}>
+      <View
         style={[
           styles.container,
           {
-            height: expandedHeight,
-            paddingBottom: bottomSafe + 4,
-            transform: [{ translateY }],
+            paddingBottom: bottomSafe,
+            maxWidth: isTabletOrLandscape ? 680 : "100%",
+            alignSelf: "center",
           },
         ]}
       >
-        <Pressable onPress={toggleExpanded} style={styles.handle}>
-          <View style={styles.handleBar} />
-          <Text style={styles.handleHint}>{expanded ? "Tutup" : "Menu"}</Text>
-        </Pressable>
+        <View style={styles.tabsRow}>
+          {items.map((item) => {
+            const active = item.key === activeKey
+            const label = item.label || DEFAULT_LABELS[item.key] || item.key
 
-        {/* Menu grid */}
-        {expanded && (
+            return (
+              <TabButton
+                key={item.key}
+                item={item}
+                label={label}
+                active={active}
+                onPress={() => onChange(item.key)}
+                primaryColor={primaryColor}
+                isSmall={isSmall}
+                isTabletOrLandscape={isTabletOrLandscape}
+              />
+            )
+          })}
+        </View>
+      </View>
+    </View>
+  )
+}
+
+interface TabButtonProps {
+  item: TabItem
+  label: string
+  active: boolean
+  onPress: () => void
+  primaryColor: string
+  isSmall: boolean
+  isTabletOrLandscape: boolean
+}
+
+function TabButton({
+  item,
+  label,
+  active,
+  onPress,
+  primaryColor,
+  isSmall,
+  isTabletOrLandscape,
+}: TabButtonProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current
+  const activeAnim = useRef(new Animated.Value(active ? 1 : 0)).current
+
+  useEffect(() => {
+    Animated.spring(activeAnim, {
+      toValue: active ? 1 : 0,
+      friction: 8,
+      tension: 100,
+      useNativeDriver: false,
+    }).start()
+  }, [active])
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.92,
+      useNativeDriver: false,
+      speed: 50,
+      bounciness: 4,
+    }).start()
+  }
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: false,
+      speed: 40,
+      bounciness: 6,
+    }).start()
+  }
+
+  const activePillBg = activeAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["rgba(241, 245, 249, 0)", primaryColor + "14"], // 8% opacity tint
+  })
+
+  const iconTint = active ? primaryColor : Colors.muted
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={styles.tabPressable}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: active }}
+      accessibilityLabel={label}
+      hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+    >
+      <Animated.View
+        style={[
+          styles.tabButtonInner,
+          {
+            backgroundColor: activePillBg,
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
+        <View style={styles.iconContainer}>
+          {item.icon &&
+            React.cloneElement(item.icon as React.ReactElement<any>, {
+              color: iconTint,
+              size: isSmall ? 20 : isTabletOrLandscape ? 24 : 22,
+            })}
+
+          {typeof item.badgeCount === "number" && item.badgeCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>
+                {item.badgeCount > 99 ? "99+" : item.badgeCount}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.tabLabel,
+            {
+              fontSize: isSmall ? moderateScale(9.5) : moderateScale(11),
+              color: active ? primaryColor : Colors.muted,
+              fontWeight: active ? "700" : "500",
+            },
+          ]}
+        >
+          {label}
+        </Text>
+
+        {active && (
           <View
             style={[
-              styles.menuGrid,
-              {
-                width: "100%",
-                paddingHorizontal: isLandscape ? 28 : 16,
-                justifyContent: "space-between",
-              },
+              styles.activeDot,
+              { backgroundColor: primaryColor },
             ]}
-          >
-            {items.map((item) => {
-              const active = item.key === activeKey
-              return (
-                <Pressable
-                  key={item.key}
-                  onPress={() => handleItemPress(item.key)}
-                  style={({ pressed }) => [
-                    styles.menuItem,
-                    active && styles.menuItemActive,
-                    pressed && styles.menuItemPressed,
-                    {
-                      flex: 1,
-                      marginHorizontal: isLandscape ? 6 : 4,
-                      aspectRatio: 1,
-                      maxWidth: isLandscape ? 90 : undefined,
-                    },
-                  ]}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: active }}
-                >
-                  <Animated.View
-                    style={[
-                      styles.menuItemInner,
-                      active && { transform: [{ scale: scaleAnim }] },
-                    ]}
-                  >
-                    {item.icon && (
-                      <View style={[
-                        styles.menuItemIcon
-                      ]}>
-                        {React.cloneElement(item.icon as React.ReactElement<any>, {
-                          color: active ? Colors.white : Colors.text,
-                          size: isLandscape ? 22 : 22,
-                        })}
-                      </View>
-                    )}
-                    
-                  </Animated.View>
-                </Pressable>
-              )
-            })}
-          </View>
+          />
         )}
       </Animated.View>
-    </SafeAreaView>
+    </Pressable>
   )
 }
 
 const styles = StyleSheet.create({
+  outerWrapper: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+    elevation: 20,
+  },
   container: {
+    width: "100%",
     backgroundColor: Colors.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    shadowColor: "#000",
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderTopWidth: 1,
+    borderTopColor: "#F1F5F9",
+    shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 16,
-    overflow: "hidden",
+    paddingTop: 8,
   },
-  handle: {
-    height: 60,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 12,
-  },
-  handleBar: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.border,
-    marginBottom: 8,
-  },
-  handleHint: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: Colors.muted,
-  },
-  menuGrid: {
+  tabsRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-around",
+    paddingHorizontal: 6,
   },
-  menuItem: {
-    backgroundColor: Colors.bg,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  menuItemActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.accent,
-  },
-  menuItemPressed: {
-    opacity: 0.8,
-  },
-  menuItemInner: {
+  tabPressable: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 10,
   },
-  menuItemIcon: {
+  tabButtonInner: {
+    width: "92%",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
+    paddingVertical: 5,
+    borderRadius: 14,
+    minHeight: 46,
   },
-  menuItemLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: Colors.text,
+  iconContainer: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 24,
+    marginBottom: 2,
+  },
+  tabLabel: {
     textAlign: "center",
+    letterSpacing: -0.2,
   },
-  menuItemLabelActive: {
+  activeDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 2,
+  },
+  badge: {
+    position: "absolute",
+    top: -4,
+    right: -10,
+    backgroundColor: Colors.error,
+    borderRadius: 10,
+    minWidth: 16,
+    height: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: Colors.white,
+  },
+  badgeText: {
     color: Colors.white,
-  },
-  menuItemLabelLandscape: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: 9,
+    fontWeight: "700",
   },
 })

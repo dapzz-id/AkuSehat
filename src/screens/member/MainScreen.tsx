@@ -1,13 +1,30 @@
 "use client"
 import React from "react"
-import { useEffect, useRef, useState, useMemo } from "react"
-import { Animated, StatusBar, StyleSheet, Text, View, ScrollView, Pressable, TextInput, ActivityIndicator, useWindowDimensions, Dimensions, Modal, Alert } from "react-native"
+import { useEffect, useRef, useState, useMemo, useCallback } from "react"
+import { Animated, StatusBar, StyleSheet, Text, View, ScrollView, Pressable, TextInput, ActivityIndicator, useWindowDimensions, Dimensions, Modal, Alert, Image, Linking, Platform, AppState, RefreshControl } from "react-native"
 import Icon from 'react-native-vector-icons/Feather'
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Colors } from "../../settings/Colors"
+import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'react-native-svg'
 import api from "../../api/axiosConfig"
 import AnimatedBottomTabs, { type TabItem } from "../../components/AnimatedBottomTabs"
 import HealthBarChart from "../../components/HealthBarChart"
+import RunTrackerView from "./RunTrackerView"
+import DailyVitalityView from "./DailyVitalityView"
+import EditProfileModal from "../../components/EditProfileModal"
+import ChangelogModal from "../../components/ChangelogModal"
+import CheckUpdateModal, { type CheckUpdateStatus } from "../../components/CheckUpdateModal"
+import ForceUpgradeModal from "../../components/ForceUpgradeModal"
+import MaintenanceModal from "../../components/MaintenanceModal"
+import ThemeHubModal from "../../components/ThemeHubModal"
+import { useTheme } from "../../theme/ThemeContext"
+import useRealtimeSystemSync from "../../hooks/useRealtimeSystemSync"
+import { checkAppUpdate, type SoftwareReleaseData } from "../../api/appUpdateService"
+import CounselingMemberView from "./CounselingMemberView"
+import ErgonomicsMemberView from "./ErgonomicsMemberView"
+import BurnoutMemberView from "./BurnoutMemberView"
+import NutritionMemberView from "./NutritionMemberView"
+import VaccineMemberView from "./VaccineMemberView"
 import { logout } from "../../utils/authHelper"
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { checkAuthStatus } from '../../utils/authHelper';
@@ -22,16 +39,29 @@ type Summary = {
   status?: string
 }
 type Profile = {
-  id: number;
+  id: string | number;
   nama: string;
+  email?: string;
   username: string;
+  avatar?: string | null;
   nomor_induk: string;
+  id_divisi?: string | number;
   divisi?: string;
+  color_cover?: string;
+  tertiary_color?: string;
+  can_add_user?: boolean;
   jk?: "L" | "P";
-  level?: string
+  level?: string;
+  active_modules?: string[];
+  instansi?: {
+    id: string | number;
+    nama_instansi: string;
+    jenis_instansi: string;
+    active_modules?: string[];
+  };
 }
 type KesehatanItem = {
-  id_kesehatan: number;
+  id_kesehatan: string | number;
   tgl: string;
   bb: string;
   tb: string;
@@ -44,15 +74,15 @@ type KesehatanItem = {
   pesan_tkd: string
 }
 type HbItem = {
-  id_hb: number;
+  id_hb: string | number;
   tgl: string;
   hb: string;
   status: string;
   pesan: string
 }
 type HaidItem = {
-  id: number;
-  id_user: number;
+  id: string | number;
+  id_user: string | number;
   tanggal_mulai: string;
   tanggal_selesai: string | null;
   durasi_hari: number;
@@ -62,9 +92,9 @@ type HaidItem = {
   updated_at: string | null
 }
 type PitaItem = {
-  id: number;
-  id_user: number;
-  id_haid: number;
+  id: string | number;
+  id_user: string | number;
+  id_haid: string | number;
   jumlah_pita: number;
   tanggal_pinjam: string;
   tanggal_kembali: string | null;
@@ -103,21 +133,74 @@ const horizontalScale = (size: number) => (SCREEN_WIDTH / guidelineBaseWidth) * 
 const verticalScale = (size: number) => (SCREEN_HEIGHT / guidelineBaseHeight) * size;
 const moderateScale = (size: number, factor = 0.5) => size + (horizontalScale(size) - size) * factor;
 const HomeScreenMember = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [active, setActive] = useState("ringkasan")
   const fadeMount = useRef(new Animated.Value(0)).current
   const slideMount = useRef(new Animated.Value(16)).current
   const fadeTab = useRef(new Animated.Value(1)).current
-  const [tabs, setTabs] = useState<TabItem[]>([
-    { key: "ringkasan", icon: <Icon name="activity" size={22} color="#444" /> },
-    { key: "profil", icon: <Icon name="user" size={22} color="#444" /> }
-  ])
+  const shimmerAnim = useRef(new Animated.Value(0)).current
+  const hasFetchedKesehatan = useRef<string | null>(null);
+  const hasFetchedHb = useRef<string | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [kesehatanSubTab, setKesehatanSubTab] = useState<'klinis' | 'hemoglobin' | 'vital'>('klinis')
   const { width } = useWindowDimensions()
   const isSmallScreen = width < 375
   const [summary, setSummary] = useState<Summary | null>(null)
   const [loadingSummary, setLoadingSummary] = useState(false)
   const [errorSummary, setErrorSummary] = useState<string | null>(null)
-  const [profile, setProfile] = useState<Profile | null>(null)
+
+  // Collapsible section states for Dashboard (default: open / kebuka)
+  const [isSummaryOpen, setIsSummaryOpen] = useState(true);
+  const [isMenuGridOpen, setIsMenuGridOpen] = useState(true);
+  const [isHaidOpen, setIsHaidOpen] = useState(true);
+  const [isChartOpen, setIsChartOpen] = useState(true);
+
+  const userMods: string[] = useMemo(() => {
+    if (Array.isArray(profile?.active_modules)) {
+      return profile.active_modules;
+    }
+    if (Array.isArray(profile?.instansi?.active_modules)) {
+      return profile.instansi.active_modules;
+    }
+    return [];
+  }, [profile]);
+
+  const isModActive = useCallback((modKey: string): boolean => {
+    if (!profile) return true; // keep visible during initial load
+    return userMods.includes(modKey);
+  }, [profile, userMods]);
+
+  const tabs: TabItem[] = useMemo(() => {
+    const list: TabItem[] = [
+      { key: "ringkasan", label: "Ringkasan", icon: <Icon name="activity" size={20} /> },
+    ];
+
+    if (isModActive('kesehatan') || isModActive('hemoglobin') || isModActive('vitalitas')) {
+      list.push({ key: "kesehatan", label: "Kesehatan", icon: <Icon name="heart" size={20} /> });
+    }
+
+    if (isModActive('olahraga')) {
+      list.push({ key: "olahraga", label: "Aktivitas", icon: <Icon name="zap" size={20} /> });
+    } else if (isModActive('konsultasi')) {
+      list.push({ key: "konseling", label: "Konseling", icon: <Icon name="message-square" size={20} /> });
+    }
+
+    list.push({ key: "profil", label: "Profil", icon: <Icon name="user" size={20} /> });
+    return list;
+  }, [isModActive]);
+
+  useEffect(() => {
+    if (kesehatanSubTab === 'klinis' && !isModActive('kesehatan')) {
+      if (isModActive('hemoglobin')) setKesehatanSubTab('hemoglobin');
+      else if (isModActive('vitalitas')) setKesehatanSubTab('vital');
+    } else if (kesehatanSubTab === 'hemoglobin' && !isModActive('hemoglobin')) {
+      if (isModActive('kesehatan')) setKesehatanSubTab('klinis');
+      else if (isModActive('vitalitas')) setKesehatanSubTab('vital');
+    } else if (kesehatanSubTab === 'vital' && !isModActive('vitalitas')) {
+      if (isModActive('kesehatan')) setKesehatanSubTab('klinis');
+      else if (isModActive('hemoglobin')) setKesehatanSubTab('hemoglobin');
+    }
+  }, [isModActive, kesehatanSubTab]);
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [kesehatanData, setKesehatanData] = useState<YearData<KesehatanItem>[]>([])
   const [loadingKesehatan, setLoadingKesehatan] = useState(false)
@@ -142,6 +225,69 @@ const HomeScreenMember = () => {
   const [retypePassword, setRetypePassword] = useState("")
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [savingPassword, setSavingPassword] = useState(false)
+  // State untuk edit profile modal
+  const [editProfileModalVisible, setEditProfileModalVisible] = useState(false)
+  // State untuk theme hub modal
+  const [themeHubModalVisible, setThemeHubModalVisible] = useState(false)
+  const { themeId, isDark } = useTheme()
+  // State untuk changelog modal
+  const [changelogModalVisible, setChangelogModalVisible] = useState(false)
+  // State untuk check update modal
+  const [checkUpdateVisible, setCheckUpdateVisible] = useState(false)
+  const [checkUpdateStatus, setCheckUpdateStatus] = useState<CheckUpdateStatus>('checking')
+  const [checkUpdateData, setCheckUpdateData] = useState<SoftwareReleaseData | null>(null)
+  const [checkUpdateError, setCheckUpdateError] = useState<string | null>(null)
+  const [forceUpgradeVisible, setForceUpgradeVisible] = useState(false)
+  const [forceUpgradeData, setForceUpgradeData] = useState<SoftwareReleaseData | null>(null)
+
+  const handleCheckUpdate = async () => {
+    setCheckUpdateStatus('checking')
+    setCheckUpdateVisible(true)
+    setCheckUpdateError(null)
+    setCheckUpdateData(null)
+
+    try {
+      const res = await checkAppUpdate()
+
+      if (!res.success && res.isOffline) {
+        setCheckUpdateStatus('error')
+        setCheckUpdateError('Koneksi internet terputus. Silakan hubungkan perangkat Anda ke internet.')
+        return
+      }
+
+      if (!res.success) {
+        setCheckUpdateStatus('error')
+        setCheckUpdateError(res.message || 'Gagal memeriksa pembaruan aplikasi.')
+        return
+      }
+
+      if (res.has_update && res.data) {
+        if (res.is_mandatory) {
+          setCheckUpdateVisible(false)
+          setForceUpgradeData(res.data)
+          setForceUpgradeVisible(true)
+        } else {
+          setCheckUpdateData(res.data)
+          setCheckUpdateStatus('update_available')
+        }
+      } else {
+        setCheckUpdateStatus('up_to_date')
+      }
+    } catch (err: any) {
+      setCheckUpdateStatus('error')
+      setCheckUpdateError(err?.message || 'Terjadi kesalahan sistem saat memeriksa pembaruan.')
+    }
+  }
+
+  const handleApplyUpdate = () => {
+    const targetUrl =
+      checkUpdateData?.download_url ||
+      (Platform.OS === 'android'
+        ? 'https://play.google.com/store/apps'
+        : 'https://apps.apple.com')
+    Linking.openURL(targetUrl).catch(() => {})
+  }
+
   // State untuk modal informasi kesehatan
   const [healthInfoModalVisible, setHealthInfoModalVisible] = useState(false)
   // State untuk loading logout
@@ -182,19 +328,32 @@ const HomeScreenMember = () => {
   const canSubmitPita = useMemo(() => {
     return currentHaidData !== null && activePitaData === null;
   }, [currentHaidData, activePitaData]);
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true)
-      await logout()
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Login" }],
-      })
-    } catch (error) {
-      console.log("Logout error:", error)
-    } finally {
-      setIsLoggingOut(false)
-    }
+  const handleLogout = () => {
+    Alert.alert(
+      "Keluar dari Akun",
+      "Apakah Anda yakin ingin mengakhiri sesi dan keluar dari aplikasi?",
+      [
+        { text: "Batal", style: "cancel" },
+        {
+          text: "Ya, Keluar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setIsLoggingOut(true)
+              await logout()
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "Login" }],
+              })
+            } catch (error) {
+              console.log("Logout error:", error)
+            } finally {
+              setIsLoggingOut(false)
+            }
+          }
+        }
+      ]
+    )
   }
   const handleChangePassword = async () => {
     if (newPassword !== retypePassword) {
@@ -291,80 +450,150 @@ const HomeScreenMember = () => {
       setSubmittingPita(false);
     }
   };
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Reusable profile & active modules fetcher
+  const fetchProfileAndModules = useCallback(async (isSilent = false) => {
+    try {
+      if (!isSilent) setLoadingProfile(true);
+      const meRes = await api.get("/me");
+      const profileData = meRes?.data?.data || meRes?.data || null;
+      if (profileData) {
+        setProfile(profileData);
+      }
+    } catch (e) {
+      console.log("Error fetching profile/modules:", e);
+    } finally {
+      if (!isSilent) setLoadingProfile(false);
+    }
+  }, []);
+
+  const fetchAll = useCallback(async () => {
+    setLoadingSummary(true);
+    setLoadingProfile(true);
+    setErrorSummary(null);
+    setInitialLoading(true);
+    try {
+      const [sumRes, meRes] = await Promise.all([
+        api.get("/member/summary"),
+        api.get("/me"),
+      ]);
+      setSummary(sumRes?.data?.data || sumRes?.data || null);
+      const profileData = meRes?.data?.data || meRes?.data || null;
+      setProfile(profileData);
+      const hasHaidMod = profileData?.active_modules ? profileData.active_modules.includes('haid_pita') : true;
+      if (profileData?.jk === "P" && hasHaidMod) {
+        setLoadingHaid(true);
+        setLoadingPita(true);
+        const [haidRes, pitaRes, notifRes] = await Promise.all([
+          api.get(`/member/${profileData.id}/riwayat-haid`),
+          api.get(`/member/${profileData.id}/riwayat-pita`),
+          api.get('/member/check-peminjaman-status')
+        ]);
+        setHaidData(haidRes?.data?.data || []);
+        setPitaData(pitaRes?.data?.data || []);
+        setPeminjamanNotification(notifRes?.data?.data || null);
+      }
+    } catch (e: any) {
+      setErrorSummary(e?.message || "Gagal memuat data");
+    } finally {
+      setLoadingSummary(false);
+      setLoadingProfile(false);
+      setLoadingHaid(false);
+      setLoadingPita(false);
+      setInitialLoading(false);
+    }
+  }, []);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchAll();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchAll]);
+
+  // 1. Initial Load
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
+  // 2. Webhook-Style Conditional Realtime Sync (Zero Overhead / 304 Not Modified):
+  // Simultaneously checks Maintenance Mode, Mandatory Update, and Active Feature Modules in 1 request.
+  const handleActiveModulesChange = useCallback((newMods: string[]) => {
+    setProfile(prev => {
+      if (!prev) return prev;
+      const prevMods = prev.active_modules || [];
+      const prevStr = [...prevMods].sort().join(',');
+      const newStr = [...newMods].sort().join(',');
+      if (prevStr !== newStr) {
+        return {
+          ...prev,
+          active_modules: newMods,
+          instansi: prev.instansi ? { ...prev.instansi, active_modules: newMods } : prev.instansi,
+        };
+      }
+      return prev;
+    });
+  }, []);
+
+  const {
+    isMaintenance,
+    maintenanceMessage,
+    isMandatoryUpgrade,
+    forceUpgradeData: syncForceUpgradeData,
+    recheckSync,
+  } = useRealtimeSystemSync({
+    onActiveModulesChange: handleActiveModulesChange,
+    intervalMs: 4000,
+  });
+
+  // 3. useFocusEffect: Immediately refresh auth & profile when screen is focused
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       const check = async () => {
         const user = await checkAuthStatus();
         if (!user) {
           navigation.navigate('Login');
+          return;
         }
+        // Immediate module & profile sync on screen focus
+        fetchProfileAndModules(true);
       };
       check();
-    }, [navigation])
+    }, [navigation, fetchProfileAndModules])
   );
+
+  // 4. AppState listener: Refresh instantly when switching back from browser to app
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeMount, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.timing(slideMount, { toValue: 0, duration: 500, useNativeDriver: true }),
-    ]).start();
-  }, [fadeMount, slideMount]);
-  useEffect(() => {
-    Animated.sequence([
-      Animated.timing(fadeTab, { toValue: 0.6, duration: 120, useNativeDriver: true }),
-      Animated.timing(fadeTab, { toValue: 1, duration: 160, useNativeDriver: true }),
-    ]).start();
-  }, [active, fadeTab]);
-  useEffect(() => {
-    const fetchAll = async () => {
-      setLoadingSummary(true);
-      setLoadingProfile(true);
-      setErrorSummary(null);
-      setInitialLoading(true);
-      try {
-        const [sumRes, meRes] = await Promise.all([
-          api.get("/member/summary"),
-          api.get("/me"),
-        ]);
-        setSummary(sumRes?.data?.data || sumRes?.data || null);
-        const profileData = meRes?.data?.data || meRes?.data || null;
-        setProfile(profileData);
-        setTabs([
-          { key: "ringkasan", icon: <Icon name="activity" size={22} color="#444" /> },
-          { key: "kesehatan", icon: <Icon name="heart" size={22} color="#444" /> },
-          { key: "hemoglobin", icon: <Icon name="droplet" size={22} color="#444" /> },
-          { key: "profil", icon: <Icon name="user" size={22} color="#444" /> },
-        ]);
-        if (profileData?.jk === "P") {
-          setLoadingHaid(true);
-          setLoadingPita(true);
-          const [haidRes, pitaRes, notifRes] = await Promise.all([
-            api.get(`/member/${profileData.id}/riwayat-haid`),
-            api.get(`/member/${profileData.id}/riwayat-pita`),
-            api.get('/member/check-peminjaman-status')
-          ]);
-          setHaidData(haidRes?.data?.data || []);
-          setPitaData(pitaRes?.data?.data || []);
-          setPeminjamanNotification(notifRes?.data?.data || null);
-        }
-      } catch (e: any) {
-        setErrorSummary(e?.message || "Gagal memuat data");
-      } finally {
-        setLoadingSummary(false);
-        setLoadingProfile(false);
-        setLoadingHaid(false);
-        setLoadingPita(false);
-        setInitialLoading(false);
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        fetchProfileAndModules(true);
       }
-    };
-    fetchAll();
-  }, []);
+    });
+    return () => subscription.remove();
+  }, [fetchProfileAndModules]);
+
+  // 5. Auto bounce-back if user is currently inside a disabled module sub-screen
   useEffect(() => {
-    if (active === "kesehatan" && profile) {
+    if (active === 'ringkasan' || active === 'profil') return;
+    const modKey = active === 'konseling' ? 'konsultasi' : active;
+    if (!isModActive(modKey)) {
+      setActive('ringkasan');
+      Alert.alert("Fitur Dinonaktifkan", "Modul ini telah dinonaktifkan oleh Administrator Institusi Anda.");
+    }
+  }, [active, isModActive]);
+
+  useEffect(() => {
+    if (active === "kesehatan" && profile?.id) {
+      if (hasFetchedKesehatan.current === String(profile.id)) return;
       const fetchKesehatan = async () => {
         try {
           setLoadingKesehatan(true);
           const res = await api.get(`/member/${profile.id}/kesehatan`);
           setKesehatanData(res?.data?.data || []);
+          hasFetchedKesehatan.current = String(profile.id);
         } catch (e: any) {
           console.error("Error fetching kesehatan:", e);
           setKesehatanData([]);
@@ -374,14 +603,17 @@ const HomeScreenMember = () => {
       };
       fetchKesehatan();
     }
-  }, [active, profile]);
+  }, [active, profile?.id]);
+
   useEffect(() => {
-    if (active === "hemoglobin" && profile) {
+    if ((active === "hemoglobin" || (active === "kesehatan" && kesehatanSubTab === "hemoglobin")) && profile?.id) {
+      if (hasFetchedHb.current === String(profile.id)) return;
       const fetchHb = async () => {
         try {
           setLoadingHb(true);
           const res = await api.get(`/member/${profile.id}/hb`);
           setHbData(res?.data?.data || []);
+          hasFetchedHb.current = String(profile.id);
         } catch (e: any) {
           console.error("Error fetching hb:", e);
           setHbData([]);
@@ -391,7 +623,7 @@ const HomeScreenMember = () => {
       };
       fetchHb();
     }
-  }, [active, profile]);
+  }, [active, kesehatanSubTab, profile?.id]);
   const getGreetingTime = (): string => {
     const hour = new Date().getHours();
     if (hour >= 0 && hour < 12) return "Selamat pagi 🌥️";
@@ -443,8 +675,33 @@ const HomeScreenMember = () => {
   const pitaButtonColor = activePitaData
     ? getStatusColor(activePitaData.status)
     : canSubmitPita ? '#8b5cf6' : Colors.muted;
+
+  // Palet Warna:
+  // Primer: Putih (Colors.white / surface card)
+  // Sekunder: Hijau kesehatan (Colors.primary = #059669)
+  // Tersier: Warna cover divisi pengguna yang ditentukan oleh Admin Instansi
+  const hasDivisi = Boolean(profile?.divisi || profile?.id_divisi);
+  const tertiaryColor = profile?.color_cover || profile?.tertiary_color || Colors.defaultTertiary || '#2e7d32';
+
+  const shimmerTranslateX = shimmerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-SCREEN_WIDTH * 0.9, SCREEN_WIDTH * 1.3],
+  });
+  const shimmerOpacity = shimmerAnim.interpolate({
+    inputRange: [0, 0.15, 0.85, 1],
+    outputRange: [0, 1, 1, 0],
+  });
+
+  const currentTabKey = useMemo(() => {
+    if (['kesehatan', 'hemoglobin', 'vital'].includes(active)) return 'kesehatan';
+    if (active === 'olahraga') return 'olahraga';
+    if (active === 'konseling' && tabs.some(t => t.key === 'konseling')) return 'konseling';
+    if (active === 'profil') return 'profil';
+    return 'ringkasan';
+  }, [active, tabs]);
+
   return (
-    <SafeAreaView style={[styles.safe, { flex: 1 }]}>
+    <SafeAreaView edges={["top", "left", "right"]} style={[styles.safe, { flex: 1 }]}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.bg} />
       <ScrollView
         contentContainerStyle={[styles.scroll, {
@@ -455,47 +712,388 @@ const HomeScreenMember = () => {
         }]}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
-        overScrollMode="never"
-        bounces={false}
+        bounces={true}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[tertiaryColor, Colors.primary]}
+            tintColor={tertiaryColor}
+          />
+        }
       >
-        <Animated.View style={[styles.header, { opacity: fadeMount, transform: [{ translateY: slideMount }] }]}>
+        <Animated.View style={[
+          styles.header, 
+          { 
+            opacity: fadeMount, 
+            transform: [{ translateY: slideMount }],
+            shadowColor: hasDivisi ? tertiaryColor : "#000",
+            shadowOpacity: hasDivisi ? 0.16 : 0.08,
+            shadowRadius: 14,
+            borderColor: hasDivisi ? tertiaryColor + '30' : Colors.border,
+            borderWidth: hasDivisi ? 1.2 : StyleSheet.hairlineWidth,
+          }
+        ]}>
+          {hasDivisi && (
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+              {/* Subtle top accent line with rounded corners */}
+              <View 
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 2.5,
+                  backgroundColor: tertiaryColor,
+                  borderTopLeftRadius: moderateScale(16),
+                  borderTopRightRadius: moderateScale(16),
+                  opacity: 0.9,
+                }} 
+              />
+              {/* Soft ambient glow in top right */}
+              <View 
+                style={{
+                  position: 'absolute',
+                  top: -moderateScale(35),
+                  right: -moderateScale(25),
+                  width: moderateScale(160),
+                  height: moderateScale(160),
+                  borderRadius: moderateScale(80),
+                  backgroundColor: tertiaryColor,
+                  opacity: 0.04,
+                }} 
+              />
+              {/* Animated Light Sweep (cahaya berjalan ke samping sesuai warna divisi) */}
+              <Animated.View
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    width: SCREEN_WIDTH * 0.85,
+                    opacity: shimmerOpacity,
+                    transform: [
+                      { translateX: shimmerTranslateX },
+                      { skewX: '-22deg' },
+                    ],
+                  },
+                ]}
+              >
+                <Svg height="100%" width="100%">
+                  <Defs>
+                    <SvgLinearGradient id="shimmerBeam" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <Stop offset="0%" stopColor={tertiaryColor} stopOpacity="0" />
+                      <Stop offset="30%" stopColor={tertiaryColor} stopOpacity="0.10" />
+                      <Stop offset="48%" stopColor="#ffffff" stopOpacity="0.65" />
+                      <Stop offset="52%" stopColor={tertiaryColor} stopOpacity="0.30" />
+                      <Stop offset="70%" stopColor={tertiaryColor} stopOpacity="0.12" />
+                      <Stop offset="100%" stopColor={tertiaryColor} stopOpacity="0" />
+                    </SvgLinearGradient>
+                  </Defs>
+                  <Rect x="0" y="0" width="100%" height="100%" fill="url(#shimmerBeam)" />
+                </Svg>
+              </Animated.View>
+            </View>
+          )}
+
           <View style={styles.headerRow}>
             <View style={styles.greetingContainer}>
-              <Text style={styles.greet}>{getGreetingTime()},</Text>{/* */}
-              <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">{profile?.nama || "Member"}</Text>
-            </View>{/* */}
-            <View style={styles.profileBadge}>
-              <Icon name="user" size={20} color={Colors.white} />
+              {active === "profil" ? (
+                <View style={[styles.profileHeroTag, { backgroundColor: `${tertiaryColor}15` }]}>
+                  <Icon name="user-check" size={11} color={tertiaryColor} />
+                  <Text style={[styles.profileHeroTagText, { color: tertiaryColor }]}>
+                    Profil Pengguna
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.greet}>
+                  {getGreetingTime()},
+                </Text>
+              )}
+              <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">
+                {profile?.nama || "Member"}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: horizontalScale(6), flexWrap: 'wrap', marginTop: verticalScale(3) }}>
+                {profile?.divisi ? (
+                  <View style={[
+                    styles.divisiBadge, 
+                    {
+                      backgroundColor: tertiaryColor + '14', 
+                      borderColor: tertiaryColor + '38',
+                      borderWidth: 1,
+                      marginTop: 0,
+                    }
+                  ]}>
+                    <View style={[styles.divisiDot, { backgroundColor: tertiaryColor }]} />
+                    <Text style={[styles.divisiBadgeText, { color: tertiaryColor }]} numberOfLines={1}>
+                      {profile.divisi}
+                    </Text>
+                  </View>
+                ) : null}
+                {active === "profil" && (
+                  <View style={[
+                    styles.divisiBadge,
+                    {
+                      backgroundColor: '#0d948815',
+                      borderColor: '#0d948835',
+                      borderWidth: 1,
+                      marginTop: 0,
+                    }
+                  ]}>
+                    <Icon name="shield" size={10} color="#0d9488" />
+                    <Text style={[styles.divisiBadgeText, { color: '#0d9488' }]} numberOfLines={1}>
+                      {profile?.level || 'Member'}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
+            <Pressable 
+              onPress={() => {
+                if (active === "profil") {
+                  setEditProfileModalVisible(true);
+                } else {
+                  setActive("profil");
+                }
+              }}
+              style={({ pressed }) => [
+                styles.profileBadge, 
+                { 
+                  backgroundColor: tertiaryColor + '12', 
+                  borderColor: tertiaryColor + '40',
+                  borderWidth: 1.5,
+                  shadowColor: tertiaryColor,
+                  shadowOpacity: 0.15,
+                  shadowRadius: 6,
+                  overflow: 'hidden' 
+                },
+                pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] }
+              ]}
+            >
+              {profile?.avatar ? (
+                <Image source={{ uri: profile.avatar }} style={{ width: '100%', height: '100%' }} />
+              ) : (
+                <Icon name="user" size={20} color={tertiaryColor} />
+              )}
+              {active === "profil" && (
+                <View style={[styles.avatarEditIconBadge, { backgroundColor: tertiaryColor }]}>
+                  <Icon name="camera" size={9} color={Colors.white} />
+                </View>
+              )}
+            </Pressable>
           </View>
         </Animated.View>
 
         <Animated.View style={{ opacity: fadeTab }}>
           {active === "ringkasan" && (
             <View style={{ gap: verticalScale(12) }}>
-              <Card style={{ padding: isSmallScreen ? moderateScale(20) : moderateScale(24) }}>
-                <Text style={styles.cardTitle}>Ringkasan Kesehatan</Text>
-                {loadingSummary ? (
-                  <View style={styles.centerRow}>
-                    <ActivityIndicator color={Colors.primary} />{/* */}
-                    <Text style={styles.mutedText}>Memuat...</Text>
-                  </View>
-                ) : errorSummary ? (
-                  <Text style={[styles.mutedText, { color: "#dc2626" }]}>{errorSummary}</Text>
-                ) : (
-                  <>
-                    <View style={styles.metrics}>
-                      <Metric label="IMT" value={(summary?.bmi ?? 0).toFixed(1)} unit="" />{/* */}
-                      <Metric label="Tinggi" value={`${summary?.tinggi ?? 0}`} unit="cm" />{/* */}
-                      <Metric label="Berat" value={`${summary?.berat ?? 0}`} unit="kg" />
-                    </View>{/* */}
-                    <View style={styles.metrics}>
-                      <Metric label="Sistol" value={`${summary?.sistol ?? 0}`} unit="mmHg" />{/* */}
-                      <Metric label="Diastol" value={`${summary?.diastol ?? 0}`} unit="mmHg" />{/* */}
-                      <Metric label="Hb" value={`${summary?.hb ?? 0}`} unit="g/dL" />
+              <Card style={{ padding: isSmallScreen ? moderateScale(20) : moderateScale(24), borderTopWidth: 3.5, borderTopColor: tertiaryColor }}>
+                <Pressable
+                  onPress={() => setIsSummaryOpen(prev => !prev)}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: isSummaryOpen ? verticalScale(6) : 0 }}
+                >
+                  <Text style={styles.cardTitle}>Ringkasan Kesehatan</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(8) }}>
+                    {profile?.divisi ? (
+                      <View style={[styles.divisiPillSmall, { backgroundColor: tertiaryColor + '18' }]}>
+                        <Text style={[styles.divisiPillSmallText, { color: tertiaryColor }]}>{profile.divisi}</Text>
+                      </View>
+                    ) : null}
+                    <View style={[styles.collapseArrowBtn, { backgroundColor: tertiaryColor + '15' }]}>
+                      <Icon name={isSummaryOpen ? "chevron-up" : "chevron-down"} size={18} color={tertiaryColor} />
                     </View>
+                  </View>
+                </Pressable>
+                {isSummaryOpen && (
+                  <>
+                    {loadingSummary ? (
+                      <View style={styles.centerRow}>
+                        <ActivityIndicator color={Colors.primary} />{/* */}
+                        <Text style={styles.mutedText}>Memuat...</Text>
+                      </View>
+                    ) : errorSummary ? (
+                      <Text style={[styles.mutedText, { color: "#dc2626" }]}>{errorSummary}</Text>
+                    ) : (
+                      <>
+                        <View style={styles.metrics}>
+                          <Metric label="IMT" value={(summary?.bmi ?? 0).toFixed(1)} unit="" />{/* */}
+                          <Metric label="Tinggi" value={`${summary?.tinggi ?? 0}`} unit="cm" />{/* */}
+                          <Metric label="Berat" value={`${summary?.berat ?? 0}`} unit="kg" />
+                        </View>{/* */}
+                        <View style={styles.metrics}>
+                          <Metric label="Sistol" value={`${summary?.sistol ?? 0}`} unit="mmHg" />{/* */}
+                          <Metric label="Diastol" value={`${summary?.diastol ?? 0}`} unit="mmHg" />{/* */}
+                          <Metric label="Hb" value={`${summary?.hb ?? 0}`} unit="g/dL" />
+                        </View>
+                      </>
+                    )}
                   </>
+                )}
+              </Card>
+
+              {/* MENU LAYANAN & FITUR UTAMA DASHBOARD */}
+              <Card style={{ padding: isSmallScreen ? moderateScale(16) : moderateScale(20) }}>
+                <Pressable
+                  onPress={() => setIsMenuGridOpen(prev => !prev)}
+                  style={[
+                    styles.menuGridHeader,
+                    {
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: isMenuGridOpen ? verticalScale(12) : 0,
+                    }
+                  ]}
+                >
+                  <View style={{ flex: 1, paddingRight: moderateScale(10) }}>
+                    <Text style={styles.cardTitle}>Layanan & Fitur</Text>
+                    <Text style={styles.menuGridSubtitle}>Akses cepat fitur kesehatan Anda</Text>
+                  </View>
+                  <View style={[styles.collapseArrowBtn, { backgroundColor: tertiaryColor + '15' }]}>
+                    <Icon name={isMenuGridOpen ? "chevron-up" : "chevron-down"} size={18} color={tertiaryColor} />
+                  </View>
+                </Pressable>
+
+                {isMenuGridOpen && (
+                  <View style={styles.menuGrid}>
+                  {isModActive('kesehatan') && (
+                    <Pressable
+                      onPress={() => {
+                        setKesehatanSubTab('klinis');
+                        setActive('kesehatan');
+                      }}
+                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
+                    >
+                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#fef2f2' }]}>
+                        <Icon name="heart" size={22} color="#dc2626" />
+                      </View>
+                      <Text style={styles.menuGridItemTitle}>Klinis</Text>
+                      <Text style={styles.menuGridItemSub}>Cek Fisik</Text>
+                    </Pressable>
+                  )}
+
+                  {isModActive('olahraga') && (
+                    <Pressable
+                      onPress={() => setActive('olahraga')}
+                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
+                    >
+                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#ecfdf5' }]}>
+                        <Icon name="zap" size={22} color="#059669" />
+                      </View>
+                      <Text style={styles.menuGridItemTitle}>Olahraga</Text>
+                      <Text style={styles.menuGridItemSub}>Lacak Lari</Text>
+                    </Pressable>
+                  )}
+
+                  {isModActive('hemoglobin') && (
+                    <Pressable
+                      onPress={() => {
+                        setKesehatanSubTab('hemoglobin');
+                        setActive('kesehatan');
+                      }}
+                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
+                    >
+                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#fff1f2' }]}>
+                        <Icon name="droplet" size={22} color="#e11d48" />
+                      </View>
+                      <Text style={styles.menuGridItemTitle}>Hb Darah</Text>
+                      <Text style={styles.menuGridItemSub}>Kadar Hb</Text>
+                    </Pressable>
+                  )}
+
+                  {isModActive('vitalitas') && (
+                    <Pressable
+                      onPress={() => {
+                        setKesehatanSubTab('vital');
+                        setActive('kesehatan');
+                      }}
+                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
+                    >
+                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#fffbeb' }]}>
+                        <Icon name="sun" size={22} color="#d97706" />
+                      </View>
+                      <Text style={styles.menuGridItemTitle}>Vitalitas</Text>
+                      <Text style={styles.menuGridItemSub}>Log Harian</Text>
+                    </Pressable>
+                  )}
+
+                  {isModActive('konsultasi') && (
+                    <Pressable
+                      onPress={() => setActive('konseling')}
+                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
+                    >
+                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#eff6ff' }]}>
+                        <Icon name="message-square" size={22} color="#2563eb" />
+                      </View>
+                      <Text style={styles.menuGridItemTitle}>Konseling</Text>
+                      <Text style={styles.menuGridItemSub}>Konsultasi</Text>
+                    </Pressable>
+                  )}
+
+                  {profile?.jk === "P" && isModActive('haid_pita') && (
+                    <Pressable
+                      onPress={() => setRiwayatHaidModalVisible(true)}
+                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
+                    >
+                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#f5f3ff' }]}>
+                        <Icon name="calendar" size={22} color="#7c3aed" />
+                      </View>
+                      <Text style={styles.menuGridItemTitle}>Pita & Haid</Text>
+                      <Text style={styles.menuGridItemSub}>Siklus & UKS</Text>
+                    </Pressable>
+                  )}
+
+                  {isModActive('nutrisi') && (
+                    <Pressable
+                      onPress={() => setActive('nutrisi')}
+                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
+                    >
+                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#fef3c7' }]}>
+                        <Icon name="coffee" size={22} color="#d97706" />
+                      </View>
+                      <Text style={styles.menuGridItemTitle}>Nutrisi</Text>
+                      <Text style={styles.menuGridItemSub}>Pola Makan</Text>
+                    </Pressable>
+                  )}
+
+                  {isModActive('burnout') && (
+                    <Pressable
+                      onPress={() => setActive('burnout')}
+                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
+                    >
+                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#f3e8ff' }]}>
+                        <Icon name="activity" size={22} color="#9333ea" />
+                      </View>
+                      <Text style={styles.menuGridItemTitle}>Burnout</Text>
+                      <Text style={styles.menuGridItemSub}>Cek Stres</Text>
+                    </Pressable>
+                  )}
+
+                  {isModActive('ergonomi') && (
+                    <Pressable
+                      onPress={() => setActive('ergonomi')}
+                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
+                    >
+                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#ecfeff' }]}>
+                        <Icon name="crosshair" size={22} color="#0891b2" />
+                      </View>
+                      <Text style={styles.menuGridItemTitle}>Ergonomi</Text>
+                      <Text style={styles.menuGridItemSub}>Postur Duduk</Text>
+                    </Pressable>
+                  )}
+
+                  {isModActive('vaksinasi') && (
+                    <Pressable
+                      onPress={() => setActive('vaksinasi')}
+                      style={({ pressed }) => [styles.menuGridItem, pressed && styles.menuGridItemPressed]}
+                    >
+                      <View style={[styles.menuGridIconContainer, { backgroundColor: '#eff6ff' }]}>
+                        <Icon name="shield" size={22} color="#2563eb" />
+                      </View>
+                      <Text style={styles.menuGridItemTitle}>Vaksinasi</Text>
+                      <Text style={styles.menuGridItemSub}>Paspor Imunisasi</Text>
+                    </Pressable>
+                  )}
+                </View>
                 )}
               </Card>
 
@@ -507,7 +1105,23 @@ const HomeScreenMember = () => {
               {/* MENU HAID */}
               {profile?.jk === "P" && (
                 <Card>
-                  <Text style={styles.cardTitle}>Menu Haid</Text>
+                  <Pressable
+                    onPress={() => setIsHaidOpen(prev => !prev)}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: isHaidOpen ? verticalScale(12) : 0,
+                    }}
+                  >
+                    <Text style={styles.cardTitle}>Menu Haid</Text>
+                    <View style={[styles.collapseArrowBtn, { backgroundColor: '#f5f3ff' }]}>
+                      <Icon name={isHaidOpen ? "chevron-up" : "chevron-down"} size={18} color="#7c3aed" />
+                    </View>
+                  </Pressable>
+
+                  {isHaidOpen && (
+                    <>
 
                   {/* Status Haid Saat Ini */}
                   {currentHaidData && (
@@ -629,212 +1243,437 @@ const HomeScreenMember = () => {
                       <Icon name="chevron-right" size={18} color={Colors.muted} />
                     </Pressable>
                   </View>
-                </Card>
-              )}
+                </>
+                )}
+              </Card>
+            )}
 
               {/* Card untuk HealthBarChart */}
               <Card>
-                <View style={styles.chartHeader}>
-                  <Text style={styles.chartTitle}>Tren Kesehatan</Text>{/* */}
+                <View style={[styles.chartHeader, { marginBottom: isChartOpen ? verticalScale(12) : 0 }]}>
                   <Pressable
-                    onPress={() => setHealthInfoModalVisible(true)}
-                    style={styles.infoIconButton}
+                    onPress={() => setIsChartOpen(prev => !prev)}
+                    style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
                   >
-                    <Icon name="info" size={18} color={Colors.primary} />
+                    <Text style={styles.chartTitle}>Tren Kesehatan</Text>
                   </Pressable>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(6) }}>
+                    <Pressable
+                      onPress={() => setHealthInfoModalVisible(true)}
+                      style={styles.infoIconButton}
+                    >
+                      <Icon name="info" size={18} color={Colors.primary} />
+                    </Pressable>
+                    <Pressable
+                      onPress={() => setIsChartOpen(prev => !prev)}
+                      style={[styles.collapseArrowBtn, { backgroundColor: tertiaryColor + '15' }]}
+                    >
+                      <Icon name={isChartOpen ? "chevron-up" : "chevron-down"} size={18} color={tertiaryColor} />
+                    </Pressable>
+                  </View>
                 </View>
-                <HealthBarChart />
+                {isChartOpen && <HealthBarChart />}
               </Card>
             </View>
           )}
 
           {active === "kesehatan" && (
             <View style={{ gap: verticalScale(12) }}>
-              <Card>
-                <Text style={styles.cardTitle}>Riwayat Kesehatan</Text>
-                {loadingKesehatan ? (
-                  <View style={styles.centerRow}>
-                    <ActivityIndicator color={Colors.primary} />{/* */}
-                    <Text style={styles.mutedText}>Memuat...</Text>
-                  </View>
-                ) : kesehatanData.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Icon name="heart" size={40} color={Colors.muted} />{/* */}
-                    <Text style={[styles.mutedText, { textAlign: 'center', marginTop: 8 }]}>Belum ada data kesehatan</Text>
-                  </View>
-                ) : (
-                  <ScrollView style={{ maxHeight: verticalScale(500) }} showsVerticalScrollIndicator={false}>
-                    {kesehatanData.map((yG) => (
-                      <View key={yG.year} style={styles.yearGroup}>
-                        <Text style={styles.yearTitle}>{yG.year}</Text>
-                        {yG.months.map((mG, idx) => (
-                          <View key={`${yG.year}-${idx}`} style={styles.monthGroup}>
-                            <Text style={styles.monthTitle}>{mG.month.charAt(0).toUpperCase() + mG.month.slice(1)}</Text>
-                            {mG.data.map((item) => (
-                              <View key={item.id_kesehatan} style={styles.healthCard}>
-                                <View style={styles.healthHeader}>
-                                  <Icon name="calendar" size={16} color={Colors.primary} />{/* */}
-                                  <Text style={styles.healthDate}>
-                                    {new Date(item.tgl).toLocaleDateString('id-ID', {
-                                      day: 'numeric',
-                                      month: 'long',
-                                      year: 'numeric'
-                                    })}
-                                  </Text>
-                                </View>
-                                <View style={styles.healthMetrics}>
-                                  <View style={styles.healthMetricRow}>
-                                    <Text style={styles.healthLabel}>IMT:</Text>{/* */}
-                                    <Text style={styles.healthValue}>{item.imt}</Text>
-                                  </View>{/* */}
-                                  <View style={styles.healthMetricRow}>
-                                    <Text style={styles.healthLabel}>BB/TB:</Text>{/* */}
-                                    <Text style={styles.healthValue}>{item.bb} kg / {item.tb} cm</Text>
-                                  </View>{/* */}
-                                  <View style={styles.healthMetricRow}>
-                                    <Text style={styles.healthLabel}>Tekanan Darah:</Text>{/* */}
-                                    <Text style={styles.healthValue}>{item.sistol}/{item.diastol} mmHg</Text>
-                                  </View>{/* */}
-                                  <View style={styles.healthMetricRow}>
-                                    <Text style={styles.healthLabel}>Status:</Text>{/* */}
-                                    <Text style={[styles.healthValue, { color: Colors.primary, fontWeight: '700' }]}>
-                                      {item.status}
-                                    </Text>
-                                  </View>
-                                </View>
-                                {item.pesan_imt && (
-                                  <View style={styles.healthMessage}>
-                                    <Icon name="info" size={14} color={Colors.muted} />{/* */}
-                                    <Text style={styles.healthMessageText}>{item.pesan_imt}</Text>
-                                  </View>
-                                )}
-                              </View>
-                            ))}
-                          </View>
-                        ))}
-                      </View>
-                    ))}
-                  </ScrollView>
-                )}
-              </Card>
-            </View>
-          )}
+              <View style={styles.subScreenHeader}>
+                <Pressable onPress={() => setActive('ringkasan')} style={styles.backButton}>
+                  <Icon name="arrow-left" size={18} color={tertiaryColor} />
+                  <Text style={[styles.backButtonText, { color: tertiaryColor }]}>Ringkasan</Text>
+                </Pressable>
+                <Text style={styles.subScreenTitle}>Pusat Rekam Medis</Text>
+              </View>
 
-          {active === "hemoglobin" && (
-            <View style={{ gap: verticalScale(12) }}>
-              <TipCard
-                style={{
-                  paddingBottom: verticalScale(10),
-                  borderBottomWidth: 4.5,
-                  borderBottomColor: Colors.primary,
-                  marginBottom: verticalScale(8)
-                }}
-                title="Tentang Hemoglobin"
-                text="Hemoglobin normal untuk remaja perempuan: 12-16 g/dL, remaja laki-laki: 13-18 g/dL"
-              />
-              <Card>
-                <Text style={styles.cardTitle}>Riwayat Hemoglobin</Text>
-                {loadingHb ? (
-                  <View style={styles.centerRow}>
-                    <ActivityIndicator color={Colors.primary} />{/* */}
-                    <Text style={styles.mutedText}>Memuat...</Text>
-                  </View>
-                ) : hbData.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Icon name="droplet" size={40} color={Colors.muted} />{/* */}
-                    <Text style={[styles.mutedText, { textAlign: 'center', marginTop: 8 }]}>
-                      Belum ada data hemoglobin
+              {/* Segmented Filter Bar */}
+              <View style={styles.subTabRow}>
+                {isModActive('kesehatan') && (
+                  <Pressable
+                    onPress={() => setKesehatanSubTab('klinis')}
+                    style={[styles.subTabButton, kesehatanSubTab === 'klinis' && { backgroundColor: tertiaryColor }]}
+                  >
+                    <Text style={[styles.subTabButtonText, kesehatanSubTab === 'klinis' && styles.subTabButtonTextActive]}>
+                      Klinis
                     </Text>
-                  </View>
-                ) : (
-                  <ScrollView style={{ maxHeight: verticalScale(500) }} showsVerticalScrollIndicator={false}>
-                    {hbData.map((yG) => (
-                      <View key={yG.year} style={styles.yearGroup}>
-                        <Text style={styles.yearTitle}>{yG.year}</Text>
-                        {yG.months.map((mG, idx) => (
-                          <View key={`${yG.year}-${idx}`} style={styles.monthGroup}>
-                            <Text style={styles.monthTitle}>
-                              {mG.month.charAt(0).toUpperCase() + mG.month.slice(1)}
-                            </Text>
-                            {mG.data.map((item) => (
-                              <View key={item.id_hb} style={styles.hbCard}>
-                                <View style={styles.hbHeader}>
-                                  <Icon name="droplet" size={18} color="#dc2626" />{/* */}
-                                  <View style={{ flex: 1, marginLeft: moderateScale(8) }}>
-                                    <Text style={styles.hbDate}>
+                  </Pressable>
+                )}
+                {isModActive('hemoglobin') && (
+                  <Pressable
+                    onPress={() => setKesehatanSubTab('hemoglobin')}
+                    style={[styles.subTabButton, kesehatanSubTab === 'hemoglobin' && { backgroundColor: tertiaryColor }]}
+                  >
+                    <Text style={[styles.subTabButtonText, kesehatanSubTab === 'hemoglobin' && styles.subTabButtonTextActive]}>
+                      Hemoglobin
+                    </Text>
+                  </Pressable>
+                )}
+                {isModActive('vitalitas') && (
+                  <Pressable
+                    onPress={() => setKesehatanSubTab('vital')}
+                    style={[styles.subTabButton, kesehatanSubTab === 'vital' && { backgroundColor: tertiaryColor }]}
+                  >
+                    <Text style={[styles.subTabButtonText, kesehatanSubTab === 'vital' && styles.subTabButtonTextActive]}>
+                      Vitalitas
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+
+              {kesehatanSubTab === 'klinis' && (
+                <Card>
+                  <Text style={styles.cardTitle}>Riwayat Pemeriksaan Klinis</Text>
+                  {loadingKesehatan ? (
+                    <View style={styles.centerRow}>
+                      <ActivityIndicator color={Colors.primary} />
+                      <Text style={styles.mutedText}>Memuat...</Text>
+                    </View>
+                  ) : kesehatanData.length === 0 ? (
+                    <View style={styles.emptyState}>
+                      <Icon name="heart" size={40} color={Colors.muted} />
+                      <Text style={[styles.mutedText, { textAlign: 'center', marginTop: 8 }]}>Belum ada data kesehatan</Text>
+                    </View>
+                  ) : (
+                    <ScrollView style={{ maxHeight: verticalScale(500) }} showsVerticalScrollIndicator={false} nestedScrollEnabled={true}>
+                      {kesehatanData.map((yG) => (
+                        <View key={yG.year} style={styles.yearGroup}>
+                          <Text style={styles.yearTitle}>{yG.year}</Text>
+                          {yG.months.map((mG, idx) => (
+                            <View key={`${yG.year}-${idx}`} style={styles.monthGroup}>
+                              <Text style={styles.monthTitle}>{mG.month.charAt(0).toUpperCase() + mG.month.slice(1)}</Text>
+                              {mG.data.map((item) => (
+                                <View key={item.id_kesehatan} style={styles.healthCard}>
+                                  <View style={styles.healthHeader}>
+                                    <Icon name="calendar" size={16} color={Colors.primary} />
+                                    <Text style={styles.healthDate}>
                                       {new Date(item.tgl).toLocaleDateString('id-ID', {
                                         day: 'numeric',
                                         month: 'long',
                                         year: 'numeric'
                                       })}
                                     </Text>
-                                  </View>{/* */}
-                                  <View style={styles.hbBadge}>
-                                    <Text style={styles.hbBadgeText}>{item.hb} g/dL</Text>
                                   </View>
-                                </View>
-                                <View style={styles.hbStatus}>
-                                  <Text style={styles.hbStatusLabel}>Status:</Text>{/* */}
-                                  <Text style={[
-                                    styles.hbStatusValue,
-                                    { color: item.status === 'Normal' ? '#16a34a' : '#dc2626' }
-                                  ]}>
-                                    {item.status}
-                                  </Text>
-                                </View>
-                                {item.pesan && (
-                                  <View style={styles.hbMessage}>
-                                    <Icon name="info" size={14} color={Colors.muted} />{/* */}
-                                    <Text style={styles.hbMessageText}>{item.pesan}</Text>
+                                  <View style={styles.healthMetrics}>
+                                    <View style={styles.healthMetricRow}>
+                                      <Text style={styles.healthLabel}>IMT:</Text>
+                                      <Text style={styles.healthValue}>{item.imt}</Text>
+                                    </View>
+                                    <View style={styles.healthMetricRow}>
+                                      <Text style={styles.healthLabel}>BB/TB:</Text>
+                                      <Text style={styles.healthValue}>{item.bb} kg / {item.tb} cm</Text>
+                                    </View>
+                                    <View style={styles.healthMetricRow}>
+                                      <Text style={styles.healthLabel}>Tekanan Darah:</Text>
+                                      <Text style={styles.healthValue}>{item.sistol}/{item.diastol} mmHg</Text>
+                                    </View>
+                                    <View style={styles.healthMetricRow}>
+                                      <Text style={styles.healthLabel}>Status:</Text>
+                                      <Text style={[styles.healthValue, { color: Colors.primary, fontWeight: '700' }]}>
+                                        {item.status}
+                                      </Text>
+                                    </View>
                                   </View>
-                                )}
+                                  {item.pesan_imt && (
+                                    <View style={styles.healthMessage}>
+                                      <Icon name="info" size={14} color={Colors.muted} />
+                                      <Text style={styles.healthMessageText}>{item.pesan_imt}</Text>
+                                    </View>
+                                  )}
+                                </View>
+                              ))}
+                            </View>
+                          ))}
+                        </View>
+                      ))}
+                    </ScrollView>
+                  )}
+                </Card>
+              )}
+
+              {kesehatanSubTab === 'hemoglobin' && (
+                <>
+                  <TipCard
+                    style={{
+                      paddingBottom: verticalScale(10),
+                      borderBottomWidth: 4.5,
+                      borderBottomColor: Colors.primary,
+                      marginBottom: verticalScale(8)
+                    }}
+                    title="Tentang Hemoglobin"
+                    text="Hemoglobin normal untuk remaja perempuan: 12-16 g/dL, remaja laki-laki: 13-18 g/dL"
+                  />
+                  <Card>
+                    <Text style={styles.cardTitle}>Riwayat Hemoglobin</Text>
+                    {loadingHb ? (
+                      <View style={styles.centerRow}>
+                        <ActivityIndicator color={Colors.primary} />
+                        <Text style={styles.mutedText}>Memuat...</Text>
+                      </View>
+                    ) : hbData.length === 0 ? (
+                      <View style={styles.emptyState}>
+                        <Icon name="droplet" size={40} color={Colors.muted} />
+                        <Text style={[styles.mutedText, { textAlign: 'center', marginTop: 8 }]}>
+                          Belum ada data hemoglobin
+                        </Text>
+                      </View>
+                    ) : (
+                      <ScrollView style={{ maxHeight: verticalScale(500) }} showsVerticalScrollIndicator={false} nestedScrollEnabled={true}>
+                        {hbData.map((yG) => (
+                          <View key={yG.year} style={styles.yearGroup}>
+                            <Text style={styles.yearTitle}>{yG.year}</Text>
+                            {yG.months.map((mG, idx) => (
+                              <View key={`${yG.year}-${idx}`} style={styles.monthGroup}>
+                                <Text style={styles.monthTitle}>
+                                  {mG.month.charAt(0).toUpperCase() + mG.month.slice(1)}
+                                </Text>
+                                {mG.data.map((item) => (
+                                  <View key={item.id_hb} style={styles.hbCard}>
+                                    <View style={styles.hbHeader}>
+                                      <Icon name="droplet" size={18} color="#dc2626" />
+                                      <View style={{ flex: 1, marginLeft: moderateScale(8) }}>
+                                        <Text style={styles.hbDate}>
+                                          {new Date(item.tgl).toLocaleDateString('id-ID', {
+                                            day: 'numeric',
+                                            month: 'long',
+                                            year: 'numeric'
+                                          })}
+                                        </Text>
+                                      </View>
+                                      <View style={styles.hbBadge}>
+                                        <Text style={styles.hbBadgeText}>{item.hb} g/dL</Text>
+                                      </View>
+                                    </View>
+                                    <View style={styles.hbStatus}>
+                                      <Text style={styles.hbStatusLabel}>Status:</Text>
+                                      <Text style={[
+                                        styles.hbStatusValue,
+                                        { color: item.status === 'Normal' ? '#16a34a' : '#dc2626' }
+                                      ]}>
+                                        {item.status}
+                                      </Text>
+                                    </View>
+                                    {item.pesan && (
+                                      <View style={styles.hbMessage}>
+                                        <Icon name="info" size={14} color={Colors.muted} />
+                                        <Text style={styles.hbMessageText}>{item.pesan}</Text>
+                                      </View>
+                                    )}
+                                  </View>
+                                ))}
                               </View>
                             ))}
                           </View>
                         ))}
-                      </View>
-                    ))}
-                  </ScrollView>
-                )}
-              </Card>
+                      </ScrollView>
+                    )}
+                  </Card>
+                </>
+              )}
+
+              {kesehatanSubTab === 'vital' && (
+                <DailyVitalityView />
+              )}
+            </View>
+          )}
+
+          {active === "olahraga" && isModActive('olahraga') && (
+            <View style={{ gap: verticalScale(12) }}>
+              <View style={styles.subScreenHeader}>
+                <Pressable onPress={() => setActive('ringkasan')} style={styles.backButton}>
+                  <Icon name="arrow-left" size={18} color={tertiaryColor} />
+                  <Text style={[styles.backButtonText, { color: tertiaryColor }]}>Ringkasan</Text>
+                </Pressable>
+                <Text style={styles.subScreenTitle}>Olahraga & Kebugaran</Text>
+              </View>
+              <RunTrackerView />
+            </View>
+          )}
+
+          {active === "konseling" && isModActive('konsultasi') && (
+            <View style={{ gap: verticalScale(12) }}>
+              <View style={styles.subScreenHeader}>
+                <Pressable onPress={() => setActive('ringkasan')} style={styles.backButton}>
+                  <Icon name="arrow-left" size={18} color={tertiaryColor} />
+                  <Text style={[styles.backButtonText, { color: tertiaryColor }]}>Ringkasan</Text>
+                </Pressable>
+                <Text style={styles.subScreenTitle}>Konseling Kesehatan</Text>
+              </View>
+              <CounselingMemberView themeColor={tertiaryColor} profile={profile} />
+            </View>
+          )}
+
+          {active === "ergonomi" && isModActive('ergonomi') && (
+            <View style={{ gap: verticalScale(12) }}>
+              <View style={styles.subScreenHeader}>
+                <Pressable onPress={() => setActive('ringkasan')} style={styles.backButton}>
+                  <Icon name="arrow-left" size={18} color={tertiaryColor} />
+                  <Text style={[styles.backButtonText, { color: tertiaryColor }]}>Ringkasan</Text>
+                </Pressable>
+                <Text style={styles.subScreenTitle}>Ergonomi & Peregangan Postur</Text>
+              </View>
+              <ErgonomicsMemberView themeColor="#0891b2" />
+            </View>
+          )}
+
+          {active === "burnout" && isModActive('burnout') && (
+            <View style={{ gap: verticalScale(12) }}>
+              <View style={styles.subScreenHeader}>
+                <Pressable onPress={() => setActive('ringkasan')} style={styles.backButton}>
+                  <Icon name="arrow-left" size={18} color={tertiaryColor} />
+                  <Text style={[styles.backButtonText, { color: tertiaryColor }]}>Ringkasan</Text>
+                </Pressable>
+                <Text style={styles.subScreenTitle}>Skrining Burnout & Stres</Text>
+              </View>
+              <BurnoutMemberView themeColor="#9333ea" onNavigateToCounseling={() => setActive('konseling')} />
+            </View>
+          )}
+
+          {active === "nutrisi" && isModActive('nutrisi') && (
+            <View style={{ gap: verticalScale(12) }}>
+              <View style={styles.subScreenHeader}>
+                <Pressable onPress={() => setActive('ringkasan')} style={styles.backButton}>
+                  <Icon name="arrow-left" size={18} color={tertiaryColor} />
+                  <Text style={[styles.backButtonText, { color: tertiaryColor }]}>Ringkasan</Text>
+                </Pressable>
+                <Text style={styles.subScreenTitle}>Nutrisi & Pola Makan</Text>
+              </View>
+              <NutritionMemberView themeColor="#d97706" />
+            </View>
+          )}
+
+          {active === "vaksinasi" && isModActive('vaksinasi') && (
+            <View style={{ gap: verticalScale(12) }}>
+              <View style={styles.subScreenHeader}>
+                <Pressable onPress={() => setActive('ringkasan')} style={styles.backButton}>
+                  <Icon name="arrow-left" size={18} color={tertiaryColor} />
+                  <Text style={[styles.backButtonText, { color: tertiaryColor }]}>Ringkasan</Text>
+                </Pressable>
+                <Text style={styles.subScreenTitle}>Paspor Vaksinasi Digital</Text>
+              </View>
+              <VaccineMemberView themeColor="#2563eb" userName={profile?.nama || 'Member'} />
             </View>
           )}
 
           {active === "profil" && (
-            <View style={{ gap: verticalScale(12) }}>
-              <Card style={styles.profileHeaderCard}>
-                <View style={styles.profileAvatar}>
-                  <Icon name="user" size={40} color={Colors.white} />
-                </View>{/* */}
-                <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{profile?.nama || "Member"}</Text>{/* */}
-                  <Text style={styles.profileRole}>Member</Text>
-                </View>
-              </Card>
+            <View style={{ gap: verticalScale(14) }}>
+              {/* Quick Stat Highlights */}
+              {profile && (
+                <View style={styles.profileStatGrid}>
+                  {/* Card 1: Peran */}
+                  <View style={styles.profileStatCard}>
+                    <View style={[styles.profileStatIconBox, { backgroundColor: '#f0fdf4' }]}>
+                      <Icon name="shield" size={15} color="#0d9488" />
+                    </View>
+                    <Text style={styles.profileStatLabel}>PERAN</Text>
+                    <Text style={styles.profileStatValue} numberOfLines={1}>
+                      {profile.level || 'Member'}
+                    </Text>
+                  </View>
 
+                  {/* Card 2: Divisi */}
+                  <View style={styles.profileStatCard}>
+                    <View style={[styles.profileStatIconBox, { backgroundColor: `${tertiaryColor}15` }]}>
+                      <Icon name="layers" size={15} color={tertiaryColor} />
+                    </View>
+                    <Text style={styles.profileStatLabel}>DIVISI</Text>
+                    <Text style={[styles.profileStatValue, { color: tertiaryColor }]} numberOfLines={1}>
+                      {profile.divisi || '-'}
+                    </Text>
+                  </View>
+
+                  {/* Card 3: Nomor Induk */}
+                  <View style={styles.profileStatCard}>
+                    <View style={[styles.profileStatIconBox, { backgroundColor: '#eff6ff' }]}>
+                      <Icon name="credit-card" size={15} color="#2563eb" />
+                    </View>
+                    <Text style={styles.profileStatLabel}>NO. INDUK</Text>
+                    <Text style={styles.profileStatValue} numberOfLines={1}>
+                      {profile.nomor_induk || '-'}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Card 1: Informasi Pribadi */}
               <Card>
-                <Text style={styles.cardTitle}>Informasi Pribadi</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: verticalScale(8) }}>
+                  <View style={{ flex: 1, marginRight: horizontalScale(8) }}>
+                    <Text style={styles.cardTitle}>Informasi Pribadi</Text>
+                    <Text style={{ fontSize: moderateScale(11), color: Colors.muted, marginTop: verticalScale(1) }}>
+                      Data identitas dan keanggotaan institusi
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={() => setEditProfileModalVisible(true)}
+                    style={({ pressed }) => [
+                      {
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: horizontalScale(4),
+                        paddingHorizontal: horizontalScale(10),
+                        paddingVertical: verticalScale(6),
+                        borderRadius: moderateScale(8),
+                        backgroundColor: `${tertiaryColor}14`,
+                        borderWidth: 1,
+                        borderColor: `${tertiaryColor}32`,
+                      },
+                      pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
+                    ]}
+                  >
+                    <Icon name="edit-3" size={12} color={tertiaryColor} />
+                    <Text style={{ fontSize: moderateScale(11.5), fontWeight: '700', color: tertiaryColor }}>Edit Profil</Text>
+                  </Pressable>
+                </View>
+
                 {loadingProfile ? (
                   <View style={styles.centerRow}>
-                    <ActivityIndicator color={Colors.primary} />{/* */}
-                    <Text style={styles.mutedText}>Memuat...</Text>
+                    <ActivityIndicator color={Colors.primary} />
+                    <Text style={styles.mutedText}>Memuat data profil...</Text>
                   </View>
                 ) : profile ? (
-                  <View style={styles.profileDetails}>
-                    <ProfileField icon="user" label="Nama" value={profile.nama} />{/* */}
-                    <ProfileField icon="at-sign" label="Username" value={profile.username} />{/* */}
-                    <ProfileField icon="key" label="Nomor Induk" value={profile.nomor_induk || "-"} />{/* */}
-                    <ProfileField icon="book" label="Divisi" value={profile.divisi || "-"} />{/* */}
-                    <ProfileField
+                  <View style={{ marginTop: verticalScale(4) }}>
+                    <ProfileRow
                       icon="user"
+                      iconBg="#ecfdf5"
+                      iconColor="#059669"
+                      label="Nama Lengkap"
+                      value={profile.nama}
+                    />
+                    <ProfileRow
+                      icon="at-sign"
+                      iconBg="#f5f3ff"
+                      iconColor="#7c3aed"
+                      label="Username"
+                      value={profile.username}
+                    />
+                    <ProfileRow
+                      icon="mail"
+                      iconBg="#fffbeb"
+                      iconColor="#d97706"
+                      label="Alamat Email"
+                      value={profile.email}
+                    />
+                    <ProfileRow
+                      icon="user-check"
+                      iconBg="#fff1f2"
+                      iconColor="#e11d48"
                       label="Jenis Kelamin"
-                      value={profile.jk === 'P' ? 'Perempuan' : profile.jk === 'L' ? 'Laki-laki' : '-'}
-                    />{/* */}
-                    <ProfileField icon="shield" label="Peran" value={profile.level || "Member"} />
+                      value={profile.jk === 'P' ? 'Perempuan' : profile.jk === 'L' ? 'Laki-laki' : null}
+                    />
+                    <ProfileRow
+                      icon="briefcase"
+                      iconBg="#eff6ff"
+                      iconColor="#2563eb"
+                      label="Institusi"
+                      value={profile.instansi?.nama_instansi || 'SMK Telekomunikasi Telesandi Bekasi'}
+                      numberOfLines={2}
+                      isLast={true}
+                    />
                   </View>
                 ) : (
                   <View style={styles.emptyState}>
-                    <Icon name="user-x" size={40} color={Colors.muted} />{/* */}
+                    <Icon name="user-x" size={40} color={Colors.muted} />
                     <Text style={[styles.mutedText, { textAlign: 'center', marginTop: 8 }]}>
                       Profil tidak tersedia
                     </Text>
@@ -842,28 +1681,77 @@ const HomeScreenMember = () => {
                 )}
               </Card>
 
+              {/* Card 2: Pengaturan & Keamanan */}
               <Card>
-                <Text style={styles.cardTitle}>Akun</Text>
-                <View style={styles.accountActions}>
-                  <Pressable onPress={() => setModalVisible(true)} style={styles.accountButton}>
-                    <Icon name="lock" size={20} color={Colors.primary} />{/* */}
-                    <Text style={styles.accountButtonText}>Ganti Password</Text>{/* */}
-                    <Icon name="chevron-right" size={18} color={Colors.muted} />
-                  </Pressable>{/* */}
-                  <Pressable
+                <View style={{ marginBottom: verticalScale(6) }}>
+                  <Text style={styles.cardTitle}>Akun & Keamanan</Text>
+                  <Text style={{ fontSize: moderateScale(11), color: Colors.muted, marginTop: verticalScale(1) }}>
+                    Kelola kata sandi dan sesi akun Anda
+                  </Text>
+                </View>
+
+                <View style={{ marginTop: verticalScale(2) }}>
+                  <AccountActionItem
+                    icon="user-check"
+                    iconBg="#e0e7ff"
+                    iconColor="#4338ca"
+                    title="Ubah Profil"
+                    subtitle="Perbarui nama dan foto tampilan"
+                    onPress={() => setEditProfileModalVisible(true)}
+                  />
+                  <AccountActionItem
+                    icon="lock"
+                    iconBg="#fef3c7"
+                    iconColor="#b45309"
+                    title="Ganti Kata Sandi"
+                    subtitle="Amankan akun dengan sandi baru"
+                    onPress={() => setModalVisible(true)}
+                  />
+                  <AccountActionItem
+                    icon="refresh-cw"
+                    iconBg="#ecfdf5"
+                    iconColor="#059669"
+                    title="Periksa Pembaruan"
+                    subtitle="Cek ketersediaan versi terbaru aplikasi"
+                    onPress={handleCheckUpdate}
+                  />
+                  <AccountActionItem
+                    icon="file-text"
+                    iconBg="#e0f2fe"
+                    iconColor="#0284c7"
+                    title="Catatan Pembaruan"
+                    subtitle="Riwayat versi dan pembaruan sistem"
+                    onPress={() => setChangelogModalVisible(true)}
+                  />
+                  <AccountActionItem
+                    icon="layout"
+                    iconBg={themeId === 'atlas_modern' ? '#e0e7ff' : '#ecfdf5'}
+                    iconColor={themeId === 'atlas_modern' ? '#4f46e5' : '#059669'}
+                    title="Tampilan & Tema Aplikasi"
+                    subtitle={
+                      themeId === 'atlas_modern'
+                        ? `Atlas Neo Modern • Mode ${isDark ? 'Gelap' : 'Terang'}`
+                        : `Emerald Classic • Mode ${isDark ? 'Gelap' : 'Terang'}`
+                    }
+                    onPress={() => setThemeHubModalVisible(true)}
+                  />
+                  <AccountActionItem
+                    icon="log-out"
+                    iconBg="#fee2e2"
+                    iconColor="#dc2626"
+                    title="Keluar dari Akun"
+                    subtitle="Akhiri sesi login di perangkat ini"
                     onPress={handleLogout}
-                    disabled={isLoggingOut}
-                    style={[
-                      styles.accountButton,
-                      styles.logoutButton,
-                      { opacity: isLoggingOut ? 0.6 : 1 }
-                    ]}
-                  >
-                    <Icon name="log-out" size={20} color="#dc2626" />{/* */}
-                    <Text style={[styles.accountButtonText, { color: '#dc2626' }]}>Keluar</Text>
-                  </Pressable>
+                    isDanger={true}
+                    isLast={true}
+                  />
                 </View>
               </Card>
+
+              {/* Card 3: Footer Versi Aplikasi */}
+              <View style={styles.profileFooter}>
+                <Text style={styles.profileFooterVersion}>Versi 1.0.0 • Build Stabil</Text>
+              </View>
             </View>
           )}
         </Animated.View>
@@ -1012,7 +1900,7 @@ const HomeScreenMember = () => {
                 </Text>
               </View>
             ) : (
-              <ScrollView style={{ maxHeight: verticalScale(500) }} showsVerticalScrollIndicator={false}>
+              <ScrollView style={{ maxHeight: verticalScale(500) }} showsVerticalScrollIndicator={false} nestedScrollEnabled={true}>
                 {haidData.map((yG) => (
                   <View key={yG.year} style={styles.yearGroup}>
                     <Text style={styles.yearTitle}>{yG.year}</Text>
@@ -1116,7 +2004,7 @@ const HomeScreenMember = () => {
                 </Text>
               </View>
             ) : (
-              <ScrollView style={{ maxHeight: verticalScale(500) }} showsVerticalScrollIndicator={false}>
+              <ScrollView style={{ maxHeight: verticalScale(500) }} showsVerticalScrollIndicator={false} nestedScrollEnabled={true}>
                 {pitaData.map((yG) => (
                   <View key={yG.year} style={styles.yearGroup}>
                     <Text style={styles.yearTitle}>{yG.year}</Text>
@@ -1277,6 +2165,57 @@ const HomeScreenMember = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Modal Edit Profil */}
+      <EditProfileModal
+        visible={editProfileModalVisible}
+        onClose={() => setEditProfileModalVisible(false)}
+        currentProfile={profile}
+        onProfileUpdated={(updated) => {
+          setProfile((prev: any) => ({
+            ...prev,
+            nama: updated.nama,
+            email: updated.email,
+            avatar: updated.avatar,
+          }));
+        }}
+        themeColor={tertiaryColor}
+      />
+
+      {/* Modal Catatan Pembaruan (Changelog) */}
+      <ChangelogModal
+        visible={changelogModalVisible}
+        onClose={() => setChangelogModalVisible(false)}
+      />
+
+      {/* Modal Periksa Pembaruan */}
+      <CheckUpdateModal
+        visible={checkUpdateVisible}
+        onClose={() => setCheckUpdateVisible(false)}
+        status={checkUpdateStatus}
+        updateData={checkUpdateData}
+        errorMessage={checkUpdateError}
+        onUpdateNow={handleApplyUpdate}
+      />
+
+      {/* Modal Force Upgrade jika Wajib */}
+      <ForceUpgradeModal
+        visible={forceUpgradeVisible || isMandatoryUpgrade}
+        updateData={syncForceUpgradeData || forceUpgradeData}
+      />
+
+      {/* Modal Maintenance Mode - Unclosable */}
+      <MaintenanceModal
+        visible={isMaintenance}
+        message={maintenanceMessage}
+        onRefreshStatus={recheckSync}
+      />
+
+      {/* Modal Tampilan & Tema (On-Demand Download Theme Hub) */}
+      <ThemeHubModal
+        visible={themeHubModalVisible}
+        onClose={() => setThemeHubModalVisible(false)}
+      />
       {/* Loading Popup */}
       <Modal
         visible={initialLoading}
@@ -1303,7 +2242,7 @@ const HomeScreenMember = () => {
           </View>
         </View>
       </Modal>
-      <AnimatedBottomTabs items={tabs} activeKey={active} onChange={setActive} />
+      <AnimatedBottomTabs items={tabs} activeKey={currentTabKey} onChange={setActive} themeColor={tertiaryColor} />
     </SafeAreaView>
   )
 }
@@ -1318,15 +2257,124 @@ const Metric = ({ label, value, unit }: { label: string; value: string; unit: st
     <Text style={styles.metricLabel}>{label}</Text>
   </View>
 )
-const ProfileField = ({ icon, label, value }: { icon: string; label: string; value: string }) => (
-  <View style={styles.profileField}>
-    <View style={styles.fieldLeft}>
-      <Icon name={icon as any} size={18} color={Colors.primary} style={styles.fieldIcon} />{/* */}
-      <Text style={styles.fieldLabel}>{label}</Text>
-    </View>{/* */}
-    <Text style={styles.fieldValue}>{value}</Text>
-  </View>
-)
+interface ProfileRowProps {
+  icon: string;
+  iconBg: string;
+  iconColor: string;
+  label: string;
+  value?: string | null;
+  isBadge?: boolean;
+  badgeColor?: string;
+  isLast?: boolean;
+  numberOfLines?: number;
+}
+
+const ProfileRow = ({
+  icon,
+  iconBg,
+  iconColor,
+  label,
+  value,
+  isBadge = false,
+  badgeColor,
+  isLast = false,
+  numberOfLines = 1,
+}: ProfileRowProps) => {
+  const displayVal = value && value.trim() !== '' && value !== '-' ? value : null;
+
+  return (
+    <View style={[styles.profileRowContainer, !isLast && styles.profileRowDivider]}>
+      <View style={styles.profileRowLeft}>
+        <View style={[styles.profileRowIconBox, { backgroundColor: iconBg }]}>
+          <Icon name={icon as any} size={16} color={iconColor} />
+        </View>
+        <Text style={styles.profileRowLabel} numberOfLines={1}>
+          {label}
+        </Text>
+      </View>
+      <View style={[styles.profileRowRight, numberOfLines > 1 && { maxWidth: '58%' }]}>
+        {isBadge && displayVal ? (
+          <View
+            style={[
+              styles.profileRowBadge,
+              badgeColor ? { backgroundColor: badgeColor + '15', borderColor: badgeColor + '35' } : null,
+            ]}
+          >
+            <Text
+              style={[
+                styles.profileRowBadgeText,
+                badgeColor ? { color: badgeColor } : null,
+              ]}
+              numberOfLines={1}
+            >
+              {displayVal}
+            </Text>
+          </View>
+        ) : (
+          <Text
+            style={[
+              styles.profileRowValue,
+              !displayVal && styles.profileRowValueEmpty,
+            ]}
+            numberOfLines={numberOfLines}
+            ellipsizeMode="tail"
+          >
+            {displayVal || 'Belum diisi'}
+          </Text>
+        )}
+      </View>
+    </View>
+  );
+};
+
+interface AccountActionItemProps {
+  icon: string;
+  iconBg: string;
+  iconColor: string;
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+  isDanger?: boolean;
+  isLast?: boolean;
+}
+
+const AccountActionItem = ({
+  icon,
+  iconBg,
+  iconColor,
+  title,
+  subtitle,
+  onPress,
+  isDanger = false,
+  isLast = false,
+}: AccountActionItemProps) => (
+  <Pressable
+    onPress={onPress}
+    style={({ pressed }) => [
+      styles.actionItem,
+      !isLast && styles.actionItemDivider,
+      pressed && styles.actionItemPressed,
+    ]}
+  >
+    <View style={[styles.actionIconBox, { backgroundColor: iconBg }]}>
+      <Icon name={icon as any} size={18} color={iconColor} />
+    </View>
+    <View style={styles.actionTextBox}>
+      <Text style={[styles.actionTitle, isDanger && { color: '#dc2626' }]} numberOfLines={1}>
+        {title}
+      </Text>
+      <Text style={[styles.actionSubtitle, isDanger && { color: '#ef4444' }]} numberOfLines={1}>
+        {subtitle}
+      </Text>
+    </View>
+    <Icon
+      name="chevron-right"
+      size={18}
+      color={isDanger ? '#f87171' : Colors.muted}
+      style={{ opacity: 0.6 }}
+    />
+  </Pressable>
+);
 const TipCard = ({ title, text, style }: { title: string; text: string; style?: any }) => (
   <View style={[styles.tipCard, style]}>
     <Icon name="info" size={20} color={Colors.white} />{/* */}
@@ -1347,9 +2395,11 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 12,
-    elevation: 5
+    elevation: 4,
+    overflow: 'hidden',
+    position: 'relative',
   },
   headerRow: {
     flexDirection: "row",
@@ -1382,6 +2432,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
     marginTop: verticalScale(2)
+  },
+  divisiBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: horizontalScale(8),
+    paddingVertical: verticalScale(3),
+    borderRadius: moderateScale(6),
+    borderWidth: 1,
+    marginTop: verticalScale(6),
+    gap: horizontalScale(6),
+  },
+  divisiDot: {
+    width: moderateScale(6),
+    height: moderateScale(6),
+    borderRadius: moderateScale(3),
+  },
+  divisiBadgeText: {
+    fontSize: moderateScale(11),
+    fontWeight: '700',
+  },
+  divisiPillSmall: {
+    paddingHorizontal: horizontalScale(8),
+    paddingVertical: verticalScale(2),
+    borderRadius: moderateScale(6),
+  },
+  divisiPillSmallText: {
+    fontSize: moderateScale(11),
+    fontWeight: '700',
   },
   card: {
     backgroundColor: Colors.white,
@@ -1420,73 +2499,211 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  profileHeaderCard: {
+  profileHeroTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: moderateScale(20)
+    alignSelf: 'flex-start',
+    gap: horizontalScale(4),
+    paddingHorizontal: horizontalScale(8),
+    paddingVertical: verticalScale(2.5),
+    borderRadius: moderateScale(6),
+    marginBottom: verticalScale(2),
   },
-  profileAvatar: {
-    backgroundColor: Colors.primary,
-    width: moderateScale(60),
-    height: moderateScale(60),
-    borderRadius: moderateScale(30),
+  profileHeroTagText: {
+    fontSize: moderateScale(11),
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  avatarEditIconBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: moderateScale(18),
+    height: moderateScale(18),
+    borderRadius: moderateScale(9),
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: moderateScale(16)
+    borderWidth: 1.5,
+    borderColor: Colors.white,
   },
-  profileInfo: { flex: 1 },
-  profileName: {
-    color: Colors.text,
-    fontSize: moderateScale(20),
-    fontWeight: '700',
-    marginBottom: verticalScale(4)
-  },
-  profileRole: {
-    color: Colors.muted,
-    fontSize: moderateScale(14)
-  },
-  profileDetails: { gap: verticalScale(16) },
-  profileField: {
+  profileStatGrid: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: verticalScale(8)
+    gap: horizontalScale(8),
   },
-  fieldLeft: {
+  profileStatCard: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(14),
+    paddingVertical: verticalScale(10),
+    paddingHorizontal: horizontalScale(6),
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  profileStatIconBox: {
+    width: moderateScale(30),
+    height: moderateScale(30),
+    borderRadius: moderateScale(8),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: verticalScale(4),
+  },
+  profileStatLabel: {
+    fontSize: moderateScale(9.5),
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 0.4,
+    marginBottom: verticalScale(2),
+  },
+  profileStatValue: {
+    fontSize: moderateScale(12.5),
+    fontWeight: '700',
+    color: Colors.text,
+    textAlign: 'center',
+  },
+  // Profile Row Styles
+  profileRowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1
+    justifyContent: 'space-between',
+    paddingVertical: verticalScale(11),
+    gap: horizontalScale(10),
   },
-  fieldIcon: { marginRight: moderateScale(12) },
-  fieldLabel: {
-    color: Colors.muted,
-    fontSize: moderateScale(14),
-    flex: 1
+  profileRowDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#F1F5F9',
   },
-  fieldValue: {
+  profileRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: horizontalScale(10),
+    flex: 1,
+    marginRight: horizontalScale(8),
+  },
+  profileRowIconBox: {
+    width: moderateScale(34),
+    height: moderateScale(34),
+    borderRadius: moderateScale(10),
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  profileRowLabel: {
+    color: '#475569',
+    fontSize: moderateScale(13),
+    fontWeight: '600',
+    flexShrink: 1,
+  },
+  profileRowRight: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    flexShrink: 1,
+    maxWidth: '52%',
+  },
+  profileRowValue: {
     color: Colors.text,
-    fontSize: moderateScale(14),
-    fontWeight: '600'
+    fontSize: moderateScale(13.5),
+    fontWeight: '700',
+    textAlign: 'right',
   },
-  accountActions: { gap: verticalScale(8) },
-  accountButton: {
+  profileRowValueEmpty: {
+    color: '#94A3B8',
+    fontWeight: '400',
+    fontStyle: 'italic',
+    fontSize: moderateScale(12),
+  },
+  profileRowBadge: {
+    paddingHorizontal: horizontalScale(9),
+    paddingVertical: verticalScale(3),
+    borderRadius: moderateScale(6),
+    borderWidth: 1,
+  },
+  profileRowBadgeText: {
+    fontSize: moderateScale(11.5),
+    fontWeight: '700',
+  },
+
+  // Account Action Items
+  actionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: verticalScale(12),
-    paddingHorizontal: moderateScale(8),
-    borderRadius: moderateScale(8),
-    backgroundColor: Colors.bg
+    paddingHorizontal: horizontalScale(8),
+    borderRadius: moderateScale(12),
+    gap: horizontalScale(12),
   },
-  accountButtonText: {
-    color: Colors.text,
-    fontSize: moderateScale(14),
-    fontWeight: '500',
+  actionItemDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#F1F5F9',
+  },
+  actionItemPressed: {
+    backgroundColor: '#F8FAFC',
+    opacity: 0.85,
+  },
+  actionIconBox: {
+    width: moderateScale(38),
+    height: moderateScale(38),
+    borderRadius: moderateScale(11),
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  actionTextBox: {
     flex: 1,
-    marginLeft: moderateScale(12)
+    justifyContent: 'center',
+    marginRight: horizontalScale(6),
   },
-  logoutButton: {
-    backgroundColor: 'rgba(220, 38, 38, 0.1)',
-    marginTop: verticalScale(8)
+  actionTitle: {
+    color: Colors.text,
+    fontSize: moderateScale(13.5),
+    fontWeight: '700',
+    marginBottom: verticalScale(1),
+  },
+  actionSubtitle: {
+    color: Colors.muted,
+    fontSize: moderateScale(11),
+    fontWeight: '500',
+  },
+
+  // Profile Footer
+  profileFooter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: verticalScale(20),
+    gap: verticalScale(4),
+  },
+  profileFooterBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: horizontalScale(6),
+  },
+  profileFooterDot: {
+    width: moderateScale(6),
+    height: moderateScale(6),
+    borderRadius: moderateScale(3),
+  },
+  profileFooterApp: {
+    fontSize: moderateScale(12),
+    fontWeight: '700',
+    color: Colors.text,
+    letterSpacing: 0.3,
+  },
+  profileFooterOrg: {
+    fontSize: moderateScale(11),
+    color: Colors.muted,
+    fontWeight: '500',
+  },
+  profileFooterVersion: {
+    fontSize: moderateScale(10),
+    color: '#94A3B8',
+    marginTop: verticalScale(2),
   },
   metrics: {
     flexDirection: "row",
@@ -2024,6 +3241,111 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: moderateScale(16),
     fontWeight: '600',
+  },
+  menuGridHeader: {
+    marginBottom: verticalScale(12),
+  },
+  menuGridSubtitle: {
+    fontSize: moderateScale(12),
+    color: Colors.muted,
+    marginTop: verticalScale(2),
+  },
+  menuGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    gap: moderateScale(10),
+  },
+  menuGridItem: {
+    width: '31%',
+    backgroundColor: '#F8FAFC',
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(12),
+    paddingHorizontal: horizontalScale(6),
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  menuGridItemPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.97 }],
+  },
+  menuGridIconContainer: {
+    width: moderateScale(44),
+    height: moderateScale(44),
+    borderRadius: moderateScale(12),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: verticalScale(6),
+  },
+  menuGridItemTitle: {
+    fontSize: moderateScale(12),
+    fontWeight: '700',
+    color: Colors.text,
+    textAlign: 'center',
+  },
+  menuGridItemSub: {
+    fontSize: moderateScale(10),
+    color: Colors.muted,
+    textAlign: 'center',
+    marginTop: verticalScale(1),
+  },
+  subTabRow: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: moderateScale(10),
+    padding: moderateScale(4),
+    gap: moderateScale(4),
+  },
+  subTabButton: {
+    flex: 1,
+    paddingVertical: verticalScale(8),
+    borderRadius: moderateScale(8),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subTabButtonText: {
+    fontSize: moderateScale(12),
+    fontWeight: '600',
+    color: Colors.muted,
+  },
+  subTabButtonTextActive: {
+    color: Colors.white,
+    fontWeight: '700',
+  },
+  subScreenHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: verticalScale(6),
+    paddingHorizontal: horizontalScale(4),
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: verticalScale(6),
+    paddingHorizontal: horizontalScale(10),
+    borderRadius: moderateScale(8),
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: horizontalScale(4),
+  },
+  backButtonText: {
+    fontSize: moderateScale(12),
+    fontWeight: '600',
+  },
+  subScreenTitle: {
+    fontSize: moderateScale(15),
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  collapseArrowBtn: {
+    width: moderateScale(28),
+    height: moderateScale(28),
+    borderRadius: moderateScale(14),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 })
 export default HomeScreenMember

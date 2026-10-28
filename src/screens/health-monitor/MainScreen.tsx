@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState, useMemo } from "react"
 import {
   Animated,
   StatusBar,
@@ -13,15 +13,25 @@ import {
   Dimensions,
   Modal,
   Alert,
+  Image,
+  Linking,
+  Platform,
 } from "react-native"
 import Icon from 'react-native-vector-icons/Feather'
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Colors } from "../../settings/Colors"
-import { logout } from "../../utils/authHelper"
+import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'react-native-svg'
+import { logout, checkAuthStatus } from "../../utils/authHelper"
 import api from "../../api/axiosConfig"
 import AnimatedBottomTabs, { type TabItem } from "../../components/AnimatedBottomTabs"
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { checkAuthStatus } from '../../utils/authHelper';
+import EditProfileModal from "../../components/EditProfileModal";
+import ChangelogModal from "../../components/ChangelogModal";
+import CheckUpdateModal, { type CheckUpdateStatus } from "../../components/CheckUpdateModal";
+import ForceUpgradeModal from "../../components/ForceUpgradeModal";
+import MaintenanceModal from "../../components/MaintenanceModal";
+import useRealtimeSystemSync from "../../hooks/useRealtimeSystemSync";
+import { checkAppUpdate, type SoftwareReleaseData } from "../../api/appUpdateService";
 type DashboardData = {
   total_member: number
   pinjaman_aktif: number
@@ -29,9 +39,9 @@ type DashboardData = {
   menunggu_verifikasi: number
 }
 type Peminjaman = {
-  id: number
+  id: string | number
   user: {
-    id: number
+    id: string | number
     nama: string
     nomor_induk: string
     divisi?: string
@@ -46,15 +56,25 @@ type Peminjaman = {
   verified: boolean
 }
 type Profile = {
+  id: string | number
   nama: string
   username: string
   nomor_induk?: string
+  id_divisi?: string | number
   divisi?: string
+  color_cover?: string
+  tertiary_color?: string
   email?: string
+  avatar?: string | null
   level?: string
+  jk?: "L" | "P"
+  instansi?: {
+    id: string | number
+    nama_instansi?: string
+  }
 }
 type Member = {
-  id: number
+  id: string | number
   nama: string
   nomor_induk: string
   divisi_name?: string
@@ -76,7 +96,8 @@ const HomeScreenHealthMonitor = () => {
   const fadeMount = useRef(new Animated.Value(0)).current
   const slideMount = useRef(new Animated.Value(16)).current
   const fadeTab = useRef(new Animated.Value(1)).current
-  const navigation = useNavigation();
+  const shimmerAnim = useRef(new Animated.Value(0)).current
+  const navigation = useNavigation<any>();
   // State untuk ganti password
   const [passwordModalVisible, setPasswordModalVisible] = useState(false)
   const [currentPassword, setCurrentPassword] = useState("")
@@ -84,12 +105,6 @@ const HomeScreenHealthMonitor = () => {
   const [retypePassword, setRetypePassword] = useState("")
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [savingPassword, setSavingPassword] = useState(false)
-  const tabs: TabItem[] = [
-    { key: "dashboard", icon: <Icon name="home" size={22} color="#444" /> },
-    { key: "peminjaman", icon: <Icon name="clipboard" size={22} color="#444" /> },
-    { key: "warning", icon: <Icon name="alert-triangle" size={22} color="#444" /> },
-    { key: "profil", icon: <Icon name="user" size={22} color="#444" /> },
-  ]
   const handleChangePassword = async () => {
     if (newPassword !== retypePassword) {
       setPasswordError("Kata sandi baru tidak cocok.")
@@ -123,9 +138,90 @@ const HomeScreenHealthMonitor = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [showNonActive, setShowNonActive] = useState(false)
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [editProfileModalVisible, setEditProfileModalVisible] = useState(false)
+  const [changelogModalVisible, setChangelogModalVisible] = useState(false)
+  // State untuk check update modal
+  const [checkUpdateVisible, setCheckUpdateVisible] = useState(false)
+  const [checkUpdateStatus, setCheckUpdateStatus] = useState<CheckUpdateStatus>('checking')
+  const [checkUpdateData, setCheckUpdateData] = useState<SoftwareReleaseData | null>(null)
+  const [checkUpdateError, setCheckUpdateError] = useState<string | null>(null)
+  const [forceUpgradeVisible, setForceUpgradeVisible] = useState(false)
+  const [forceUpgradeData, setForceUpgradeData] = useState<SoftwareReleaseData | null>(null)
+
+  // Webhook-Style Conditional Realtime Sync (Zero Overhead / 304 Not Modified):
+  // Monitors Maintenance Mode and Mandatory Update in realtime
+  const {
+    isMaintenance,
+    maintenanceMessage,
+    isMandatoryUpgrade,
+    forceUpgradeData: syncForceUpgradeData,
+    recheckSync,
+  } = useRealtimeSystemSync({
+    intervalMs: 5000,
+  });
+
+  const handleCheckUpdate = async () => {
+    setCheckUpdateStatus('checking')
+    setCheckUpdateVisible(true)
+    setCheckUpdateError(null)
+    setCheckUpdateData(null)
+
+    try {
+      const res = await checkAppUpdate()
+
+      if (!res.success && res.isOffline) {
+        setCheckUpdateStatus('error')
+        setCheckUpdateError('Koneksi internet terputus. Silakan hubungkan perangkat Anda ke internet.')
+        return
+      }
+
+      if (!res.success) {
+        setCheckUpdateStatus('error')
+        setCheckUpdateError(res.message || 'Gagal memeriksa pembaruan aplikasi.')
+        return
+      }
+
+      if (res.has_update && res.data) {
+        if (res.is_mandatory) {
+          setCheckUpdateVisible(false)
+          setForceUpgradeData(res.data)
+          setForceUpgradeVisible(true)
+        } else {
+          setCheckUpdateData(res.data)
+          setCheckUpdateStatus('update_available')
+        }
+      } else {
+        setCheckUpdateStatus('up_to_date')
+      }
+    } catch (err: any) {
+      setCheckUpdateStatus('error')
+      setCheckUpdateError(err?.message || 'Terjadi kesalahan sistem saat memeriksa pembaruan.')
+    }
+  }
+
+  const handleApplyUpdate = () => {
+    const targetUrl =
+      checkUpdateData?.download_url ||
+      (Platform.OS === 'android'
+        ? 'https://play.google.com/store/apps'
+        : 'https://apps.apple.com')
+    Linking.openURL(targetUrl).catch(() => {})
+  }
+
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [warningList, setWarningList] = useState<Peminjaman[]>([])
   const [loadingWarning, setLoadingWarning] = useState(false)
+  const tabs: TabItem[] = useMemo(() => [
+    { key: "dashboard", label: "Dasbor", icon: <Icon name="home" size={20} /> },
+    { key: "peminjaman", label: "Pita UKS", icon: <Icon name="clipboard" size={20} /> },
+    {
+      key: "warning",
+      label: "Peringatan",
+      icon: <Icon name="alert-triangle" size={20} />,
+      badgeCount: warningList.length > 0 ? warningList.length : undefined,
+    },
+    { key: "profil", label: "Profil", icon: <Icon name="user" size={20} /> },
+  ], [warningList.length]);
   const [modalVisible, setModalVisible] = useState(false)
   const [modalType, setModalType] = useState<'return' | 'delete' | 'verify'>('return')
   const [selectedItem, setSelectedItem] = useState<Peminjaman | null>(null)
@@ -394,33 +490,74 @@ const HomeScreenHealthMonitor = () => {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     return diffDays > 0 ? diffDays : 0
   }
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true)
-      await logout()
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Login" }],
-      })
-    } catch (error) {
-      console.log("Logout error:", error)
-    } finally {
-      setIsLoggingOut(false)
-    }
+  const handleLogout = () => {
+    Alert.alert(
+      "Keluar dari Akun",
+      "Apakah Anda yakin ingin mengakhiri sesi dan keluar dari aplikasi?",
+      [
+        { text: "Batal", style: "cancel" },
+        {
+          text: "Ya, Keluar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setIsLoggingOut(true)
+              await logout()
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "Login" }],
+              })
+            } catch (error) {
+              console.log("Logout error:", error)
+            } finally {
+              setIsLoggingOut(false)
+            }
+          }
+        }
+      ]
+    )
   }
   const handleCheckNow = () => {
     setActive("peminjaman")
     setShowNonActive(true)
   }
+  const hasDivisi = Boolean(profile?.divisi || profile?.id_divisi);
+  const tertiaryColor = profile?.color_cover || profile?.tertiary_color || Colors.defaultTertiary || '#2e7d32';
+
+  useEffect(() => {
+    if (!profile?.divisi && !profile?.id_divisi) return;
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerAnim, {
+          toValue: 1,
+          duration: 2600,
+          useNativeDriver: true,
+        }),
+        Animated.delay(1800),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [profile?.divisi, profile?.id_divisi, shimmerAnim]);
+
+  const shimmerTranslateX = shimmerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-SCREEN_WIDTH * 0.9, SCREEN_WIDTH * 1.3],
+  });
+  const shimmerOpacity = shimmerAnim.interpolate({
+    inputRange: [0, 0.15, 0.85, 1],
+    outputRange: [0, 1, 1, 0],
+  });
+
   return (
-    <SafeAreaView style={[styles.safe, { flex: 1 }]}>
+    <SafeAreaView edges={["top", "left", "right"]} style={[styles.safe, { flex: 1 }]}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.bg} />
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
           {
             flexGrow: 1,
-            paddingBottom: verticalScale(120),
+            paddingBottom: verticalScale(140),
             paddingTop: verticalScale(30),
             paddingHorizontal: isSmallScreen ? horizontalScale(12) : horizontalScale(16)
           }
@@ -432,16 +569,159 @@ const HomeScreenHealthMonitor = () => {
       >
         <Animated.View style={[
           styles.header,
-          { opacity: fadeMount, transform: [{ translateY: slideMount }] }
+          { 
+            opacity: fadeMount, 
+            transform: [{ translateY: slideMount }],
+            shadowColor: hasDivisi ? tertiaryColor : "#000",
+            shadowOpacity: hasDivisi ? 0.16 : 0.08,
+            shadowRadius: 14,
+            borderColor: hasDivisi ? tertiaryColor + '30' : Colors.border,
+            borderWidth: hasDivisi ? 1.2 : StyleSheet.hairlineWidth,
+          }
         ]}>
+          {hasDivisi && (
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+              {/* Subtle top accent line */}
+              <View 
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 3,
+                  backgroundColor: tertiaryColor,
+                  opacity: 0.9,
+                }} 
+              />
+              {/* Ambient radial glow in top right */}
+              <View 
+                style={{
+                  position: 'absolute',
+                  top: -moderateScale(25),
+                  right: -moderateScale(15),
+                  width: moderateScale(130),
+                  height: moderateScale(130),
+                  borderRadius: moderateScale(65),
+                  backgroundColor: tertiaryColor,
+                  opacity: 0.08,
+                }} 
+              />
+              {/* Animated Light Sweep (cahaya berjalan ke samping sesuai warna divisi) */}
+              <Animated.View
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    width: SCREEN_WIDTH * 0.85,
+                    opacity: shimmerOpacity,
+                    transform: [
+                      { translateX: shimmerTranslateX },
+                      { skewX: '-22deg' },
+                    ],
+                  },
+                ]}
+              >
+                <Svg height="100%" width="100%">
+                  <Defs>
+                    <SvgLinearGradient id="shimmerBeamHM" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <Stop offset="0%" stopColor={tertiaryColor} stopOpacity="0" />
+                      <Stop offset="30%" stopColor={tertiaryColor} stopOpacity="0.10" />
+                      <Stop offset="48%" stopColor="#ffffff" stopOpacity="0.65" />
+                      <Stop offset="52%" stopColor={tertiaryColor} stopOpacity="0.30" />
+                      <Stop offset="70%" stopColor={tertiaryColor} stopOpacity="0.12" />
+                      <Stop offset="100%" stopColor={tertiaryColor} stopOpacity="0" />
+                    </SvgLinearGradient>
+                  </Defs>
+                  <Rect x="0" y="0" width="100%" height="100%" fill="url(#shimmerBeamHM)" />
+                </Svg>
+              </Animated.View>
+            </View>
+          )}
+
           <View style={styles.headerRow}>
             <View style={styles.greetingContainer}>
-              <Text style={styles.greet}>{getGreetingTime()},</Text>
-              <Text style={styles.name} numberOfLines={2}>{profile?.nama || "Health Monitor"}</Text>
+              {active === "profil" ? (
+                <View style={[styles.profileHeroTag, { backgroundColor: `${tertiaryColor}15` }]}>
+                  <Icon name="user-check" size={11} color={tertiaryColor} />
+                  <Text style={[styles.profileHeroTagText, { color: tertiaryColor }]}>
+                    Profil Petugas
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.greet}>
+                  {getGreetingTime()},
+                </Text>
+              )}
+              <Text style={styles.name} numberOfLines={2}>
+                {profile?.nama || "Health Monitor"}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: horizontalScale(6), flexWrap: 'wrap', marginTop: verticalScale(3) }}>
+                {profile?.divisi ? (
+                  <View style={[
+                    styles.divisiBadge, 
+                    {
+                      backgroundColor: tertiaryColor + '14', 
+                      borderColor: tertiaryColor + '38',
+                      borderWidth: 1,
+                      marginTop: 0,
+                    }
+                  ]}>
+                    <View style={[styles.divisiDot, { backgroundColor: tertiaryColor }]} />
+                    <Text style={[styles.divisiBadgeText, { color: tertiaryColor }]} numberOfLines={1}>
+                      {profile.divisi}
+                    </Text>
+                  </View>
+                ) : null}
+                {active === "profil" && (
+                  <View style={[
+                    styles.divisiBadge,
+                    {
+                      backgroundColor: '#0d948815',
+                      borderColor: '#0d948835',
+                      borderWidth: 1,
+                      marginTop: 0,
+                    }
+                  ]}>
+                    <Icon name="shield" size={10} color="#0d9488" />
+                    <Text style={[styles.divisiBadgeText, { color: '#0d9488' }]} numberOfLines={1}>
+                      {profile?.level || 'Health Monitor'}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
-            <View style={styles.profileBadge}>
-              <Icon name="user" size={20} color={Colors.white} />
-            </View>
+            <Pressable 
+              onPress={() => {
+                if (active === "profil") {
+                  setEditProfileModalVisible(true);
+                } else {
+                  setActive("profil");
+                }
+              }}
+              style={({ pressed }) => [
+                styles.profileBadge, 
+                { 
+                  backgroundColor: tertiaryColor + '12', 
+                  borderColor: tertiaryColor + '40',
+                  borderWidth: 1.5,
+                  shadowColor: tertiaryColor,
+                  shadowOpacity: 0.15,
+                  shadowRadius: 6,
+                  overflow: 'hidden' 
+                },
+                pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] }
+              ]}
+            >
+              {profile?.avatar ? (
+                <Image source={{ uri: profile.avatar }} style={{ width: '100%', height: '100%' }} />
+              ) : (
+                <Icon name="user" size={20} color={tertiaryColor} />
+              )}
+              {active === "profil" && (
+                <View style={[styles.avatarEditIconBadge, { backgroundColor: tertiaryColor }]}>
+                  <Icon name="camera" size={9} color={Colors.white} />
+                </View>
+              )}
+            </Pressable>
           </View>
         </Animated.View>
         <Animated.View style={{ opacity: fadeTab }}>
@@ -776,30 +1056,120 @@ const HomeScreenHealthMonitor = () => {
             </View>
           )}
           {active === "profil" && (
-            <View style={{ gap: verticalScale(12) }}>
-              <Card style={styles.profileHeaderCard}>
-                <View style={styles.profileAvatar}>
-                  <Icon name="user" size={40} color={Colors.white} />
+            <View style={{ gap: verticalScale(14) }}>
+              {/* Quick Stat Highlights */}
+              {profile && (
+                <View style={styles.profileStatGrid}>
+                  {/* Card 1: Peran */}
+                  <View style={styles.profileStatCard}>
+                    <View style={[styles.profileStatIconBox, { backgroundColor: '#f0fdf4' }]}>
+                      <Icon name="shield" size={15} color="#0d9488" />
+                    </View>
+                    <Text style={styles.profileStatLabel}>PERAN</Text>
+                    <Text style={styles.profileStatValue} numberOfLines={1}>
+                      {profile.level || 'Petugas'}
+                    </Text>
+                  </View>
+
+                  {/* Card 2: Divisi */}
+                  <View style={styles.profileStatCard}>
+                    <View style={[styles.profileStatIconBox, { backgroundColor: `${tertiaryColor}15` }]}>
+                      <Icon name="layers" size={15} color={tertiaryColor} />
+                    </View>
+                    <Text style={styles.profileStatLabel}>DIVISI</Text>
+                    <Text style={[styles.profileStatValue, { color: tertiaryColor }]} numberOfLines={1}>
+                      {profile.divisi || '-'}
+                    </Text>
+                  </View>
+
+                  {/* Card 3: Nomor Induk */}
+                  <View style={styles.profileStatCard}>
+                    <View style={[styles.profileStatIconBox, { backgroundColor: '#eff6ff' }]}>
+                      <Icon name="credit-card" size={15} color="#2563eb" />
+                    </View>
+                    <Text style={styles.profileStatLabel}>NO. INDUK</Text>
+                    <Text style={styles.profileStatValue} numberOfLines={1}>
+                      {profile.nomor_induk || '-'}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{profile?.nama || "Health Monitor"}</Text>
-                  <Text style={styles.profileRole}>Health Monitor</Text>
-                </View>
-              </Card>
+              )}
+
+              {/* Card 1: Informasi Pribadi */}
               <Card>
-                <Text style={styles.cardTitle}>Informasi Pribadi</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: verticalScale(8) }}>
+                  <View style={{ flex: 1, marginRight: horizontalScale(8) }}>
+                    <Text style={styles.cardTitle}>Informasi Pribadi</Text>
+                    <Text style={{ fontSize: moderateScale(11), color: Colors.muted, marginTop: verticalScale(1) }}>
+                      Data identitas dan keanggotaan institusi
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={() => setEditProfileModalVisible(true)}
+                    style={({ pressed }) => [
+                      {
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: horizontalScale(4),
+                        paddingHorizontal: horizontalScale(10),
+                        paddingVertical: verticalScale(6),
+                        borderRadius: moderateScale(8),
+                        backgroundColor: `${tertiaryColor}14`,
+                        borderWidth: 1,
+                        borderColor: `${tertiaryColor}32`,
+                      },
+                      pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
+                    ]}
+                  >
+                    <Icon name="edit-3" size={12} color={tertiaryColor} />
+                    <Text style={{ fontSize: moderateScale(11.5), fontWeight: '700', color: tertiaryColor }}>Edit Profil</Text>
+                  </Pressable>
+                </View>
+
                 {loadingProfile ? (
                   <View style={styles.centerRow}>
                     <ActivityIndicator color={Colors.primary} />
-                    <Text style={styles.mutedText}>Memuat...</Text>
+                    <Text style={styles.mutedText}>Memuat data profil...</Text>
                   </View>
                 ) : profile ? (
-                  <View style={styles.profileDetails}>
-                    <ProfileField icon="user" label="Nama" value={profile.nama} />
-                    <ProfileField icon="at-sign" label="Username" value={profile.username} />
-                    <ProfileField icon="key" label="Nomor Induk" value={profile.nomor_induk || "-"} />
-                    <ProfileField icon="book" label="Divisi" value={profile.divisi || "-"} />
-                    <ProfileField icon="shield" label="Peran" value={profile.level || "Health Monitor"} />
+                  <View style={{ marginTop: verticalScale(4) }}>
+                    <ProfileRow
+                      icon="user"
+                      iconBg="#ecfdf5"
+                      iconColor="#059669"
+                      label="Nama Lengkap"
+                      value={profile.nama}
+                    />
+                    <ProfileRow
+                      icon="at-sign"
+                      iconBg="#f5f3ff"
+                      iconColor="#7c3aed"
+                      label="Username"
+                      value={profile.username}
+                    />
+                    <ProfileRow
+                      icon="mail"
+                      iconBg="#fffbeb"
+                      iconColor="#d97706"
+                      label="Alamat Email"
+                      value={profile.email}
+                    />
+                    <ProfileRow
+                      icon="user-check"
+                      iconBg="#fff1f2"
+                      iconColor="#e11d48"
+                      label="Jenis Kelamin"
+                      value={profile.jk === 'P' ? 'Perempuan' : profile.jk === 'L' ? 'Laki-laki' : null}
+                    />
+                    <ProfileRow
+                      icon="briefcase"
+                      iconBg="#eff6ff"
+                      iconColor="#2563eb"
+                      label="Institusi"
+                      value={profile.instansi?.nama_instansi || 'SMK Telekomunikasi Telesandi Bekasi'}
+                      numberOfLines={2}
+                      isLast={true}
+                    />
                   </View>
                 ) : (
                   <View style={styles.emptyState}>
@@ -810,20 +1180,66 @@ const HomeScreenHealthMonitor = () => {
                   </View>
                 )}
               </Card>
+
+              {/* Card 2: Pengaturan & Keamanan */}
               <Card>
-                <Text style={styles.cardTitle}>Akun</Text>
-                <View style={styles.accountActions}>
-                  <Pressable onPress={() => setPasswordModalVisible(true)} style={styles.accountButton}>
-                    <Icon name="lock" size={20} color={Colors.primary} />
-                    <Text style={styles.accountButtonText}>Ganti Password</Text>
-                    <Icon name="chevron-right" size={18} color={Colors.muted} />
-                  </Pressable>
-                  <Pressable onPress={handleLogout} disabled={isLoggingOut} style={[styles.accountButton, styles.logoutButton]}>
-                    <Icon name="log-out" size={20} color="#dc2626" />
-                    <Text style={[styles.accountButtonText, { color: '#dc2626' }]}>Keluar</Text>
-                  </Pressable>
+                <View style={{ marginBottom: verticalScale(6) }}>
+                  <Text style={styles.cardTitle}>Akun & Keamanan</Text>
+                  <Text style={{ fontSize: moderateScale(11), color: Colors.muted, marginTop: verticalScale(1) }}>
+                    Kelola kata sandi dan sesi akun Anda
+                  </Text>
+                </View>
+
+                <View style={{ marginTop: verticalScale(2) }}>
+                  <AccountActionItem
+                    icon="user-check"
+                    iconBg="#e0e7ff"
+                    iconColor="#4338ca"
+                    title="Ubah Profil"
+                    subtitle="Perbarui nama dan foto tampilan"
+                    onPress={() => setEditProfileModalVisible(true)}
+                  />
+                  <AccountActionItem
+                    icon="lock"
+                    iconBg="#fef3c7"
+                    iconColor="#b45309"
+                    title="Ganti Kata Sandi"
+                    subtitle="Amankan akun dengan sandi baru"
+                    onPress={() => setPasswordModalVisible(true)}
+                  />
+                  <AccountActionItem
+                    icon="refresh-cw"
+                    iconBg="#ecfdf5"
+                    iconColor="#059669"
+                    title="Periksa Pembaruan"
+                    subtitle="Cek ketersediaan versi terbaru aplikasi"
+                    onPress={handleCheckUpdate}
+                  />
+                  <AccountActionItem
+                    icon="file-text"
+                    iconBg="#e0f2fe"
+                    iconColor="#0284c7"
+                    title="Catatan Pembaruan"
+                    subtitle="Riwayat versi dan pembaruan sistem"
+                    onPress={() => setChangelogModalVisible(true)}
+                  />
+                  <AccountActionItem
+                    icon="log-out"
+                    iconBg="#fee2e2"
+                    iconColor="#dc2626"
+                    title="Keluar dari Akun"
+                    subtitle="Akhiri sesi login di perangkat ini"
+                    onPress={handleLogout}
+                    isDanger={true}
+                    isLast={true}
+                  />
                 </View>
               </Card>
+
+              {/* Card 3: Footer Versi Aplikasi */}
+              <View style={styles.profileFooter}>
+                <Text style={styles.profileFooterVersion}>Versi 1.0.0 • Build Stabil</Text>
+              </View>
             </View>
           )}
         </Animated.View>
@@ -881,7 +1297,53 @@ const HomeScreenHealthMonitor = () => {
           </View>
         </View>
       </Modal>
-      <AnimatedBottomTabs items={tabs} activeKey={active} onChange={setActive} />
+
+      {/* Modal Edit Profil */}
+      <EditProfileModal
+        visible={editProfileModalVisible}
+        onClose={() => setEditProfileModalVisible(false)}
+        currentProfile={profile}
+        onProfileUpdated={(updated) => {
+          setProfile((prev: any) => ({
+            ...prev,
+            nama: updated.nama,
+            email: updated.email,
+            avatar: updated.avatar,
+          }));
+        }}
+        themeColor={tertiaryColor}
+      />
+
+      {/* Modal Catatan Pembaruan (Changelog) */}
+      <ChangelogModal
+        visible={changelogModalVisible}
+        onClose={() => setChangelogModalVisible(false)}
+      />
+
+      {/* Modal Periksa Pembaruan */}
+      <CheckUpdateModal
+        visible={checkUpdateVisible}
+        onClose={() => setCheckUpdateVisible(false)}
+        status={checkUpdateStatus}
+        updateData={checkUpdateData}
+        errorMessage={checkUpdateError}
+        onUpdateNow={handleApplyUpdate}
+      />
+
+      {/* Modal Force Upgrade jika Wajib */}
+      <ForceUpgradeModal
+        visible={forceUpgradeVisible || isMandatoryUpgrade}
+        updateData={syncForceUpgradeData || forceUpgradeData}
+      />
+
+      {/* Modal Maintenance Mode - Unclosable */}
+      <MaintenanceModal
+        visible={isMaintenance}
+        message={maintenanceMessage}
+        onRefreshStatus={recheckSync}
+      />
+
+      <AnimatedBottomTabs items={tabs} activeKey={active} onChange={setActive} themeColor={tertiaryColor} />
       <ConfirmModal
         visible={modalVisible}
         type={modalType}
@@ -1097,15 +1559,124 @@ const DetailRow = ({ icon, label, value }: any) => (
     <Text style={styles.detailValue}>{value}</Text>
   </View>
 )
-const ProfileField = ({ icon, label, value }: { icon: string; label: string; value: string }) => (
-  <View style={styles.profileField}>
-    <View style={styles.fieldLeft}>
-      <Icon name={icon as any} size={18} color={Colors.primary} style={styles.fieldIcon} />
-      <Text style={styles.fieldLabel}>{label}</Text>
+interface ProfileRowProps {
+  icon: string;
+  iconBg: string;
+  iconColor: string;
+  label: string;
+  value?: string | null;
+  isBadge?: boolean;
+  badgeColor?: string;
+  isLast?: boolean;
+  numberOfLines?: number;
+}
+
+const ProfileRow = ({
+  icon,
+  iconBg,
+  iconColor,
+  label,
+  value,
+  isBadge = false,
+  badgeColor,
+  isLast = false,
+  numberOfLines = 1,
+}: ProfileRowProps) => {
+  const displayVal = value && value.trim() !== '' && value !== '-' ? value : null;
+
+  return (
+    <View style={[styles.profileRowContainer, !isLast && styles.profileRowDivider]}>
+      <View style={styles.profileRowLeft}>
+        <View style={[styles.profileRowIconBox, { backgroundColor: iconBg }]}>
+          <Icon name={icon as any} size={16} color={iconColor} />
+        </View>
+        <Text style={styles.profileRowLabel} numberOfLines={1}>
+          {label}
+        </Text>
+      </View>
+      <View style={[styles.profileRowRight, numberOfLines > 1 && { maxWidth: '58%' }]}>
+        {isBadge && displayVal ? (
+          <View
+            style={[
+              styles.profileRowBadge,
+              badgeColor ? { backgroundColor: badgeColor + '15', borderColor: badgeColor + '35' } : null,
+            ]}
+          >
+            <Text
+              style={[
+                styles.profileRowBadgeText,
+                badgeColor ? { color: badgeColor } : null,
+              ]}
+              numberOfLines={1}
+            >
+              {displayVal}
+            </Text>
+          </View>
+        ) : (
+          <Text
+            style={[
+              styles.profileRowValue,
+              !displayVal && styles.profileRowValueEmpty,
+            ]}
+            numberOfLines={numberOfLines}
+            ellipsizeMode="tail"
+          >
+            {displayVal || 'Belum diisi'}
+          </Text>
+        )}
+      </View>
     </View>
-    <Text style={styles.fieldValue}>{value}</Text>
-  </View>
-)
+  );
+};
+
+interface AccountActionItemProps {
+  icon: string;
+  iconBg: string;
+  iconColor: string;
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+  isDanger?: boolean;
+  isLast?: boolean;
+}
+
+const AccountActionItem = ({
+  icon,
+  iconBg,
+  iconColor,
+  title,
+  subtitle,
+  onPress,
+  isDanger = false,
+  isLast = false,
+}: AccountActionItemProps) => (
+  <Pressable
+    onPress={onPress}
+    style={({ pressed }) => [
+      styles.actionItem,
+      !isLast && styles.actionItemDivider,
+      pressed && styles.actionItemPressed,
+    ]}
+  >
+    <View style={[styles.actionIconBox, { backgroundColor: iconBg }]}>
+      <Icon name={icon as any} size={18} color={iconColor} />
+    </View>
+    <View style={styles.actionTextBox}>
+      <Text style={[styles.actionTitle, isDanger && { color: '#dc2626' }]} numberOfLines={1}>
+        {title}
+      </Text>
+      <Text style={[styles.actionSubtitle, isDanger && { color: '#ef4444' }]} numberOfLines={1}>
+        {subtitle}
+      </Text>
+    </View>
+    <Icon
+      name="chevron-right"
+      size={18}
+      color={isDanger ? '#f87171' : Colors.muted}
+      style={{ opacity: 0.6 }}
+    />
+  </Pressable>
+);
 const ConfirmModal = ({ visible, type, item, loading, onClose, onConfirm }: any) => {
   const isReturn = type === 'return'
   const isDelete = type === 'delete'
@@ -1403,9 +1974,11 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 12,
-    elevation: 5,
+    elevation: 4,
+    overflow: 'hidden',
+    position: 'relative',
   },
   label: { color: Colors.muted, marginBottom: verticalScale(6), marginTop: verticalScale(2), fontSize: moderateScale(14) },
   input: { backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.border, borderRadius: moderateScale(12), paddingHorizontal: horizontalScale(12), paddingVertical: verticalScale(12), color: Colors.text, fontSize: moderateScale(16) },
@@ -1442,6 +2015,26 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(20),
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  divisiBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: horizontalScale(8),
+    paddingVertical: verticalScale(3),
+    borderRadius: moderateScale(6),
+    borderWidth: 1,
+    marginTop: verticalScale(6),
+    gap: horizontalScale(6),
+  },
+  divisiDot: {
+    width: moderateScale(6),
+    height: moderateScale(6),
+    borderRadius: moderateScale(3),
+  },
+  divisiBadgeText: {
+    fontSize: moderateScale(11),
+    fontWeight: '700',
   },
   card: {
     backgroundColor: Colors.white,
@@ -1805,53 +2398,211 @@ const styles = StyleSheet.create({
     color: Colors.muted,
     fontSize: moderateScale(14),
   },
-  profileDetails: {
-    gap: verticalScale(16)
+  profileHeroTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: horizontalScale(4),
+    paddingHorizontal: horizontalScale(8),
+    paddingVertical: verticalScale(2.5),
+    borderRadius: moderateScale(6),
+    marginBottom: verticalScale(2),
   },
-  profileField: {
+  profileHeroTagText: {
+    fontSize: moderateScale(11),
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  avatarEditIconBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: moderateScale(18),
+    height: moderateScale(18),
+    borderRadius: moderateScale(9),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: Colors.white,
+  },
+  profileStatGrid: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: verticalScale(8),
+    gap: horizontalScale(8),
   },
-  fieldLeft: {
+  profileStatCard: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(14),
+    paddingVertical: verticalScale(10),
+    paddingHorizontal: horizontalScale(6),
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  profileStatIconBox: {
+    width: moderateScale(30),
+    height: moderateScale(30),
+    borderRadius: moderateScale(8),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: verticalScale(4),
+  },
+  profileStatLabel: {
+    fontSize: moderateScale(9.5),
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 0.4,
+    marginBottom: verticalScale(2),
+  },
+  profileStatValue: {
+    fontSize: moderateScale(12.5),
+    fontWeight: '700',
+    color: Colors.text,
+    textAlign: 'center',
+  },
+
+  // Profile Row Styles
+  profileRowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: verticalScale(11),
+    gap: horizontalScale(10),
+  },
+  profileRowDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#F1F5F9',
+  },
+  profileRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: horizontalScale(10),
     flex: 1,
+    marginRight: horizontalScale(8),
   },
-  fieldIcon: {
-    marginRight: moderateScale(12)
+  profileRowIconBox: {
+    width: moderateScale(34),
+    height: moderateScale(34),
+    borderRadius: moderateScale(10),
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
-  fieldLabel: {
-    color: Colors.muted,
-    fontSize: moderateScale(14),
-    flex: 1,
-  },
-  fieldValue: {
-    color: Colors.text,
-    fontSize: moderateScale(14),
+  profileRowLabel: {
+    color: '#475569',
+    fontSize: moderateScale(13),
     fontWeight: '600',
+    flexShrink: 1,
   },
-  accountActions: {
-    gap: verticalScale(8)
+  profileRowRight: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    flexShrink: 1,
+    maxWidth: '52%',
   },
-  accountButton: {
+  profileRowValue: {
+    color: Colors.text,
+    fontSize: moderateScale(13.5),
+    fontWeight: '700',
+    textAlign: 'right',
+  },
+  profileRowValueEmpty: {
+    color: '#94A3B8',
+    fontWeight: '400',
+    fontStyle: 'italic',
+    fontSize: moderateScale(12),
+  },
+  profileRowBadge: {
+    paddingHorizontal: horizontalScale(9),
+    paddingVertical: verticalScale(3),
+    borderRadius: moderateScale(6),
+    borderWidth: 1,
+  },
+  profileRowBadgeText: {
+    fontSize: moderateScale(11.5),
+    fontWeight: '700',
+  },
+
+  // Account Action Items
+  actionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: verticalScale(12),
-    paddingHorizontal: moderateScale(8),
-    borderRadius: moderateScale(8),
-    backgroundColor: Colors.bg,
+    paddingHorizontal: horizontalScale(8),
+    borderRadius: moderateScale(12),
+    gap: horizontalScale(12),
   },
-  accountButtonText: {
-    color: Colors.text,
-    fontSize: moderateScale(14),
-    fontWeight: '500',
+  actionItemDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#F1F5F9',
+  },
+  actionItemPressed: {
+    backgroundColor: '#F8FAFC',
+    opacity: 0.85,
+  },
+  actionIconBox: {
+    width: moderateScale(38),
+    height: moderateScale(38),
+    borderRadius: moderateScale(11),
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  actionTextBox: {
     flex: 1,
-    marginLeft: moderateScale(12),
+    justifyContent: 'center',
+    marginRight: horizontalScale(6),
   },
-  logoutButton: {
-    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+  actionTitle: {
+    color: Colors.text,
+    fontSize: moderateScale(13.5),
+    fontWeight: '700',
+    marginBottom: verticalScale(1),
+  },
+  actionSubtitle: {
+    color: Colors.muted,
+    fontSize: moderateScale(11),
+    fontWeight: '500',
+  },
+
+  // Profile Footer
+  profileFooter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: verticalScale(20),
+    gap: verticalScale(4),
+  },
+  profileFooterBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: horizontalScale(6),
+  },
+  profileFooterDot: {
+    width: moderateScale(6),
+    height: moderateScale(6),
+    borderRadius: moderateScale(3),
+  },
+  profileFooterApp: {
+    fontSize: moderateScale(12),
+    fontWeight: '700',
+    color: Colors.text,
+    letterSpacing: 0.3,
+  },
+  profileFooterOrg: {
+    fontSize: moderateScale(11),
+    color: Colors.muted,
+    fontWeight: '500',
+  },
+  profileFooterVersion: {
+    fontSize: moderateScale(10),
+    color: '#94A3B8',
     marginTop: verticalScale(2),
   },
   // Modal Styles

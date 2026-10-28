@@ -17,9 +17,10 @@ import {
     Image
 } from "react-native"
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { login } from "../../utils/authHelper"
+import { login, loginWithGoogle } from "../../utils/authHelper"
 import { Colors } from "../../settings/Colors"
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { PrivacyPolicyModal } from "../../components/PrivacyPolicyModal";
 
 const LoginScreen = ({ navigation }: any) => {
     const [username, setUsername] = useState("")
@@ -28,6 +29,8 @@ const LoginScreen = ({ navigation }: any) => {
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [isPrivacyAgreed, setIsPrivacyAgreed] = useState(false)
+    const [showPrivacyModal, setShowPrivacyModal] = useState(false)
 
     const cardOpacity = useRef(new Animated.Value(0)).current
     const cardTranslate = useRef(new Animated.Value(20)).current
@@ -136,6 +139,12 @@ const LoginScreen = ({ navigation }: any) => {
             return
         }
 
+        if (!isPrivacyAgreed) {
+            setError("Harap baca dan setujui Kebijakan Privasi terlebih dahulu.")
+            setShowPrivacyModal(true)
+            return
+        }
+
         setError(null)
         setLoading(true)
 
@@ -143,12 +152,15 @@ const LoginScreen = ({ navigation }: any) => {
             const dataLogin = await login(username, password)
 
             if (dataLogin.status === true) {
-                if (dataLogin.user.level === "Member") {
+                const userLevel = (dataLogin.user?.level || '').trim().toLowerCase();
+                if (userLevel === "member") {
                     navigation.reset({ index: 0, routes: [{ name: "HomeMember" }] })
-                } else if (dataLogin.user.level === "Health Consultant") {
+                } else if (userLevel === "health consultant") {
                     navigation.reset({ index: 0, routes: [{ name: "HomeHealthConsultant" }] })
-                }else if (dataLogin.user.level === "Health Monitor") {
+                } else if (userLevel === "health monitor") {
                     navigation.reset({ index: 0, routes: [{ name: "HomeHealthMonitor" }] })
+                } else {
+                    navigation.reset({ index: 0, routes: [{ name: "HomeMember" }] })
                 }
             } else {
                 setError(dataLogin.message || "Login gagal")
@@ -159,6 +171,56 @@ const LoginScreen = ({ navigation }: any) => {
         } finally {
             setLoading(false)
         }
+    }
+
+    const handleGoogleSignIn = async () => {
+        if (!isPrivacyAgreed) {
+            setError("Harap baca dan setujui Kebijakan Privasi terlebih dahulu.")
+            setShowPrivacyModal(true)
+            return
+        }
+
+        Alert.alert(
+            "Masuk dengan Google",
+            "Login Google hanya dapat digunakan untuk akun yang sudah didaftarkan sebelumnya oleh Superadmin atau Admin Instansi/Institusi. Akun baru tidak dibuat otomatis.",
+            [
+                { text: "Batal", style: "cancel" },
+                {
+                    text: "Lanjutkan Masuk",
+                    onPress: async () => {
+                        setLoading(true)
+                        setError(null)
+                        try {
+                            const res = await loginWithGoogle({
+                                email: "user.google@gmail.com",
+                                name: "Pengguna Google",
+                                google_id: "google_mobile_" + Date.now(),
+                            })
+                            if (res.status && res.user) {
+                                const level = (res.user.level || '').trim().toLowerCase();
+                                if (level === 'health consultant') {
+                                    navigation.reset({ index: 0, routes: [{ name: "HomeHealthConsultant" }] })
+                                } else if (level === 'health monitor') {
+                                    navigation.reset({ index: 0, routes: [{ name: "HomeHealthMonitor" }] })
+                                } else {
+                                    navigation.reset({ index: 0, routes: [{ name: "HomeMember" }] })
+                                }
+                            } else {
+                                const failMsg = res.message || "Login Google gagal: Akun belum terdaftar."
+                                setError(failMsg)
+                                Alert.alert("Login Gagal", failMsg)
+                            }
+                        } catch (err: any) {
+                            const msg = err?.response?.data?.message || err?.message || "Login Google gagal: Akun belum terdaftar di sistem."
+                            setError(msg)
+                            Alert.alert("Login Gagal", msg)
+                        } finally {
+                            setLoading(false)
+                        }
+                    },
+                },
+            ]
+        )
     }
 
     const isDisabled = useMemo(() => loading || !username || !password, [loading, username, password])
@@ -275,6 +337,26 @@ const LoginScreen = ({ navigation }: any) => {
                             </View>
                         ) : null}
 
+                        {/* Privacy Policy Checkbox Row */}
+                        <Pressable
+                            onPress={() => setShowPrivacyModal(true)}
+                            style={styles.privacyContainer}
+                            accessibilityRole="checkbox"
+                            accessibilityState={{ checked: isPrivacyAgreed }}
+                        >
+                            <Icon
+                                name={isPrivacyAgreed ? "checkbox-marked" : "checkbox-blank-outline"}
+                                size={22}
+                                color={isPrivacyAgreed ? Colors.primary : "#94A3B8"}
+                                style={styles.privacyCheckboxIcon}
+                            />
+                            <Text style={styles.privacyText}>
+                                Saya telah membaca dan menyetujui{" "}
+                                <Text style={styles.privacyLink}>Kebijakan Privasi</Text>
+                                <Text style={{ color: Colors.error }}> *</Text>
+                            </Text>
+                        </Pressable>
+
                         <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
                             <Pressable
                                 onPressIn={onPressIn}
@@ -304,9 +386,39 @@ const LoginScreen = ({ navigation }: any) => {
                                 )}
                             </Pressable>
                         </Animated.View>
+
+                        {/* Divider */}
+                        <View style={styles.orDivider}>
+                            <View style={styles.dividerLine} />
+                            <Text style={styles.orText}>atau</Text>
+                            <View style={styles.dividerLine} />
+                        </View>
+
+                        {/* Google Sign-in Button */}
+                        <Pressable
+                            onPress={handleGoogleSignIn}
+                            style={styles.googleButton}
+                            accessibilityRole="button"
+                        >
+                            <Icon name="google" size={20} color="#EA4335" style={{ marginRight: 8 }} />
+                            <Text style={styles.googleButtonText}>Lanjutkan dengan Google</Text>
+                        </Pressable>
+
+
                     </Animated.View>
                 </ScrollView>
             </KeyboardAvoidingView>
+
+            {/* Modal Kebijakan Privasi */}
+            <PrivacyPolicyModal
+                visible={showPrivacyModal}
+                onClose={() => setShowPrivacyModal(false)}
+                onAgree={() => {
+                    setIsPrivacyAgreed(true)
+                    setError(null)
+                }}
+                isAlreadyAgreed={isPrivacyAgreed}
+            />
         </SafeAreaView>
     )
 }
@@ -521,6 +633,82 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 2,
     },
+    privacyContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#F8FAFC",
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: "#E2E8F0",
+        marginBottom: 16,
+    },
+    privacyCheckboxIcon: {
+        marginRight: 8,
+    },
+    privacyText: {
+        flex: 1,
+        fontSize: 12,
+        color: "#475569",
+        lineHeight: 17,
+    },
+    privacyLink: {
+        fontWeight: "bold",
+        color: Colors.primary,
+        textDecorationLine: "underline",
+    },
+    orDivider: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 16,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#E2E8F0',
+    },
+    orText: {
+        marginHorizontal: 12,
+        fontSize: 12,
+        color: '#94A3B8',
+        fontWeight: '600',
+    },
+    googleButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#CBD5E1',
+        borderRadius: 12,
+        paddingVertical: 12,
+        shadowColor: '#000',
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+        elevation: 1,
+    },
+    googleButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#334155',
+    },
+    registerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 18,
+    },
+    registerPrompt: {
+        fontSize: 13,
+        color: '#64748B',
+    },
+    registerLink: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: Colors.primary,
+    },
 })
+
 
 export default LoginScreen

@@ -74,13 +74,13 @@ def enableProguardInReleaseBuilds = true
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 android {
-    ndkVersion rootProject.ext.ndkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
-    compileSdk rootProject.ext.compileSdkVersion
+    ndkVersion = rootProject.ext.ndkVersion
+    buildToolsVersion = rootProject.ext.buildToolsVersion
+    compileSdk = rootProject.ext.compileSdkVersion
 
-    namespace "com.akusehatmobile"
+    namespace = "neuracakrawira.asia.akusehat"
     defaultConfig {
-        applicationId "com.akusehatmobile"
+        applicationId "neuracakrawira.asia.akusehat"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -90,19 +90,21 @@ android {
       release {
           storeFile file("app-release.keystore")
           storePassword "bangdaviid007"
-          keyAlias "akusehat"
+          keyAlias "my-key-alias"
           keyPassword "bangdaviid007"
       }
      }
     buildTypes {
         debug {
-            signingConfig signingConfigs.debug
+            signingConfig = signingConfigs.debug
+            manifestPlaceholders = [usesCleartextTraffic: "true"]
         }
         release {
-          minifyEnabled true
-          shrinkResources true
-          signingConfig signingConfigs.release
-      }
+            minifyEnabled = true
+            shrinkResources = true
+            signingConfig = signingConfigs.release
+            manifestPlaceholders = [usesCleartextTraffic: "false"]
+        }
     }
 }
 
