@@ -14,7 +14,7 @@
         </div>
         <div class="flex items-center gap-2">
             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-xs">
-                <i class="fab fa-google-pay text-base text-gray-900"></i> Google Payment Certified
+                <i class="fas fa-shield-check text-emerald-600"></i> Pembayaran Terverifikasi
             </span>
         </div>
     </div>
@@ -107,8 +107,8 @@
                     </div>
                     <div class="flex items-center justify-between py-1">
                         <span>Metode Pembayaran:</span>
-                        <span class="font-bold text-white flex items-center gap-1">
-                            <i class="fab fa-google-pay text-base text-white"></i> Google Pay
+                        <span class="font-bold text-white flex items-center gap-1.5">
+                            <i class="fas fa-wallet text-sm text-emerald-400"></i> Google Pay
                         </span>
                     </div>
                 </div>
@@ -407,8 +407,8 @@
                             <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Langkah 2</span>
                             <h3 class="text-base font-bold text-gray-800">Ringkasan Tagihan</h3>
                         </div>
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                            <i class="fab fa-google-pay text-base text-gray-900"></i> Resmi
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                            <i class="fas fa-shield-halved text-emerald-600"></i> Checkout Aman
                         </span>
                     </div>
 
@@ -440,21 +440,22 @@
 
                 <!-- Single Unified Google Pay Action Button Container -->
                 <div class="mt-6 pt-4 border-t border-gray-200 space-y-3">
-                    <button type="button" id="btnPayWithGoogle" onclick="openPaymentConfirmation()"
-                        class="w-full py-3.5 px-5 rounded-xl font-bold text-white bg-black hover:bg-neutral-800 active:scale-[0.99] transition-all duration-200 shadow-md shadow-black/20 flex items-center justify-center gap-2.5 cursor-pointer text-sm sm:text-base">
-                        <svg class="h-5 w-auto flex-shrink-0" viewBox="9 11 52 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M26.544 24.1659C26.544 23.5831 26.4971 23.0003 26.4034 22.4294H18.4434V25.7239H23.0037C22.8161 26.7825 22.2065 27.734 21.3155 28.3286V30.4695H24.0353C25.6296 28.9828 26.544 26.7825 26.544 24.1659Z" fill="#4285F4"/>
-                            <path d="M18.4442 32.539C20.7185 32.539 22.6411 31.7778 24.0361 30.4695L21.3164 28.3287C20.5544 28.852 19.5814 29.1493 18.4442 29.1493C16.2403 29.1493 14.3763 27.6388 13.7081 25.5908H10.8794V27.7853C12.2625 30.5284 15.148 32.539 18.4442 32.539Z" fill="#34A853"/>
-                            <path d="M13.7083 25.5908C13.3524 24.5322 13.3524 23.3826 13.7083 22.324V19.3995H10.8795C9.6976 21.7554 9.6976 24.5824 10.8795 26.9383L13.7083 25.5908Z" fill="#FBBC04"/>
-                            <path d="M18.4442 15.9287C19.6496 15.9049 20.8219 16.3687 21.6777 17.2251L24.0954 14.8074C22.5601 13.2721 20.5376 12.4157 18.4442 12.4395C15.148 12.4395 12.2625 14.4501 10.8794 17.1932L13.7081 19.3877C14.3763 17.3397 16.2403 15.9287 18.4442 15.9287Z" fill="#EA4335"/>
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M33.0603 31.5161V25.4741H36.1786C37.4564 25.4741 38.535 25.046 39.4142 24.2015L39.6252 23.9875C41.2313 22.2391 41.1258 19.5155 39.4142 17.898C38.5584 17.0416 37.3861 16.5778 36.1786 16.6016H31.1729V31.5161H33.0603ZM33.0605 23.6425V18.4332H36.2262C36.9063 18.4332 37.5512 18.6948 38.0319 19.1706C39.052 20.1696 39.0754 21.8347 38.0905 22.8694C37.6098 23.3809 36.9297 23.6663 36.2262 23.6425H33.0605ZM48.4293 22.1083C47.6204 21.359 46.5185 20.9784 45.1234 20.9784C43.3298 20.9784 41.9816 21.6444 41.0906 22.9646L42.7553 24.0231C43.3649 23.1192 44.1973 22.6673 45.2524 22.6673C45.9206 22.6673 46.5653 22.9171 47.0694 23.369C47.5618 23.7972 47.8432 24.4156 47.8432 25.0698V25.5098C47.1163 25.1055 46.2019 24.8914 45.0765 24.8914C43.7635 24.8914 42.7084 25.2006 41.923 25.831C41.1375 26.4613 40.739 27.2939 40.739 28.3524C40.7155 29.3158 41.1258 30.2316 41.8527 30.85C42.5912 31.5161 43.5291 31.8491 44.631 31.8491C45.9323 31.8491 46.9639 31.2663 47.7494 30.1007H47.8314V31.5161H49.6368V25.2244C49.6368 23.9042 49.2382 22.8576 48.4293 22.1083ZM43.3066 29.6369C42.9197 29.3514 42.6852 28.8876 42.6852 28.3881C42.6852 27.8291 42.9432 27.3652 43.4473 26.9965C43.9632 26.6278 44.6081 26.4375 45.3702 26.4375C46.4255 26.4256 47.2462 26.6635 47.8325 27.1392C47.8325 27.948 47.5159 28.6497 46.8945 29.2444C46.3317 29.8153 45.5696 30.1364 44.7723 30.1364C44.2446 30.1483 43.7287 29.9699 43.3066 29.6369ZM53.693 35.9999L60.0001 21.3114H57.9485L55.0295 28.6378H54.9943L52.0049 21.3114H49.9534L54.0916 30.8619L51.747 35.9999H53.693Z" fill="#FFFFFF"/>
-                        </svg>
-                        <span id="btnPayLabel" class="whitespace-nowrap">Bayar dengan Google Pay</span>
-                    </button>
+                    <div id="gpay-button-container" class="w-full flex justify-center min-h-[48px]">
+                        <button type="button" id="btnPayWithGoogle" onclick="openPaymentConfirmation()"
+                            class="w-full py-3 px-5 rounded-xl font-bold text-white bg-black hover:bg-neutral-800 active:scale-[0.99] transition-all duration-200 shadow-md shadow-black/20 flex items-center justify-center cursor-pointer min-h-[48px]">
+                            <svg class="h-6 w-auto flex-shrink-0" viewBox="9 11 52 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M26.544 24.1659C26.544 23.5831 26.4971 23.0003 26.4034 22.4294H18.4434V25.7239H23.0037C22.8161 26.7825 22.2065 27.734 21.3155 28.3286V30.4695H24.0353C25.6296 28.9828 26.544 26.7825 26.544 24.1659Z" fill="#4285F4"/>
+                                <path d="M18.4442 32.539C20.7185 32.539 22.6411 31.7778 24.0361 30.4695L21.3164 28.3287C20.5544 28.852 19.5814 29.1493 18.4442 29.1493C16.2403 29.1493 14.3763 27.6388 13.7081 25.5908H10.8794V27.7853C12.2625 30.5284 15.148 32.539 18.4442 32.539Z" fill="#34A853"/>
+                                <path d="M13.7083 25.5908C13.3524 24.5322 13.3524 23.3826 13.7083 22.324V19.3995H10.8795C9.6976 21.7554 9.6976 24.5824 10.8795 26.9383L13.7083 25.5908Z" fill="#FBBC04"/>
+                                <path d="M18.4442 15.9287C19.6496 15.9049 20.8219 16.3687 21.6777 17.2251L24.0954 14.8074C22.5601 13.2721 20.5376 12.4157 18.4442 12.4395C15.148 12.4395 12.2625 14.4501 10.8794 17.1932L13.7081 19.3877C14.3763 17.3397 16.2403 15.9287 18.4442 15.9287Z" fill="#EA4335"/>
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M33.0603 31.5161V25.4741H36.1786C37.4564 25.4741 38.535 25.046 39.4142 24.2015L39.6252 23.9875C41.2313 22.2391 41.1258 19.5155 39.4142 17.898C38.5584 17.0416 37.3861 16.5778 36.1786 16.6016H31.1729V31.5161H33.0603ZM33.0605 23.6425V18.4332H36.2262C36.9063 18.4332 37.5512 18.6948 38.0319 19.1706C39.052 20.1696 39.0754 21.8347 38.0905 22.8694C37.6098 23.3809 36.9297 23.6663 36.2262 23.6425H33.0605ZM48.4293 22.1083C47.6204 21.359 46.5185 20.9784 45.1234 20.9784C43.3298 20.9784 41.9816 21.6444 41.0906 22.9646L42.7553 24.0231C43.3649 23.1192 44.1973 22.6673 45.2524 22.6673C45.9206 22.6673 46.5653 22.9171 47.0694 23.369C47.5618 23.7972 47.8432 24.4156 47.8432 25.0698V25.5098C47.1163 25.1055 46.2019 24.8914 45.0765 24.8914C43.7635 24.8914 42.7084 25.2006 41.923 25.831C41.1375 26.4613 40.739 27.2939 40.739 28.3524C40.7155 29.3158 41.1258 30.2316 41.8527 30.85C42.5912 31.5161 43.5291 31.8491 44.631 31.8491C45.9323 31.8491 46.9639 31.2663 47.7494 30.1007H47.8314V31.5161H49.6368V25.2244C49.6368 23.9042 49.2382 22.8576 48.4293 22.1083ZM43.3066 29.6369C42.9197 29.3514 42.6852 28.8876 42.6852 28.3881C42.6852 27.8291 42.9432 27.3652 43.4473 26.9965C43.9632 26.6278 44.6081 26.4375 45.3702 26.4375C46.4255 26.4256 47.2462 26.6635 47.8325 27.1392C47.8325 27.948 47.5159 28.6497 46.8945 29.2444C46.3317 29.8153 45.5696 30.1364 44.7723 30.1364C44.2446 30.1483 43.7287 29.9699 43.3066 29.6369ZM53.693 35.9999L60.0001 21.3114H57.9485L55.0295 28.6378H54.9943L52.0049 21.3114H49.9534L54.0916 30.8619L51.747 35.9999H53.693Z" fill="#FFFFFF"/>
+                            </svg>
+                        </button>
+                    </div>
 
                     <div class="flex items-center justify-center gap-2 text-[11px] text-gray-500 text-center">
                         <i class="fas fa-shield-halved text-emerald-600"></i>
-                        <span>Enkripsi Resmi Google Payment API • Struk Pajak PDF Langsung Terbit</span>
+                        <span>Enkripsi Resmi Google Pay • Struk Pajak PDF Langsung Terbit</span>
                     </div>
                 </div>
             </div>
@@ -525,8 +526,8 @@
                         </td>
                         <td class="px-4 py-3 font-bold text-gray-900">Rp {{ number_format($trx->nominal, 0, ',', '.') }}</td>
                         <td class="px-4 py-3">
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-black text-white">
-                                <i class="fab fa-google-pay text-sm"></i> Google Pay
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-neutral-900 text-white">
+                                <i class="fas fa-wallet text-xs text-neutral-300"></i> Google Pay
                             </span>
                         </td>
                         <td class="px-4 py-3">
@@ -569,7 +570,7 @@
 <div id="paymentConfirmModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 text-center animate-in fade-in zoom-in-95 duration-200">
         <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl border border-emerald-100 shadow-xs">
-            <i class="fab fa-google-pay text-3xl text-gray-900"></i>
+            <i class="fas fa-shield-halved text-2xl text-emerald-600"></i>
         </div>
         <h3 class="text-lg font-bold text-gray-800 mb-1">Konfirmasi Pembayaran</h3>
         <p class="text-xs text-gray-500 mb-4">Pastikan rincian pesanan sudah sesuai sebelum melanjutkan ke Google Pay.</p>
@@ -785,10 +786,7 @@
             }
         }
 
-        if (btnPayLabel) {
-            btnPayLabel.textContent = 'Bayar dengan Google Pay';
-        }
-
+        // Total calculation complete
         return total;
     }
 
@@ -897,6 +895,7 @@
                 .then(function(response) {
                     if (response.result) {
                         console.log('Google Pay is ready to pay.');
+                        renderGooglePayButton();
                     }
                 })
                 .catch(function(err) {
@@ -907,29 +906,38 @@
         }
     }
 
+    function renderGooglePayButton() {
+        const container = document.getElementById('gpay-button-container');
+        if (container && paymentsClient) {
+            try {
+                const officialBtn = paymentsClient.createButton({
+                    buttonColor: 'black',
+                    buttonType: 'pay',
+                    buttonSizeMode: 'fill',
+                    buttonRadius: 12,
+                    onClick: openPaymentConfirmation
+                });
+                container.innerHTML = '';
+                container.appendChild(officialBtn);
+            } catch(e) {
+                console.warn('Google Pay createButton notice: ', e);
+            }
+        }
+    }
+
     function setPayBtnLoading(text) {
-        const btn = document.getElementById('btnPayWithGoogle');
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin text-lg"></i><span>${text}</span>`;
+        const container = document.getElementById('gpay-button-container');
+        if (container) {
+            container.innerHTML = `
+                <button type="button" disabled class="w-full py-3.5 px-5 rounded-xl font-bold text-white bg-black opacity-80 flex items-center justify-center gap-2 cursor-wait text-sm sm:text-base">
+                    <i class="fas fa-spinner fa-spin text-lg"></i><span>${text}</span>
+                </button>
+            `;
         }
     }
 
     function resetPayBtn() {
-        const btn = document.getElementById('btnPayWithGoogle');
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = `
-                <svg class="h-6 w-auto flex-shrink-0" viewBox="9 11 52 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M26.544 24.1659C26.544 23.5831 26.4971 23.0003 26.4034 22.4294H18.4434V25.7239H23.0037C22.8161 26.7825 22.2065 27.734 21.3155 28.3286V30.4695H24.0353C25.6296 28.9828 26.544 26.7825 26.544 24.1659Z" fill="#4285F4"/>
-                    <path d="M18.4442 32.539C20.7185 32.539 22.6411 31.7778 24.0361 30.4695L21.3164 28.3287C20.5544 28.852 19.5814 29.1493 18.4442 29.1493C16.2403 29.1493 14.3763 27.6388 13.7081 25.5908H10.8794V27.7853C12.2625 30.5284 15.148 32.539 18.4442 32.539Z" fill="#34A853"/>
-                    <path d="M13.7083 25.5908C13.3524 24.5322 13.3524 23.3826 13.7083 22.324V19.3995H10.8795C9.6976 21.7554 9.6976 24.5824 10.8795 26.9383L13.7083 25.5908Z" fill="#FBBC04"/>
-                    <path d="M18.4442 15.9287C19.6496 15.9049 20.8219 16.3687 21.6777 17.2251L24.0954 14.8074C22.5601 13.2721 20.5376 12.4157 18.4442 12.4395C15.148 12.4395 12.2625 14.4501 10.8794 17.1932L13.7081 19.3877C14.3763 17.3397 16.2403 15.9287 18.4442 15.9287Z" fill="#EA4335"/>
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M33.0603 31.5161V25.4741H36.1786C37.4564 25.4741 38.535 25.046 39.4142 24.2015L39.6252 23.9875C41.2313 22.2391 41.1258 19.5155 39.4142 17.898C38.5584 17.0416 37.3861 16.5778 36.1786 16.6016H31.1729V31.5161H33.0603ZM33.0605 23.6425V18.4332H36.2262C36.9063 18.4332 37.5512 18.6948 38.0319 19.1706C39.052 20.1696 39.0754 21.8347 38.0905 22.8694C37.6098 23.3809 36.9297 23.6663 36.2262 23.6425H33.0605ZM48.4293 22.1083C47.6204 21.359 46.5185 20.9784 45.1234 20.9784C43.3298 20.9784 41.9816 21.6444 41.0906 22.9646L42.7553 24.0231C43.3649 23.1192 44.1973 22.6673 45.2524 22.6673C45.9206 22.6673 46.5653 22.9171 47.0694 23.369C47.5618 23.7972 47.8432 24.4156 47.8432 25.0698V25.5098C47.1163 25.1055 46.2019 24.8914 45.0765 24.8914C43.7635 24.8914 42.7084 25.2006 41.923 25.831C41.1375 26.4613 40.739 27.2939 40.739 28.3524C40.7155 29.3158 41.1258 30.2316 41.8527 30.85C42.5912 31.5161 43.5291 31.8491 44.631 31.8491C45.9323 31.8491 46.9639 31.2663 47.7494 30.1007H47.8314V31.5161H49.6368V25.2244C49.6368 23.9042 49.2382 22.8576 48.4293 22.1083ZM43.3066 29.6369C42.9197 29.3514 42.6852 28.8876 42.6852 28.3881C42.6852 27.8291 42.9432 27.3652 43.4473 26.9965C43.9632 26.6278 44.6081 26.4375 45.3702 26.4375C46.4255 26.4256 47.2462 26.6635 47.8325 27.1392C47.8325 27.948 47.5159 28.6497 46.8945 29.2444C46.3317 29.8153 45.5696 30.1364 44.7723 30.1364C44.2446 30.1483 43.7287 29.9699 43.3066 29.6369ZM53.693 35.9999L60.0001 21.3114H57.9485L55.0295 28.6378H54.9943L52.0049 21.3114H49.9534L54.0916 30.8619L51.747 35.9999H53.693Z" fill="#FFFFFF"/>
-                </svg>
-                <span id="btnPayLabel" class="whitespace-nowrap">Bayar dengan Google Pay</span>
-            `;
-        }
+        renderGooglePayButton();
     }
 
     // Workflow Konfirmasi Transaksi
