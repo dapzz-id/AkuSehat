@@ -20,6 +20,7 @@
 /storage/*.key
 /storage/pail
 /vendor
+/database/seeders/ProductionSeeder.php
 Homestead.json
 Homestead.yaml
 Thumbs.db

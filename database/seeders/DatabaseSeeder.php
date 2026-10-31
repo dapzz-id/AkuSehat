@@ -16,11 +16,11 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         // Jika berjalan di environment production, hanya jalankan seeder SuperAdmin
-        if (app()->environment('production')) {
-            $this->command->info('Lingkungan terdeteksi sebagai PRODUCTION.');
-            $this->call(ProductionSeeder::class);
-            return;
-        }
+        // if (app()->environment('production')) {
+        //     $this->command->info('Lingkungan terdeteksi sebagai PRODUCTION.');
+        //     $this->call(ProductionSeeder::class);
+        //     return;
+        // }
 
         // 1. License Key Aktif untuk Sekolah A
         $licenseA = LicenseKey::firstOrCreate(
