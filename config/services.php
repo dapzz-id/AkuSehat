@@ -35,6 +35,12 @@ return [
         ],
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
     'google_pay' => [
         'environment' => env('GOOGLE_PAY_ENVIRONMENT', 'TEST'),
         'merchant_id' => env('GOOGLE_PAY_MERCHANT_ID', ''),

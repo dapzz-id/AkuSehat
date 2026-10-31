@@ -64,8 +64,8 @@ class AuthController extends Controller
 
     public function redirectToGoogle()
     {
-        $clientId = env('GOOGLE_CLIENT_ID');
-        $redirectUri = env('GOOGLE_REDIRECT_URI', url('/auth/google/callback'));
+        $clientId = config('services.google.client_id') ?: env('GOOGLE_CLIENT_ID');
+        $redirectUri = config('services.google.redirect') ?: (env('GOOGLE_REDIRECT_URI') ?: url('/auth/google/callback'));
 
         if (empty($clientId)) {
             return view('auth.google-simulate');
@@ -98,9 +98,9 @@ class AuthController extends Controller
             return redirect()->route('login')->with('error', 'Login Google dibatalkan atau terjadi kesalahan.');
         }
 
-        $clientId = env('GOOGLE_CLIENT_ID');
-        $clientSecret = env('GOOGLE_CLIENT_SECRET');
-        $redirectUri = env('GOOGLE_REDIRECT_URI', url('/auth/google/callback'));
+        $clientId = config('services.google.client_id') ?: env('GOOGLE_CLIENT_ID');
+        $clientSecret = config('services.google.client_secret') ?: env('GOOGLE_CLIENT_SECRET');
+        $redirectUri = config('services.google.redirect') ?: (env('GOOGLE_REDIRECT_URI') ?: url('/auth/google/callback'));
 
         try {
             $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
