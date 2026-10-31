@@ -82,7 +82,7 @@ export const Config = {
     APP_BUILD: "Build Stabil",
     PACKAGE_NAME: "neuracakrawira.asia.akusehat",
     // Gunakan 10.0.2.2 untuk Android Emulator atau IP LAN untuk HP fisik
-    API_URL: Platform.OS === "android" ? "http://10.0.2.2:8000/api" : "http://localhost:8000/api",
+    API_URL: "https://akusehat.neuracakrawira.asia/api",
     AXIOS_TIMEOUT: 15000,
     AXIOS_CREDENTIALS: true,
 }
