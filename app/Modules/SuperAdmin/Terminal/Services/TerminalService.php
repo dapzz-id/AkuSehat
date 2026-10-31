@@ -165,17 +165,54 @@ class TerminalService
 
     public function getComposerBinary(): string
     {
+        // 1. Cek jika ada composer.phar di direktori root aplikasi
+        if (file_exists(base_path('composer.phar'))) {
+            return base_path('composer.phar');
+        }
+
+        // 2. Lingkungan Linux / Hosting (cPanel, CloudLinux, VPS)
+        if (PHP_OS_FAMILY !== 'Windows') {
+            $home = getenv('HOME') ?: ($_SERVER['HOME'] ?? ('/home/' . (get_current_user() ?: '')));
+
+            $linuxCandidates = [
+                '/usr/local/bin/composer',
+                '/usr/bin/composer',
+                '/bin/composer',
+                '/opt/cpanel/composer/bin/composer',
+                '/usr/local/cpanel/3rdparty/bin/composer',
+                $home . '/.composer/vendor/bin/composer',
+                $home . '/.config/composer/vendor/bin/composer',
+                $home . '/bin/composer',
+                $home . '/composer.phar',
+            ];
+
+            foreach ($linuxCandidates as $candidate) {
+                if ($candidate && file_exists($candidate) && is_readable($candidate)) {
+                    return $candidate;
+                }
+            }
+
+            // Coba temukan via perintah shell 'which composer'
+            $which = @shell_exec('which composer 2>/dev/null');
+            if ($which && trim($which) && file_exists(trim($which))) {
+                return trim($which);
+            }
+
+            return 'composer';
+        }
+
+        // 3. Lingkungan Windows Lokal
         $userProfile = getenv('USERPROFILE') ?: 'C:/Users/' . (get_current_user() ?: 'Alvin');
         $appData = getenv('APPDATA') ?: ($userProfile . '/AppData/Roaming');
 
-        $candidates = [
+        $windowsCandidates = [
             'C:/laragon/bin/composer/composer.bat',
             'C:/laragon/bin/composer/composer.phar',
             'C:/ProgramData/ComposerSetup/bin/composer.bat',
             $appData . '/Composer/vendor/bin/composer.bat',
         ];
 
-        foreach ($candidates as $candidate) {
+        foreach ($windowsCandidates as $candidate) {
             if ($candidate && file_exists($candidate)) {
                 return $candidate;
             }
@@ -205,7 +242,7 @@ class TerminalService
 
         // 2. If starts with composer
         if ($trimmed === 'composer') {
-            if (str_ends_with(strtolower($composerBinary), '.phar')) {
+            if ($composerBinary !== 'composer' && (str_ends_with(strtolower($composerBinary), '.phar') || PHP_OS_FAMILY !== 'Windows')) {
                 return '"' . $phpBinary . '" "' . $composerBinary . '" --no-interaction';
             }
             return '"' . $composerBinary . '" --no-interaction';
@@ -215,7 +252,7 @@ class TerminalService
             if (!str_contains($rest, '--no-interaction')) {
                 $rest .= ' --no-interaction';
             }
-            if (str_ends_with(strtolower($composerBinary), '.phar')) {
+            if ($composerBinary !== 'composer' && (str_ends_with(strtolower($composerBinary), '.phar') || PHP_OS_FAMILY !== 'Windows')) {
                 return '"' . $phpBinary . '" "' . $composerBinary . '" ' . $rest;
             }
             return '"' . $composerBinary . '" ' . $rest;
@@ -246,46 +283,87 @@ class TerminalService
 
     protected function buildEnvironment(): array
     {
-        $phpDir = dirname($this->getPhpBinary());
-        $composerDir = 'C:\\laragon\\bin\\composer';
-        $gitUsrBin = 'C:\\Program Files\\Git\\usr\\bin';
-        $gitBin = 'C:\\Program Files\\Git\\bin';
-        $gitMingw = 'C:\\Program Files\\Git\\mingw64\\bin';
-        $gitCmd = 'C:\\Program Files\\Git\\cmd';
-
+        $isWindows = PHP_OS_FAMILY === 'Windows';
         $currentPath = getenv('PATH') ?: ($_SERVER['PATH'] ?? $_SERVER['Path'] ?? '');
-        $newPath = $phpDir . ';' . $composerDir . ';' . $gitUsrBin . ';' . $gitBin . ';' . $gitMingw . ';' . $gitCmd . ';' . $currentPath;
+        $phpDir = dirname($this->getPhpBinary());
 
-        // Resolve user directory and AppData for Windows
-        $userProfile = getenv('USERPROFILE') ?: ($_SERVER['USERPROFILE'] ?? 'C:\\Users\\' . (get_current_user() ?: 'Alvin'));
-        if (!file_exists($userProfile)) {
-            $userProfile = 'C:\\Users\\Alvin';
+        if ($isWindows) {
+            $composerDir = 'C:\\laragon\\bin\\composer';
+            $gitUsrBin = 'C:\\Program Files\\Git\\usr\\bin';
+            $gitBin = 'C:\\Program Files\\Git\\bin';
+            $gitMingw = 'C:\\Program Files\\Git\\mingw64\\bin';
+            $gitCmd = 'C:\\Program Files\\Git\\cmd';
+
+            $newPath = $phpDir . ';' . $composerDir . ';' . $gitUsrBin . ';' . $gitBin . ';' . $gitMingw . ';' . $gitCmd . ';' . $currentPath;
+
+            // Resolve user directory and AppData for Windows
+            $userProfile = getenv('USERPROFILE') ?: ($_SERVER['USERPROFILE'] ?? 'C:\\Users\\' . (get_current_user() ?: 'Alvin'));
+            if (!file_exists($userProfile)) {
+                $userProfile = 'C:\\Users\\Alvin';
+            }
+
+            $appData = getenv('APPDATA') ?: ($_SERVER['APPDATA'] ?? ($userProfile . '\\AppData\\Roaming'));
+            $localAppData = getenv('LOCALAPPDATA') ?: ($_SERVER['LOCALAPPDATA'] ?? ($userProfile . '\\AppData\\Local'));
+            $composerHome = getenv('COMPOSER_HOME') ?: ($_SERVER['COMPOSER_HOME'] ?? ($appData . '\\Composer'));
+
+            if (!file_exists($composerHome)) {
+                @mkdir($composerHome, 0777, true);
+            }
+
+            return array_merge($_SERVER, [
+                'PATH' => $newPath,
+                'Path' => $newPath,
+                'APPDATA' => $appData,
+                'USERPROFILE' => $userProfile,
+                'LOCALAPPDATA' => $localAppData,
+                'COMPOSER_HOME' => $composerHome,
+                'HOME' => $userProfile,
+                'HOMEDRIVE' => getenv('HOMEDRIVE') ?: 'C:',
+                'HOMEPATH' => getenv('HOMEPATH') ?: ('\\Users\\' . (get_current_user() ?: 'Alvin')),
+                'SystemRoot' => getenv('SystemRoot') ?: 'C:\\WINDOWS',
+                'WINDIR' => getenv('WINDIR') ?: 'C:\\WINDOWS',
+                'ComSpec' => getenv('ComSpec') ?: 'C:\\WINDOWS\\system32\\cmd.exe',
+                'PATHEXT' => getenv('PATHEXT') ?: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC',
+                'TEMP' => getenv('TEMP') ?: sys_get_temp_dir(),
+                'TMP' => getenv('TMP') ?: sys_get_temp_dir(),
+                'COMPOSER_MEMORY_LIMIT' => '-1',
+                'COMPOSER_ALLOW_SUPERUSER' => '1',
+                'COMPOSER_DISCARD_CHANGES' => '1',
+            ]);
         }
 
-        $appData = getenv('APPDATA') ?: ($_SERVER['APPDATA'] ?? ($userProfile . '\\AppData\\Roaming'));
-        $localAppData = getenv('LOCALAPPDATA') ?: ($_SERVER['LOCALAPPDATA'] ?? ($userProfile . '\\AppData\\Local'));
-        $composerHome = getenv('COMPOSER_HOME') ?: ($_SERVER['COMPOSER_HOME'] ?? ($appData . '\\Composer'));
+        // Linux / Hosting Environment (cPanel, CloudLinux, VPS)
+        $homeDir = getenv('HOME') ?: ($_SERVER['HOME'] ?? ('/home/' . (get_current_user() ?: '')));
+        $extraLinuxPaths = [
+            $phpDir,
+            '/usr/local/bin',
+            '/usr/bin',
+            '/bin',
+            '/usr/local/sbin',
+            '/usr/sbin',
+            '/sbin',
+            '/opt/cpanel/composer/bin',
+            '/usr/local/cpanel/3rdparty/bin',
+            $homeDir . '/.composer/vendor/bin',
+            $homeDir . '/.config/composer/vendor/bin',
+            $homeDir . '/bin',
+        ];
 
+        $validExtraPaths = array_filter($extraLinuxPaths, fn($p) => file_exists($p));
+        $newLinuxPath = implode(':', array_unique(array_merge($validExtraPaths, explode(':', $currentPath))));
+
+        $composerHome = getenv('COMPOSER_HOME') ?: ($homeDir . '/.composer');
         if (!file_exists($composerHome)) {
-            @mkdir($composerHome, 0777, true);
+            @mkdir($composerHome, 0755, true);
         }
 
         return array_merge($_SERVER, [
-            'PATH' => $newPath,
-            'Path' => $newPath,
-            'APPDATA' => $appData,
-            'USERPROFILE' => $userProfile,
-            'LOCALAPPDATA' => $localAppData,
+            'PATH' => $newLinuxPath,
+            'HOME' => $homeDir,
             'COMPOSER_HOME' => $composerHome,
-            'HOME' => $userProfile,
-            'HOMEDRIVE' => getenv('HOMEDRIVE') ?: 'C:',
-            'HOMEPATH' => getenv('HOMEPATH') ?: ('\\Users\\' . (get_current_user() ?: 'Alvin')),
-            'SystemRoot' => getenv('SystemRoot') ?: 'C:\\WINDOWS',
-            'WINDIR' => getenv('WINDIR') ?: 'C:\\WINDOWS',
-            'ComSpec' => getenv('ComSpec') ?: 'C:\\WINDOWS\\system32\\cmd.exe',
-            'PATHEXT' => getenv('PATHEXT') ?: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC',
-            'TEMP' => getenv('TEMP') ?: sys_get_temp_dir(),
-            'TMP' => getenv('TMP') ?: sys_get_temp_dir(),
+            'SHELL' => getenv('SHELL') ?: '/bin/bash',
+            'USER' => get_current_user() ?: 'syntxid',
+            'TMPDIR' => sys_get_temp_dir(),
             'COMPOSER_MEMORY_LIMIT' => '-1',
             'COMPOSER_ALLOW_SUPERUSER' => '1',
             'COMPOSER_DISCARD_CHANGES' => '1',
