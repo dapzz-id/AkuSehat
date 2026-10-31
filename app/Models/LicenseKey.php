@@ -145,12 +145,12 @@ class LicenseKey extends Model
     }
 
     /**
-     * Generate unique license key dengan format RDVZ-XXXX-XXXX-XXXX
+     * Generate unique license key dengan format NCS-XXXX-XXXX-XXXX
      */
     public static function generateKey()
     {
         do {
-            $key = 'RDVZ-' . strtoupper(\Illuminate\Support\Str::random(4)) . '-' . 
+            $key = 'NCS-' . strtoupper(\Illuminate\Support\Str::random(4)) . '-' . 
                    strtoupper(\Illuminate\Support\Str::random(4)) . '-' . 
                    strtoupper(\Illuminate\Support\Str::random(4));
         } while (self::where('key', $key)->exists());

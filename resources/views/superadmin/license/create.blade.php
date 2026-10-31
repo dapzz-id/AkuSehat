@@ -108,7 +108,7 @@
             for (let i = 0; i < len; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
             return res;
         }
-        const key = 'RDVZ-' + segment(4) + '-' + segment(4) + '-' + segment(4);
+        const key = 'NCS-' + segment(4) + '-' + segment(4) + '-' + segment(4);
         document.getElementById('licenseKeyInput').value = key;
     }
 </script>
