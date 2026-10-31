@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'google_pay' => [
+        'environment' => env('GOOGLE_PAY_ENVIRONMENT', 'TEST'),
+        'merchant_id' => env('GOOGLE_PAY_MERCHANT_ID', ''),
+        'merchant_name' => env('GOOGLE_PAY_MERCHANT_NAME', 'AkuSehat - Neura Cakrawira Solusi'),
+    ],
+
 ];

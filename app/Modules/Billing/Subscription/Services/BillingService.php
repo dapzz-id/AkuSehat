@@ -243,7 +243,7 @@ class BillingService
                     'status' => BillingTransactionStatus::SUCCESS->value,
                     'payload' => [
                         'gateway' => 'Google Pay Web API',
-                        'merchant_id' => env('GOOGLE_PAY_MERCHANT_ID', 'BCR2DN4TX7W7XXXX'),
+                        'merchant_id' => config('services.google_pay.merchant_id') ?: env('GOOGLE_PAY_MERCHANT_ID', 'BCR2DN4TX7W7XXXX'),
                         'card_details' => $validated['card_details'] ?? 'Google Pay',
                         'card_network' => $validated['card_network'] ?? 'CARD',
                         'timestamp' => now()->toIso8601String(),

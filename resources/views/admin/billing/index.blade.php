@@ -833,9 +833,9 @@
     }
 
     // Google Pay API Client Configuration
-    const GOOGLE_PAY_ENV = '{{ env('GOOGLE_PAY_ENVIRONMENT', 'TEST') }}';
-    const GOOGLE_PAY_MERCHANT_ID = '{{ env('GOOGLE_PAY_MERCHANT_ID', '') }}';
-    const GOOGLE_PAY_MERCHANT_NAME = '{{ env('GOOGLE_PAY_MERCHANT_NAME', 'AkuSehat - Neura Cakrawira Solusi') }}';
+    const GOOGLE_PAY_ENV = '{{ config('services.google_pay.environment', env('GOOGLE_PAY_ENVIRONMENT', 'TEST')) }}';
+    const GOOGLE_PAY_MERCHANT_ID = '{{ config('services.google_pay.merchant_id', env('GOOGLE_PAY_MERCHANT_ID', '')) }}';
+    const GOOGLE_PAY_MERCHANT_NAME = '{{ config('services.google_pay.merchant_name', env('GOOGLE_PAY_MERCHANT_NAME', 'AkuSehat - Neura Cakrawira Solusi')) }}';
 
     const baseGooglePayRequest = {
         apiVersion: 2,
