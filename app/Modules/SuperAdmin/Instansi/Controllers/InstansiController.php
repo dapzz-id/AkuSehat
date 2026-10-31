@@ -37,7 +37,7 @@ class InstansiController extends Controller
             $instansi = $this->instansiService->createWithStarterLicenseAndAdmin($data);
 
             return redirect()->route('superadmin.instansi.index')
-                ->with('success', "Data {$instansi->jenis_instansi} '{$instansi->nama_instansi}' berhasil ditambahkan dengan lisensi default 500 user. Akun Admin: Username [{$instansi->npsn}], Password [password123]");
+                ->with('success', "Data {$instansi->jenis_instansi} '{$instansi->nama_instansi}' berhasil ditambahkan dengan lisensi default 8 user. Akun Admin: Username [{$instansi->npsn}], Password [password123]");
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', 'Gagal menambahkan instansi: ' . $e->getMessage() . '. Seluruh data berhasil dibatalkan (Rollback).');
         }

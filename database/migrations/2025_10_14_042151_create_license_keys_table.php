@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('instansi_id')->nullable()->index();
             $table->string('key', 20)->unique();
-            $table->integer('kuota_pengguna')->default(200)->index();
+            $table->integer('kuota_pengguna')->default(8)->index();
             $table->enum('status', ['active', 'expired'])->default('active')->index();
             $table->date('tanggal_berakhir')->index();
             $table->timestamps();

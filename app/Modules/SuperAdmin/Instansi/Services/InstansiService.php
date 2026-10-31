@@ -44,7 +44,7 @@ class InstansiService
             $starterLicense = LicenseKey::create([
                 'instansi_id' => $instansi->id,
                 'key' => LicenseKey::generateKey(),
-                'kuota_pengguna' => 500,
+                'kuota_pengguna' => 8,
                 'status' => LicenseKey::STATUS_ACTIVE,
                 'tanggal_berakhir' => now()->addMonth(),
             ]);

@@ -61,7 +61,7 @@
                     {{-- Kuota Pengguna --}}
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Kuota Pengguna Maksimal <span class="text-red-500">*</span></label>
-                        <input type="number" name="kuota_pengguna" value="{{ old('kuota_pengguna', 500) }}" required min="1" max="100000"
+                        <input type="number" name="kuota_pengguna" value="{{ old('kuota_pengguna', 8) }}" required min="1" max="100000"
                             class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#308a34] focus:border-transparent text-sm">
                         <p class="text-xs text-gray-500 mt-1">Jumlah user maksimal yang diizinkan untuk lisensi ini.</p>
                     </div>

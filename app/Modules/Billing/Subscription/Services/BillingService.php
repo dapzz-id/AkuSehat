@@ -148,11 +148,11 @@ class BillingService
             }
 
             if (!$targetLicense) {
-                $targetLicense = $this->billingRepository->createDefaultLicense((string) $instansi->id, 500);
+                $targetLicense = $this->billingRepository->createDefaultLicense((string) $instansi->id, 8);
                 $instansi->update(['license_id_active' => $targetLicense->id]);
             }
 
-            $kuotaTarget = (int) ($targetLicense->kuota_pengguna ?: 500);
+            $kuotaTarget = (int) ($targetLicense->kuota_pengguna ?: 8);
             $tambahKuota = 0;
             $subtotal = $kuotaTarget * self::HARGA_PER_USER_TAHUN;
             $tipeTransaksi = BillingTransactionType::PERPANJANG_LISENSI->value;
