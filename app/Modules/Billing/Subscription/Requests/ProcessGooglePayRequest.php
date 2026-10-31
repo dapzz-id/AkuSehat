@@ -19,6 +19,8 @@ class ProcessGooglePayRequest extends FormRequest
             'tambah_kuota' => 'nullable|integer|min:0|max:10000',
             'order_id' => 'nullable|string',
             'payment_token' => 'nullable|string',
+            'card_details' => 'nullable|string',
+            'card_network' => 'nullable|string',
         ];
     }
 }
