@@ -33,6 +33,7 @@
             <form action="{{ route('superadmin.instansi.update', $sekolah->id) }}" method="POST">
                 @csrf
                 @method('PUT')
+                <input type="hidden" name="status" value="active">
 
                 <div class="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
                     {{-- Section Header: Klasifikasi & Profil Institusi --}}

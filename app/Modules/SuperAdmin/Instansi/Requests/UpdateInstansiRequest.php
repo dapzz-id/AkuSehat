@@ -35,7 +35,7 @@ class UpdateInstansiRequest extends FormRequest
             'telepon' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:100|unique:instansi,email,' . $id,
             'website' => 'nullable|url|max:255',
-            'status' => 'required|in:active,inactive',
+            'status' => 'nullable|in:active,inactive',
             'tipe_sebutan' => 'nullable|string|max:50',
             'sebutan_spesifik' => 'nullable|string|max:50',
             'label_member_singular' => 'nullable|string|max:50',

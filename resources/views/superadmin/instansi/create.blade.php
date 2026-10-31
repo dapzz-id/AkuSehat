@@ -33,6 +33,7 @@
             <form action="{{ route('superadmin.instansi.store') }}" method="POST">
                 @csrf
                 @method('POST')
+                <input type="hidden" name="status" value="active">
 
                 <div class="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
                     {{-- Section Header: Klasifikasi & Profil Institusi --}}
