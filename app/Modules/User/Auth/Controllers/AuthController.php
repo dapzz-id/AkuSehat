@@ -65,7 +65,7 @@ class AuthController extends Controller
     public function redirectToGoogle()
     {
         $clientId = config('services.google.client_id') ?: env('GOOGLE_CLIENT_ID');
-        $redirectUri = config('services.google.redirect') ?: (env('GOOGLE_REDIRECT_URI') ?: url('/auth/google/callback'));
+        $redirectUri = $this->getGoogleRedirectUri();
 
         if (empty($clientId)) {
             return view('auth.google-simulate');
@@ -81,6 +81,20 @@ class AuthController extends Controller
         ]);
 
         return redirect('https://accounts.google.com/o/oauth2/v2/auth?' . $query);
+    }
+
+    private function getGoogleRedirectUri(): string
+    {
+        $redirectUri = config('services.google.redirect') ?: env('GOOGLE_REDIRECT_URI');
+        $currentHost = request()->getHost();
+        $isLocalHost = in_array($currentHost, ['localhost', '127.0.0.1', '::1']);
+
+        // Jika URI kosong atau mengarah ke localhost padahal aplikasi dibuka di domain produksi
+        if (empty($redirectUri) || (!$isLocalHost && str_contains($redirectUri, 'localhost'))) {
+            return 'https://' . $currentHost . '/auth/google/callback';
+        }
+
+        return $redirectUri;
     }
 
     public function handleGoogleCallback(GoogleCallbackRequest $request)
@@ -100,7 +114,7 @@ class AuthController extends Controller
 
         $clientId = config('services.google.client_id') ?: env('GOOGLE_CLIENT_ID');
         $clientSecret = config('services.google.client_secret') ?: env('GOOGLE_CLIENT_SECRET');
-        $redirectUri = config('services.google.redirect') ?: (env('GOOGLE_REDIRECT_URI') ?: url('/auth/google/callback'));
+        $redirectUri = $this->getGoogleRedirectUri();
 
         try {
             $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
