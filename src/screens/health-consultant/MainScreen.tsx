@@ -490,7 +490,7 @@ const HomeScreenHealthConsultant = () => {
 
   const shimmerTranslateX = shimmerAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-SCREEN_WIDTH * 0.9, SCREEN_WIDTH * 1.3],
+    outputRange: [-SCREEN_WIDTH * 0.8, SCREEN_WIDTH * 1.2],
   });
   const shimmerOpacity = shimmerAnim.interpolate({
     inputRange: [0, 0.15, 0.85, 1],
@@ -529,7 +529,7 @@ const HomeScreenHealthConsultant = () => {
           }
         ]}>
           {hasDivisi && (
-            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+            <View style={[StyleSheet.absoluteFillObject, { borderRadius: moderateScale(16), overflow: 'hidden' }]} pointerEvents="none">
               {/* Subtle top accent line */}
               <View 
                 style={{
@@ -555,28 +555,28 @@ const HomeScreenHealthConsultant = () => {
                   opacity: 0.08,
                 }} 
               />
-              {/* Animated Light Sweep (cahaya berjalan ke samping sesuai warna divisi) */}
+              {/* Animated Light Sweep (cahaya berjalan ke samping secara halus) */}
               <Animated.View
-                style={[
-                  StyleSheet.absoluteFill,
-                  {
-                    width: SCREEN_WIDTH * 0.85,
-                    opacity: shimmerOpacity,
-                    transform: [
-                      { translateX: shimmerTranslateX },
-                      { skewX: '-22deg' },
-                    ],
-                  },
-                ]}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  bottom: 0,
+                  left: 0,
+                  width: SCREEN_WIDTH * 0.65,
+                  opacity: shimmerOpacity,
+                  transform: [
+                    { translateX: shimmerTranslateX },
+                    { skewX: '-20deg' },
+                  ],
+                }}
               >
                 <Svg height="100%" width="100%">
                   <Defs>
                     <SvgLinearGradient id="shimmerBeamHC" x1="0%" y1="0%" x2="100%" y2="0%">
                       <Stop offset="0%" stopColor={tertiaryColor} stopOpacity="0" />
-                      <Stop offset="30%" stopColor={tertiaryColor} stopOpacity="0.10" />
-                      <Stop offset="48%" stopColor="#ffffff" stopOpacity="0.65" />
-                      <Stop offset="52%" stopColor={tertiaryColor} stopOpacity="0.30" />
-                      <Stop offset="70%" stopColor={tertiaryColor} stopOpacity="0.12" />
+                      <Stop offset="30%" stopColor={tertiaryColor} stopOpacity="0.08" />
+                      <Stop offset="50%" stopColor="#ffffff" stopOpacity="0.38" />
+                      <Stop offset="70%" stopColor={tertiaryColor} stopOpacity="0.08" />
                       <Stop offset="100%" stopColor={tertiaryColor} stopOpacity="0" />
                     </SvgLinearGradient>
                   </Defs>

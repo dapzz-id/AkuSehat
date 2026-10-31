@@ -87,13 +87,13 @@ android {
         versionName "1.0"
     }
     signingConfigs {
-      release {
-          storeFile file("app-release.keystore")
-          storePassword "bangdaviid007"
-          keyAlias "my-key-alias"
-          keyPassword "bangdaviid007"
-      }
-     }
+        release {
+            storeFile file(project.property("AKUSEHAT_UPLOAD_STORE_FILE"))
+            storePassword project.property("AKUSEHAT_UPLOAD_STORE_PASSWORD")
+            keyAlias project.property("AKUSEHAT_UPLOAD_KEY_ALIAS")
+            keyPassword project.property("AKUSEHAT_UPLOAD_KEY_PASSWORD")
+        }
+    }
     buildTypes {
         debug {
             signingConfig = signingConfigs.debug
@@ -104,6 +104,7 @@ android {
             shrinkResources = true
             signingConfig = signingConfigs.release
             manifestPlaceholders = [usesCleartextTraffic: "false"]
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
 }

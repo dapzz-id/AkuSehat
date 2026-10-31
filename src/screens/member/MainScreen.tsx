@@ -716,7 +716,7 @@ const HomeScreenMember = () => {
 
   const shimmerTranslateX = shimmerAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-SCREEN_WIDTH * 0.9, SCREEN_WIDTH * 1.3],
+    outputRange: [-SCREEN_WIDTH * 0.8, SCREEN_WIDTH * 1.2],
   });
   const shimmerOpacity = shimmerAnim.interpolate({
     inputRange: [0, 0.15, 0.85, 1],
@@ -809,7 +809,15 @@ const HomeScreenMember = () => {
             backgroundColor: theme.surface,
           }
         ]}>
-          <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <View 
+            style={[
+              StyleSheet.absoluteFillObject, 
+              { 
+                borderRadius: isAtlas ? moderateScale(22) : moderateScale(16), 
+                overflow: 'hidden' 
+              }
+            ]} 
+            pointerEvents="none">
             <View 
               style={{
                 position: 'absolute',
@@ -849,28 +857,29 @@ const HomeScreenMember = () => {
                 opacity: isAtlas ? (isDark ? 0.08 : 0.05) : (hasDivisi ? 0.04 : 0),
               }} 
             />
-            {/* Animated Light Sweep (cahaya berjalan ke samping kanan) */}
+            {/* Animated Light Sweep (cahaya berjalan menyapu kartu secara halus dan rapi) */}
             <Animated.View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  width: SCREEN_WIDTH * 0.95,
-                  opacity: shimmerOpacity,
-                  transform: [
-                    { translateX: shimmerTranslateX },
-                    { skewX: '-22deg' },
-                  ],
-                },
-              ]}
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: 0,
+                width: SCREEN_WIDTH * 0.65,
+                opacity: shimmerOpacity,
+                transform: [
+                  { translateX: shimmerTranslateX },
+                  { skewX: '-20deg' },
+                ],
+              }}
             >
               <Svg height="100%" width="100%">
                 <Defs>
                   <SvgLinearGradient id="shimmerBeamMember" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <Stop offset="0%" stopColor={isAtlas ? effectivePrimary : tertiaryColor} stopOpacity="0" />
-                    <Stop offset="25%" stopColor={isAtlas ? effectiveSecondary : tertiaryColor} stopOpacity={isAtlas ? (isDark ? "0.25" : "0.18") : "0.12"} />
-                    <Stop offset="50%" stopColor="#ffffff" stopOpacity={isDark ? "0.70" : "0.90"} />
-                    <Stop offset="75%" stopColor={isAtlas ? effectivePrimary : tertiaryColor} stopOpacity={isAtlas ? (isDark ? "0.30" : "0.20") : "0.15"} />
-                    <Stop offset="100%" stopColor={isAtlas ? effectiveSecondary : tertiaryColor} stopOpacity="0" />
+                    <Stop offset="0%" stopColor={isAtlas ? effectiveSecondary : tertiaryColor} stopOpacity="0" />
+                    <Stop offset="30%" stopColor={isAtlas ? effectivePrimary : tertiaryColor} stopOpacity={isAtlas ? (isDark ? "0.14" : "0.08") : "0.06"} />
+                    <Stop offset="50%" stopColor="#ffffff" stopOpacity={isDark ? "0.28" : "0.38"} />
+                    <Stop offset="70%" stopColor={isAtlas ? effectiveSecondary : tertiaryColor} stopOpacity={isAtlas ? (isDark ? "0.14" : "0.08") : "0.06"} />
+                    <Stop offset="100%" stopColor={isAtlas ? effectivePrimary : tertiaryColor} stopOpacity="0" />
                   </SvgLinearGradient>
                 </Defs>
                 <Rect x="0" y="0" width="100%" height="100%" fill="url(#shimmerBeamMember)" />
