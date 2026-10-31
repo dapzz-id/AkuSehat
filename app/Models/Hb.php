@@ -4,16 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Traits\BelongsToTenant;
 
 class Hb extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids, BelongsToTenant;
 
     protected $table = 'hb';
     protected $primaryKey = 'id_hb';
 
     protected $fillable = [
         'id_user',
+        'instansi_id',
         'id_divisi',
         'tgl',
         'hb',

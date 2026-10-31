@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('peminjaman_pita', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('id_user')->index();
+            $table->uuid('id')->primary();
+            $table->uuid('id_user')->index();
+            $table->uuid('instansi_id')->nullable()->index();
             $table->date('tanggal_pinjam');
             $table->date('tanggal_kembali')->nullable();
             $table->integer('jumlah_pita');
@@ -24,6 +25,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('instansi_id')->references('id')->on('instansi')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 

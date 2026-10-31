@@ -29,17 +29,24 @@
                             <i class="fas fa-file-pdf text-xs md:text-sm mr-1.5 md:mr-2"></i>
                             <span>Export PDF</span>
                         </button>
-                        <button onclick="window.location.href='{{ route('admin.hb.create') }}'"
-                            class="w-32 flex-1 sm:flex-none bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center">
-                            <i class="fas fa-plus text-xs md:text-sm mr-1.5 md:mr-2"></i>
-                            <span>Tambah</span>
-                        </button>
-                        <button type="submit" form="bulkDeleteForm" id="bulkDeleteBtn"
-                            class="w-40 flex-1 sm:flex-none bg-[#d32f2f] hover:bg-[#b71c1c] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled>
-                            <i class="fas fa-trash text-xs md:text-sm mr-1.5 md:mr-2"></i>
-                            <span>Hapus Terpilih</span>
-                        </button>
+                        @if(auth()->user()->isAdminInstansi())
+                            <div class="px-3 md:px-4 py-1.5 md:py-2 bg-emerald-50 border border-emerald-200 text-[#1b5e20] rounded-md text-xs md:text-sm font-semibold inline-flex items-center gap-1.5">
+                                <i class="fas fa-chart-pie text-emerald-600"></i>
+                                <span>Mode Laporan & Rekapitulasi (Read-Only)</span>
+                            </div>
+                        @else
+                            <button onclick="window.location.href='{{ route('admin.hb.create') }}'"
+                                class="w-32 flex-1 sm:flex-none bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center">
+                                <i class="fas fa-plus text-xs md:text-sm mr-1.5 md:mr-2"></i>
+                                <span>Tambah</span>
+                            </button>
+                            <button type="submit" form="bulkDeleteForm" id="bulkDeleteBtn"
+                                class="w-40 flex-1 sm:flex-none bg-[#d32f2f] hover:bg-[#b71c1c] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                                <i class="fas fa-trash text-xs md:text-sm mr-1.5 md:mr-2"></i>
+                                <span>Hapus Terpilih</span>
+                            </button>
+                        @endif
                     </div>
                     <form id="searchForm" action="{{ route('admin.hb.index') }}" method="GET"
                         class="w-full flex-1 mt-1 flex flex-col sm:flex-row gap-2">
@@ -77,6 +84,81 @@
             </div>
         </div>
 
+        <!-- Grafik & Analisis Pemeriksaan Hemoglobin -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5">
+            <!-- Grafik 1: Proporsi Status Hemoglobin -->
+            <div class="lg:col-span-5 bg-white p-5 rounded-lg border border-gray-100 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-2">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-red-100 text-[#b71c1c] flex items-center justify-center text-xs font-bold shadow-sm">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold text-gray-800">Distribusi Status Hemoglobin</h3>
+                            <p class="text-[11px] text-gray-400">Proporsi normal vs anemia member</p>
+                        </div>
+                    </div>
+                    <span class="text-[11px] font-bold text-red-800 bg-red-50 px-2.5 py-1 rounded-md border border-red-200">
+                        {{ $totalHb }} Sampel
+                    </span>
+                </div>
+
+                <div class="relative flex items-center justify-center my-auto py-3">
+                    <div class="w-44 h-44 sm:w-48 sm:h-48 relative">
+                        <canvas id="hbStatusChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 text-[11px]">
+                    <div class="flex flex-col items-center justify-center p-2 rounded-lg bg-[#c8e6c9]/40 border border-[#c8e6c9] text-center">
+                        <span class="text-[10px] text-[#1b5e20] font-medium flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-[#1b5e20]"></span> Normal
+                        </span>
+                        <span class="font-bold text-[#1b5e20] text-sm mt-0.5">{{ $countNormal }}</span>
+                    </div>
+                    <div class="flex flex-col items-center justify-center p-2 rounded-lg bg-[#ffcdd2]/50 border border-[#ffcdd2] text-center">
+                        <span class="text-[10px] text-[#c62828] font-medium flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-[#c62828]"></span> Anemia
+                        </span>
+                        <span class="font-bold text-[#c62828] text-sm mt-0.5">{{ $countAnemia }}</span>
+                    </div>
+                    <div class="flex flex-col items-center justify-center p-2 rounded-lg bg-[#ffe0b2]/50 border border-[#ffe0b2] text-center">
+                        <span class="text-[10px] text-[#ef6c00] font-medium flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-[#ef6c00]"></span> Tinggi
+                        </span>
+                        <span class="font-bold text-[#ef6c00] text-sm mt-0.5">{{ $countTinggi }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grafik 2: Rata-rata Hb per Divisi -->
+            <div class="lg:col-span-7 bg-white p-5 rounded-lg border border-gray-100 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-2">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-[#1b5e20] flex items-center justify-center text-xs font-bold shadow-sm">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold text-gray-800">Rata-rata Kadar Hb per Divisi / Kelas</h3>
+                            <p class="text-[11px] text-gray-400">Deteksi kelompok yang rentan mengalami anemia (g/dL)</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                        Tren Divisi
+                    </span>
+                </div>
+
+                <div class="relative w-full h-52 sm:h-56 my-auto">
+                    <canvas id="divisionHbChart"></canvas>
+                </div>
+
+                <p class="text-[11px] text-gray-400 pt-3 border-t border-gray-100 flex items-center gap-1.5">
+                    <i class="fas fa-circle-info text-red-500"></i>
+                    Batas acuan normal Hb: &ge; 12.0 g/dL untuk perempuan, dan &ge; 13.0 g/dL untuk laki-laki.
+                </p>
+            </div>
+        </div>
+
         <!-- Table Card -->
         <div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
             <form id="bulkDeleteForm" action="{{ route('admin.hb.mass_destroy') }}" method="POST"
@@ -87,10 +169,12 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-[#e8f5e9]">
                             <tr>
+                                @if(!auth()->user()->isAdminInstansi())
                                 <th class="w-10 px-2 sm:px-3 md:px-6 py-2 md:py-3 text-center">
                                     <input type="checkbox" id="selectAll"
                                         class="rounded border-gray-300 text-[#2e7d32] focus:ring-[#2e7d32]">
                                 </th>
+                                @endif
                                 <th
                                     class="px-2 sm:px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
                                     Member
@@ -120,10 +204,12 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             @forelse($hb as $item)
                                 <tr class="hover:bg-[#f1f8e9] transition-colors duration-150">
+                                    @if(!auth()->user()->isAdminInstansi())
                                     <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 text-center">
                                         <input type="checkbox" name="ids[]" value="{{ $item->id_hb }}"
                                             class="rowCheckbox rounded border-gray-300 text-[#2e7d32] focus:ring-[#2e7d32]">
                                     </td>
+                                    @endif
                                     <!-- Member -->
                                     <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4">
                                         <div class="text-xs md:text-sm font-medium text-gray-900">{{ $item->user->nama }}
@@ -165,9 +251,9 @@
                                         </span>
                                     </td>
                                     <!-- Aksi -->
-                                    <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap">
-                                        <div class="flex items-center justify-center gap-1 md:gap-2">
-                                            <a href="#" class="view-detail text-[#388e3c] hover:text-[#2e7d32] p-1 transition-colors duration-200"
+                                    <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-center">
+                                        @if(auth()->user()->isAdminInstansi())
+                                            <button type="button" onclick="openHbDetail(this); return false;" class="view-detail inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#e8f5e9] text-[#2e7d32] hover:bg-[#c8e6c9] font-medium text-xs transition-colors shadow-sm cursor-pointer"
                                                 data-nama="{{ $item->user->nama }}"
                                                 data-nomor-induk="{{ $item->user->nomor_induk }} ({{ $item->user->jk === 'L' ? 'L' : 'P' }})"
                                                 data-divisi="{{ $item->user->divisi->divisi_name ?? '-' }}"
@@ -178,43 +264,64 @@
                                                 data-created-at="{{ $item->created_at ? $item->created_at->format('d/m/Y H:i:s') : '-' }}"
                                                 data-updated-at="{{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i:s') : '-' }}"
                                                 title="Lihat Detail">
-                                                <i class="fas fa-eye text-sm md:text-base"></i>
-                                            </a>
-                                            <a href="{{ route('admin.hb.edit', $item->id_hb) }}"
-                                                class="text-[#2e7d32] hover:text-[#1b5e20] p-1 transition-colors duration-200"
-                                                title="Edit">
-                                                <i class="fas fa-edit text-sm md:text-base"></i>
-                                            </a>
-                                            <form action="{{ route('admin.hb.destroy', $item->id_hb) }}" method="POST"
-                                                class="inline"
-                                                onsubmit="return confirm('Yakin ingin menghapus data HB ini?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit"
-                                                    class="text-[#d32f2f] hover:text-[#b71c1c] p-1 transition-colors duration-200"
-                                                    title="Hapus">
-                                                    <i class="fas fa-trash text-sm md:text-base"></i>
+                                                <i class="fas fa-eye text-xs"></i>
+                                                <span>Lihat Detail</span>
+                                            </button>
+                                        @else
+                                            <div class="flex items-center justify-center gap-1 md:gap-2">
+                                                <button type="button" onclick="openHbDetail(this); return false;" class="view-detail text-[#388e3c] hover:text-[#2e7d32] p-1 transition-colors duration-200 cursor-pointer"
+                                                    data-nama="{{ $item->user->nama }}"
+                                                    data-nomor-induk="{{ $item->user->nomor_induk }} ({{ $item->user->jk === 'L' ? 'L' : 'P' }})"
+                                                    data-divisi="{{ $item->user->divisi->divisi_name ?? '-' }}"
+                                                    data-tanggal="{{ $item->tgl->format('d/m/Y') }}"
+                                                    data-hb="{{ $item->hb }}"
+                                                    data-status="{{ $item->status }}"
+                                                    data-pesan="{{ $item->pesan ?? '-' }}"
+                                                    data-created-at="{{ $item->created_at ? $item->created_at->format('d/m/Y H:i:s') : '-' }}"
+                                                    data-updated-at="{{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i:s') : '-' }}"
+                                                    title="Lihat Detail">
+                                                    <i class="fas fa-eye text-sm md:text-base"></i>
                                                 </button>
-                                            </form>
-                                        </div>
+                                                <a href="{{ route('admin.hb.edit', $item->id_hb) }}"
+                                                    class="text-[#2e7d32] hover:text-[#1b5e20] p-1 transition-colors duration-200"
+                                                    title="Edit">
+                                                    <i class="fas fa-edit text-sm md:text-base"></i>
+                                                </a>
+                                                <form action="{{ route('admin.hb.destroy', $item->id_hb) }}" method="POST"
+                                                    class="inline"
+                                                    onsubmit="return confirm('Yakin ingin menghapus data HB ini?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                        class="text-[#d32f2f] hover:text-[#b71c1c] p-1 transition-colors duration-200"
+                                                        title="Hapus">
+                                                        <i class="fas fa-trash text-sm md:text-base"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-4 md:px-6 py-6 md:py-8 text-center">
+                                    <td colspan="{{ auth()->user()->isAdminInstansi() ? 6 : 7 }}" class="px-4 md:px-6 py-6 md:py-8 text-center">
                                         <div class="flex flex-col items-center justify-center text-gray-400">
                                             <div
                                                 class="w-12 h-12 md:w-16 md:h-16 bg-red-100 rounded-full flex items-center justify-center mb-2 md:mb-3">
                                                 <i class="fas fa-tint text-red-300 text-xl md:text-2xl"></i>
                                             </div>
                                             <p class="text-sm md:text-lg font-medium text-gray-600">Tidak ada data HB</p>
-                                            <p class="text-xs md:text-sm mt-1 text-gray-500">Klik "Tambah Data HB" untuk
-                                                menambahkan data baru</p>
-                                            <a href="{{ route('admin.hb.create') }}"
-                                                class="mt-3 inline-flex items-center bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-4 py-2 rounded-md text-xs md:text-sm font-medium transition-colors">
-                                                <i class="fas fa-plus mr-1.5 md:mr-2 text-xs"></i>
-                                                Tambah Data HB
-                                            </a>
+                                            @if(!auth()->user()->isAdminInstansi())
+                                                <p class="text-xs md:text-sm mt-1 text-gray-500">Klik "Tambah Data HB" untuk
+                                                    menambahkan data baru</p>
+                                                <a href="{{ route('admin.hb.create') }}"
+                                                    class="mt-3 inline-flex items-center bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-4 py-2 rounded-md text-xs md:text-sm font-medium transition-colors">
+                                                    <i class="fas fa-plus mr-1.5 md:mr-2 text-xs"></i>
+                                                    Tambah Data HB
+                                                </a>
+                                            @else
+                                                <p class="text-xs md:text-sm mt-1 text-gray-500">Belum ada riwayat hasil pemeriksaan hemoglobin yang tercatat.</p>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -405,7 +512,7 @@
     </div>
 
     <!-- Detail Modal -->
-    <div id="detailModal" class="fixed inset-0 bg-black/40 hidden z-50 flex items-center justify-center p-4"
+    <div id="detailModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden z-[999999] flex items-center justify-center p-4"
         onclick="closeDetailModal()">
         <div class="relative bg-white rounded-lg shadow-xl w-full max-w-4xl" onclick="event.stopPropagation()">
             <div class="p-4 md:p-6 max-h-[70vh] overflow-y-auto">
@@ -490,25 +597,71 @@
                 filterType));
         }
 
-        function closeDetailModal() {
-            document.getElementById('detailModal').classList.add('hidden');
-        }
+        window.closeDetailModal = function() {
+            const m = document.getElementById('detailModal');
+            if (m) {
+                m.classList.add('hidden');
+                m.style.display = 'none';
+                m.style.setProperty('display', 'none', 'important');
+            }
+        };
 
-        const viewButtons = document.querySelectorAll('.view-detail');
-        viewButtons.forEach(btn => {
-            btn.addEventListener('click', function(e) {
+        window.openHbDetail = function(btn) {
+            try {
+                if (!btn) {
+                    btn = (window.event && window.event.target) ? window.event.target.closest('button, .view-detail') : null;
+                } else if (btn.closest) {
+                    btn = btn.closest('button, .view-detail') || btn;
+                }
+                if (!btn) return;
+
+                const getVal = function(attr, fallback) {
+                    return btn.getAttribute(attr) || fallback || '-';
+                };
+
+                const setTxt = function(id, val) {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = val;
+                };
+
+                setTxt('detailNama', getVal('data-nama', '-'));
+                setTxt('detailNomorInduk', getVal('data-nomor-induk', '-'));
+                setTxt('detailDivisi', getVal('data-divisi', '-'));
+                setTxt('detailTanggal', getVal('data-tanggal', '-'));
+                setTxt('detailHb', getVal('data-hb', '-'));
+                setTxt('detailStatus', getVal('data-status', '-'));
+                setTxt('detailPesan', getVal('data-pesan', '-'));
+                setTxt('detailCreatedAt', getVal('data-created-at', '-'));
+                setTxt('detailUpdatedAt', getVal('data-updated-at', '-'));
+
+                const m = document.getElementById('detailModal');
+                if (m) {
+                    m.classList.remove('hidden');
+                    m.style.removeProperty('display');
+                    m.style.display = 'flex';
+                    m.style.setProperty('display', 'flex', 'important');
+                    m.style.zIndex = '999999';
+                    m.style.opacity = '1';
+                    m.style.pointerEvents = 'auto';
+                }
+            } catch (err) {
+                console.error('Error opening Hb detail modal:', err);
+                const m = document.getElementById('detailModal');
+                if (m) {
+                    m.classList.remove('hidden');
+                    m.style.display = 'flex';
+                    m.style.setProperty('display', 'flex', 'important');
+                    m.style.zIndex = '999999';
+                }
+            }
+        };
+
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.view-detail');
+            if (btn) {
                 e.preventDefault();
-                document.getElementById('detailNama').textContent = this.dataset.nama;
-                document.getElementById('detailNomorInduk').textContent = this.dataset.nomorInduk;
-                document.getElementById('detailDivisi').textContent = this.dataset.divisi;
-                document.getElementById('detailTanggal').textContent = this.dataset.tanggal;
-                document.getElementById('detailHb').textContent = this.dataset.hb;
-                document.getElementById('detailStatus').textContent = this.dataset.status;
-                document.getElementById('detailPesan').textContent = this.dataset.pesan;
-                document.getElementById('detailCreatedAt').textContent = this.dataset.createdAt;
-                document.getElementById('detailUpdatedAt').textContent = this.dataset.updatedAt;
-                document.getElementById('detailModal').classList.remove('hidden');
-            });
+                openHbDetail(btn);
+            }
         });
 
         document.addEventListener('keydown', function(event) {
@@ -522,20 +675,22 @@
         const rowCheckboxes = document.querySelectorAll('.rowCheckbox');
         const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
 
-        selectAll.addEventListener('change', function() {
-            rowCheckboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
+        if (selectAll && bulkDeleteBtn) {
+            selectAll.addEventListener('change', function() {
+                rowCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                toggleBulkDeleteBtn();
             });
-            toggleBulkDeleteBtn();
-        });
 
-        rowCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', toggleBulkDeleteBtn);
-        });
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', toggleBulkDeleteBtn);
+            });
 
-        function toggleBulkDeleteBtn() {
-            const checkedCount = document.querySelectorAll('.rowCheckbox:checked').length;
-            bulkDeleteBtn.disabled = checkedCount === 0;
+            function toggleBulkDeleteBtn() {
+                const checkedCount = document.querySelectorAll('.rowCheckbox:checked').length;
+                bulkDeleteBtn.disabled = checkedCount === 0;
+            }
         }
 
         // Search clear functionality
@@ -543,17 +698,122 @@
         const clearSearch = document.getElementById('clearSearch');
         const searchForm = document.getElementById('searchForm');
 
-        function toggleClearIcon() {
-            clearSearch.style.display = searchInput.value.trim() !== '' ? 'flex' : 'none';
+        if (searchInput && clearSearch) {
+            function toggleClearIcon() {
+                clearSearch.style.display = searchInput.value.trim() !== '' ? 'flex' : 'none';
+            }
+
+            toggleClearIcon();
+
+            searchInput.addEventListener('input', toggleClearIcon);
+
+            clearSearch.addEventListener('click', function() {
+                searchInput.value = '';
+                toggleClearIcon();
+            });
         }
 
-        toggleClearIcon();
+        // Inisialisasi Grafik Analisis Hb
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Chart === 'undefined') return;
 
-        searchInput.addEventListener('input', toggleClearIcon);
+            // 1. Donut Chart - Distribusi Status Hb
+            const hbStatusCtx = document.getElementById('hbStatusChart');
+            if (hbStatusCtx) {
+                const hbStatusData = @json($hbChartData ?? ['labels' => [], 'data' => [], 'colors' => []]);
+                new Chart(hbStatusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: hbStatusData.labels,
+                        datasets: [{
+                            data: hbStatusData.data,
+                            backgroundColor: hbStatusData.colors || ['#2e7d32', '#d32f2f', '#ed6c02'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                        return ` ${label}: ${value} orang (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
 
-        clearSearch.addEventListener('click', function() {
-            searchInput.value = '';
-            toggleClearIcon();
+            // 2. Bar Chart - Rata-rata Hb per Divisi
+            const divHbCtx = document.getElementById('divisionHbChart');
+            if (divHbCtx) {
+                const divData = @json($divisionHbChartData ?? ['labels' => [], 'data' => []]);
+                new Chart(divHbCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: divData.labels,
+                        datasets: [{
+                            label: 'Rata-rata Hb (g/dL)',
+                            data: divData.data,
+                            backgroundColor: 'rgba(46, 125, 50, 0.75)',
+                            borderColor: '#2e7d32',
+                            borderWidth: 1.5,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` Rata-rata: ${context.parsed.y} g/dL`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                min: 8,
+                                max: 18,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                },
+                                ticks: {
+                                    font: { size: 11 },
+                                    callback: function(val) { return val + ' g/dL'; }
+                                }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: {
+                                    font: { size: 10 },
+                                    maxRotation: 45,
+                                    minRotation: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            }
         });
     </script>
 @endsection

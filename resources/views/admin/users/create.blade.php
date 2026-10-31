@@ -69,17 +69,18 @@
 
                     <div>
                         <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1.5 md:mb-2">
-                            Divisi
+                            Divisi <span class="text-red-500">*</span>
                         </label>
-                        <select id="divisi-select" name="id_divisi"
+                        <select id="divisi-select" name="id_divisi" required
                             class="w-full text-sm md:text-base border border-gray-300 rounded-md px-3 py-1.5 md:py-2 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]">
                             <option value="">Pilih Divisi</option>
                             @foreach ($divisi as $k)
                                 <option value="{{ $k->id }}" {{ old('id_divisi') == $k->id ? 'selected' : '' }}>
-                                    {{ $k->divisi_name }}
+                                    [{{ $k->kategori_meta['badge'] ?? 'Divisi' }}] {{ $k->divisi_name }}
                                 </option>
                             @endforeach
                         </select>
+                        <p class="text-xs text-gray-500 mt-1">1 user hanya dapat memiliki 1 divisi. Lisensi key menghitung user dari divisi.</p>
                         @error('id_divisi')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -93,16 +94,16 @@
                             class="w-full text-sm md:text-base border border-gray-300 rounded-md px-3 py-1.5 md:py-2 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]">
                             <option value="">Pilih Peran</option>
                             <option value="Admin" {{ old('level') == 'Admin' ? 'selected' : '' }}>
-                                Admin
+                                Admin Staf ({{ auth()->user()->instansi ? auth()->user()->instansi->getRoleLabel('Admin') : 'Admin PMR / Staf UKS' }})
                             </option>
                             <option value="Health Consultant" {{ old('level') == 'Health Consultant' ? 'selected' : '' }}>
-                                Health Consultant
+                                Health Consultant ({{ auth()->user()->instansi ? auth()->user()->instansi->getRoleLabel('Health Consultant') : 'Konselor' }})
                             </option>
                             <option value="Health Monitor" {{ old('level') == 'Health Monitor' ? 'selected' : '' }}>
-                                Health Monitor
+                                Health Monitor ({{ auth()->user()->instansi ? auth()->user()->instansi->getRoleLabel('Health Monitor') : 'Pemeriksa Medis' }})
                             </option>
                             <option value="Member" {{ old('level') == 'Member' ? 'selected' : '' }}>
-                                Member
+                                Member ({{ auth()->user()->instansi ? auth()->user()->instansi->getRoleLabel('Member') : 'Anggota' }})
                             </option>
                         </select>
                         @error('level')
@@ -156,6 +157,7 @@
                                     <li>Password akan di-enkripsi otomatis</li>
                                     <li>Users dapat login menggunakan username dan password ini</li>
                                     <li>Divisi bisa dikosongkan jika belum ditentukan</li>
+                                    <li><strong>Admin Staf</strong>: Akun staf pembantu operasional UKS/PMR. Akun <strong>Admin Instansi</strong> bersifat tunggal (1 akun utama per instansi) untuk mengelola billing dan lisensi.</li>
                                 </ul>
                             </div>
                         </div>

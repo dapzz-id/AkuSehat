@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class MaintenanceMode extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $table = 'maintenance_mode';
 
@@ -16,15 +17,48 @@ class MaintenanceMode extends Model
         'is_mobile_maintenance',
     ];
 
-    public static function isWebInMaintenance()
+    protected static ?self $runtimeCache = null;
+
+    protected static function booted(): void
     {
-        $mode = self::find(2); // ambil baris dengan id = 2 (untuk Web)
+        static::saved(function () {
+            self::$runtimeCache = null;
+            \Illuminate\Support\Facades\Cache::forget('maintenance_mode_record');
+            \Illuminate\Support\Facades\Cache::forever('global_system_version', (string) now()->timestamp . '_' . \Illuminate\Support\Str::random(6));
+        });
+
+        static::deleted(function () {
+            self::$runtimeCache = null;
+            \Illuminate\Support\Facades\Cache::forget('maintenance_mode_record');
+            \Illuminate\Support\Facades\Cache::forever('global_system_version', (string) now()->timestamp . '_' . \Illuminate\Support\Str::random(6));
+        });
+    }
+
+    public static function getCached(): ?self
+    {
+        if (self::$runtimeCache !== null) {
+            return self::$runtimeCache;
+        }
+
+        try {
+            self::$runtimeCache = \Illuminate\Support\Facades\Cache::remember('maintenance_mode_record', 60, function () {
+                return self::first();
+            });
+            return self::$runtimeCache;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    public static function isWebInMaintenance(): bool
+    {
+        $mode = self::getCached();
         return $mode ? (bool) $mode->is_web_maintenance : false;
     }
 
-    public static function isMobileInMaintenance()
+    public static function isMobileInMaintenance(): bool
     {
-        $mode = self::find(1); // ambil baris dengan id = 1 (untuk Mobile)
+        $mode = self::getCached();
         return $mode ? (bool) $mode->is_mobile_maintenance : false;
     }
 

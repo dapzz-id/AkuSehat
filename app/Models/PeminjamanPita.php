@@ -5,22 +5,29 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Traits\BelongsToTenant;
 
 class PeminjamanPita extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids, BelongsToTenant;
 
     protected $table = 'peminjaman_pita';
 
     protected $fillable = [
         'id_user',
+        'instansi_id',
         'tanggal_pinjam',
         'tanggal_kembali',
         'jumlah_pita',
         'verified',
         'status',
         'estimasi_selesai_haid',
-        'keterangan'
+        'keterangan',
+        'denda_nominal',
+        'denda_status',
+        'sanksi_catatan',
+        'health_flag',
     ];
 
     protected $casts = [
@@ -28,6 +35,7 @@ class PeminjamanPita extends Model
         'tanggal_kembali' => 'date',
         'estimasi_selesai_haid' => 'date',
         'verified' => 'boolean',
+        'denda_nominal' => 'integer',
     ];
 
     public function user()
@@ -41,7 +49,11 @@ class PeminjamanPita extends Model
             return false;
         }
 
-        return Carbon::now()->gt($this->estimasi_selesai_haid);
+        if ($this->status === 'terlambat') {
+            return true;
+        }
+
+        return Carbon::now()->startOfDay()->gt(Carbon::parse($this->estimasi_selesai_haid)->startOfDay());
     }
 
     public function hariTerlambat()
@@ -50,6 +62,24 @@ class PeminjamanPita extends Model
             return 0;
         }
 
-        return Carbon::parse($this->estimasi_selesai_haid)->diffInDays(Carbon::now());
+        return (int) Carbon::parse($this->estimasi_selesai_haid)->startOfDay()->diffInDays(Carbon::now()->startOfDay());
+    }
+
+    /**
+     * Hitung denda otomatis (default Rp 1.000 / hari keterlambatan)
+     */
+    public function hitungDenda($tarifPerHari = 1000)
+    {
+        $days = $this->hariTerlambat();
+        return $days > 0 ? $days * $tarifPerHari : 0;
+    }
+
+    /**
+     * Evaluasi apakah durasi haid / peminjaman melebihi batas wajar 7 hari (indikasi gangguan reproduksi)
+     */
+    public function isIndikasiGangguanReproduksi()
+    {
+        $days = $this->hariTerlambat();
+        return $days >= 1 || $this->health_flag === 'perhatian_khusus' || $this->health_flag === 'rujuk_konseling';
     }
 }

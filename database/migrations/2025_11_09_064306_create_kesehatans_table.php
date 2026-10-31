@@ -12,15 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('kesehatan', function (Blueprint $table) {
-            $table->id('id_kesehatan');
-            $table->unsignedBigInteger('id_user')->index();
+            $table->uuid('id_kesehatan')->primary();
+            $table->uuid('id_user')->index();
+            $table->uuid('instansi_id')->nullable()->index();
             $table->date('tgl')->index();
-            $table->string('bb', 30); // Berat Badan
-            $table->string('tb', 30); // Tinggi Badan
-            $table->string('sistol', 30);
-            $table->string('diastol', 30);
+            $table->decimal('bb', 5, 2);
+            $table->decimal('tb', 5, 2);
+            $table->integer('sistol');
+            $table->integer('diastol');
             $table->string('status_darah', 30);
-            $table->string('imt', 20); // Indeks Massa Tubuh
+            $table->decimal('imt', 4, 2);
             $table->string('status', 30);
             $table->text('pesan_imt');
             $table->text('pesan_tkd'); // Pesan Tekanan Darah
@@ -32,6 +33,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('instansi_id')->references('id')->on('instansi')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 

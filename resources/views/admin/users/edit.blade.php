@@ -72,16 +72,24 @@
                         <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1.5 md:mb-2">
                             Divisi
                         </label>
+                        @php
+                            $memberActionContext = auth()->user()->instansi ? auth()->user()->instansi->getContextualActionInfo(null, $member) : null;
+                            $emptyDivisiLabel = $memberActionContext ? '-- Tanpa Divisi (' . $memberActionContext['badge_label'] . ') --' : '-- Tanpa Divisi --';
+                            $emptyDivisiHelp = ($memberActionContext && $memberActionContext['is_alumni'])
+                                ? 'Kosongkan (Tanpa Divisi) untuk menetapkan status ' . $memberActionContext['badge_label'] . '. Kuota lisensi aktif akan dibebaskan dan riwayat kesehatan tetap tersimpan.'
+                                : 'Kosongkan (Tanpa Divisi) untuk melepas penugasan divisi. Akun tetap tersimpan aman di sistem.';
+                        @endphp
                         <select id="divisi-select" name="id_divisi"
                             class="w-full text-sm md:text-base border border-gray-300 rounded-md px-3 py-1.5 md:py-2 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]">
-                            <option value="">Pilih Divisi</option>
+                            <option value="">{{ $emptyDivisiLabel }}</option>
                             @foreach ($divisi as $k)
                                 <option value="{{ $k->id }}"
                                     {{ old('id_divisi', $member->id_divisi) == $k->id ? 'selected' : '' }}>
-                                    {{ $k->divisi_name }}
+                                    [{{ $k->kategori_meta['badge'] ?? 'Divisi' }}] {{ $k->divisi_name }}
                                 </option>
                             @endforeach
                         </select>
+                        <p class="text-xs text-gray-500 mt-1">{{ $emptyDivisiHelp }}</p>
                         @error('id_divisi')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -91,24 +99,32 @@
                         <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1.5 md:mb-2">
                             Peran
                         </label>
-                        <select id="peran-select" name="level"
-                            class="w-full text-sm md:text-base border border-gray-300 rounded-md px-3 py-1.5 md:py-2 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]">
-                            <option value="">Pilih Peran</option>
-                            <option value="Admin" {{ old('level', $member->level) == 'Admin' ? 'selected' : '' }}>
-                                Admin
-                            </option>
-                            <option value="Health Consultant"
-                                {{ old('level', $member->level) == 'Health Consultant' ? 'selected' : '' }}>
-                                Health Consultant
-                            </option>
-                            <option value="Health Monitor"
-                                {{ old('level', $member->level) == 'Health Monitor' ? 'selected' : '' }}>
-                                Health Monitor
-                            </option>
-                            <option value="Member" {{ old('level', $member->level) == 'Member' ? 'selected' : '' }}>
-                                Member
-                            </option>
-                        </select>
+                        @if($member->level === 'Admin Instansi')
+                            <input type="hidden" name="level" value="Admin Instansi">
+                            <div class="w-full text-xs md:text-sm bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-md px-3 py-2 flex items-center gap-2">
+                                <i class="fas fa-shield-halved text-emerald-600"></i>
+                                <span><strong>Admin Instansi</strong> — Penanggung Jawab Utama (Hanya 1 akun per instansi). Peran akun ini tidak dapat diubah.</span>
+                            </div>
+                        @else
+                            <select id="peran-select" name="level"
+                                class="w-full text-sm md:text-base border border-gray-300 rounded-md px-3 py-1.5 md:py-2 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]">
+                                <option value="">Pilih Peran</option>
+                                <option value="Admin" {{ old('level', $member->level) == 'Admin' ? 'selected' : '' }}>
+                                    Admin Staf ({{ auth()->user()->instansi ? auth()->user()->instansi->getRoleLabel('Admin') : 'Admin PMR / Staf UKS' }})
+                                </option>
+                                <option value="Health Consultant"
+                                    {{ old('level', $member->level) == 'Health Consultant' ? 'selected' : '' }}>
+                                    Health Consultant ({{ auth()->user()->instansi ? auth()->user()->instansi->getRoleLabel('Health Consultant') : 'Konselor' }})
+                                </option>
+                                <option value="Health Monitor"
+                                    {{ old('level', $member->level) == 'Health Monitor' ? 'selected' : '' }}>
+                                    Health Monitor ({{ auth()->user()->instansi ? auth()->user()->instansi->getRoleLabel('Health Monitor') : 'Pemeriksa Medis' }})
+                                </option>
+                                <option value="Member" {{ old('level', $member->level) == 'Member' ? 'selected' : '' }}>
+                                    Member ({{ auth()->user()->instansi ? auth()->user()->instansi->getRoleLabel('Member') : 'Anggota' }})
+                                </option>
+                            </select>
+                        @endif
                         @error('level')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -189,10 +205,12 @@
             maxOptions: 1000,
         });
 
-        new TomSelect("#peran-select", {
-            placeholder: "Cari peran...",
-            allowEmptyOption: true,
-            maxOptions: 1000,
-        });
+        if (document.getElementById('peran-select')) {
+            new TomSelect("#peran-select", {
+                placeholder: "Cari peran...",
+                allowEmptyOption: true,
+                maxOptions: 1000,
+            });
+        }
     </script>
 @endpush

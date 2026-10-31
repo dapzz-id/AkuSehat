@@ -29,17 +29,24 @@
                             <i class="fas fa-file-pdf text-xs md:text-sm mr-1.5 md:mr-2"></i>
                             <span>Export PDF</span>
                         </button>
-                        <button onclick="window.location.href='{{ route('admin.kesehatan.create') }}'"
-                            class="w-32 flex-1 sm:flex-none bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center">
-                            <i class="fas fa-plus text-xs md:text-sm mr-1.5 md:mr-2"></i>
-                            <span>Tambah</span>
-                        </button>
-                        <button type="submit" form="bulkDeleteForm" id="bulkDeleteBtn"
-                            class="w-40 flex-1 sm:flex-none bg-[#d32f2f] hover:bg-[#b71c1c] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled>
-                            <i class="fas fa-trash text-xs md:text-sm mr-1.5 md:mr-2"></i>
-                            <span>Hapus Terpilih</span>
-                        </button>
+                        @if(auth()->user()->isAdminInstansi())
+                            <div class="px-3 md:px-4 py-1.5 md:py-2 bg-emerald-50 border border-emerald-200 text-[#1b5e20] rounded-md text-xs md:text-sm font-semibold inline-flex items-center gap-1.5">
+                                <i class="fas fa-chart-pie text-emerald-600"></i>
+                                <span>Mode Laporan & Rekapitulasi (Read-Only)</span>
+                            </div>
+                        @else
+                            <button onclick="window.location.href='{{ route('admin.kesehatan.create') }}'"
+                                class="w-32 flex-1 sm:flex-none bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center">
+                                <i class="fas fa-plus text-xs md:text-sm mr-1.5 md:mr-2"></i>
+                                <span>Tambah</span>
+                            </button>
+                            <button type="submit" form="bulkDeleteForm" id="bulkDeleteBtn"
+                                class="w-40 flex-1 sm:flex-none bg-[#d32f2f] hover:bg-[#b71c1c] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                                <i class="fas fa-trash text-xs md:text-sm mr-1.5 md:mr-2"></i>
+                                <span>Hapus Terpilih</span>
+                            </button>
+                        @endif
                     </div>
                     <form id="searchForm" action="{{ route('admin.kesehatan.index') }}" method="GET"
                         class="w-full flex-1 mt-1 flex flex-col sm:flex-row gap-2">
@@ -77,6 +84,87 @@
             </div>
         </div>
 
+        <!-- Grafik & Analisis Pemeriksaan Fisik -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5">
+            <!-- Grafik 1: Distribusi Status IMT / BMI -->
+            <div class="lg:col-span-5 bg-white p-5 rounded-lg border border-gray-100 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-2">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-[#1b5e20] flex items-center justify-center text-xs font-bold shadow-sm">
+                            <i class="fas fa-weight-scale"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold text-gray-800">Distribusi Status IMT / Gizi</h3>
+                            <p class="text-[11px] text-gray-400">Klasifikasi Indeks Massa Tubuh WHO</p>
+                        </div>
+                    </div>
+                    <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                        {{ $totalKesehatan }} Data
+                    </span>
+                </div>
+
+                <div class="relative flex items-center justify-center my-auto py-3">
+                    <div class="w-44 h-44 sm:w-48 sm:h-48 relative">
+                        <canvas id="kesehatanImtChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100 text-[11px]">
+                    <div class="flex items-center justify-between p-2 rounded-lg bg-[#c8e6c9]/40 border border-[#c8e6c9]">
+                        <span class="text-[#1b5e20] font-medium flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-[#1b5e20]"></span> Normal
+                        </span>
+                        <span class="font-bold text-[#1b5e20]">{{ $imtChartData['data'][0] }}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-2 rounded-lg bg-[#fff9c4]/50 border border-[#fff9c4]">
+                        <span class="text-[#f57f17] font-medium flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-[#f57f17]"></span> Underweight
+                        </span>
+                        <span class="font-bold text-[#f57f17]">{{ $imtChartData['data'][1] }}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-2 rounded-lg bg-[#ffe0b2]/50 border border-[#ffe0b2]">
+                        <span class="text-[#ef6c00] font-medium flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-[#ef6c00]"></span> Overweight
+                        </span>
+                        <span class="font-bold text-[#ef6c00]">{{ $imtChartData['data'][2] }}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-2 rounded-lg bg-[#ffcdd2]/50 border border-[#ffcdd2]">
+                        <span class="text-[#c62828] font-medium flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-[#c62828]"></span> Obesitas
+                        </span>
+                        <span class="font-bold text-[#c62828]">{{ $imtChartData['data'][3] }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grafik 2: Distribusi Tekanan Darah -->
+            <div class="lg:col-span-7 bg-white p-5 rounded-lg border border-gray-100 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-2">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center text-xs font-bold shadow-sm">
+                            <i class="fas fa-heart-pulse"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold text-gray-800">Distribusi Kategori Tekanan Darah</h3>
+                            <p class="text-[11px] text-gray-400">Pola sistol & diastol member instansi</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200">
+                        Profil Vital
+                    </span>
+                </div>
+
+                <div class="relative w-full h-52 sm:h-56 my-auto">
+                    <canvas id="kesehatanDarahChart"></canvas>
+                </div>
+
+                <p class="text-[11px] text-gray-400 pt-3 border-t border-gray-100 flex items-center gap-1.5">
+                    <i class="fas fa-circle-info text-emerald-600"></i>
+                    Data tekanan darah diukur pada saat pemeriksaan fisik berkala di instansi Anda.
+                </p>
+            </div>
+        </div>
+
         <!-- Table Section -->
         <div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
             <form id="bulkDeleteForm" action="{{ route('admin.kesehatan.mass_destroy') }}" method="POST"
@@ -87,10 +175,12 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-[#e8f5e9]">
                             <tr>
+                                @if(!auth()->user()->isAdminInstansi())
                                 <th class="w-10 px-2 sm:px-3 md:px-6 py-2 md:py-3 text-center">
                                     <input type="checkbox" id="selectAll"
                                         class="rounded border-gray-300 text-[#2e7d32] focus:ring-[#2e7d32]">
                                 </th>
+                                @endif
                                 <th
                                     class="px-2 sm:px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
                                     Member
@@ -128,10 +218,12 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             @forelse($kesehatan as $item)
                                 <tr class="hover:bg-[#f1f8e9] transition-colors duration-150">
+                                    @if(!auth()->user()->isAdminInstansi())
                                     <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 text-center">
                                         <input type="checkbox" name="ids[]" value="{{ $item->id_kesehatan }}"
                                             class="rowCheckbox rounded border-gray-300 text-[#2e7d32] focus:ring-[#2e7d32]">
                                     </td>
+                                    @endif
                                     <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4">
                                         <div class="text-xs md:text-sm font-medium text-gray-900">{{ $item->user->nama }}
                                         </div>
@@ -195,53 +287,80 @@
                                             {{ $item->status_darah }}
                                         </span>
                                     </td>
-                                    <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap">
+                                    <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-center">
                                         <div class="flex items-center justify-center gap-1 md:gap-2">
-                                            <a href="#" class="view-detail text-[#388e3c] hover:text-[#2e7d32] p-1 transition-colors duration-200"
-                                                data-nama="{{ $item->user->nama }}"
-                                                data-nomor-induk="{{ $item->user->nomor_induk }}"
-                                                data-divisi="{{ $item->user->divisi->divisi_name ?? '-' }}"
-                                                data-tanggal="{{ $item->tgl->format('d/m/Y') }}"
-                                                data-bb="{{ $item->bb }}"
-                                                data-tb="{{ $item->tb }}"
-                                                data-sistol="{{ $item->sistol }}"
-                                                data-diastol="{{ $item->diastol }}"
-                                                data-status-darah="{{ $item->status_darah }}"
-                                                data-imt="{{ $item->imt }}"
-                                                data-status="{{ $item->status }}"
-                                                data-pesan-imt="{{ $item->pesan_imt ?? '-' }}"
-                                                data-pesan-tkd="{{ $item->pesan_tkd ?? '-' }}"
-                                                data-kondisi-telinga="{{ $item->kondisi_telinga ?? '-' }}"
-                                                data-kondisi-gigi="{{ $item->kondisi_gigi ?? '-' }}"
-                                                data-perilaku-beresiko="{{ $item->perilaku_beresiko ?? '-' }}"
-                                                data-gangguan-reproduksi="{{ $item->gangguan_reproduksi ?? '-' }}"
-                                                data-created-at="{{ $item->created_at ? $item->created_at->format('d/m/Y H:i:s') : '-' }}"
-                                                data-updated-at="{{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i:s') : '-' }}"
-                                                title="Lihat Detail">
-                                                <i class="fas fa-eye text-sm md:text-base"></i>
-                                            </a>
-                                            <a href="{{ route('admin.kesehatan.edit', $item->id_kesehatan) }}"
-                                                class="text-[#2e7d32] hover:text-[#1b5e20] p-1 transition-colors duration-200"
-                                                title="Edit">
-                                                <i class="fas fa-edit text-sm md:text-base"></i>
-                                            </a>
-                                            <form action="{{ route('admin.kesehatan.destroy', $item->id_kesehatan) }}"
-                                                method="POST" class="inline"
-                                                onsubmit="return confirm('Yakin ingin menghapus data kesehatan ini?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit"
-                                                    class="text-[#d32f2f] hover:text-[#b71c1c] p-1 transition-colors duration-200"
-                                                    title="Hapus">
-                                                    <i class="fas fa-trash text-sm md:text-base"></i>
+                                            @if(auth()->user()->isAdminInstansi())
+                                                <button type="button" onclick="openKesehatanDetail(this); return false;" class="view-detail px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#1b5e20] border border-emerald-200/80 rounded-md text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                                                    data-nama="{{ $item->user->nama }}"
+                                                    data-nomor-induk="{{ $item->user->nomor_induk }}"
+                                                    data-divisi="{{ $item->user->divisi->divisi_name ?? '-' }}"
+                                                    data-tanggal="{{ $item->tgl->format('d/m/Y') }}"
+                                                    data-bb="{{ $item->bb }}"
+                                                    data-tb="{{ $item->tb }}"
+                                                    data-sistol="{{ $item->sistol }}"
+                                                    data-diastol="{{ $item->diastol }}"
+                                                    data-status-darah="{{ $item->status_darah }}"
+                                                    data-imt="{{ $item->imt }}"
+                                                    data-status="{{ $item->status }}"
+                                                    data-pesan-imt="{{ $item->pesan_imt ?? '-' }}"
+                                                    data-pesan-tkd="{{ $item->pesan_tkd ?? '-' }}"
+                                                    data-kondisi-telinga="{{ $item->kondisi_telinga ?? '-' }}"
+                                                    data-kondisi-gigi="{{ $item->kondisi_gigi ?? '-' }}"
+                                                    data-perilaku-beresiko="{{ $item->perilaku_beresiko ?? '-' }}"
+                                                    data-gangguan-reproduksi="{{ $item->gangguan_reproduksi ?? '-' }}"
+                                                    data-created-at="{{ $item->created_at ? $item->created_at->format('d/m/Y H:i:s') : '-' }}"
+                                                    data-updated-at="{{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i:s') : '-' }}"
+                                                    title="Lihat Detail Pemeriksaan">
+                                                    <i class="fas fa-file-lines text-xs"></i>
+                                                    <span>Lihat Detail</span>
                                                 </button>
-                                            </form>
+                                            @else
+                                                <button type="button" onclick="openKesehatanDetail(this); return false;" class="view-detail text-[#388e3c] hover:text-[#2e7d32] p-1 transition-colors duration-200 cursor-pointer"
+                                                    data-nama="{{ $item->user->nama }}"
+                                                    data-nomor-induk="{{ $item->user->nomor_induk }}"
+                                                    data-divisi="{{ $item->user->divisi->divisi_name ?? '-' }}"
+                                                    data-tanggal="{{ $item->tgl->format('d/m/Y') }}"
+                                                    data-bb="{{ $item->bb }}"
+                                                    data-tb="{{ $item->tb }}"
+                                                    data-sistol="{{ $item->sistol }}"
+                                                    data-diastol="{{ $item->diastol }}"
+                                                    data-status-darah="{{ $item->status_darah }}"
+                                                    data-imt="{{ $item->imt }}"
+                                                    data-status="{{ $item->status }}"
+                                                    data-pesan-imt="{{ $item->pesan_imt ?? '-' }}"
+                                                    data-pesan-tkd="{{ $item->pesan_tkd ?? '-' }}"
+                                                    data-kondisi-telinga="{{ $item->kondisi_telinga ?? '-' }}"
+                                                    data-kondisi-gigi="{{ $item->kondisi_gigi ?? '-' }}"
+                                                    data-perilaku-beresiko="{{ $item->perilaku_beresiko ?? '-' }}"
+                                                    data-gangguan-reproduksi="{{ $item->gangguan_reproduksi ?? '-' }}"
+                                                    data-created-at="{{ $item->created_at ? $item->created_at->format('d/m/Y H:i:s') : '-' }}"
+                                                    data-updated-at="{{ $item->updated_at ? $item->updated_at->format('d/m/Y H:i:s') : '-' }}"
+                                                    title="Lihat Detail">
+                                                    <i class="fas fa-eye text-sm md:text-base"></i>
+                                                </button>
+                                                <a href="{{ route('admin.kesehatan.edit', $item->id_kesehatan) }}"
+                                                    class="text-[#2e7d32] hover:text-[#1b5e20] p-1 transition-colors duration-200"
+                                                    title="Edit">
+                                                    <i class="fas fa-edit text-sm md:text-base"></i>
+                                                </a>
+                                                <form action="{{ route('admin.kesehatan.destroy', $item->id_kesehatan) }}"
+                                                    method="POST" class="inline"
+                                                    onsubmit="return confirm('Yakin ingin menghapus data kesehatan ini?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                        class="text-[#d32f2f] hover:text-[#b71c1c] p-1 transition-colors duration-200"
+                                                        title="Hapus">
+                                                        <i class="fas fa-trash text-sm md:text-base"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="px-4 md:px-6 py-6 md:py-8 text-center">
+                                    <td colspan="{{ auth()->user()->isAdminInstansi() ? 8 : 9 }}" class="px-4 md:px-6 py-6 md:py-8 text-center">
                                         <div class="flex flex-col items-center justify-center text-gray-400">
                                             <div
                                                 class="w-12 h-12 md:w-16 md:h-16 bg-gray-100 rounded-full flex items-center justify-center mb-2 md:mb-3">
@@ -249,13 +368,17 @@
                                             </div>
                                             <p class="text-sm md:text-lg font-medium text-gray-600">Tidak ada data
                                                 kesehatan</p>
-                                            <p class="text-xs md:text-sm mt-1 text-gray-500">Klik "Tambah Data" untuk
-                                                menambahkan data baru</p>
-                                            <a href="{{ route('admin.kesehatan.create') }}"
-                                                class="mt-3 inline-flex items-center bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-4 py-2 rounded-md text-xs md:text-sm font-medium transition-colors">
-                                                <i class="fas fa-plus mr-1.5 md:mr-2 text-xs"></i>
-                                                Tambah Data Kesehatan
-                                            </a>
+                                            @if(!auth()->user()->isAdminInstansi())
+                                                <p class="text-xs md:text-sm mt-1 text-gray-500">Klik "Tambah Data" untuk
+                                                    menambahkan data baru</p>
+                                                <a href="{{ route('admin.kesehatan.create') }}"
+                                                    class="mt-3 inline-flex items-center bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-4 py-2 rounded-md text-xs md:text-sm font-medium transition-colors">
+                                                    <i class="fas fa-plus mr-1.5 md:mr-2 text-xs"></i>
+                                                    Tambah Data Kesehatan
+                                                </a>
+                                            @else
+                                                <p class="text-xs md:text-sm mt-1 text-gray-500">Belum ada riwayat hasil pemeriksaan fisik & vital yang tercatat.</p>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -446,7 +569,7 @@
     </div>
 
     <!-- Detail Modal -->
-    <div id="detailModal" class="fixed inset-0 bg-black/40 hidden z-50 flex items-center justify-center p-4"
+    <div id="detailModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden z-[999999] flex items-center justify-center p-4"
         onclick="closeDetailModal()">
         <div class="relative bg-white rounded-lg shadow-xl w-full max-w-4xl" onclick="event.stopPropagation()">
             <div class="p-4 md:p-6 max-h-[70vh] overflow-y-auto">
@@ -583,35 +706,81 @@
             }
         }
 
-        function closeDetailModal() {
-            document.getElementById('detailModal').classList.add('hidden');
-        }
+        window.closeDetailModal = function() {
+            const m = document.getElementById('detailModal');
+            if (m) {
+                m.classList.add('hidden');
+                m.style.display = 'none';
+                m.style.setProperty('display', 'none', 'important');
+            }
+        };
 
-        const viewButtons = document.querySelectorAll('.view-detail');
-        viewButtons.forEach(btn => {
-            btn.addEventListener('click', function(e) {
+        window.openKesehatanDetail = function(btn) {
+            try {
+                if (!btn) {
+                    btn = (window.event && window.event.target) ? window.event.target.closest('button, .view-detail') : null;
+                } else if (btn.closest) {
+                    btn = btn.closest('button, .view-detail') || btn;
+                }
+                if (!btn) return;
+
+                const getVal = function(attr, fallback) {
+                    return btn.getAttribute(attr) || fallback || '-';
+                };
+
+                const setTxt = function(id, val) {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = val;
+                };
+
+                setTxt('detailNama', getVal('data-nama', '-'));
+                setTxt('detailNomorInduk', getVal('data-nomor-induk', '-'));
+                setTxt('detailDivisi', getVal('data-divisi', '-'));
+                setTxt('detailTanggal', getVal('data-tanggal', '-'));
+                setTxt('detailBb', getVal('data-bb', '-') + ' kg');
+                setTxt('detailTb', getVal('data-tb', '-') + ' cm');
+                setTxt('detailSistol', getVal('data-sistol', '-'));
+                setTxt('detailDiastol', getVal('data-diastol', '-'));
+                setTxt('detailStatusDarah', getVal('data-status-darah', '-'));
+                setTxt('detailImt', getVal('data-imt', '-'));
+                setTxt('detailStatus', getVal('data-status', '-'));
+                setTxt('detailPesanImt', getVal('data-pesan-imt', '-'));
+                setTxt('detailPesanTkd', getVal('data-pesan-tkd', '-'));
+                setTxt('detailKondisiTelinga', getVal('data-kondisi-telinga', '-'));
+                setTxt('detailKondisiGigi', getVal('data-kondisi-gigi', '-'));
+                setTxt('detailPerilakuBeresiko', getVal('data-perilaku-beresiko', '-'));
+                setTxt('detailGangguanReproduksi', getVal('data-gangguan-reproduksi', '-'));
+                setTxt('detailCreatedAt', getVal('data-created-at', '-'));
+                setTxt('detailUpdatedAt', getVal('data-updated-at', '-'));
+
+                const m = document.getElementById('detailModal');
+                if (m) {
+                    m.classList.remove('hidden');
+                    m.style.removeProperty('display');
+                    m.style.display = 'flex';
+                    m.style.setProperty('display', 'flex', 'important');
+                    m.style.zIndex = '999999';
+                    m.style.opacity = '1';
+                    m.style.pointerEvents = 'auto';
+                }
+            } catch (err) {
+                console.error('Error opening kesehatan detail modal:', err);
+                const m = document.getElementById('detailModal');
+                if (m) {
+                    m.classList.remove('hidden');
+                    m.style.display = 'flex';
+                    m.style.setProperty('display', 'flex', 'important');
+                    m.style.zIndex = '999999';
+                }
+            }
+        };
+
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.view-detail');
+            if (btn) {
                 e.preventDefault();
-                document.getElementById('detailNama').textContent = this.dataset.nama;
-                document.getElementById('detailNomorInduk').textContent = this.dataset.nomorInduk;
-                document.getElementById('detailDivisi').textContent = this.dataset.divisi;
-                document.getElementById('detailTanggal').textContent = this.dataset.tanggal;
-                document.getElementById('detailBb').textContent = this.dataset.bb + ' kg';
-                document.getElementById('detailTb').textContent = this.dataset.tb + ' cm';
-                document.getElementById('detailSistol').textContent = this.dataset.sistol;
-                document.getElementById('detailDiastol').textContent = this.dataset.diastol;
-                document.getElementById('detailStatusDarah').textContent = this.dataset.statusDarah;
-                document.getElementById('detailImt').textContent = this.dataset.imt;
-                document.getElementById('detailStatus').textContent = this.dataset.status;
-                document.getElementById('detailPesanImt').textContent = this.dataset.pesanImt;
-                document.getElementById('detailPesanTkd').textContent = this.dataset.pesanTkd;
-                document.getElementById('detailKondisiTelinga').textContent = this.dataset.kondisiTelinga;
-                document.getElementById('detailKondisiGigi').textContent = this.dataset.kondisiGigi;
-                document.getElementById('detailPerilakuBeresiko').textContent = this.dataset.perilakuBeresiko;
-                document.getElementById('detailGangguanReproduksi').textContent = this.dataset.gangguanReproduksi;
-                document.getElementById('detailCreatedAt').textContent = this.dataset.createdAt;
-                document.getElementById('detailUpdatedAt').textContent = this.dataset.updatedAt;
-                document.getElementById('detailModal').classList.remove('hidden');
-            });
+                openKesehatanDetail(btn);
+            }
         });
 
         document.addEventListener('keydown', function(event) {
@@ -625,20 +794,22 @@
         const rowCheckboxes = document.querySelectorAll('.rowCheckbox');
         const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
 
-        selectAll.addEventListener('change', function() {
-            rowCheckboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
+        if (selectAll && bulkDeleteBtn) {
+            selectAll.addEventListener('change', function() {
+                rowCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                toggleBulkDeleteBtn();
             });
-            toggleBulkDeleteBtn();
-        });
 
-        rowCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', toggleBulkDeleteBtn);
-        });
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', toggleBulkDeleteBtn);
+            });
 
-        function toggleBulkDeleteBtn() {
-            const checkedCount = document.querySelectorAll('.rowCheckbox:checked').length;
-            bulkDeleteBtn.disabled = checkedCount === 0;
+            function toggleBulkDeleteBtn() {
+                const checkedCount = document.querySelectorAll('.rowCheckbox:checked').length;
+                bulkDeleteBtn.disabled = checkedCount === 0;
+            }
         }
 
         const searchInput = document.getElementById('searchInput');
@@ -656,6 +827,102 @@
         clearSearch.addEventListener('click', function() {
             searchInput.value = '';
             toggleClearIcon();
+        });
+
+        // Inisialisasi Grafik Analitik Data Kesehatan
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Grafik Status IMT / BMI (Doughnut)
+            const imtCtx = document.getElementById('kesehatanImtChart');
+            if (imtCtx && typeof Chart !== 'undefined') {
+                const labels = {!! json_encode($imtChartData['labels']) !!};
+                const dataValues = {!! json_encode($imtChartData['data']) !!};
+                const bgColors = {!! json_encode($imtChartData['colors']) !!};
+                const total = {{ $totalKesehatan > 0 ? $totalKesehatan : 1 }};
+
+                new Chart(imtCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: dataValues,
+                            backgroundColor: bgColors,
+                            borderWidth: 3,
+                            borderColor: '#ffffff',
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const val = context.raw || 0;
+                                        const pct = Math.round((val / total) * 100);
+                                        return ` ${context.label}: ${val} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '72%'
+                    }
+                });
+            }
+
+            // 2. Grafik Status Tekanan Darah (Bar)
+            const darahCtx = document.getElementById('kesehatanDarahChart');
+            if (darahCtx && typeof Chart !== 'undefined') {
+                const darahLabels = {!! json_encode($darahChartData['labels']) !!};
+                const darahValues = {!! json_encode($darahChartData['data']) !!};
+                const darahColors = {!! json_encode($darahChartData['colors']) !!};
+
+                new Chart(darahCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: darahLabels,
+                        datasets: [{
+                            label: 'Jumlah Anggota',
+                            data: darahValues,
+                            backgroundColor: darahColors,
+                            borderRadius: 6,
+                            maxBarThickness: 36
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` ${context.raw} member`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0,
+                                    font: { size: 10 }
+                                },
+                                grid: { color: '#f1f5f9' }
+                            },
+                            x: {
+                                ticks: {
+                                    font: { size: 11, weight: '600' },
+                                    color: '#334155'
+                                },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
         });
     </script>
 @endsection

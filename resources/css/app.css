@@ -1,3 +1,131 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+        -webkit-tap-highlight-color: transparent;
+        font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    }
+
+    body {
+        @apply text-slate-800 bg-slate-50 antialiased selection:bg-emerald-500 selection:text-white;
+        font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    /* Custom Slim Scrollbars */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.4);
+        border-radius: 9999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(100, 116, 139, 0.6);
+    }
+}
+
+@layer components {
+    /* Modern Glass Card */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+
+    .glass-card-dark {
+        background: rgba(6, 78, 59, 0.7);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    /* Modern subtle button active press */
+    .btn-press {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-press:active {
+        transform: scale(0.98);
+    }
+
+    /* Soft Glow Animations */
+    .pulse-subtle {
+        animation: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulseSubtle {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.85;
+            transform: scale(1.02);
+        }
+    }
+
+    /* Enhanced Form Controls */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus,
+    input[type="number"]:focus,
+    input[type="date"]:focus,
+    select:focus,
+    textarea:focus {
+        border-color: #059669 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+        outline: none !important;
+    }
+
+    /* Modern Table Hover & Styles */
+    tbody tr {
+        transition: background-color 0.15s ease;
+    }
+
+    tbody tr:hover {
+        background-color: rgba(236, 253, 245, 0.45) !important;
+    }
+
+    /* Status Pills */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.625rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1;
+    }
+
+    /* Fixed Fullscreen Modal & Overlay Reset */
+    .fixed.inset-0,
+    div[id$="Modal"].fixed {
+        margin: 0 !important;
+        margin-top: 0 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+    }
+}

@@ -19,12 +19,27 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'Excel' => Maatwebsite\Excel\Facades\Excel::class,
             'PDF' => Barryvdh\DomPDF\Facade::class,
+            'check.division' => \App\Http\Middleware\CheckUserDivisionActive::class,
+            'tenant.isolate' => \App\Http\Middleware\EnforceTenantAccess::class,
+        ]);
+
+        $middleware->web(append: [
+            \App\Http\Middleware\CheckUserDivisionActive::class,
+            \App\Http\Middleware\EnforceTenantAccess::class,
+            \App\Http\Middleware\CheckMaintenance::class,
+        ]);
+
+        $middleware->api(append: [
+            \App\Http\Middleware\CheckUserDivisionActive::class,
+            \App\Http\Middleware\EnforceTenantAccess::class,
+            \App\Http\Middleware\CheckMaintenance::class,
         ]);
 
         $middleware->use([
-            \App\Http\Middleware\CheckMaintenance::class
+            \App\Http\Middleware\SecurityHeaders::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
+

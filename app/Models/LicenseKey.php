@@ -3,12 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Modules\SuperAdmin\LicenseKey\Enums\LicenseStatus;
 
 class LicenseKey extends Model
 {
+    use HasUuids;
+
     protected $table = 'license_keys';
-    const STATUS_ACTIVE = 'active';
-    const STATUS_EXPIRED = 'expired';
+    const STATUS_ACTIVE = LicenseStatus::ACTIVE->value;
+    const STATUS_EXPIRED = LicenseStatus::EXPIRED->value;
 
     protected $fillable = [
         'instansi_id',
@@ -22,7 +26,7 @@ class LicenseKey extends Model
         'tanggal_berakhir' => 'date',
     ];
 
-    public function licenseKey()
+    public function instansiAktif()
     {
         return $this->hasMany(Instansi::class, 'license_id_active');
     }
@@ -32,14 +36,19 @@ class LicenseKey extends Model
         return $this->belongsTo(Instansi::class, 'instansi_id');
     }
 
+    public function sekolah()
+    {
+        return $this->belongsTo(Instansi::class, 'instansi_id');
+    }
+
     public function users()
     {
-        return $this->hasMany(User::class, 'license_key_id');
+        return $this->hasMany(User::class, 'instansi_id', 'instansi_id');
     }
 
     public function isActive()
     {
-        return $this->status === self::STATUS_ACTIVE && $this->tanggal_berakhir >= now();
+        return $this->status === self::STATUS_ACTIVE && $this->tanggal_berakhir && $this->tanggal_berakhir->copy()->endOfDay()->gte(now());
     }
 
     /**
@@ -47,7 +56,7 @@ class LicenseKey extends Model
      */
     public function isExpired()
     {
-        return $this->status === self::STATUS_EXPIRED || \Carbon\Carbon::now()->gt($this->tanggal_berakhir);
+        return $this->status === self::STATUS_EXPIRED || ($this->tanggal_berakhir && now()->gt($this->tanggal_berakhir->copy()->endOfDay()));
     }
 
     /**
@@ -55,10 +64,10 @@ class LicenseKey extends Model
      */
     public function getDaysRemaining()
     {
-        if ($this->isExpired()) {
+        if ($this->isExpired() || !$this->tanggal_berakhir) {
             return 0;
         }
-        return \Carbon\Carbon::now()->diffInDays($this->tanggal_berakhir);
+        return (int) max(0, ceil(now()->diffInDays($this->tanggal_berakhir->copy()->endOfDay(), false)));
     }
 
     /**
@@ -129,7 +138,7 @@ class LicenseKey extends Model
         parent::boot();
 
         static::saving(function ($licenseKey) {
-            if ($licenseKey->tanggal_berakhir < now()) {
+            if ($licenseKey->tanggal_berakhir && $licenseKey->tanggal_berakhir->copy()->endOfDay()->isPast()) {
                 $licenseKey->status = self::STATUS_EXPIRED;
             }
         });

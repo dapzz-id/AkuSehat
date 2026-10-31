@@ -4,16 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Traits\BelongsToTenant;
 
 class Kesehatan extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids, BelongsToTenant;
 
     protected $table = 'kesehatan';
     protected $primaryKey = 'id_kesehatan';
 
     protected $fillable = [
         'id_user',
+        'instansi_id',
         'tgl',
         'bb',
         'tb',

@@ -12,10 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('id_divisi')->nullable()->index();
-            $table->unsignedBigInteger('instansi_id')->nullable()->index();
-            $table->unsignedBigInteger('license_key_id')->nullable()->index();
+            $table->uuid('id')->primary();
+            $table->uuid('id_divisi')->nullable()->index();
+            $table->uuid('instansi_id')->nullable()->index();
             $table->string('tgl', 20);
             $table->string('nomor_induk', 30)->nullable();
             $table->string('username', 20)->unique();
@@ -28,7 +27,6 @@ return new class extends Migration
 
             $table->foreign('id_divisi')->references('id')->on('divisi')->onDelete('set null')->onUpdate('cascade');
             $table->foreign('instansi_id')->references('id')->on('instansi')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreign('license_key_id')->references('id')->on('license_keys')->onDelete('set null');
         });
     }
 

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('maintenance_mode', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->boolean('is_web_maintenance')->default(false);
             $table->boolean('is_mobile_maintenance')->default(false);
             $table->timestamps();

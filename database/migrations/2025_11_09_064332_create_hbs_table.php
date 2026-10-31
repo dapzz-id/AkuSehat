@@ -12,17 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('hb', function (Blueprint $table) {
-            $table->id('id_hb');
-            $table->unsignedBigInteger('id_user')->index();
-            $table->unsignedBigInteger('id_divisi')->nullable()->index();
+            $table->uuid('id_hb')->primary();
+            $table->uuid('id_user')->index();
+            $table->uuid('id_divisi')->nullable()->index();
+            $table->uuid('instansi_id')->nullable()->index();
             $table->date('tgl')->index();
-            $table->string('hb', 30); // Kadar Hemoglobin
+            $table->decimal('hb', 4, 2);
             $table->string('status', 30);
             $table->text('pesan');
             $table->timestamps();
 
             $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
             $table->foreign('id_divisi')->references('id')->on('divisi')->onDelete('set null')->onUpdate('cascade');
+            $table->foreign('instansi_id')->references('id')->on('instansi')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 

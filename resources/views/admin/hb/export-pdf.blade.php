@@ -97,7 +97,7 @@
 
                 <!-- Teks Kop -->
                 <td style="text-align:center; border:none; line-height:1.3;">
-                    <div style="font-size:22px; font-weight:bold;">RADEVELOPERZ</div>
+                    <div style="font-size:22px; font-weight:bold;">NEURA CAKRAWIRA SOLUSI</div>
                     <div style="font-size:14px; font-weight:bold;">
                         Innovative Digital Solutions for Modern Challenges
                     </div>
@@ -107,8 +107,8 @@
                     </div>
                     <div style="font-size:12px; margin-top:3px;">
                         WhatsApp: +62895383107479 |
-                        Email: raadeveloperz@gmail.com<br>
-                        Website: www.raadeveloperz.web.id
+                        Email: neuracakrawirasolusi@gmail.com<br>
+                        Website: www.neuracakrawirasolusi.com
                     </div>
                 </td>
 

@@ -1,177 +1,252 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah User')
+@section('title', 'Tambah Pengguna Baru')
 
 @section('content')
-<div class="space-y-6">
-    <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold text-gray-800">Tambah User</h1>
-        <a href="{{ route('superadmin.users.index') }}" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200">
-            <i class="fas fa-arrow-left mr-2"></i>Kembali
+<div class="space-y-6 max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center shadow-md shadow-emerald-700/20">
+                    <i class="fas fa-user-plus text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-slate-800 tracking-tight">Tambah Pengguna Baru</h1>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        Daftarkan akun pengguna baru ke dalam ekosistem institusi atau sistem pusat.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <a href="{{ route('superadmin.users.index') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors">
+            <i class="fas fa-arrow-left"></i>
+            <span>Kembali ke Daftar</span>
         </a>
     </div>
 
-    <div class="bg-white rounded-lg shadow-soft p-6">
+    @if(isset($errors) && $errors->any())
+        <div class="p-4 bg-rose-50 border-l-4 border-rose-500 text-rose-800 rounded-r-xl shadow-sm">
+            <div class="flex items-center gap-2 font-bold text-sm mb-1">
+                <i class="fas fa-circle-exclamation text-rose-600"></i>
+                <span>Terdapat kesalahan pengisian formulir:</span>
+            </div>
+            <ul class="list-disc list-inside text-xs space-y-1">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div class="bg-white rounded-2xl shadow-soft border border-slate-200/80 p-6 sm:p-8">
         <form action="{{ route('superadmin.users.store') }}" method="POST">
             @csrf
             
-            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+                <!-- Nama Lengkap -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Nama Lengkap <span class="text-rose-500">*</span>
+                    </label>
                     <input type="text" name="nama" value="{{ old('nama') }}" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#308a34] focus:border-transparent @error('nama') border-red-500 @enderror">
+                           placeholder="Contoh: Budi Santoso"
+                           class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 @error('nama') border-rose-500 @enderror">
                     @error('nama')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                        <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
                     @enderror
                 </div>
 
+                <!-- Username -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Username <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Username <span class="text-rose-500">*</span>
+                    </label>
                     <input type="text" name="username" value="{{ old('username') }}" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#308a34] focus:border-transparent @error('username') border-red-500 @enderror">
+                           placeholder="Contoh: budi.santoso"
+                           class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 @error('username') border-rose-500 @enderror">
                     @error('username')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                        <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
                     @enderror
                 </div>
 
+                <!-- Email -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Password <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Alamat Email (Opsional)
+                    </label>
+                    <input type="email" name="email" value="{{ old('email') }}"
+                           placeholder="Contoh: user@instansi.id"
+                           class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 @error('email') border-rose-500 @enderror">
+                    @error('email')
+                        <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Password <span class="text-rose-500">*</span>
+                    </label>
                     <input type="password" name="password" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#308a34] focus:border-transparent @error('password') border-red-500 @enderror">
+                           placeholder="Minimal 6 karakter"
+                           class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 @error('password') border-rose-500 @enderror">
                     @error('password')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                        <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
                     @enderror
                 </div>
 
+                <!-- Role / Peran -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Role <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Role / Peran Pengguna <span class="text-rose-500">*</span>
+                    </label>
                     <select name="level" id="level" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#308a34] focus:border-transparent @error('level') border-red-500 @enderror">
-                        <option value="">Pilih Role</option>
-                        <option value="Admin PMR" {{ old('level') == 'Admin PMR' ? 'selected' : '' }}>Admin PMR</option>
-                        <option value="Guru BK" {{ old('level') == 'Guru BK' ? 'selected' : '' }}>Guru BK</option>
-                        <option value="Guru Olahraga" {{ old('level') == 'Guru Olahraga' ? 'selected' : '' }}>Guru Olahraga</option>
-                        <option value="Siswa" {{ old('level') == 'Siswa' ? 'selected' : '' }}>Siswa</option>
+                            class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 @error('level') border-rose-500 @enderror">
+                        <option value="">-- Pilih Peran --</option>
+                        <option value="Member" {{ old('level') == 'Member' ? 'selected' : '' }}>Member (Siswa / Mahasiswa / Karyawan)</option>
+                        <option value="Admin" {{ old('level') == 'Admin' ? 'selected' : '' }}>Admin PMR / Koordinator Unit</option>
+                        <option value="Health Monitor" {{ old('level') == 'Health Monitor' ? 'selected' : '' }}>Health Monitor (Guru Penjas / Petugas Medis / HSE)</option>
+                        <option value="Health Consultant" {{ old('level') == 'Health Consultant' ? 'selected' : '' }}>Health Consultant (Guru BK / Konselor / Psikolog)</option>
+                        <option value="Admin Instansi" {{ old('level') == 'Admin Instansi' ? 'selected' : '' }}>Admin Instansi / Institusi</option>
+                        <option value="SuperAdmin" {{ old('level') == 'SuperAdmin' ? 'selected' : '' }}>Super Administrator Pusat</option>
                     </select>
                     @error('level')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                        <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
                     @enderror
                 </div>
 
+                <!-- Jenis Kelamin -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Kelamin <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Jenis Kelamin <span class="text-rose-500">*</span>
+                    </label>
                     <select name="jk" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#308a34] focus:border-transparent @error('jk') border-red-500 @enderror">
-                        <option value="">Pilih Jenis Kelamin</option>
+                            class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 @error('jk') border-rose-500 @enderror">
+                        <option value="">-- Pilih Jenis Kelamin --</option>
                         <option value="L" {{ old('jk') == 'L' ? 'selected' : '' }}>Laki-laki</option>
                         <option value="P" {{ old('jk') == 'P' ? 'selected' : '' }}>Perempuan</option>
                     </select>
                     @error('jk')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                        <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
                     @enderror
                 </div>
 
+                <!-- Asal Institusi / Instansi -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Sekolah <span class="text-red-500">*</span></label>
-                    <select name="sekolah_id" id="sekolah_id" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#308a34] focus:border-transparent @error('sekolah_id') border-red-500 @enderror">
-                        <option value="">Pilih Sekolah</option>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Asal Institusi / Instansi <span class="text-rose-500">*</span>
+                    </label>
+                    @php $currInstansiId = old('instansi_id', old('sekolah_id')); @endphp
+                    <select name="instansi_id" id="instansi_id" required
+                            class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 @if($errors->has('instansi_id') || $errors->has('sekolah_id')) border-rose-500 @endif">
+                        <option value="">-- Pilih Institusi / Instansi --</option>
                         @foreach($sekolah as $s)
-                        <option value="{{ $s->id }}" {{ old('sekolah_id') == $s->id ? 'selected' : '' }}>
-                            {{ $s->nama_sekolah }} - {{ $s->jenjang }}
-                        </option>
+                            <option value="{{ $s->id }}" {{ $currInstansiId == $s->id ? 'selected' : '' }}>
+                                {{ $s->nama_instansi ?? $s->nama_sekolah }} ({{ $s->jenis_instansi ?? $s->jenjang ?? 'Umum' }})
+                            </option>
                         @endforeach
                     </select>
-                    @error('sekolah_id')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                    @if($errors->has('instansi_id'))
+                        <p class="mt-1 text-xs text-rose-500">{{ $errors->first('instansi_id') }}</p>
+                    @elseif($errors->has('sekolah_id'))
+                        <p class="mt-1 text-xs text-rose-500">{{ $errors->first('sekolah_id') }}</p>
+                    @endif
+                </div>
+
+                <!-- Divisi / Unit Kerja -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Divisi / Kelas / Unit Kerja (Opsional)
+                    </label>
+                    <select name="id_divisi" id="id_divisi"
+                            class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 @error('id_divisi') border-rose-500 @enderror">
+                        <option value="">-- Tanpa Divisi (Langsung di Instansi) --</option>
+                        @foreach($divisi as $d)
+                            <option value="{{ $d->id }}" data-instansi="{{ $d->instansi_id }}" {{ old('id_divisi') == $d->id ? 'selected' : '' }}>
+                                {{ $d->divisi_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('id_divisi')
+                        <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
                     @enderror
                 </div>
 
-                <div id="nisField" style="display: none;">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">NIS</label>
-                    <input type="text" name="nis" value="{{ old('nis') }}"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#308a34] focus:border-transparent @error('nis') border-red-500 @enderror">
-                    @error('nis')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                    @enderror
+                <!-- Nomor Induk -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Nomor Induk (NIS / NIP / NIK)
+                    </label>
+                    <input type="text" name="nomor_induk" value="{{ old('nomor_induk', old('nis')) }}"
+                           placeholder="Contoh: 10293847"
+                           class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 @if($errors->has('nomor_induk') || $errors->has('nis')) border-rose-500 @endif">
+                    @if($errors->has('nomor_induk'))
+                        <p class="mt-1 text-xs text-rose-500">{{ $errors->first('nomor_induk') }}</p>
+                    @elseif($errors->has('nis'))
+                        <p class="mt-1 text-xs text-rose-500">{{ $errors->first('nis') }}</p>
+                    @endif
                 </div>
 
-                <div id="tglField" style="display: none;">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Lahir</label>
+                <!-- Tanggal Lahir -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Tanggal Lahir (Opsional)
+                    </label>
                     <input type="date" name="tgl" value="{{ old('tgl') }}"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#308a34] focus:border-transparent @error('tgl') border-red-500 @enderror">
+                           class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 @error('tgl') border-rose-500 @enderror">
                     @error('tgl')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div id="kelasField" class="md:col-span-2" style="display: none;">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Kelas</label>
-                    <select name="id_kelas" id="id_kelas"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#308a34] focus:border-transparent @error('id_kelas') border-red-500 @enderror">
-                        <option value="">Pilih Kelas</option>
-                        @foreach($kelas as $k)
-                        <option value="{{ $k->id }}" {{ old('id_kelas') == $k->id ? 'selected' : '' }}>
-                            {{ $k->nama_kelas }}
-                        </option>
-                        @endforeach
-                    </select>
-                    @error('id_kelas')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                        <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
                     @enderror
                 </div>
             </div>
 
-            <div class="flex items-center justify-end mt-6 space-x-3">
-                <a href="{{ route('superadmin.users.index') }}" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200">
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-end gap-3 mt-8 pt-5 border-t border-slate-100">
+                <a href="{{ route('superadmin.users.index') }}" 
+                   class="px-5 py-2.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-200 transition-colors">
                     Batal
                 </a>
-                <button type="submit" class="px-4 py-2 bg-[#308a34] text-white rounded-lg hover:bg-[#1B5E20] transition-colors duration-200">
-                    <i class="fas fa-save mr-2"></i>Simpan
+                <button type="submit" 
+                        class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-700/20 transition-all flex items-center gap-2">
+                    <i class="fas fa-save"></i>
+                    <span>Simpan Pengguna Baru</span>
                 </button>
             </div>
         </form>
     </div>
 </div>
-@endsection
 
-@push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const levelSelect = document.getElementById('level');
-    const nisField = document.getElementById('nisField');
-    const tglField = document.getElementById('tglField');
-    const kelasField = document.getElementById('kelasField');
+document.addEventListener('DOMContentLoaded', function () {
+    const instansiSelect = document.getElementById('instansi_id');
+    const divisiSelect = document.getElementById('id_divisi');
 
-    function toggleFields() {
-        const level = levelSelect.value;
-        
-        if (level === 'Siswa') {
-            nisField.style.display = 'block';
-            tglField.style.display = 'block';
-            kelasField.style.display = 'block';
-        } else {
-            nisField.style.display = 'none';
-            tglField.style.display = 'none';
-            kelasField.style.display = 'none';
-        }
+    if (instansiSelect && divisiSelect) {
+        const filterDivisi = () => {
+            const selectedInstansi = instansiSelect.value;
+            const currentVal = divisiSelect.value;
+            let hasActiveMatch = false;
+
+            Array.from(divisiSelect.options).forEach((opt, idx) => {
+                if (idx === 0) return; // Keep "-- Tanpa Divisi --"
+                const instansi = opt.getAttribute('data-instansi');
+                if (!selectedInstansi || instansi === selectedInstansi) {
+                    opt.style.display = '';
+                    if (opt.value === currentVal) hasActiveMatch = true;
+                } else {
+                    opt.style.display = 'none';
+                }
+            });
+
+            if (!hasActiveMatch && currentVal !== '') {
+                divisiSelect.value = '';
+            }
+        };
+
+        instansiSelect.addEventListener('change', filterDivisi);
+        filterDivisi();
     }
-
-    levelSelect.addEventListener('change', toggleFields);
-    toggleFields(); // Initial check
-
-    // Initialize Tom Select
-    new TomSelect('#sekolah_id', {
-        placeholder: 'Pilih Sekolah',
-        allowEmptyOption: false,
-        create: false
-    });
-
-    new TomSelect('#id_kelas', {
-        placeholder: 'Pilih Kelas',
-        allowEmptyOption: true,
-        create: false
-    });
 });
 </script>
-@endpush
+@endsection

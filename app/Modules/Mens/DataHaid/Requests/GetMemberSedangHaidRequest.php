@@ -1,0 +1,18 @@
+<?php
+
+namespace App\Modules\Mens\DataHaid\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class GetMemberSedangHaidRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return $this->user() !== null;
+    }
+
+    public function rules(): array
+    {
+        return [];
+    }
+}

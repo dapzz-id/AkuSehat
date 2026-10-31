@@ -12,8 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('instansi', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('license_id_active')->nullable()->index();
+            $table->uuid('id')->primary();
+            $table->uuid('license_id_active')->nullable()->index();
+            $table->enum('jenis_instansi', ['Sekolah', 'Universitas', 'Perusahaan', 'Pemerintah', 'Klinik', 'Lainnya'])->default('Sekolah')->index();
+            $table->string('npsn', 20)->nullable()->unique();
+            $table->enum('jenjang', ['SD', 'SMP', 'SMA', 'SMK', 'MA', 'SLB', 'MTS'])->nullable();
             $table->string('nama_instansi')->index();
             $table->string('alamat');
             $table->string('email')->nullable();

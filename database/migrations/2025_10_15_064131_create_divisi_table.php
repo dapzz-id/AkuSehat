@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('divisi', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('instansi_id')->index();
+            $table->uuid('id')->primary();
+            $table->uuid('instansi_id')->index();
             $table->string('tgl', 20)->index();
             $table->string('divisi_name', 100)->index();
             $table->string('color_cover')->default('#2e7d32');

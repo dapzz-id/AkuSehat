@@ -6,11 +6,38 @@
 <div class="space-y-6">
     <!-- Header Section -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Manajemen License Key</h1>
-        <a href="{{ route('superadmin.license.create') }}" class="px-4 py-2 text-center bg-[#308a34] text-white rounded-lg hover:bg-[#1B5E20] transition-colors duration-200 shadow-soft text-sm sm:text-base">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Manajemen License Key</h1>
+            <p class="text-xs sm:text-sm text-gray-500 mt-1">Daftar lisensi aktif dan kadaluarsa untuk instansi dan sekolah.</p>
+        </div>
+        <a href="{{ route('superadmin.license.create') }}" class="px-4 py-2 text-center bg-[#308a34] text-white rounded-lg hover:bg-[#1B5E20] transition-colors duration-200 shadow-soft text-sm sm:text-base font-medium">
             <i class="fas fa-plus mr-2"></i>Generate License
         </a>
     </div>
+
+    @if(session('success'))
+        <div class="p-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 rounded-r-lg shadow-sm flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-check-circle text-emerald-600 text-lg"></i>
+                <span class="text-sm font-medium">{{ session('success') }}</span>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="p-4 bg-rose-50 border-l-4 border-rose-500 text-rose-800 rounded-r-lg shadow-sm flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-exclamation-circle text-rose-600 text-lg"></i>
+                <span class="text-sm font-medium">{{ session('error') }}</span>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    @endif
 
     <!-- Desktop Table (hidden on mobile) -->
     <div class="hidden sm:block bg-white rounded-lg shadow-soft">
@@ -35,8 +62,8 @@
                             <td class="px-4 py-3 text-sm text-gray-700">{{ $licenses->firstItem() + $index }}</td>
                             <td class="px-4 py-3">
                                 <div>
-                                    <p class="font-semibold text-gray-800">{{ $license->sekolah->nama_sekolah }}</p>
-                                    <p class="text-xs text-gray-500">{{ $license->sekolah->jenjang }} - {{ $license->sekolah->kota }}</p>
+                                    <p class="font-semibold text-gray-800">{{ $license->sekolah->nama_sekolah ?? 'Belum Ditugaskan' }}</p>
+                                    <p class="text-xs text-gray-500">{{ $license->sekolah ? ($license->sekolah->jenjang . ' - ' . $license->sekolah->kota) : '-' }}</p>
                                 </div>
                             </td>
                             <td class="px-4 py-3">
@@ -151,8 +178,8 @@
 
             <!-- Informasi Sekolah -->
             <div class="mb-3">
-                <h3 class="font-semibold text-gray-800 text-lg mb-1">{{ $license->sekolah->nama_sekolah }}</h3>
-                <p class="text-sm text-gray-600">{{ $license->sekolah->jenjang }} - {{ $license->sekolah->kota }}</p>
+                <h3 class="font-semibold text-gray-800 text-lg mb-1">{{ $license->sekolah->nama_sekolah ?? 'Belum Ditugaskan' }}</h3>
+                <p class="text-sm text-gray-600">{{ $license->sekolah ? ($license->sekolah->jenjang . ' - ' . $license->sekolah->kota) : '-' }}</p>
             </div>
 
             <!-- License Key -->

@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('data_haid', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('id_user')->index();
+            $table->uuid('id')->primary();
+            $table->uuid('id_user')->index();
+            $table->uuid('instansi_id')->nullable()->index();
             $table->date('tanggal_mulai')->nullable();
             $table->date('tanggal_selesai')->nullable();
             $table->integer('durasi_hari')->nullable();
@@ -22,6 +23,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('instansi_id')->references('id')->on('instansi')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 

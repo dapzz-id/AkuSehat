@@ -105,6 +105,10 @@
                                     Warna Cover
                                 </th>
                                 <th
+                                    class="px-2 sm:px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider">
+                                    Hak Akses Modul
+                                </th>
+                                <th
                                     class="px-2 sm:px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-[#1b5e20] uppercase tracking-wider hidden md:table-cell">
                                     Jumlah Members
                                 </th>
@@ -130,8 +134,16 @@
                                             class="rowCheckbox rounded border-gray-300 text-[#2e7d32] focus:ring-[#2e7d32]">
                                     </td>
                                     <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4">
-                                        <div class="text-xs md:text-sm font-medium text-gray-900">{{ $item->divisi_name }}
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <div class="text-xs md:text-sm font-bold text-gray-900">{{ $item->divisi_name }}</div>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-{{ $item->kategori_meta['color'] }}-50 text-{{ $item->kategori_meta['color'] }}-700 border border-{{ $item->kategori_meta['color'] }}-200">
+                                                <i class="fas {{ $item->kategori_meta['icon'] }} text-[9px]"></i>
+                                                <span>{{ $item->kategori_meta['badge'] }}</span>
+                                            </span>
                                         </div>
+                                        @if($item->description)
+                                            <div class="text-[11px] text-gray-500 italic mt-0.5">{{ $item->description }}</div>
+                                        @endif
                                         <div class="text-xs text-gray-500 md:hidden mt-0.5">
                                             Members: {{ $item->jumlah_member }}
                                         </div>
@@ -146,10 +158,23 @@
                                     </td>
                                     <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 text-xs md:text-sm text-gray-900">
                                         <div class="flex items-center gap-1 sm:gap-2">
-                                            <div class="w-4 h-4 sm:w-6 sm:h-6 rounded-md"
+                                            <div class="w-4 h-4 sm:w-6 sm:h-6 rounded-md shadow-sm"
                                                 style="background-color: {{ $item->color_cover }};"></div>
-                                            <span class="uppercase">{{ $item->color_cover }}</span>
+                                            <span class="uppercase font-mono text-xs">{{ $item->color_cover }}</span>
                                         </div>
+                                    </td>
+                                    <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 text-xs">
+                                        @if(is_null($item->active_modules))
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                <i class="fas fa-check-double text-[10px]"></i>
+                                                <span>Inherit Instansi</span>
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                <i class="fas fa-sliders-h text-[10px]"></i>
+                                                <span>{{ count($item->active_modules) }} Modul Kustom</span>
+                                            </span>
+                                        @endif
                                     </td>
                                     <td
                                         class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 text-xs md:text-sm text-gray-900 hidden md:table-cell">
@@ -171,14 +196,26 @@
                                         {{ $item->created_at->format('d/m/Y') }}
                                     </td>
                                     <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4">
-                                        <div class="flex items-center justify-center text-xs sm:text-sm gap-1 sm:gap-2">
+                                        <div class="flex items-center justify-center text-xs sm:text-sm gap-1 sm:gap-1.5">
+                                            <!-- Tombol Atur Modul & Hak Akses -->
+                                            <button type="button" onclick="openPermissionsModal({{ json_encode($item) }})"
+                                                class="text-indigo-600 hover:text-indigo-800 p-1.5 rounded-full hover:bg-indigo-50 transition-colors"
+                                                title="Atur Modul & Hak Akses Divisi">
+                                                <i class="fas fa-sliders-h"></i>
+                                            </button>
+                                            <!-- Tombol Clone Divisi -->
+                                            <button type="button" onclick="openCloneModal({{ json_encode($item) }})"
+                                                class="text-emerald-600 hover:text-emerald-800 p-1.5 rounded-full hover:bg-emerald-50 transition-colors"
+                                                title="Kloning Divisi (Duplikasi Hak Akses & Pengaturan)">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
                                             <button type="button" onclick="editDivisi({{ json_encode($item) }})"
-                                                class="text-[#2e7d32] hover:text-[#1b5e20] p-1 sm:p-2 rounded-full hover:bg-green-50 transition-colors"
+                                                class="text-[#2e7d32] hover:text-[#1b5e20] p-1.5 rounded-full hover:bg-green-50 transition-colors"
                                                 title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                             <a href="{{ route('admin.users.index') }}?divisi={{ $item->id }}"
-                                                class="text-[#0288d1] hover:text-[#01579b] p-1 sm:p-2 rounded-full hover:bg-blue-50 transition-colors"
+                                                class="text-[#0288d1] hover:text-[#01579b] p-1.5 rounded-full hover:bg-blue-50 transition-colors"
                                                 title="Lihat Members">
                                                 <i class="fas fa-users"></i>
                                             </a>
@@ -187,7 +224,7 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"
-                                                    class="text-[#d32f2f] hover:text-[#b71c1c] p-1 sm:p-2 rounded-full hover:bg-red-50 transition-colors"
+                                                    class="text-[#d32f2f] hover:text-[#b71c1c] p-1.5 rounded-full hover:bg-red-50 transition-colors"
                                                     title="Hapus">
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
@@ -348,7 +385,23 @@
                                 class="text-red-500">*</span></label>
                         <input type="text" name="divisi" id="divisiInput" required
                             class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#2e7d32] focus:border-[#2e7d32] transition-colors"
-                            placeholder="Contoh: Information Technology" required>
+                            placeholder="Contoh: X RPL 1 / Dewan Guru / Pimpinan" required>
+                    </div>
+
+                    <!-- Kategori Divisi -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Kategori / Klasifikasi Kelompok <span class="text-red-500">*</span>
+                        </label>
+                        <select name="kategori" id="kategoriInput" required
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2e7d32] focus:border-[#2e7d32] bg-white text-gray-800 font-medium">
+                            @foreach ($kategoriOptions ?? \App\Models\Divisi::getKategoriOptions(auth()->user()->instansi?->jenis_instansi) as $kKey => $kOpt)
+                                <option value="{{ $kKey }}">
+                                    {{ $kOpt['badge'] }} — {{ $kOpt['label'] }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="text-[11px] text-gray-500 mt-1">Mengelompokkan divisi ke tab kategori yang tepat di Data Pengguna.</p>
                     </div>
                     <!-- Warna Cover -->
                     <div>
@@ -380,6 +433,187 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Kloning Divisi -->
+    <div id="cloneModal" class="fixed inset-0 bg-black/40 hidden z-50 flex items-center justify-center p-4" onclick="closeCloneModal()">
+        <div class="bg-white rounded-2xl max-w-md w-full mx-auto shadow-2xl overflow-hidden transform transition-all" onclick="event.stopPropagation()">
+            <div class="px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                        <i class="fas fa-copy text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold">Kloning Divisi</h3>
+                        <p class="text-xs text-emerald-100">Duplikasi divisi beserta hak akses modulnya</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCloneModal()" class="text-white/80 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-xs text-emerald-800 flex items-start gap-2.5">
+                    <i class="fas fa-info-circle text-emerald-600 mt-0.5"></i>
+                    <div>
+                        Menduplikasi dari: <strong id="cloneSourceName">-</strong>.
+                        Semua modul aktif dan preferensi izin akan otomatis disalin ke divisi baru ini.
+                    </div>
+                </div>
+
+                <form id="cloneForm" method="POST" action="" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                            Nama Divisi Baru <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="new_divisi_name" id="cloneNewNameInput" required
+                            class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600"
+                            placeholder="Contoh: Siswa Kelas 12 RPL 2 / Divisi Guru">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                            Warna Cover Baru
+                        </label>
+                        <div class="flex items-center gap-3">
+                            <input type="color" id="cloneColorPicker" class="w-12 h-10 p-1 border border-gray-300 rounded-xl cursor-pointer" value="#10b981">
+                            <input type="text" name="new_cover_color" id="cloneColorHex"
+                                class="flex-1 border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                                placeholder="#10b981">
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="px-6 py-4 bg-gray-50 flex justify-end gap-2 border-t border-gray-100">
+                <button type="button" onclick="closeCloneModal()" class="px-4 py-2 border border-gray-300 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                    Batal
+                </button>
+                <button type="submit" form="cloneForm" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-700/20 transition-colors flex items-center gap-1.5">
+                    <i class="fas fa-copy"></i>
+                    <span>Kloning Sekarang</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Atur Hak Akses Modul Divisi -->
+    <div id="permissionsModal" class="fixed inset-0 bg-black/40 hidden z-50 flex items-center justify-center p-4" onclick="closePermissionsModal()">
+        <div class="bg-white rounded-2xl max-w-2xl w-full mx-auto shadow-2xl overflow-hidden transform transition-all flex flex-col max-h-[90vh]" onclick="event.stopPropagation()">
+            <div class="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-700 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                        <i class="fas fa-sliders-h text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold">Atur Modul & Hak Akses Divisi</h3>
+                        <p class="text-xs text-indigo-100" id="permDivisiTitle">-</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closePermissionsModal()" class="text-white/80 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-5 flex-1">
+                <form id="permissionsForm" method="POST" action="" class="space-y-5">
+                    @csrf
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                            Keterangan / Target Divisi
+                        </label>
+                        <input type="text" name="description" id="permDescriptionInput"
+                            class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                            placeholder="Contoh: Khusus Dewan Guru & Staf Tata Usaha / Siswa Kelas 12 Akhir">
+                    </div>
+
+                    <!-- Pilihan Mode: Inherit vs Kustom -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                            Skema Hak Akses Modul
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label class="relative flex items-start p-3.5 rounded-xl border border-gray-200 cursor-pointer hover:border-indigo-400 has-[:checked]:border-indigo-600 has-[:checked]:bg-indigo-50/50 transition-colors">
+                                <input type="radio" name="use_custom_modules" value="0" id="inheritRadio" onchange="toggleModulesCustomView()" class="mt-0.5 text-indigo-600 focus:ring-indigo-500">
+                                <div class="ml-2.5 text-xs">
+                                    <div class="font-bold text-gray-800">Ikuti Pengaturan Instansi</div>
+                                    <div class="text-[11px] text-gray-500 mt-0.5">Mewarisi semua modul aktif default institusi (Inherit)</div>
+                                </div>
+                            </label>
+
+                            <label class="relative flex items-start p-3.5 rounded-xl border border-gray-200 cursor-pointer hover:border-indigo-400 has-[:checked]:border-indigo-600 has-[:checked]:bg-indigo-50/50 transition-colors">
+                                <input type="radio" name="use_custom_modules" value="1" id="customRadio" onchange="toggleModulesCustomView()" class="mt-0.5 text-indigo-600 focus:ring-indigo-500">
+                                <div class="ml-2.5 text-xs">
+                                    <div class="font-bold text-gray-800">Kustomisasi Khusus Divisi</div>
+                                    <div class="text-[11px] text-gray-500 mt-0.5">Pilih modul spesifik yang hanya boleh diakses divisi ini</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Checklist Container -->
+                    <div id="customModulesContainer" class="space-y-3 pt-2 border-t border-gray-100 hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold uppercase tracking-wider text-gray-700">Pilih Modul Aktif:</span>
+                            <div class="space-x-2 text-[11px]">
+                                <button type="button" onclick="checkAllModules(true)" class="text-indigo-600 hover:underline font-semibold">Pilih Semua</button>
+                                <span class="text-gray-300">|</span>
+                                <button type="button" onclick="checkAllModules(false)" class="text-gray-500 hover:underline">Hapus Semua</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            @php
+                                $all10 = [
+                                    'haid_pita' => ['Siklus & Cuti Haid (FemHealth)', 'fas fa-venus text-pink-500'],
+                                    'olahraga' => ['Aktivitas Olahraga & Tracker', 'fas fa-running text-emerald-500'],
+                                    'vitalitas' => ['Vitalitas, Tidur & Hidrasi', 'fas fa-heart-pulse text-sky-500'],
+                                    'kesehatan' => ['Rekam Medis Fisik Klinis', 'fas fa-notes-medical text-teal-500'],
+                                    'hemoglobin' => ['Skrining HB & Anemia', 'fas fa-droplet text-rose-500'],
+                                    'konsultasi' => ['Konseling SafeSpace', 'fas fa-comments text-indigo-500'],
+                                    'nutrisi' => ['Nutrisi & Pola Makan Sehat', 'fas fa-apple-whole text-amber-500'],
+                                    'burnout' => ['Skrining Burnout & Stres', 'fas fa-brain text-purple-500'],
+                                    'ergonomi' => ['Ergonomi & Peringatan Duduk', 'fas fa-chair text-cyan-500'],
+                                    'vaksinasi' => ['Paspor Vaksinasi & Imunisasi', 'fas fa-syringe text-blue-500'],
+                                ];
+                            @endphp
+
+                            @foreach($all10 as $modKey => $modInfo)
+                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
+                                <input type="checkbox" name="active_modules[]" value="{{ $modKey }}" id="mod_{{ $modKey }}" class="divisiModuleCheckbox rounded text-indigo-600 focus:ring-indigo-500">
+                                <i class="{{ $modInfo[1] }} text-sm"></i>
+                                <span class="font-medium text-gray-800">{{ $modInfo[0] }}</span>
+                            </label>
+                            @endforeach
+                        </div>
+
+                        <!-- Wewenang Add User Divisi -->
+                        <div class="pt-3 border-t border-gray-100">
+                            <label class="flex items-center justify-between p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer">
+                                <div>
+                                    <span class="text-xs font-semibold text-gray-800 block">Izinkan Role / Staf Divisi Ini Menambah User</span>
+                                    <span class="text-[11px] text-gray-500">Staf yang bertugas pada divisi ini dapat mendaftarkan anggota baru.</span>
+                                </div>
+                                <input type="checkbox" name="permissions[can_add_user]" value="1" id="permCanAddUser" class="rounded text-indigo-600 focus:ring-indigo-500">
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="px-6 py-4 bg-gray-50 flex justify-end gap-2 border-t border-gray-100">
+                <button type="button" onclick="closePermissionsModal()" class="px-4 py-2 border border-gray-300 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                    Batal
+                </button>
+                <button type="submit" form="permissionsForm" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-700/20 transition-colors flex items-center gap-1.5">
+                    <i class="fas fa-save"></i>
+                    <span>Simpan Pengaturan</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 @endsection
 @push('styles')
     <style>
@@ -452,6 +686,7 @@
             document.getElementById('divisiForm').action = '{{ route('admin.divisi.store') }}';
             document.getElementById('divisiForm').method = 'POST';
             document.getElementById('divisiInput').value = '';
+            document.getElementById('kategoriInput').value = 'member';
             // Reset color to default
             document.getElementById('colorPicker').value = '#2e7d32';
             document.getElementById('colorHex').value = '#2e7d32';
@@ -480,6 +715,7 @@
                 divisi.id);
             document.getElementById('divisiForm').method = 'POST';
             document.getElementById('divisiInput').value = divisi.divisi_name;
+            document.getElementById('kategoriInput').value = divisi.kategori || 'member';
             document.getElementById('colorPicker').value = divisi.color_cover;
             document.getElementById('colorHex').value = divisi.color_cover;
         }
@@ -528,5 +764,80 @@
             searchInput.value = '';
             toggleClearIcon();
         });
+
+        // Clone Modal Logic
+        const cloneColorPicker = document.getElementById('cloneColorPicker');
+        const cloneColorHex = document.getElementById('cloneColorHex');
+
+        cloneColorPicker.addEventListener('input', () => {
+            cloneColorHex.value = cloneColorPicker.value;
+        });
+        cloneColorHex.addEventListener('input', () => {
+            const hex = cloneColorHex.value.trim();
+            if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+                cloneColorPicker.value = hex;
+            }
+        });
+
+        function openCloneModal(divisi) {
+            document.getElementById('cloneModal').classList.remove('hidden');
+            document.getElementById('cloneSourceName').textContent = divisi.divisi_name;
+            document.getElementById('cloneNewNameInput').value = divisi.divisi_name + ' (Kloning)';
+            document.getElementById('cloneColorPicker').value = divisi.color_cover || '#10b981';
+            document.getElementById('cloneColorHex').value = divisi.color_cover || '#10b981';
+            document.getElementById('cloneForm').action = '/admin/divisi/' + divisi.id + '/clone';
+        }
+
+        function closeCloneModal() {
+            document.getElementById('cloneModal').classList.add('hidden');
+        }
+
+        // Permissions Modal Logic
+        function openPermissionsModal(divisi) {
+            document.getElementById('permissionsModal').classList.remove('hidden');
+            document.getElementById('permDivisiTitle').textContent = 'Divisi: ' + divisi.divisi_name;
+            document.getElementById('permDescriptionInput').value = divisi.description || '';
+            document.getElementById('permissionsForm').action = '/admin/divisi/' + divisi.id + '/permissions';
+
+            const isCustom = divisi.active_modules !== null && Array.isArray(divisi.active_modules);
+            if (isCustom) {
+                document.getElementById('customRadio').checked = true;
+                document.getElementById('customModulesContainer').classList.remove('hidden');
+                
+                // Set checked states based on divisi.active_modules
+                const checkboxes = document.querySelectorAll('.divisiModuleCheckbox');
+                checkboxes.forEach(cb => {
+                    cb.checked = divisi.active_modules.includes(cb.value);
+                });
+            } else {
+                document.getElementById('inheritRadio').checked = true;
+                document.getElementById('customModulesContainer').classList.add('hidden');
+                // Check all as visual default
+                const checkboxes = document.querySelectorAll('.divisiModuleCheckbox');
+                checkboxes.forEach(cb => cb.checked = true);
+            }
+
+            const perms = divisi.module_permissions || {};
+            document.getElementById('permCanAddUser').checked = !!perms.can_add_user;
+        }
+
+        function closePermissionsModal() {
+            document.getElementById('permissionsModal').classList.add('hidden');
+        }
+
+        function toggleModulesCustomView() {
+            const isCustom = document.getElementById('customRadio').checked;
+            const container = document.getElementById('customModulesContainer');
+            if (isCustom) {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        function checkAllModules(check) {
+            const checkboxes = document.querySelectorAll('.divisiModuleCheckbox');
+            checkboxes.forEach(cb => cb.checked = check);
+        }
     </script>
 @endpush
