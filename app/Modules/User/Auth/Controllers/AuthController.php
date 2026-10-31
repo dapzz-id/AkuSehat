@@ -154,9 +154,7 @@ class AuthController extends Controller
         $result = $this->authService->handleGoogleLoginWeb($googleId, $name, $email, $avatar);
 
         if (!$result['success']) {
-            return redirect()->route('login')->withErrors([
-                'username' => $result['message']
-            ])->with('error', $result['message']);
+            return redirect()->route('login')->with('error', $result['message']);
         }
 
         return redirect('/dashboard')->with('success', 'Berhasil masuk dengan akun Google!');

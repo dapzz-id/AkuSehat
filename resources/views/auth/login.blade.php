@@ -98,28 +98,19 @@
 
                 <!-- Card Form -->
                 <div class="bg-white rounded-2xl shadow-[0_4px_25px_-5px_rgba(0,0,0,0.06),0_10px_20px_-5px_rgba(0,0,0,0.03)] border border-slate-200/80 p-7 sm:p-9">
-                    <!-- Error Notification -->
-                    @if ($errors->any())
-                        <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm animate-fade-in">
-                            <div class="flex items-start gap-3">
-                                <i class="fas fa-circle-exclamation text-rose-500 mt-0.5 text-base flex-shrink-0"></i>
-                                <div class="flex-1 space-y-1">
-                                    <p class="font-semibold">Gagal masuk ke sistem:</p>
-                                    <ul class="list-disc list-inside text-xs space-y-0.5 text-rose-700">
-                                        @foreach ($errors->all() as $error)
-                                            <li>{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
+                    <!-- Error Notification (Satu kartu alert bersih) -->
                     @if (session('error'))
                         <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm animate-fade-in flex items-start gap-3">
                             <i class="fas fa-circle-xmark text-rose-500 mt-0.5 text-base flex-shrink-0"></i>
                             <div class="text-xs leading-relaxed font-semibold">
                                 {{ session('error') }}
+                            </div>
+                        </div>
+                    @elseif ($errors->any())
+                        <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm animate-fade-in flex items-start gap-3">
+                            <i class="fas fa-circle-xmark text-rose-500 mt-0.5 text-base flex-shrink-0"></i>
+                            <div class="text-xs leading-relaxed font-semibold">
+                                {{ $errors->first() }}
                             </div>
                         </div>
                     @endif
