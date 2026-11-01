@@ -39,7 +39,7 @@ class MemberRepository
 
     public function getLatestKesehatan(string|int $userId)
     {
-        return DB::table('kesehatan')->where('id_user', $userId)->orderByDesc('tgl')->first();
+        return Kesehatan::where('id_user', $userId)->orderByDesc('tgl')->first();
     }
 
     public function getLatestHb(string|int $userId)

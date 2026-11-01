@@ -36,6 +36,7 @@ class UserVitalLog extends Model
         'diastolic' => 'integer',
         'blood_sugar' => 'float',
         'weight_kg' => 'float',
+        'notes' => \App\Casts\TenantEncrypted::class,
     ];
 
     public function user()

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Modules\User\Member\Services\MemberService;
 use App\Modules\User\Member\Repositories\MemberRepository;
 use App\Modules\User\Member\Requests\GetMemberProfileRequest;
+use App\Modules\User\Member\Requests\SystemRealtimeSyncRequest;
 use App\Modules\User\Member\Requests\UpdateProfileRequest;
 use App\Modules\User\Member\Requests\UpdatePasswordRequest;
 use App\Modules\User\Member\Requests\GetNotificationRequest;
@@ -78,7 +79,7 @@ class MemberApiController extends Controller
         ]);
     }
 
-    public function systemRealtimeSync(Request $req): JsonResponse
+    public function systemRealtimeSync(SystemRealtimeSyncRequest $req): JsonResponse
     {
         $platform = $req->input('platform', 'android');
         $currentVersion = $req->input('current_version') ?? $req->header('X-App-Version', '1.0.0');
@@ -154,7 +155,7 @@ class MemberApiController extends Controller
         ]);
     }
 
-    public function myModules(Request $req): JsonResponse
+    public function myModules(SystemRealtimeSyncRequest $req): JsonResponse
     {
         return $this->systemRealtimeSync($req);
     }
@@ -251,11 +252,11 @@ class MemberApiController extends Controller
     public function riwayatHaid(GetRiwayatHaidRequest $req, string|int $userId): JsonResponse
     {
         $u = $req->user();
-        if ($u->isMember() && $u->id != $userId) {
+        if ($u->isMember() && (string) $u->id !== (string) $userId) {
             return response()->json([
                 'status' => false,
-                'message' => 'Akses tidak diperbolehkan.'
-            ], 403);
+                'message' => 'Data tidak ditemukan.'
+            ], 404);
         }
 
         if (!$u->isSuperAdmin() && $u->instansi_id) {
@@ -263,7 +264,7 @@ class MemberApiController extends Controller
             if (!$targetUser || $targetUser->instansi_id !== $u->instansi_id) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Data pengguna tidak ditemukan di institusi Anda.'
+                    'message' => 'Data tidak ditemukan.'
                 ], 404);
             }
         }
@@ -438,11 +439,11 @@ class MemberApiController extends Controller
     public function getRiwayatPita(GetRiwayatPitaRequest $req, string|int $userId): JsonResponse
     {
         $u = $req->user();
-        if ($u->isMember() && $u->id != $userId) {
+        if ($u->isMember() && (string) $u->id !== (string) $userId) {
             return response()->json([
                 'status' => false,
-                'message' => 'Akses tidak diperbolehkan.'
-            ], 403);
+                'message' => 'Data tidak ditemukan.'
+            ], 404);
         }
 
         if (!$u->isSuperAdmin() && $u->instansi_id) {

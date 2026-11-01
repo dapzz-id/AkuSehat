@@ -25,7 +25,7 @@ class DivisiController extends Controller
     {
         $currentUser = Auth::user();
         if (!$currentUser->instansi_id) {
-            abort(403, 'Anda belum terdaftar dalam instansi.');
+            abort(404);
         }
 
         $divisi = $this->divisiRepository->getPaginatedForInstansi(

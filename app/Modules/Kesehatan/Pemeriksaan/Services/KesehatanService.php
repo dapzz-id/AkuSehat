@@ -213,15 +213,15 @@ class KesehatanService
     {
         $targetUser = User::find($targetUserId);
         if (!$targetUser) {
-            return ['status' => false, 'code' => 404, 'message' => 'User tidak ditemukan.'];
+            return ['status' => false, 'code' => 404, 'message' => 'Data tidak ditemukan.'];
         }
 
-        if ($actor->isMember() && $actor->id != $targetUserId) {
-            return ['status' => false, 'code' => 403, 'message' => 'Akses tidak diperbolehkan.'];
+        if ($actor->isMember() && (string) $actor->id !== (string) $targetUserId) {
+            return ['status' => false, 'code' => 404, 'message' => 'Data tidak ditemukan.'];
         }
 
         if (!$actor->isSuperAdmin() && $targetUser->instansi_id !== $actor->instansi_id) {
-            return ['status' => false, 'code' => 403, 'message' => 'Akses lintas instansi ditolak.'];
+            return ['status' => false, 'code' => 404, 'message' => 'Data tidak ditemukan.'];
         }
 
         $formatted = $this->kesehatanRepository->getByUserGrouped($targetUserId);

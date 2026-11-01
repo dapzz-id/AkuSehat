@@ -14,76 +14,68 @@ use Illuminate\Http\Request;
 
 class AuthService
 {
+    private const GENERIC_AUTH_ERROR = 'Email/Username atau Password salah.';
+    private const DUMMY_BCRYPT_HASH = '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
+
     public function __construct(
         protected AuthRepository $authRepository
     ) {}
 
     public function attemptWebLogin(string $loginInput, string $password, bool $remember, Request $request): array
     {
-        $loginInput = trim($loginInput);
-        $fieldType = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+        $user = $this->authRepository->findByLogin($loginInput);
+        $passwordValid = Hash::check($password, $user ? $user->password : self::DUMMY_BCRYPT_HASH);
 
-        $credentials = [
-            $fieldType => $loginInput,
-            'password' => $password,
-        ];
-
-        if (Auth::attempt($credentials, $remember)) {
-            $user = Auth::user();
-
-            if (MaintenanceMode::isWebInMaintenance() && !$user->isSuperAdmin()) {
-                Auth::logout();
-                $request->session()->invalidate();
-                return [
-                    'success' => false,
-                    'message' => 'Website sedang dalam masa pemeliharaan (Maintenance Mode). Hanya Super Administrator yang diizinkan masuk saat ini.'
-                ];
-            }
-
-            if ($user->isBanned() || $user->isSuspended() || $user->status === 'nonaktif') {
-                Auth::logout();
-                $request->session()->invalidate();
-                return [
-                    'success' => false,
-                    'message' => 'Kredensial yang Anda masukkan tidak cocok dengan data kami atau akun tidak dapat diakses.'
-                ];
-            }
-
-            if ($user->isMember() && $user->instansi_id && (is_null($user->id_divisi) || !$user->divisi)) {
-                Auth::logout();
-                $request->session()->invalidate();
-                return [
-                    'success' => false,
-                    'message' => 'Akun Anda tidak memiliki divisi/unit aktif atau divisi sebelumnya telah dihapus oleh administrator. Silakan hubungi Admin Institusi/Instansi Anda.'
-                ];
-            }
-
-            $request->session()->regenerate();
-
-            AuditLogger::auth(
-                'web_login_password',
-                "Pengguna {$user->name} ({$user->email}) berhasil login via Web menggunakan kredensial akun.",
-                ['role' => $user->level, 'instansi_id' => $user->instansi_id]
-            );
-
-            return ['success' => true, 'user' => $user];
+        if (!$user || !$passwordValid) {
+            return [
+                'success' => false,
+                'message' => self::GENERIC_AUTH_ERROR,
+            ];
         }
 
-        return [
-            'success' => false,
-            'message' => 'Kredensial yang Anda masukkan tidak cocok dengan data kami atau akun tidak dapat diakses.'
-        ];
+        if (MaintenanceMode::isWebInMaintenance() && !$user->isSuperAdmin()) {
+            return [
+                'success' => false,
+                'message' => 'Website sedang dalam masa pemeliharaan (Maintenance Mode). Hanya Super Administrator yang diizinkan masuk saat ini.'
+            ];
+        }
+
+        if ($user->isBanned() || $user->isSuspended() || $user->status === 'nonaktif') {
+            return [
+                'success' => false,
+                'message' => self::GENERIC_AUTH_ERROR,
+            ];
+        }
+
+        if ($user->isMember() && $user->instansi_id && (is_null($user->id_divisi) || !$user->divisi)) {
+            return [
+                'success' => false,
+                'message' => self::GENERIC_AUTH_ERROR,
+            ];
+        }
+
+        Auth::login($user, $remember);
+        $request->session()->regenerate();
+
+        AuditLogger::auth(
+            'web_login_password',
+            "Pengguna {$user->name} ({$user->email}) berhasil login via Web menggunakan kredensial akun.",
+            ['role' => $user->level, 'instansi_id' => $user->instansi_id]
+        );
+
+        return ['success' => true, 'user' => $user];
     }
 
     public function attemptApiLogin(string $loginInput, string $password, ?string $deviceName = 'mobile_app'): array
     {
         $user = $this->authRepository->findByLogin($loginInput);
+        $passwordValid = Hash::check($password, $user ? $user->password : self::DUMMY_BCRYPT_HASH);
 
-        if (!$user || !Hash::check($password, $user->password)) {
+        if (!$user || !$passwordValid) {
             return [
                 'status' => false,
                 'code' => 401,
-                'message' => 'Kredensial yang Anda masukkan tidak cocok dengan data kami atau akun tidak dapat diakses.'
+                'message' => self::GENERIC_AUTH_ERROR,
             ];
         }
 
@@ -99,16 +91,16 @@ class AuthService
         if ($user->isBanned() || $user->isSuspended() || $user->status === 'nonaktif') {
             return [
                 'status' => false,
-                'code' => 403,
-                'message' => 'Kredensial yang Anda masukkan tidak cocok dengan data kami atau akun tidak dapat diakses.'
+                'code' => 401,
+                'message' => self::GENERIC_AUTH_ERROR,
             ];
         }
 
         if (!in_array($user->level, [UserRole::SUPERADMIN->value, 'Superadmin', UserRole::ADMIN_INSTANSI->value]) && $user->instansi_id && (is_null($user->id_divisi) || !$user->divisi)) {
             return [
                 'status' => false,
-                'code' => 403,
-                'message' => 'Akun Anda tidak memiliki divisi/unit aktif atau divisi sebelumnya telah dihapus oleh administrator. Silakan hubungi Admin Institusi/Instansi Anda.'
+                'code' => 401,
+                'message' => self::GENERIC_AUTH_ERROR,
             ];
         }
 
@@ -176,8 +168,8 @@ class AuthService
         if (!$user) {
             return [
                 'status' => false,
-                'code' => 404,
-                'message' => "Login Google gagal: Akun dengan email ({$email}) belum terdaftar di sistem. Akun hanya dapat dibuat oleh Superadmin atau Admin Instansi/Institusi Anda."
+                'code' => 401,
+                'message' => self::GENERIC_AUTH_ERROR,
             ];
         }
 
@@ -186,8 +178,8 @@ class AuthService
         if ($user->isBanned() || $user->isSuspended() || $user->status === 'nonaktif') {
             return [
                 'status' => false,
-                'code' => 403,
-                'message' => 'Akun Anda tidak dapat diakses atau telah dinonaktifkan.'
+                'code' => 401,
+                'message' => self::GENERIC_AUTH_ERROR,
             ];
         }
 
@@ -203,8 +195,8 @@ class AuthService
         if (!in_array($user->level, [UserRole::SUPERADMIN->value, 'Superadmin', UserRole::ADMIN_INSTANSI->value]) && $user->instansi_id && (is_null($user->id_divisi) || !$user->divisi)) {
             return [
                 'status' => false,
-                'code' => 403,
-                'message' => 'Akun Anda tidak memiliki divisi/unit aktif atau divisi sebelumnya telah dihapus oleh administrator. Silakan hubungi Admin Institusi/Instansi Anda.'
+                'code' => 401,
+                'message' => self::GENERIC_AUTH_ERROR,
             ];
         }
 
@@ -275,21 +267,18 @@ class AuthService
         if (!$user) {
             return [
                 'success' => false,
-                'message' => "Login Google gagal: Akun dengan email ({$email}) belum terdaftar di sistem. Akun hanya dapat dibuat oleh Superadmin atau Admin Institusi/Instansi Anda.",
+                'message' => self::GENERIC_AUTH_ERROR,
             ];
         }
 
         $user = $this->authRepository->updateGoogleInfo($user, $googleId, $avatar);
 
-        if ($user->isBanned()) {
-            return ['success' => false, 'message' => 'Akun Anda telah di-banned.'];
-        }
-        if ($user->isSuspended()) {
-            return ['success' => false, 'message' => 'Akun Anda sedang disuspend.'];
+        if ($user->isBanned() || $user->isSuspended() || $user->status === 'nonaktif') {
+            return ['success' => false, 'message' => self::GENERIC_AUTH_ERROR];
         }
 
         if (!in_array($user->level, [UserRole::SUPERADMIN->value, 'Superadmin', UserRole::ADMIN_INSTANSI->value]) && $user->instansi_id && (is_null($user->id_divisi) || !$user->divisi)) {
-            return ['success' => false, 'message' => 'Akun Anda tidak memiliki divisi/unit aktif atau divisi sebelumnya telah dihapus oleh administrator. Silakan hubungi Admin Institusi/Instansi Anda.'];
+            return ['success' => false, 'message' => self::GENERIC_AUTH_ERROR];
         }
 
         if (MaintenanceMode::isWebInMaintenance() && !$user->isSuperAdmin()) {

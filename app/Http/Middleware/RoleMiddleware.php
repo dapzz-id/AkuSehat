@@ -50,10 +50,11 @@ class RoleMiddleware
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Akses tidak diizinkan untuk peran ' . $userLevel
-                ], 403);
+                    'success' => false,
+                    'message' => 'Data atau halaman tidak ditemukan.'
+                ], 404);
             }
-            abort(403, 'Akses tidak diizinkan untuk peran ' . $userLevel);
+            abort(404);
         }
 
         return $next($request);

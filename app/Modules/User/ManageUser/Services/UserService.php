@@ -259,7 +259,7 @@ class UserService
     public function getMembersForApi(User $actor): array
     {
         if (!$actor->isHealthConsultant() && !$actor->isSuperAdmin() && !$actor->isAdminInstansi()) {
-            return ['status' => false, 'code' => 403, 'message' => 'Akses tidak diperbolehkan.'];
+            return ['status' => false, 'code' => 404, 'message' => 'Data tidak ditemukan.'];
         }
 
         $members = $this->userRepository->getMembersByInstansi($actor->instansi_id, 15);
@@ -270,7 +270,7 @@ class UserService
     public function getMembersByDivisiForApi(User $actor, int|string $divisiId): array
     {
         if (!$actor->isHealthConsultant() && !$actor->isSuperAdmin() && !$actor->isAdminInstansi()) {
-            return ['status' => false, 'code' => 403, 'message' => 'Akses tidak diperbolehkan.'];
+            return ['status' => false, 'code' => 404, 'message' => 'Data tidak ditemukan.'];
         }
 
         $members = $this->userRepository->getMembersByDivisi($actor->instansi_id, $divisiId);

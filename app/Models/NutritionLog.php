@@ -26,6 +26,7 @@ class NutritionLog extends Model
         'log_date' => 'date',
         'calories' => 'integer',
         'is_balanced' => 'boolean',
+        'notes' => \App\Casts\TenantEncrypted::class,
     ];
 
     public function user()

@@ -25,6 +25,7 @@ class BurnoutScreening extends Model
         'screening_date' => 'date',
         'stress_score' => 'integer',
         'workload_rating' => 'integer',
+        'notes' => \App\Casts\TenantEncrypted::class,
     ];
 
     public function user()

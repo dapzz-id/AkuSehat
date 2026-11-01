@@ -41,7 +41,7 @@ class SecurityHardeningTest extends TestCase
 
         $response = $this->getJson('/api/health-consultant/health-summary');
 
-        $response->assertStatus(403);
+        $response->assertStatus(404);
         $response->assertJson([
             'status' => false,
         ]);
@@ -49,7 +49,7 @@ class SecurityHardeningTest extends TestCase
 
     /**
      * Test role-based protection on Health Monitor API endpoints.
-     * Regular members must receive JSON 403 Forbidden.
+     * Regular members must receive JSON 404 Not Found (Stealth Authorization).
      */
     public function test_member_cannot_access_health_monitor_api(): void
     {
@@ -65,7 +65,7 @@ class SecurityHardeningTest extends TestCase
 
         $response = $this->getJson('/api/health-monitor/member-haid');
 
-        $response->assertStatus(403);
+        $response->assertStatus(404);
         $response->assertJson([
             'status' => false,
         ]);
@@ -221,5 +221,33 @@ class SecurityHardeningTest extends TestCase
         $this->assertTrue(enum_exists(\App\Modules\Billing\Subscription\Enums\BillingRate::class));
         $this->assertTrue(enum_exists(\App\Modules\Billing\Subscription\Enums\BillingTransactionType::class));
         $this->assertTrue(enum_exists(\App\Modules\Billing\Subscription\Enums\PaymentMethod::class));
+    }
+
+    /**
+     * Test TenantEncrypted cast encrypts and decrypts clinical messages per-tenant using AES-256-GCM.
+     */
+    public function test_sensitive_health_data_is_encrypted_at_rest_and_isolated_per_tenant(): void
+    {
+        $tenantA = (string) Str::uuid7();
+        $tenantB = (string) Str::uuid7();
+
+        $kesehatan = new \App\Models\Kesehatan([
+            'instansi_id' => $tenantA,
+            'pesan_imt' => 'Pasien memerlukan pemantauan gizi berkala.',
+            'pesan_tkd' => 'Tekanan darah normal optimal.',
+        ]);
+
+        // Raw database attribute must be encrypted with enc:v1: envelope
+        $rawAttributes = $kesehatan->getAttributes();
+        $this->assertStringStartsWith('enc:v1:', $rawAttributes['pesan_imt']);
+        $this->assertStringStartsWith('enc:v1:', $rawAttributes['pesan_tkd']);
+        $this->assertNotEquals('Pasien memerlukan pemantauan gizi berkala.', $rawAttributes['pesan_imt']);
+
+        // Accessing via model attribute within same tenant decrypts transparently
+        $this->assertEquals('Pasien memerlukan pemantauan gizi berkala.', $kesehatan->pesan_imt);
+
+        // Tenant B key cannot decrypt Tenant A ciphertext
+        $encryptionService = app(\App\Services\Security\TenantEncryptionService::class);
+        $this->assertNull($encryptionService->decryptForTenant($rawAttributes['pesan_imt'], $tenantB));
     }
 }

@@ -145,7 +145,7 @@ class AuthController extends Controller
 
             return $this->loginWithGoogleUser($googleId, $name, $email, $avatar);
         } catch (\Exception $e) {
-            return redirect()->route('login')->with('error', 'Terjadi kesalahan sistem saat autentikasi Google: ' . $e->getMessage());
+            return redirect()->route('login')->with('error', 'Email/Username atau Password salah.');
         }
     }
 

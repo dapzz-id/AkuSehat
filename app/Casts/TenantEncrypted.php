@@ -5,6 +5,7 @@ namespace App\Casts;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Model;
 use App\Services\Security\TenantEncryptionService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 
 /**
@@ -18,6 +19,15 @@ class TenantEncrypted implements CastsAttributes
         return app(TenantEncryptionService::class);
     }
 
+    protected function resolveTenantId(Model $model, array $attributes): ?string
+    {
+        $tenantId = $model->instansi_id ?? $attributes['instansi_id'] ?? null;
+        if (!$tenantId && Auth::check()) {
+            $tenantId = Auth::user()?->instansi_id;
+        }
+        return $tenantId ? (string) $tenantId : null;
+    }
+
     /**
      * Transform the attribute from the underlying model values (Decrypt).
      */
@@ -27,7 +37,7 @@ class TenantEncrypted implements CastsAttributes
             return $value;
         }
 
-        $tenantId = $model->instansi_id ?? $attributes['instansi_id'] ?? null;
+        $tenantId = $this->resolveTenantId($model, $attributes);
         if (!$tenantId) {
             // Fallback ke standard safe decrypt jika model tidak memiliki instansi_id
             try {
@@ -37,7 +47,7 @@ class TenantEncrypted implements CastsAttributes
             }
         }
 
-        return $this->getService()->decryptForTenant($value, (string) $tenantId);
+        return $this->getService()->decryptForTenant($value, $tenantId);
     }
 
     /**
@@ -49,7 +59,12 @@ class TenantEncrypted implements CastsAttributes
             return $value;
         }
 
-        $tenantId = $model->instansi_id ?? $attributes['instansi_id'] ?? null;
+        // Hindari enkripsi ganda jika nilai sudah berformat enc:v1:
+        if (is_string($value) && str_starts_with($value, 'enc:v1:')) {
+            return $value;
+        }
+
+        $tenantId = $this->resolveTenantId($model, $attributes);
         if (!$tenantId) {
             try {
                 return Crypt::encryptString($value);
@@ -58,6 +73,6 @@ class TenantEncrypted implements CastsAttributes
             }
         }
 
-        return $this->getService()->encryptForTenant($value, (string) $tenantId);
+        return $this->getService()->encryptForTenant((string) $value, $tenantId);
     }
 }

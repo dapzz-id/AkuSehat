@@ -34,7 +34,9 @@ class Kesehatan extends Model
     ];
 
     protected $casts = [
-        'tgl' => 'date'
+        'tgl' => 'date',
+        'pesan_imt' => \App\Casts\TenantEncrypted::class,
+        'pesan_tkd' => \App\Casts\TenantEncrypted::class,
     ];
 
     public function user()

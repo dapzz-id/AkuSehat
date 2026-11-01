@@ -27,7 +27,7 @@
             <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Data Tidak Ditemukan</h1>
             
             <p class="text-sm text-slate-600 mt-2.5 leading-relaxed">
-                Halaman atau data dengan pengenal UUID tersebut tidak ditemukan pada institusi/instansi Anda atau telah dipindahkan.
+                Halaman atau data yang Anda cari tidak ditemukan atau telah dipindahkan.
             </p>
 
             <div class="mt-6 flex flex-col sm:flex-row items-center gap-2.5">

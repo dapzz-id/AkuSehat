@@ -25,6 +25,7 @@ class VaccineRecord extends Model
     protected $casts = [
         'dose_number' => 'integer',
         'administered_date' => 'date',
+        'allergy_notes' => \App\Casts\TenantEncrypted::class,
     ];
 
     public function user()

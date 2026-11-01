@@ -37,6 +37,7 @@ class UserActivity extends Model
         'max_speed' => 'float',
         'steps' => 'integer',
         'route_coordinates' => 'array',
+        'notes' => \App\Casts\TenantEncrypted::class,
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
     ];

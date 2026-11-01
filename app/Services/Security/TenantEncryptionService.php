@@ -125,6 +125,14 @@ class TenantEncryptionService
     {
         // Cek format prefix envelope enkripsi
         if (!str_starts_with($payload, 'enc:v1:')) {
+            // Jika menggunakan Laravel Crypt::encryptString fallback (eyJpdiI6...)
+            if (str_starts_with($payload, 'eyJ')) {
+                try {
+                    return \Illuminate\Support\Facades\Crypt::decryptString($payload);
+                } catch (\Throwable $e) {
+                    return $payload;
+                }
+            }
             // Data legacy (belum terenkripsi), return langsung tanpa error
             return $payload;
         }

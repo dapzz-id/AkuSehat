@@ -34,7 +34,7 @@ class AdminUserController extends Controller
     public function create()
     {
         if (!Auth::user()->canAddUser()) {
-            return redirect()->route('admin.users.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menambah pengguna.');
+            abort(404);
         }
 
         $data = $this->userService->getCreateFormData(Auth::user());
@@ -44,7 +44,7 @@ class AdminUserController extends Controller
     public function store(StoreUserRequest $request)
     {
         if (!Auth::user()->canAddUser()) {
-            return redirect()->route('admin.users.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menambah pengguna.');
+            abort(404);
         }
 
         try {

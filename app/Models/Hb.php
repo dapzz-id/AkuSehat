@@ -25,7 +25,8 @@ class Hb extends Model
     ];
 
     protected $casts = [
-        'tgl' => 'date'
+        'tgl' => 'date',
+        'pesan' => \App\Casts\TenantEncrypted::class,
     ];
 
     public function user()

@@ -9,6 +9,11 @@ use Symfony\Component\HttpFoundation\Response;
 use App\Models\User;
 use App\Models\Divisi;
 use App\Models\Instansi;
+use App\Models\Kesehatan;
+use App\Models\Hb;
+use App\Models\DataHaid;
+use App\Models\PeminjamanPita;
+use App\Models\CounselingSession;
 
 class EnforceTenantAccess
 {
@@ -31,87 +36,128 @@ class EnforceTenantAccess
             return $next($request);
         }
 
-        // 3. Blokir akses ke rute /superadmin untuk non-SuperAdmin
+        // 3. Blokir akses ke rute /superadmin untuk non-SuperAdmin dengan Stealth 404
         if ($request->is('superadmin*')) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Akses Ditolak: Halaman SuperAdmin hanya untuk Administrator Pusat.'
-                ], 403);
+            return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+        }
+
+        // 3b. Blokir akses ke rute manajemen sensitif instansi jika bukan Admin Instansi / Admin atau tidak memiliki izin
+        if ($request->is('admin/modules*') || $request->is('admin/billing*') || $request->is('admin/divisi*')) {
+            if (!$currentUser->isAdminInstansi() && !$currentUser->isAdmin()) {
+                return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
             }
-            abort(403, 'Akses Ditolak: Halaman SuperAdmin hanya untuk Administrator Pusat.');
+        }
+
+        if ($request->is('admin/users*')) {
+            if (!$currentUser->canAddUser() && !$currentUser->isAdminInstansi() && !$currentUser->isAdmin()) {
+                return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+            }
+            if (($request->isMethod('DELETE') || $request->is('admin/users/*/permissions')) && !$currentUser->isAdminInstansi() && !$currentUser->isAdmin()) {
+                return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+            }
         }
 
         $currentInstansiId = $currentUser->instansi_id;
 
-        // 4. Pengguna tanpa instansi_id tidak boleh mengakses modul instansi
+        // 4. Pengguna tanpa instansi_id tidak boleh mengakses modul instansi (Stealth 404)
         if (!$currentInstansiId) {
             if ($request->is('admin*') || $request->is('api/member*') || $request->is('api/health*')) {
                 if ($request->routeIs('link.instansi') || $request->is('link-instansi*') || $request->is('profile*') || $request->is('logout')) {
                     return $next($request);
                 }
 
-                if ($request->expectsJson()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Akun Anda belum terhubung dengan institusi/instansi manapun. Silakan tautkan kode undangan instansi terlebih dahulu.'
-                    ], 403);
-                }
-
-                return redirect()->route('dashboard')->with('error', 'Akun Anda belum terhubung dengan institusi/instansi manapun.');
+                return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
             }
             return $next($request);
         }
 
-        // 5. Validasi Route Parameters (IDOR Prevention)
+        // 5. Validasi Route Parameters (Anti-IDOR & Cross-Tenant Stealth 404)
         if ($request->route()) {
             foreach ($request->route()->parameters() as $paramKey => $paramValue) {
-            // A. Parameter User ({user})
-            if ($paramValue instanceof User) {
-                if ($paramValue->instansi_id !== $currentInstansiId) {
-                    return $this->forbiddenResponse($request, 'Akses Ditolak: Data pengguna ini milik institusi/instansi lain.');
+                // A. Parameter User ({user})
+                if ($paramValue instanceof User) {
+                    if ($paramValue->instansi_id !== $currentInstansiId) {
+                        return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                    }
+                } elseif ($paramKey === 'user' && is_string($paramValue)) {
+                    $targetUser = User::withoutGlobalScopes()->find($paramValue);
+                    if (!$targetUser || $targetUser->instansi_id !== $currentInstansiId) {
+                        return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                    }
                 }
-            } elseif ($paramKey === 'user' && is_string($paramValue)) {
-                $targetUser = User::withoutGlobalScopes()->find($paramValue);
-                if ($targetUser && $targetUser->instansi_id !== $currentInstansiId) {
-                    return $this->forbiddenResponse($request, 'Akses Ditolak: Data pengguna ini milik institusi/instansi lain.');
-                }
-            }
 
-            // B. Parameter Divisi ({divisi})
-            if ($paramValue instanceof Divisi) {
-                if ($paramValue->instansi_id !== $currentInstansiId) {
-                    return $this->forbiddenResponse($request, 'Akses Ditolak: Divisi ini milik institusi/instansi lain.');
+                // B. Parameter Divisi ({divisi} / {divisi_id})
+                if ($paramValue instanceof Divisi) {
+                    if ($paramValue->instansi_id !== $currentInstansiId) {
+                        return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                    }
+                } elseif (in_array($paramKey, ['divisi', 'divisi_id'], true) && is_string($paramValue)) {
+                    $targetDivisi = Divisi::withoutGlobalScopes()->find($paramValue);
+                    if (!$targetDivisi || $targetDivisi->instansi_id !== $currentInstansiId) {
+                        return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                    }
                 }
-            } elseif ($paramKey === 'divisi' && is_string($paramValue)) {
-                $targetDivisi = Divisi::withoutGlobalScopes()->find($paramValue);
-                if ($targetDivisi && $targetDivisi->instansi_id !== $currentInstansiId) {
-                    return $this->forbiddenResponse($request, 'Akses Ditolak: Divisi ini milik institusi/instansi lain.');
-                }
-            }
 
-            // C. Parameter Instansi ({instansi})
-            if ($paramValue instanceof Instansi) {
-                if ($paramValue->id !== $currentInstansiId) {
-                    return $this->forbiddenResponse($request, 'Akses Ditolak: Anda tidak memiliki akses ke institusi/instansi lain.');
+                // C. Parameter Instansi ({instansi})
+                if ($paramValue instanceof Instansi) {
+                    if ($paramValue->id !== $currentInstansiId) {
+                        return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                    }
+                } elseif ($paramKey === 'instansi' && is_string($paramValue)) {
+                    if ($paramValue !== $currentInstansiId) {
+                        return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                    }
                 }
-            } elseif ($paramKey === 'instansi' && is_string($paramValue)) {
-                if ($paramValue !== $currentInstansiId) {
-                    return $this->forbiddenResponse($request, 'Akses Ditolak: Anda tidak memiliki akses ke institusi/instansi lain.');
-                }
-            }
 
-            // D. Model lain yang memiliki atribut instansi_id atau user
-            if (is_object($paramValue) && method_exists($paramValue, 'getAttribute')) {
-                if ($paramValue->instansi_id && $paramValue->instansi_id !== $currentInstansiId) {
-                    return $this->forbiddenResponse($request, 'Akses Ditolak: Data ini milik institusi/instansi lain.');
+                // D. Parameter Spesifik Modul ({kesehatan}, {hb}, {counseling}, {peminjaman}, {dataHaid}, {id})
+                if (is_string($paramValue)) {
+                    if ($paramKey === 'kesehatan') {
+                        $rec = Kesehatan::withoutGlobalScopes()->find($paramValue);
+                        if (!$rec || ($rec->instansi_id && $rec->instansi_id !== $currentInstansiId)) {
+                            return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                        }
+                    } elseif ($paramKey === 'hb') {
+                        $rec = Hb::withoutGlobalScopes()->find($paramValue);
+                        if (!$rec || ($rec->instansi_id && $rec->instansi_id !== $currentInstansiId)) {
+                            return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                        }
+                    } elseif ($paramKey === 'counseling') {
+                        $rec = CounselingSession::withoutGlobalScopes()->find($paramValue);
+                        if (!$rec || ($rec->instansi_id && $rec->instansi_id !== $currentInstansiId)) {
+                            return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                        }
+                    } elseif ($paramKey === 'peminjaman') {
+                        $rec = PeminjamanPita::withoutGlobalScopes()->find($paramValue);
+                        if (!$rec || ($rec->instansi_id && $rec->instansi_id !== $currentInstansiId)) {
+                            return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                        }
+                    } elseif ($paramKey === 'dataHaid') {
+                        $rec = DataHaid::withoutGlobalScopes()->find($paramValue);
+                        if (!$rec || ($rec->instansi_id && $rec->instansi_id !== $currentInstansiId)) {
+                            return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                        }
+                    } elseif ($paramKey === 'id' && $request->is('api/member/*')) {
+                        if ($currentUser->isMember() && (string) $currentUser->id !== (string) $paramValue) {
+                            return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                        }
+                        $targetMember = User::withoutGlobalScopes()->find($paramValue);
+                        if ($targetMember && $targetMember->instansi_id !== $currentInstansiId) {
+                            return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                        }
+                    }
                 }
-                if ($paramValue->user && $paramValue->user->instansi_id && $paramValue->user->instansi_id !== $currentInstansiId) {
-                    return $this->forbiddenResponse($request, 'Akses Ditolak: Data ini milik institusi/instansi lain.');
+
+                // E. Model lain yang memiliki atribut instansi_id atau user
+                if (is_object($paramValue) && method_exists($paramValue, 'getAttribute')) {
+                    if ($paramValue->instansi_id && $paramValue->instansi_id !== $currentInstansiId) {
+                        return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                    }
+                    if ($paramValue->user && $paramValue->user->instansi_id && $paramValue->user->instansi_id !== $currentInstansiId) {
+                        return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
+                    }
                 }
             }
         }
-    }
 
         // 6. Validasi Request Body (Prevent Cross-Tenant Tampering)
         if ($request->isMethod('POST') || $request->isMethod('PUT') || $request->isMethod('PATCH')) {
@@ -152,11 +198,12 @@ class EnforceTenantAccess
     {
         if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json([
+                'status' => false,
                 'success' => false,
-                'message' => 'Data tidak ditemukan.',
+                'message' => 'Data atau halaman tidak ditemukan.',
             ], 404);
         }
 
-        abort(404, 'Data tidak ditemukan.');
+        abort(404);
     }
 }
