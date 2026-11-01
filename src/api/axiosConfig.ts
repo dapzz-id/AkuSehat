@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { Config } from "../settings/Config"
 import { Alert } from 'react-native';
 import { navigationRef } from '../navigation/rootNavigation';
+import { createS2sHeaders } from './s2sCrypto';
 
 const api = axios.create({
   baseURL: Config.API_URL,
@@ -31,6 +32,26 @@ api.interceptors.request.use(async (config) => {
         if (token) {
           config.headers['Authorization'] = `Bearer ${token}`;
         }
+      }
+
+      // Attach S2S Cryptographic Request Signature (HMAC-SHA256 + Anti-Replay Nonce)
+      if (!(config.data instanceof FormData)) {
+        const method = (config.method || 'GET').toUpperCase();
+        const basePath = (config.baseURL || '').replace(/^https?:\/\/[^/]+/, '').replace(/\/+$/, '');
+        const reqPath = (config.url || '').startsWith('http')
+          ? (config.url || '').replace(/^https?:\/\/[^/]+/, '')
+          : `${basePath}/${(config.url || '').replace(/^\/+/, '')}`;
+        const rawBody =
+          config.data === undefined || config.data === null
+            ? ''
+            : typeof config.data === 'string'
+              ? config.data
+              : JSON.stringify(config.data);
+
+        const s2sHeaders = createS2sHeaders(method, reqPath, rawBody);
+        config.headers['X-Timestamp'] = s2sHeaders['X-Timestamp'];
+        config.headers['X-Nonce'] = s2sHeaders['X-Nonce'];
+        config.headers['X-Signature'] = s2sHeaders['X-Signature'];
       }
     }
   } catch (e) {
