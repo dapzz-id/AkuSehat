@@ -24,17 +24,10 @@
                 </div>
             </a>
             <div class="flex items-center gap-3">
-                @auth
-                    <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#308a34] hover:bg-[#1B5E20] transition-colors shadow-sm">
-                        <i class="fas fa-arrow-left"></i>
-                        <span>Kembali</span>
-                    </a>
-                @else
-                    <a href="{{ route('login') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#308a34] hover:bg-[#1B5E20] transition-colors shadow-sm">
-                        <i class="fas fa-sign-in-alt"></i>
-                        <span>Masuk ke Akun</span>
-                    </a>
-                @endauth
+                <a href="{{ url('/') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#308a34] hover:bg-[#1B5E20] transition-colors shadow-sm">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Kembali</span>
+                </a>
             </div>
         </div>
     </header>
