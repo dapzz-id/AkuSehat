@@ -21,6 +21,11 @@
         'resources/css/app.css',
         'resources/js/app.js'
     ])
+
+    @if(config('services.turnstile.enabled', true) && config('services.turnstile.site_key'))
+        <!-- Cloudflare Turnstile -->
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    @endif
 </head>
 
 <body class="h-full bg-slate-900 font-sans antialiased text-slate-800">
@@ -202,6 +207,7 @@
                                            id="privacyConsent" 
                                            name="kebijakan_privasi" 
                                            value="1"
+                                           {{ old('kebijakan_privasi') ? 'checked' : '' }}
                                            class="w-4 h-4 mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0 cursor-pointer">
                                     <label for="privacyConsent" class="text-xs text-slate-700 leading-snug cursor-pointer select-none">
                                         Saya telah membaca dan menyetujui 
@@ -215,6 +221,21 @@
                                     <i class="fas fa-circle-info"></i> Wajib scroll hingga bagian paling bawah untuk menyetujui.
                                 </p>
                             </div>
+
+                            @if(config('services.turnstile.enabled', true) && config('services.turnstile.site_key'))
+                                <!-- Cloudflare Turnstile Widget -->
+                                <div class="pt-1">
+                                    <div class="cf-turnstile flex justify-center"
+                                         data-sitekey="{{ config('services.turnstile.site_key') }}"
+                                         data-theme="light"
+                                         data-size="flexible"
+                                         data-callback="onTurnstileSuccess"
+                                         data-expired-callback="onTurnstileExpired"></div>
+                                    <p id="turnstileWarningText" class="text-[11px] text-rose-600 mt-1.5 text-center hidden flex items-center justify-center gap-1 font-medium">
+                                        <i class="fas fa-shield-halved"></i> Harap selesaikan verifikasi keamanan Cloudflare terlebih dahulu.
+                                    </p>
+                                </div>
+                            @endif
                         </div>
 
                         <!-- Submit Button -->
@@ -428,9 +449,22 @@
             const scrollStatusBadge = document.getElementById('scrollStatusBadge');
             const scrollPercentage = document.getElementById('scrollPercentage');
             const privacyWarningText = document.getElementById('privacyWarningText');
+            const turnstileWarningText = document.getElementById('turnstileWarningText');
             const loginForm = document.querySelector('form');
 
-            let hasScrolledToBottom = false;
+            let hasScrolledToBottom = {{ old('kebijakan_privasi') ? 'true' : 'false' }};
+
+            window.onTurnstileSuccess = function() {
+                if (turnstileWarningText) {
+                    turnstileWarningText.classList.add('hidden');
+                }
+            };
+
+            window.onTurnstileExpired = function() {
+                if (turnstileWarningText) {
+                    turnstileWarningText.classList.remove('hidden');
+                }
+            };
 
             function openModal() {
                 privacyModal.classList.remove('hidden');
@@ -494,12 +528,24 @@
                 }
             });
 
-            // Prevent submit if not agreed
+            // Prevent submit if not agreed or Turnstile not completed
             loginForm.addEventListener('submit', function(e) {
                 if (!privacyConsent.checked) {
                     e.preventDefault();
                     privacyWarningText.classList.remove('hidden');
                     openModal();
+                    return;
+                }
+
+                const turnstileWidget = loginForm.querySelector('.cf-turnstile');
+                if (turnstileWidget) {
+                    const turnstileInput = loginForm.querySelector('input[name="cf-turnstile-response"]');
+                    if (!turnstileInput || !turnstileInput.value) {
+                        e.preventDefault();
+                        if (turnstileWarningText) {
+                            turnstileWarningText.classList.remove('hidden');
+                        }
+                    }
                 }
             });
         });

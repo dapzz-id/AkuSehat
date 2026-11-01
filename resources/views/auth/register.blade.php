@@ -21,6 +21,11 @@
         'resources/css/app.css',
         'resources/js/app.js'
     ])
+
+    @if(config('services.turnstile.enabled', true) && config('services.turnstile.site_key'))
+        <!-- Cloudflare Turnstile -->
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    @endif
 </head>
 
 <body class="h-full bg-slate-900 font-sans antialiased text-slate-800">
@@ -262,6 +267,16 @@
                                 <i class="fas fa-circle-info"></i> Harap baca dan scroll Kebijakan Privasi hingga ke bawah.
                             </p>
                         </div>
+
+                        @if(config('services.turnstile.enabled', true) && config('services.turnstile.site_key'))
+                            <!-- Cloudflare Turnstile Widget -->
+                            <div class="pt-1">
+                                <div class="cf-turnstile flex justify-center"
+                                     data-sitekey="{{ config('services.turnstile.site_key') }}"
+                                     data-theme="light"
+                                     data-size="flexible"></div>
+                            </div>
+                        @endif
 
                         <!-- Submit Button -->
                         <button type="submit" id="btnSubmitRegister"

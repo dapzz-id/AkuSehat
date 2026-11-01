@@ -52,4 +52,10 @@ return [
         'service_account_json' => env('GOOGLE_PLAY_SERVICE_ACCOUNT_JSON'),
     ],
 
+    'turnstile' => [
+        'enabled' => env('TURNSTILE_ENABLED', true),
+        'site_key' => env('TURNSTILE_SITE_KEY', '1x00000000000000000000AA'),
+        'secret_key' => env('TURNSTILE_SECRET_KEY', '1x0000000000000000000000000000000AA'),
+    ],
+
 ];
