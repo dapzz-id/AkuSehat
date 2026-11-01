@@ -14,10 +14,17 @@ class AuthRepository
         $fieldType = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         if ($fieldType === 'email') {
-            return User::whereRaw('LOWER(email) = ?', [strtolower($login)])->first();
+            return User::withoutGlobalScopes()
+                ->whereRaw('LOWER(email) = ?', [strtolower($login)])
+                ->first();
         }
 
-        return User::where('username', $login)->first();
+        return User::withoutGlobalScopes()
+            ->where(function ($q) use ($login) {
+                $q->whereRaw('LOWER(username) = ?', [strtolower($login)])
+                  ->orWhere('nomor_induk', $login);
+            })
+            ->first();
     }
 
     public function findByGoogleIdOrEmail(string $googleId, string $email): ?User
