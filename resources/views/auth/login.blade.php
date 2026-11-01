@@ -22,7 +22,14 @@
         'resources/js/app.js'
     ])
 
-    @if(config('services.turnstile.enabled', true) && config('services.turnstile.site_key'))
+    @php
+        $turnstileSiteKey = config('services.turnstile.site_key')
+            ?: env('TURNSTILE_SITE_KEY')
+            ?: env('CLOUDFLARE_TURNSTILE_SITE_KEY')
+            ?: env('CF_TURNSTILE_SITE_KEY');
+        $turnstileEnabled = (bool) config('services.turnstile.enabled', true) && !empty($turnstileSiteKey);
+    @endphp
+    @if($turnstileEnabled)
         <!-- Cloudflare Turnstile -->
         <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     @endif
@@ -222,11 +229,11 @@
                                 </p>
                             </div>
 
-                            @if(config('services.turnstile.enabled', true) && config('services.turnstile.site_key'))
+                            @if($turnstileEnabled)
                                 <!-- Cloudflare Turnstile Widget -->
                                 <div class="pt-1">
                                     <div class="cf-turnstile flex justify-center"
-                                         data-sitekey="{{ config('services.turnstile.site_key') }}"
+                                         data-sitekey="{{ $turnstileSiteKey }}"
                                          data-theme="light"
                                          data-size="flexible"
                                          data-callback="onTurnstileSuccess"

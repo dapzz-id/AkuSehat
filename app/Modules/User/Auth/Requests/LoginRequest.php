@@ -48,7 +48,7 @@ class LoginRequest extends FormRequest
             }
 
             $token = (string) $this->input('cf-turnstile-response', '');
-            $secretKey = (string) config('services.turnstile.secret_key');
+            $secretKey = $this->getTurnstileSecretKey();
 
             try {
                 $response = Http::asForm()->timeout(10)->post(
@@ -79,7 +79,27 @@ class LoginRequest extends FormRequest
     {
         return !app()->environment('testing')
             && (bool) config('services.turnstile.enabled', true)
-            && !empty(config('services.turnstile.site_key'))
-            && !empty(config('services.turnstile.secret_key'));
+            && !empty($this->getTurnstileSiteKey())
+            && !empty($this->getTurnstileSecretKey());
+    }
+
+    protected function getTurnstileSiteKey(): string
+    {
+        return (string) (
+            config('services.turnstile.site_key')
+            ?: env('TURNSTILE_SITE_KEY')
+            ?: env('CLOUDFLARE_TURNSTILE_SITE_KEY')
+            ?: env('CF_TURNSTILE_SITE_KEY', '')
+        );
+    }
+
+    protected function getTurnstileSecretKey(): string
+    {
+        return (string) (
+            config('services.turnstile.secret_key')
+            ?: env('TURNSTILE_SECRET_KEY')
+            ?: env('CLOUDFLARE_TURNSTILE_SECRET_KEY')
+            ?: env('CF_TURNSTILE_SECRET_KEY', '')
+        );
     }
 }
