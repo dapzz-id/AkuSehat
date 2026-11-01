@@ -49,9 +49,11 @@ api.interceptors.request.use(async (config) => {
               : JSON.stringify(config.data);
 
         const s2sHeaders = createS2sHeaders(method, reqPath, rawBody);
-        config.headers['X-Timestamp'] = s2sHeaders['X-Timestamp'];
-        config.headers['X-Nonce'] = s2sHeaders['X-Nonce'];
-        config.headers['X-Signature'] = s2sHeaders['X-Signature'];
+        if (s2sHeaders) {
+          config.headers['X-Timestamp'] = s2sHeaders['X-Timestamp'];
+          config.headers['X-Nonce'] = s2sHeaders['X-Nonce'];
+          config.headers['X-Signature'] = s2sHeaders['X-Signature'];
+        }
       }
     }
   } catch (e) {

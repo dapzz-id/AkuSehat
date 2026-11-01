@@ -3,7 +3,9 @@
  * Pure TypeScript implementation compatible with React Native Hermes without native dependencies.
  */
 
-const S2S_SHARED_SECRET = 'akusehat-s2s-hmac-v1-9c4f8a2e7b1d6c3a5e0f9b8d7c6a5e4f3b2a1d0c';
+import { LOCAL_SECRETS } from '../config/secrets.local';
+
+const S2S_SHARED_SECRET = LOCAL_SECRETS.S2S_SHARED_SECRET;
 
 const K: number[] = [
   0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -177,15 +179,20 @@ export function createS2sHeaders(method: string, fullPath: string, rawBody: stri
   'X-Timestamp': string;
   'X-Nonce': string;
   'X-Signature': string;
-} {
+} | null {
+  if (!S2S_SHARED_SECRET || !S2S_SHARED_SECRET.trim()) {
+    return null;
+  }
+
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const nonce = generateNonce();
   const normalizedMethod = (method || 'GET').toUpperCase().trim();
   const cleanPath = '/' + fullPath.replace(/^https?:\/\/[^/]+/, '').replace(/\?.*$/, '').replace(/^\/+/, '');
-  const bodyHash = sha256Hex(rawBody);
+  const normalizedBody = normalizedMethod === 'GET' || normalizedMethod === 'HEAD' ? '' : rawBody;
+  const bodyHash = sha256Hex(normalizedBody);
 
   const canonical = [normalizedMethod, cleanPath, timestamp, nonce, bodyHash].join('\n');
-  const signature = hmacSha256Hex(canonical, S2S_SHARED_SECRET);
+  const signature = hmacSha256Hex(canonical, S2S_SHARED_SECRET.trim());
 
   return {
     'X-Timestamp': timestamp,
@@ -193,3 +200,4 @@ export function createS2sHeaders(method: string, fullPath: string, rawBody: stri
     'X-Signature': signature,
   };
 }
+

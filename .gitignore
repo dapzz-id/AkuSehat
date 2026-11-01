@@ -73,3 +73,10 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+
+# Environment & Local Secrets (NEVER publish to GitHub)
+.env
+.env.*
+!.env.example
+src/config/secrets.local.ts
