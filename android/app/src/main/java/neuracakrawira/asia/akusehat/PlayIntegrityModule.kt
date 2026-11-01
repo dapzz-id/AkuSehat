@@ -1,12 +1,11 @@
 package neuracakrawira.asia.akusehat
 
+import android.content.pm.PackageManager
 import android.util.Log
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
-import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.IntegrityTokenRequest
 
@@ -18,9 +17,12 @@ class PlayIntegrityModule(reactContext: ReactApplicationContext) :
     @ReactMethod
     fun isPlayServicesAvailable(promise: Promise) {
         try {
-            val availability = GoogleApiAvailability.getInstance()
-            val resultCode = availability.isGooglePlayServicesAvailable(reactApplicationContext)
-            promise.resolve(resultCode == ConnectionResult.SUCCESS)
+            val pm = reactApplicationContext.packageManager
+            // Cek keberadaan paket Google Play Services ("com.google.android.gms")
+            pm.getPackageInfo("com.google.android.gms", 0)
+            promise.resolve(true)
+        } catch (e: PackageManager.NameNotFoundException) {
+            promise.resolve(false)
         } catch (e: Exception) {
             promise.resolve(false)
         }
