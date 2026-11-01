@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'PDF' => Barryvdh\DomPDF\Facade::class,
             'check.division' => \App\Http\Middleware\CheckUserDivisionActive::class,
             'tenant.isolate' => \App\Http\Middleware\EnforceTenantAccess::class,
+            's2s.verify' => \App\Http\Middleware\VerifyS2sSignature::class,
         ]);
 
         $middleware->web(append: [
@@ -30,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->api(append: [
+            \App\Http\Middleware\VerifyS2sSignature::class,
             \App\Http\Middleware\CheckUserDivisionActive::class,
             \App\Http\Middleware\EnforceTenantAccess::class,
             \App\Http\Middleware\CheckMaintenance::class,

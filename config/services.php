@@ -58,4 +58,10 @@ return [
         'secret_key' => env('TURNSTILE_SECRET_KEY') ?: env('CLOUDFLARE_TURNSTILE_SECRET_KEY') ?: env('CF_TURNSTILE_SECRET_KEY', '1x0000000000000000000000000000000AA'),
     ],
 
+    's2s' => [
+        'strict_mode' => (bool) env('S2S_STRICT_MODE', false),
+        'secret' => env('S2S_SHARED_SECRET', 'akusehat-s2s-hmac-v1-9c4f8a2e7b1d6c3a5e0f9b8d7c6a5e4f3b2a1d0c'),
+        'tolerance_seconds' => (int) env('S2S_TOLERANCE_SECONDS', 60),
+    ],
+
 ];

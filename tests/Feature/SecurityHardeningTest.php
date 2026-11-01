@@ -267,4 +267,60 @@ class SecurityHardeningTest extends TestCase
         $this->assertTrue(\Illuminate\Support\Facades\Hash::check('LegacyPassword123', $legacyBcryptHash));
         $this->assertTrue(\Illuminate\Support\Facades\Hash::needsRehash($legacyBcryptHash));
     }
+
+    /**
+     * Test Machine-to-Machine (S2S) Cryptographic HMAC-SHA256 Request Signing & Anti-Replay Protection.
+     */
+    public function test_s2s_cryptographic_hmac_signing_and_anti_replay_protection(): void
+    {
+        /** @var \App\Services\Security\S2sSignatureService $s2s */
+        $s2s = app(\App\Services\Security\S2sSignatureService::class);
+
+        $timestamp = time();
+        $nonce = 'nonce_' . Str::random(24);
+        $path = 'api/system/realtime-sync';
+        $signature = $s2s->signRequest('GET', $path, $timestamp, $nonce, '');
+
+        // 1. Valid signed request succeeds and returns server signature headers
+        $validResponse = $this->withHeaders([
+            'X-Timestamp' => (string) $timestamp,
+            'X-Nonce' => $nonce,
+            'X-Signature' => $signature,
+        ])->getJson('/api/system/realtime-sync');
+
+        $validResponse->assertStatus(200);
+        $validResponse->assertHeader('X-Server-Timestamp');
+        $validResponse->assertHeader('X-Server-Signature');
+
+        // 2. Replay Attack (reusing the exact same Nonce) must be rejected with Stealth 404
+        $replayResponse = $this->withHeaders([
+            'X-Timestamp' => (string) $timestamp,
+            'X-Nonce' => $nonce,
+            'X-Signature' => $signature,
+        ])->getJson('/api/system/realtime-sync');
+
+        $replayResponse->assertStatus(404);
+
+        // 3. Tampered Signature must be rejected with Stealth 404
+        $tamperedResponse = $this->withHeaders([
+            'X-Timestamp' => (string) $timestamp,
+            'X-Nonce' => 'nonce_' . Str::random(24),
+            'X-Signature' => str_repeat('a', 64),
+        ])->getJson('/api/system/realtime-sync');
+
+        $tamperedResponse->assertStatus(404);
+
+        // 4. Expired Timestamp (> 60s old) must be rejected with Stealth 404
+        $oldTimestamp = time() - 300;
+        $oldNonce = 'nonce_' . Str::random(24);
+        $oldSig = $s2s->signRequest('GET', $path, $oldTimestamp, $oldNonce, '');
+
+        $expiredResponse = $this->withHeaders([
+            'X-Timestamp' => (string) $oldTimestamp,
+            'X-Nonce' => $oldNonce,
+            'X-Signature' => $oldSig,
+        ])->getJson('/api/system/realtime-sync');
+
+        $expiredResponse->assertStatus(404);
+    }
 }
