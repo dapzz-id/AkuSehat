@@ -775,7 +775,7 @@ const HomeScreenMember = () => {
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={[styles.safe, { flex: 1, backgroundColor: theme.bg }]}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={theme.bg} />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       <ScrollView
         contentContainerStyle={[styles.scroll, {
           flexGrow: 1,
@@ -811,7 +811,7 @@ const HomeScreenMember = () => {
         ]}>
           <View 
             style={[
-              StyleSheet.absoluteFillObject, 
+              StyleSheet.absoluteFill, 
               { 
                 borderRadius: isAtlas ? moderateScale(22) : moderateScale(16), 
                 overflow: 'hidden' 

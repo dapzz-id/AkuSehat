@@ -499,7 +499,7 @@ const HomeScreenHealthConsultant = () => {
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={[styles.safe, { flex: 1 }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.bg} />
+      <StatusBar barStyle="dark-content" />
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
@@ -529,7 +529,7 @@ const HomeScreenHealthConsultant = () => {
           }
         ]}>
           {hasDivisi && (
-            <View style={[StyleSheet.absoluteFillObject, { borderRadius: moderateScale(16), overflow: 'hidden' }]} pointerEvents="none">
+            <View style={[StyleSheet.absoluteFill, { borderRadius: moderateScale(16), overflow: 'hidden' }]} pointerEvents="none">
               {/* Subtle top accent line */}
               <View 
                 style={{

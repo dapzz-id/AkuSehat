@@ -250,7 +250,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         },
       ]}
     >
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent={false} />
+      <StatusBar barStyle="dark-content" />
 
       <SafeAreaView style={styles.safeArea}>
         {/* Subtle Decorative Background Circles */}
@@ -381,7 +381,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#FFFFFF',
     zIndex: 9999,
   },
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
 
   // Offline Overlay
   offlineBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(15, 23, 42, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',

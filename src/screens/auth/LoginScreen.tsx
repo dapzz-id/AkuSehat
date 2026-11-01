@@ -237,7 +237,7 @@ const LoginScreen = ({ navigation }: any) => {
 
     return (
         <SafeAreaView style={styles.safe}>
-            <StatusBar barStyle="dark-content" backgroundColor={Colors.bg} />
+            <StatusBar barStyle="dark-content" />
             
             {/* Animated Background Elements */}
             <Animated.View style={[styles.bgCircle1, { 

@@ -1210,7 +1210,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   calendarPopupOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(15, 23, 42, 0.65)",
     alignItems: "center",
     justifyContent: "center",

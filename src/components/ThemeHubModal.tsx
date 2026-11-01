@@ -96,7 +96,7 @@ export const ThemeHubModal: React.FC<ThemeHubModalProps> = ({ visible, onClose }
     >
       <View style={styles.overlay}>
         <TouchableWithoutFeedback onPress={onClose}>
-          <View style={StyleSheet.absoluteFillObject} />
+          <View style={StyleSheet.absoluteFill} />
         </TouchableWithoutFeedback>
         <View style={[styles.modalCard, { backgroundColor: theme.surface }]}>
           {/* Header */}
