@@ -7,5 +7,6 @@
  * 3. File `src/config/secrets.local.ts` sudah terdaftar di `.gitignore` sehingga TIDAK AKAN ter-publish ke GitHub.
  */
 export const LOCAL_SECRETS = {
-  S2S_SHARED_SECRET: '',
+  S2S_SHARED_SECRET: 'akusehat-s2s-hmac-v1-9c4f8a2e7b1d6c3a5e0f9b8d7c6a5e4f3b2a1d0c',
 };
+

@@ -6,3 +6,4 @@
    - Untuk menambahkan variabel rahasia baru, AI hanya boleh memperbarui `src/config/secrets.example.ts` (atau `.env.example`) dan memberi tahu User variabel apa yang perlu diisi sendiri di `src/config/secrets.local.ts`.
 3. **Larangan Hardcode Secret ke GitHub**:
    - Jangan pernah menaruh kunci rahasia (*S2S shared secret*, *API key*, *keystore password*) di dalam file kode yang ter-publish ke GitHub.
+
