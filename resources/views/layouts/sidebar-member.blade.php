@@ -22,7 +22,7 @@
                 <span>Dashboard Pribadi</span>
             </a>
 
-            <a href="{{ route('privacy.policy') }}" target="_blank"
+            <a href="{{ route('privacy.policy') }}"
                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-slate-300 hover:bg-white/10 hover:text-white">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors bg-white/5 text-sky-400 group-hover:bg-white/10 group-hover:text-sky-300">
                     <i class="fas fa-shield-halved text-sm"></i>
