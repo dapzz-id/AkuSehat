@@ -21,9 +21,16 @@ api.interceptors.request.use(async (config) => {
         config.headers['Content-Type'] = 'application/json';
       }
 
-      const token = await AsyncStorage.getItem('sanctum_token');
-      if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
+      const isPublicAuthRequest =
+        config.url?.includes('/login') ||
+        config.url?.includes('/auth/google') ||
+        config.url?.includes('/register');
+
+      if (!isPublicAuthRequest) {
+        const token = await AsyncStorage.getItem('sanctum_token');
+        if (token) {
+          config.headers['Authorization'] = `Bearer ${token}`;
+        }
       }
     }
   } catch (e) {
@@ -37,8 +44,14 @@ api.interceptors.response.use(
   async (error) => {
     const status = error?.response?.status;
     const data = error?.response?.data;
+    const requestUrl = error?.config?.url || '';
+    const isAuthEndpoint =
+      requestUrl.includes('/login') ||
+      requestUrl.includes('/auth/google') ||
+      requestUrl.includes('/register') ||
+      requestUrl.includes('/check-auth');
 
-    if (status === 401) {
+    if (status === 401 && !isAuthEndpoint) {
       // Clear all stored credentials and authorization header
       await AsyncStorage.multiRemove(['sanctum_token', 'user', 'userData', 'userToken']);
       delete api.defaults.headers.common['Authorization'];
@@ -52,7 +65,7 @@ api.interceptors.response.use(
         });
       }
       Alert.alert('Sesi Berakhir', serverMessage);
-    } else if (status === 403) {
+    } else if (status === 403 && !isAuthEndpoint) {
       const forbiddenMessage = data?.message || 'Akses ditolak: Peran Anda tidak memiliki wewenang untuk aksi ini.';
       Alert.alert('Akses Dibatasi', forbiddenMessage);
     } else if (error.code === 'ECONNABORTED' || !error.response) {
@@ -62,17 +75,5 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// api.interceptors.response.use(
-//   (res) => res,
-//   async (error) => {
-//     if (error?.response?.status === 401) {
-//       try {
-//         await AsyncStorage.removeItem("sanctum_token")
-//       } catch {}
-//     }
-//     return Promise.reject(error)
-//   },
-// )
 
 export default api
