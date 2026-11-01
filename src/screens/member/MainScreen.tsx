@@ -837,7 +837,7 @@ const HomeScreenMember = () => {
                   position: 'absolute',
                   top: 0,
                   right: 0,
-                  width: '45%',
+                  width: '100%',
                   height: 3.5,
                   backgroundColor: effectiveSecondary,
                   borderTopRightRadius: moderateScale(22),
@@ -864,7 +864,7 @@ const HomeScreenMember = () => {
                 top: 0,
                 bottom: 0,
                 left: 0,
-                width: SCREEN_WIDTH * 0.65,
+                width: SCREEN_WIDTH,
                 opacity: shimmerOpacity,
                 transform: [
                   { translateX: shimmerTranslateX },

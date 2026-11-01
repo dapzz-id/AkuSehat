@@ -613,7 +613,7 @@ const HomeScreenHealthMonitor = () => {
                   top: 0,
                   bottom: 0,
                   left: 0,
-                  width: SCREEN_WIDTH * 0.65,
+                  width: SCREEN_WIDTH,
                   opacity: shimmerOpacity,
                   transform: [
                     { translateX: shimmerTranslateX },
