@@ -58,3 +58,4 @@ function generateClientNonce(): string {
   }
   return result;
 }
+

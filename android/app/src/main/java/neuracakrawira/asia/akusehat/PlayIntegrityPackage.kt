@@ -16,3 +16,4 @@ class PlayIntegrityPackage : ReactPackage {
         return emptyList()
     }
 }
+
