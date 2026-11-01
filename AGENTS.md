@@ -6,3 +6,4 @@
    - Untuk menambahkan variabel konfigurasi baru, AI hanya boleh mengubah `.env.example` dan`config/*.php`, kemudian memberi tahu User variabel apa yang perlu ditambahkan sendiri ke `.env`.
 3. **Larangan Hardcode Secret**:
    - Jangan pernah menaruh kunci rahasia (*secret key*, *API key*, *password*) secara *hardcoded* di dalam file yang di-*commit* ke GitHub.
+
