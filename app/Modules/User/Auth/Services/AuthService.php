@@ -15,16 +15,37 @@ use Illuminate\Http\Request;
 class AuthService
 {
     private const GENERIC_AUTH_ERROR = 'Email/Username atau Password salah.';
+    private const DUMMY_ARGON2ID_HASH = '$argon2id$v=19$m=65536,t=4,p=1$c29tZXNhbHQxMjM0NTY3OA$RdescudvJCsgt3ub+b+dWRWJTmaaJObG';
     private const DUMMY_BCRYPT_HASH = '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
 
     public function __construct(
         protected AuthRepository $authRepository
     ) {}
 
+    protected function getDummyHash(): string
+    {
+        return defined('PASSWORD_ARGON2ID') && config('hashing.driver') === 'argon2id'
+            ? self::DUMMY_ARGON2ID_HASH
+            : self::DUMMY_BCRYPT_HASH;
+    }
+
+    protected function upgradePasswordHashIfNeeded(User $user, #[\SensitiveParameter] string $plainPassword): void
+    {
+        try {
+            if (Hash::needsRehash($user->password)) {
+                $user->forceFill([
+                    'password' => Hash::make($plainPassword),
+                ])->saveQuietly();
+            }
+        } catch (\Throwable $e) {
+            // Abaikan jika gagal rehash agar proses login tetap berjalan lancar
+        }
+    }
+
     public function attemptWebLogin(string $loginInput, string $password, bool $remember, Request $request): array
     {
         $user = $this->authRepository->findByLogin($loginInput);
-        $passwordValid = Hash::check($password, $user ? $user->password : self::DUMMY_BCRYPT_HASH);
+        $passwordValid = Hash::check($password, $user ? $user->password : $this->getDummyHash());
 
         if (!$user || !$passwordValid) {
             return [
@@ -32,6 +53,8 @@ class AuthService
                 'message' => self::GENERIC_AUTH_ERROR,
             ];
         }
+
+        $this->upgradePasswordHashIfNeeded($user, $password);
 
         if (MaintenanceMode::isWebInMaintenance() && !$user->isSuperAdmin()) {
             return [
@@ -69,7 +92,7 @@ class AuthService
     public function attemptApiLogin(string $loginInput, string $password, ?string $deviceName = 'mobile_app'): array
     {
         $user = $this->authRepository->findByLogin($loginInput);
-        $passwordValid = Hash::check($password, $user ? $user->password : self::DUMMY_BCRYPT_HASH);
+        $passwordValid = Hash::check($password, $user ? $user->password : $this->getDummyHash());
 
         if (!$user || !$passwordValid) {
             return [
@@ -78,6 +101,8 @@ class AuthService
                 'message' => self::GENERIC_AUTH_ERROR,
             ];
         }
+
+        $this->upgradePasswordHashIfNeeded($user, $password);
 
         if (MaintenanceMode::isMobileInMaintenance() && !$user->isSuperAdmin()) {
             return [

@@ -250,4 +250,21 @@ class SecurityHardeningTest extends TestCase
         $encryptionService = app(\App\Services\Security\TenantEncryptionService::class);
         $this->assertNull($encryptionService->decryptForTenant($rawAttributes['pesan_imt'], $tenantB));
     }
+
+    /**
+     * Test Argon2id (RFC 9106) memory-hard password hashing and seamless Bcrypt legacy upgrade.
+     */
+    public function test_argon2id_memory_hard_hashing_and_legacy_bcrypt_compatibility(): void
+    {
+        $this->assertEquals('argon2id', config('hashing.driver'));
+
+        $hash = \Illuminate\Support\Facades\Hash::make('SuperSecret2026!');
+        $this->assertStringStartsWith('$argon2id$v=19$', $hash);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('SuperSecret2026!', $hash));
+
+        // Ensure legacy Bcrypt ($2y$) hashes still verify without throwing RuntimeException and trigger rehash
+        $legacyBcryptHash = password_hash('LegacyPassword123', PASSWORD_BCRYPT, ['cost' => 10]);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('LegacyPassword123', $legacyBcryptHash));
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::needsRehash($legacyBcryptHash));
+    }
 }
