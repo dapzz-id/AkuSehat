@@ -126,9 +126,9 @@ class MemberApiController extends Controller
                     : null,
             ],
             'app_update' => [
-                'has_update' => $updateCheck['has_update'],
-                'is_mandatory' => $updateCheck['is_mandatory'],
-                'data' => $updateCheck['data'],
+                'has_update' => $updateCheck['has_update'] ?? false,
+                'is_mandatory' => $updateCheck['is_mandatory'] ?? false,
+                'data' => $updateCheck['data'] ?? null,
             ],
         ];
 

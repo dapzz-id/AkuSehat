@@ -19,3 +19,4 @@ class SystemRealtimeSyncRequest extends FormRequest
         ];
     }
 }
+

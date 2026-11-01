@@ -49,3 +49,4 @@ return [
     'rehash_on_login' => true,
 
 ];
+

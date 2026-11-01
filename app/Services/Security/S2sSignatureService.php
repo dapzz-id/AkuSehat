@@ -50,6 +50,9 @@ class S2sSignatureService
     ): string {
         $normalizedMethod = strtoupper(trim($method));
         $normalizedPath = '/' . ltrim(trim($path), '/');
+        if (in_array($normalizedMethod, ['GET', 'HEAD'], true)) {
+            $rawBody = '';
+        }
         $bodyHash = hash('sha256', $rawBody);
 
         return implode("\n", [
@@ -118,7 +121,11 @@ class S2sSignatureService
 
         // 3. Kunci Nonce sekali pakai di Cache (Atomik: gagal jika Nonce sudah pernah dipakai)
         $nonceCacheKey = 's2s_nonce:' . hash('sha256', $nonce . ':' . $reqTime);
-        $stored = Cache::add($nonceCacheKey, $now, $tolerance * 2);
+        try {
+            $stored = Cache::add($nonceCacheKey, $now, $tolerance * 2);
+        } catch (\Throwable $e) {
+            $stored = Cache::store('file')->add($nonceCacheKey, $now, $tolerance * 2);
+        }
         if (!$stored) {
             return ['valid' => false, 'reason' => 'replay_detected'];
         }

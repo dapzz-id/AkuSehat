@@ -31,7 +31,7 @@ class VerifyS2sSignature
             || $request->hasHeader('X-Timestamp')
             || $request->hasHeader('X-Nonce');
 
-        if ($isStrict || $hasSignatureHeaders) {
+        if (($isStrict || $hasSignatureHeaders) && !$request->attributes->get('s2s_verified')) {
             $verification = $this->s2sService->verifyRequest(
                 $request->method(),
                 $request->path(),
@@ -64,6 +64,8 @@ class VerifyS2sSignature
                     'message' => 'Data atau halaman tidak ditemukan.',
                 ], 404);
             }
+
+            $request->attributes->set('s2s_verified', true);
         }
 
         /** @var Response $response */

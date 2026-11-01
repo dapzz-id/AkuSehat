@@ -54,12 +54,16 @@ class SoftwareAppRepository
 
     public function getLatestActive(string $platform): ?SoftwareApp
     {
-        return \Illuminate\Support\Facades\Cache::remember("latest_software_app_{$platform}", 3600, function () use ($platform) {
-            return SoftwareApp::where('platform', $platform)
-                ->where('status', SoftwareStatus::ACTIVE->value)
-                ->orderBy('release_date', 'desc')
-                ->first();
-        });
+        try {
+            return \Illuminate\Support\Facades\Cache::remember("latest_software_app_{$platform}", 3600, function () use ($platform) {
+                return SoftwareApp::where('platform', $platform)
+                    ->where('status', SoftwareStatus::ACTIVE->value)
+                    ->orderBy('release_date', 'desc')
+                    ->first();
+            });
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     public function findOrFail(string|int $id): SoftwareApp
