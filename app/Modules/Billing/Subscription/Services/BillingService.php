@@ -20,15 +20,16 @@ use Exception;
 
 class BillingService
 {
-    public const HARGA_PER_USER_TAHUN = BillingRate::HARGA_PER_USER_TAHUN->value;
+    public const HARGA_PER_USER_BULAN = BillingRate::HARGA_PER_USER_BULAN->value;
+    public const HARGA_PER_USER_TAHUN = BillingRate::HARGA_PER_USER_BULAN->value;
 
     public function __construct(
         protected BillingRepository $billingRepository
     ) {}
 
-    public function calculateTotalAmount(string|BillingTransactionType $type, int $qty, int $months = 12): float
+    public function calculateTotalAmount(string|BillingTransactionType $type, int $qty, int $months = 1): float
     {
-        $rate = BillingRate::HARGA_PER_USER_TAHUN;
+        $rate = BillingRate::HARGA_PER_USER_BULAN;
         $typeVal = $type instanceof BillingTransactionType ? $type->value : $type;
 
         if ($typeVal === BillingTransactionType::QUOTA_TOPUP->value || $typeVal === BillingTransactionType::TAMBAH_KUOTA->value) {
@@ -76,11 +77,11 @@ class BillingService
         $kuotaPerpanjangDefault = $primaryLicense ? (int) $primaryLicense->kuota_pengguna : $kuotaMaksimal;
         $tanggalBerakhirBaruPerpanjang = $primaryLicense 
             ? ($primaryLicense->tanggal_berakhir && $primaryLicense->tanggal_berakhir->isFuture() 
-                ? $primaryLicense->tanggal_berakhir->copy()->addMonths(12) 
-                : now()->addMonths(12))
-            : now()->addMonths(12);
+                ? $primaryLicense->tanggal_berakhir->copy()->addMonths(1) 
+                : now()->addMonths(1))
+            : now()->addMonths(1);
 
-        $subtotalPerpanjang = $kuotaPerpanjangDefault * self::HARGA_PER_USER_TAHUN;
+        $subtotalPerpanjang = $kuotaPerpanjangDefault * self::HARGA_PER_USER_BULAN;
         $ppnPerpanjang = (int) round($subtotalPerpanjang * 0.11);
         $totalPerpanjang = $subtotalPerpanjang + $ppnPerpanjang;
 
@@ -107,7 +108,7 @@ class BillingService
             'kuotaMaksimal' => $kuotaMaksimal,
             'sisaHari' => (int) floor($sisaHari),
             'transactions' => $transactions,
-            'hargaPerUser' => self::HARGA_PER_USER_TAHUN,
+            'hargaPerUser' => self::HARGA_PER_USER_BULAN,
             'tipeSebutan' => $instansi->tipe_sebutan,
             'sebutanSpesifik' => $instansi->sebutan_spesifik,
             'labelMember' => $instansi->label_member_singular,
@@ -154,11 +155,11 @@ class BillingService
 
             $kuotaTarget = (int) ($targetLicense->kuota_pengguna ?: 8);
             $tambahKuota = 0;
-            $subtotal = $kuotaTarget * self::HARGA_PER_USER_TAHUN;
+            $subtotal = $kuotaTarget * self::HARGA_PER_USER_BULAN;
             $tipeTransaksi = BillingTransactionType::PERPANJANG_LISENSI->value;
-            $deskripsiItem = "Perpanjangan Paket Lisensi ({$targetLicense->key} - {$kuotaTarget} " . ($instansi->label_member_singular ?? 'User') . " / +1 Tahun)";
+            $deskripsiItem = "Perpanjangan Paket Lisensi ({$targetLicense->key} - {$kuotaTarget} " . ($instansi->label_member_singular ?? 'User') . " / +1 Bulan)";
         } else {
-            // Mode TAMBAH KUOTA BARU (Paket Baru Mandiri 1 Tahun Penuh - Model Provider Internet / Bima Tri)
+            // Mode TAMBAH KUOTA BARU (Paket Baru Mandiri 1 Bulan Penuh - Model Provider Internet / Bima Tri)
             $tambahKuota = (int) ($validated['tambah_kuota'] ?? 0);
             if ($tambahKuota <= 0) {
                 return [
@@ -171,9 +172,9 @@ class BillingService
             }
 
             $targetLicense = null;
-            $subtotal = $tambahKuota * self::HARGA_PER_USER_TAHUN;
+            $subtotal = $tambahKuota * self::HARGA_PER_USER_BULAN;
             $tipeTransaksi = BillingTransactionType::TAMBAH_KUOTA->value;
-            $deskripsiItem = "Paket Kuota Baru (+{$tambahKuota} " . ($instansi->label_member_singular ?? 'User') . " / 1 Tahun Mandiri)";
+            $deskripsiItem = "Paket Kuota Baru (+{$tambahKuota} " . ($instansi->label_member_singular ?? 'User') . " / 1 Bulan Mandiri)";
         }
 
         $pajak11 = BillingRate::calculatePpn($subtotal);
@@ -199,7 +200,7 @@ class BillingService
                     $baseDate = ($lockedLicense->tanggal_berakhir && $lockedLicense->tanggal_berakhir->isFuture()) 
                         ? $lockedLicense->tanggal_berakhir 
                         : now();
-                    $tanggalBerakhirBaru = $baseDate->copy()->addMonths(12);
+                    $tanggalBerakhirBaru = $baseDate->copy()->addMonths(1);
 
                     $lockedLicense->tanggal_berakhir = $tanggalBerakhirBaru;
                     $lockedLicense->status = LicenseKey::STATUS_ACTIVE;
@@ -210,13 +211,13 @@ class BillingService
                     }
 
                     $affectedLicense = $lockedLicense;
-                    $durasiBulanTrx = 12;
+                    $durasiBulanTrx = 1;
                 } else {
-                    // Tambah Slot Baru: Buat LicenseKey baru mandiri aktif 1 tahun (seperti paket provider Bima Tri)
+                    // Tambah Slot Baru: Buat LicenseKey baru mandiri aktif 1 bulan (seperti paket provider Bima Tri)
                     $newLicense = $this->billingRepository->createNewLicense(
                         instansiId: (string) $instansi->id,
                         quota: $tambahKuota,
-                        months: 12
+                        months: 1
                     );
 
                     if (!$instansi->license_id_active) {
@@ -225,7 +226,7 @@ class BillingService
 
                     $tanggalBerakhirBaru = $newLicense->tanggal_berakhir;
                     $affectedLicense = $newLicense;
-                    $durasiBulanTrx = 12;
+                    $durasiBulanTrx = 1;
                 }
 
                 $orderId = $orderIdInput ?: ('GPAY-AKU-' . time() . '-' . strtoupper(Str::random(4)));
@@ -254,8 +255,8 @@ class BillingService
                         'tanggal_berakhir_paket' => $tanggalBerakhirBaru ? $tanggalBerakhirBaru->format('Y-m-d H:i:s') : null,
                         'subtotal' => $subtotal,
                         'ppn_11' => $pajak11,
-                        'harga_per_user' => self::HARGA_PER_USER_TAHUN,
-                        'durasi_tahun' => 1,
+                        'harga_per_user' => self::HARGA_PER_USER_BULAN,
+                        'durasi_bulan' => 1,
                         'deskripsi_item' => $deskripsiItem,
                     ],
                 ]);
@@ -336,10 +337,10 @@ class BillingService
             $tambahKuota = 10;
         }
 
-        $durasiBulan = 12;
-        $subtotal = $tambahKuota * self::HARGA_PER_USER_TAHUN;
+        $durasiBulan = 1;
+        $subtotal = $tambahKuota * self::HARGA_PER_USER_BULAN;
         $nominal = $subtotal + (int) round($subtotal * 0.11);
-        $tipe = BillingTransactionType::LISENSI_TAHUNAN->value;
+        $tipe = BillingTransactionType::LISENSI_BULANAN->value;
 
         $existingTrx = $this->billingRepository->findByOrderId($orderId);
         if ($existingTrx) {

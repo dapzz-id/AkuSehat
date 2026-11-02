@@ -87,7 +87,7 @@ class BillingRepository
         ]);
     }
 
-    public function createNewLicense(string $instansiId, int $quota, int $months = 12): LicenseKey
+    public function createNewLicense(string $instansiId, int $quota, int $months = 1): LicenseKey
     {
         return LicenseKey::create([
             'instansi_id' => $instansiId,

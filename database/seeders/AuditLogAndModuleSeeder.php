@@ -79,10 +79,10 @@ class AuditLogAndModuleSeeder extends Seeder
                     'days_ago' => 1,
                     'category' => 'billing',
                     'action' => 'payment_google_pay',
-                    'description' => 'Pembayaran Google Pay berhasil untuk institusi ' . ($instansi ? $instansi->nama_instansi : 'SMK Telesandi') . ' (Order: GPA.3042-9182-3810) senilai Rp 10.656.000',
+                    'description' => 'Pembayaran Google Pay berhasil untuk institusi ' . ($instansi ? $instansi->nama_instansi : 'SMK Telesandi') . ' (Order: GPA.3042-9182-3810) senilai Rp 4.440.000',
                     'user' => $adminInstansi,
                     'ip' => '180.252.164.22',
-                    'properties' => ['nominal' => 10656000, 'mode' => 'perpanjang', 'kuota_akhir' => 800],
+                    'properties' => ['nominal' => 4440000, 'mode' => 'perpanjang', 'kuota_akhir' => 800],
                 ],
                 [
                     'days_ago' => 1,

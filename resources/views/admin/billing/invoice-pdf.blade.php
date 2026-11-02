@@ -420,49 +420,68 @@
 <table class="items-table">
     @if($trx->tipe_transaksi === 'perpanjang_lisensi')
         @php
-            $kuotaTrx = $trx->payload['kuota_saat_perpanjang'] ?? ($instansi->getActiveLicense()->kuota_pengguna ?? 0);
+            $hargaSatuan = (int) ($trx->payload['harga_per_user'] ?? 5000);
+            $kuotaTrx = $trx->payload['kuota_paket'] ?? ($trx->payload['kuota_saat_perpanjang'] ?? ($instansi->getActiveLicense()->kuota_pengguna ?? 0));
             if ($kuotaTrx <= 0 && $trx->nominal > 0) {
-                $kuotaTrx = (int) round($trx->nominal / 1.11 / 12000);
+                $kuotaTrx = (int) round($trx->nominal / 1.11 / $hargaSatuan);
             }
-            $itemSubtotal = $trx->payload['subtotal'] ?? ($kuotaTrx * 12000);
+            $itemSubtotal = $trx->payload['subtotal'] ?? ($kuotaTrx * $hargaSatuan);
+            $durasiLabel = ($trx->durasi_bulan == 12) ? '1 TAHUN' : (($trx->durasi_bulan ?: 1) . ' BULAN');
+            $satuanDurasi = ($trx->durasi_bulan == 12) ? 'Thn' : 'Bln';
             $itemCount = 1;
         @endphp
         <tr>
-            <td colspan="2" class="item-title">PERPANJANGAN LISENSI {{ strtoupper($tipeSebutan ?? ($instansi->tipe_sebutan ?? 'INSTITUSI')) }} (1 TAHUN)</td>
+            <td colspan="2" class="item-title">PERPANJANGAN LISENSI {{ strtoupper($tipeSebutan ?? ($instansi->tipe_sebutan ?? 'INSTITUSI')) }} ({{ $durasiLabel }})</td>
         </tr>
         <tr>
-            <td class="item-calc">&nbsp;&nbsp;{{ $kuotaTrx }} {{ $labelMember ?? ($instansi->label_member_singular ?? 'Siswa') }} &times; 12.000 / Thn</td>
+            <td class="item-calc">&nbsp;&nbsp;{{ $kuotaTrx }} {{ $labelMember ?? ($instansi->label_member_singular ?? 'Siswa') }} &times; {{ number_format($hargaSatuan, 0, ',', '.') }} / {{ $satuanDurasi }}</td>
             <td class="item-total">{{ number_format($itemSubtotal, 0, ',', '.') }}</td>
         </tr>
     @elseif($trx->tipe_transaksi === 'tambah_kuota')
         @php
-            $itemSubtotal = $trx->payload['subtotal'] ?? ($trx->tambah_kuota * 12000);
+            $hargaSatuan = (int) ($trx->payload['harga_per_user'] ?? 5000);
+            $itemSubtotal = $trx->payload['subtotal'] ?? ($trx->tambah_kuota * $hargaSatuan);
+            $satuanDurasi = ($trx->durasi_bulan == 12) ? '1 Thn' : (($trx->durasi_bulan ?: 1) . ' Bln');
             $itemCount = 1;
         @endphp
         <tr>
             <td colspan="2" class="item-title">TAMBAH KUOTA LISENSI {{ strtoupper($tipeSebutan ?? ($instansi->tipe_sebutan ?? 'INSTITUSI')) }}</td>
         </tr>
         <tr>
-            <td class="item-calc">&nbsp;&nbsp;+{{ $trx->tambah_kuota }} {{ $labelMember ?? ($instansi->label_member_singular ?? 'Siswa') }} &times; 12.000 (1 Thn)</td>
+            <td class="item-calc">&nbsp;&nbsp;+{{ $trx->tambah_kuota }} {{ $labelMember ?? ($instansi->label_member_singular ?? 'Siswa') }} &times; {{ number_format($hargaSatuan, 0, ',', '.') }} ({{ $satuanDurasi }})</td>
+            <td class="item-total">{{ number_format($itemSubtotal, 0, ',', '.') }}</td>
+        </tr>
+    @elseif($trx->tipe_transaksi === 'lisensi_bulanan')
+        @php
+            $hargaSatuan = (int) ($trx->payload['harga_per_user'] ?? 5000);
+            $itemSubtotal = $trx->tambah_kuota * $hargaSatuan;
+            $itemCount = 1;
+        @endphp
+        <tr>
+            <td colspan="2" class="item-title">LISENSI {{ strtoupper($tipeSebutan ?? ($instansi->tipe_sebutan ?? 'INSTITUSI')) }} BULANAN</td>
+        </tr>
+        <tr>
+            <td class="item-calc">&nbsp;&nbsp;{{ $trx->tambah_kuota }} {{ $labelMember ?? ($instansi->label_member_singular ?? 'Siswa') }} &times; {{ number_format($hargaSatuan, 0, ',', '.') }} (1 Bln)</td>
             <td class="item-total">{{ number_format($itemSubtotal, 0, ',', '.') }}</td>
         </tr>
     @elseif($trx->tipe_transaksi === 'lisensi_tahunan')
         @php
-            $itemSubtotal = $trx->tambah_kuota * 12000;
+            $hargaSatuan = (int) ($trx->payload['harga_per_user'] ?? 5000);
+            $itemSubtotal = $trx->tambah_kuota * $hargaSatuan;
             $itemCount = 1;
         @endphp
         <tr>
-            <td colspan="2" class="item-title">LISENSI {{ strtoupper($tipeSebutan ?? ($instansi->tipe_sebutan ?? 'INSTITUSI')) }} TAHUNAN</td>
+            <td colspan="2" class="item-title">LISENSI {{ strtoupper($tipeSebutan ?? ($instansi->tipe_sebutan ?? 'INSTITUSI')) }} BULANAN</td>
         </tr>
         <tr>
-            <td class="item-calc">&nbsp;&nbsp;{{ $trx->tambah_kuota }} {{ $labelMember ?? ($instansi->label_member_singular ?? 'Siswa') }} &times; 12.000 (1 Thn)</td>
-            <td class="item-total">{{ number_format($trx->tambah_kuota * 12000, 0, ',', '.') }}</td>
+            <td class="item-calc">&nbsp;&nbsp;{{ $trx->tambah_kuota }} {{ $labelMember ?? ($instansi->label_member_singular ?? 'Siswa') }} &times; {{ number_format($hargaSatuan, 0, ',', '.') }} (1 Bln)</td>
+            <td class="item-total">{{ number_format($itemSubtotal, 0, ',', '.') }}</td>
         </tr>
     @else
         @php
             $itemCount = ($trx->durasi_bulan > 0 ? 1 : 0) + ($trx->tambah_kuota > 0 ? 1 : 0);
             if ($itemCount == 0) $itemCount = 1;
-            $itemSubtotal = ($trx->durasi_bulan * 120000) + ($trx->tambah_kuota * 10000);
+            $itemSubtotal = ($trx->durasi_bulan * 120000) + ($trx->tambah_kuota * 5000);
         @endphp
         @if($trx->durasi_bulan > 0)
         <tr>
@@ -479,8 +498,8 @@
             <td colspan="2" class="item-title">TAMBAH KUOTA ANGGOTA {{ strtoupper($labelMember ?? 'SISWA') }}</td>
         </tr>
         <tr>
-            <td class="item-calc">&nbsp;&nbsp;{{ $trx->tambah_kuota }} Usr &times; 10.000</td>
-            <td class="item-total">{{ number_format($trx->tambah_kuota * 10000, 0, ',', '.') }}</td>
+            <td class="item-calc">&nbsp;&nbsp;{{ $trx->tambah_kuota }} Usr &times; 5.000</td>
+            <td class="item-total">{{ number_format($trx->tambah_kuota * 5000, 0, ',', '.') }}</td>
         </tr>
         @endif
 
