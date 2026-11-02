@@ -125,17 +125,17 @@ class BillingRepository
             $query->where('status', $status);
         }
 
-        // 2. Keyword Search (Order ID, Nama Instansi / Sekolah, Pemesan)
+        // 2. Keyword Search (Order ID, Nama Instansi, Pemesan)
         $search = trim($filterArr['search'] ?? $filterArr['q'] ?? '');
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('order_id', 'like', "%{$search}%")
                   ->orWhereHas('instansi', function ($iq) use ($search) {
-                      $iq->where('nama_instansi', 'like', "%{$search}%")
-                         ->orWhere('nama_sekolah', 'like', "%{$search}%");
+                      $iq->where('nama_instansi', 'like', "%{$search}%");
                   })
                   ->orWhereHas('user', function ($uq) use ($search) {
-                      $uq->where('name', 'like', "%{$search}%")
+                      $uq->where('nama', 'like', "%{$search}%")
+                         ->orWhere('username', 'like', "%{$search}%")
                          ->orWhere('email', 'like', "%{$search}%");
                   });
             });

@@ -401,4 +401,39 @@ class SecurityHardeningTest extends TestCase
         $this->assertTrue($result['response']['success']);
         $this->assertEquals('failed', $dummyTrx->status);
     }
+
+    /**
+     * Test superadmin billing data retrieval with search and filter parameters.
+     */
+    public function test_superadmin_billing_filters_work_cleanly(): void
+    {
+        $mockRepo = $this->createMock(\App\Modules\Billing\Subscription\Repositories\BillingRepository::class);
+        $paginator = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 15);
+
+        $mockRepo->expects($this->once())
+            ->method('getSuperAdminTransactions')
+            ->with($this->callback(function ($filters) {
+                return $filters['search'] === 'BCA-AKU' && $filters['payment_method'] === 'manual_bca';
+            }))
+            ->willReturn($paginator);
+
+        $mockRepo->expects($this->once())
+            ->method('getTransactionSummaryStats')
+            ->willReturn([
+                'total_revenue' => 0.0,
+                'pending_count' => 0,
+                'success_count' => 0,
+                'total_count' => 0,
+            ]);
+
+        $billingService = new \App\Modules\Billing\Subscription\Services\BillingService($mockRepo);
+        $data = $billingService->getSuperAdminBillingData([
+            'search' => 'BCA-AKU',
+            'payment_method' => 'manual_bca',
+        ]);
+
+        $this->assertArrayHasKey('transactions', $data);
+        $this->assertArrayHasKey('filters', $data);
+        $this->assertEquals('BCA-AKU', $data['filters']['search']);
+    }
 }
