@@ -205,81 +205,81 @@
             </p>
         </div>
 
-        {{-- Switcher Mode Transaksi: Perpanjang Kuota Berjalan vs Tambah Slot Kuota --}}
-        <div class="mb-6">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-2">
-                <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
-                <span>Pilih Jenis Kebutuhan Transaksi</span>
-            </label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {{-- Mode 1: Perpanjang Kuota Berjalan (Default) --}}
-                <button type="button" onclick="switchBillingMode('perpanjang')" id="tabBtnPerpanjang"
-                    class="p-4 rounded-2xl border-2 text-left transition-all duration-200 border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/20 relative shadow-xs cursor-pointer">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
-                            <i class="fas fa-rotate"></i> Perpanjangan Paket
-                        </span>
-                        <div class="w-5 h-5 rounded-full border-2 border-emerald-600 flex items-center justify-center bg-emerald-600 text-white text-[10px]" id="indicatorPerpanjang">
-                            <i class="fas fa-check"></i>
-                        </div>
-                    </div>
-                    <div class="font-bold text-gray-900 text-sm sm:text-base">Perpanjang Masa Aktif Lisensi</div>
-                    <p class="text-xs text-gray-500 mt-1">
-                        Pilih paket kuota berjalan untuk diperpanjang masa aktifnya (<strong>1, 3, 6 Bulan, atau 1–3 Tahun</strong>) tanpa merubah kapasitas {{ strtolower($labelMember) }} pada paket tersebut.
-                    </p>
-                </button>
-
-                {{-- Mode 2: Tambah Slot Kuota Siswa Baru --}}
-                <button type="button" onclick="switchBillingMode('tambah_kuota')" id="tabBtnTambahKuota"
-                    class="p-4 rounded-2xl border-2 text-left transition-all duration-200 border-gray-200 bg-white hover:border-gray-300 relative cursor-pointer">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700">
-                            <i class="fas fa-user-plus"></i> Tambah Slot Baru (Mandiri)
-                        </span>
-                        <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center bg-white text-transparent text-[10px]" id="indicatorTambahKuota">
-                            <i class="fas fa-check"></i>
-                        </div>
-                    </div>
-                    <div class="font-bold text-gray-900 text-sm sm:text-base">Tambah Slot Kuota {{ $labelMember }} Baru</div>
-                    <p class="text-xs text-gray-500 mt-1">
-                        Beli paket kuota baru yang akan aktif mandiri sesuai durasi pilihan (<strong>1 Bulan s/d 3 Tahun</strong>) bersamaan dengan paket lama tanpa memotong masa aktif yang sudah ada.
-                    </p>
-                </button>
-            </div>
-        </div>
-
-        {{-- Pilihan Durasi Langganan / Perpanjangan (1, 3, 6 Bulan, 1, 2, 3 Tahun) --}}
-        <div class="mb-6">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-2">
-                <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
-                <span>Pilih Durasi Langganan / Perpanjangan</span>
-            </label>
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-                @php
-                    $durationOptions = [
-                        ['months' => 1,  'label' => '1 Bulan',  'sub' => 'Rp 5.000 / ' . strtolower($labelMember)],
-                        ['months' => 3,  'label' => '3 Bulan',  'sub' => 'Rp 15.000 / ' . strtolower($labelMember)],
-                        ['months' => 6,  'label' => '6 Bulan',  'sub' => 'Rp 30.000 / ' . strtolower($labelMember)],
-                        ['months' => 12, 'label' => '1 Tahun',  'sub' => 'Rp 60.000 / ' . strtolower($labelMember)],
-                        ['months' => 24, 'label' => '2 Tahun',  'sub' => 'Rp 120.000 / ' . strtolower($labelMember)],
-                        ['months' => 36, 'label' => '3 Tahun',  'sub' => 'Rp 180.000 / ' . strtolower($labelMember)],
-                    ];
-                @endphp
-                @foreach($durationOptions as $opt)
-                    <button type="button"
-                            onclick="setDuration({{ $opt['months'] }})"
-                            data-duration="{{ $opt['months'] }}"
-                            class="duration-preset-btn p-3 rounded-xl border-2 text-center transition-all duration-150 cursor-pointer flex flex-col items-center justify-center {{ $opt['months'] === 1 ? 'border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/20' : 'border-gray-200 bg-white hover:border-emerald-500' }}">
-                        <span class="text-sm font-black text-gray-900">{{ $opt['label'] }}</span>
-                        <span class="text-[11px] font-semibold text-emerald-700 mt-0.5">{{ $opt['sub'] }}</span>
-                    </button>
-                @endforeach
-            </div>
-        </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <!-- Left: Options Selector & Payment Method (7 cols) -->
+            <!-- Left: Konfigurasi Pesanan & Paket (7 cols) -->
             <div class="lg:col-span-7 space-y-6">
+
+                {{-- Langkah 1: Switcher Mode Transaksi: Perpanjang Kuota Berjalan vs Tambah Slot Kuota --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
+                        <span>Pilih Jenis Kebutuhan Transaksi</span>
+                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        {{-- Mode 1: Perpanjang Kuota Berjalan (Default) --}}
+                        <button type="button" onclick="switchBillingMode('perpanjang')" id="tabBtnPerpanjang"
+                            class="p-4 rounded-2xl border-2 text-left transition-all duration-200 border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/20 relative shadow-xs cursor-pointer">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                                    <i class="fas fa-rotate"></i> Perpanjangan Paket
+                                </span>
+                                <div class="w-5 h-5 rounded-full border-2 border-emerald-600 flex items-center justify-center bg-emerald-600 text-white text-[10px]" id="indicatorPerpanjang">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <div class="font-bold text-gray-900 text-sm sm:text-base">Perpanjang Masa Aktif Lisensi</div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                Pilih paket kuota berjalan untuk diperpanjang masa aktifnya (<strong>1, 3, 6 Bulan, atau 1–3 Tahun</strong>) tanpa merubah kapasitas {{ strtolower($labelMember) }} pada paket tersebut.
+                            </p>
+                        </button>
+
+                        {{-- Mode 2: Tambah Slot Kuota Siswa Baru --}}
+                        <button type="button" onclick="switchBillingMode('tambah_kuota')" id="tabBtnTambahKuota"
+                            class="p-4 rounded-2xl border-2 text-left transition-all duration-200 border-gray-200 bg-white hover:border-gray-300 relative cursor-pointer">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700">
+                                    <i class="fas fa-user-plus"></i> Tambah Slot Baru (Mandiri)
+                                </span>
+                                <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center bg-white text-transparent text-[10px]" id="indicatorTambahKuota">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <div class="font-bold text-gray-900 text-sm sm:text-base">Tambah Slot Kuota {{ $labelMember }} Baru</div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                Beli paket kuota baru yang akan aktif mandiri sesuai durasi pilihan (<strong>1 Bulan s/d 3 Tahun</strong>) bersamaan dengan paket lama tanpa memotong masa aktif yang sudah ada.
+                            </p>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Langkah 2: Pilihan Durasi Langganan / Perpanjangan (1, 3, 6 Bulan, 1, 2, 3 Tahun) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+                        <span>Pilih Durasi Langganan / Perpanjangan</span>
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                        @php
+                            $durationOptions = [
+                                ['months' => 1,  'label' => '1 Bulan',  'sub' => 'Rp 5.000 / ' . strtolower($labelMember)],
+                                ['months' => 3,  'label' => '3 Bulan',  'sub' => 'Rp 15.000 / ' . strtolower($labelMember)],
+                                ['months' => 6,  'label' => '6 Bulan',  'sub' => 'Rp 30.000 / ' . strtolower($labelMember)],
+                                ['months' => 12, 'label' => '1 Tahun',  'sub' => 'Rp 60.000 / ' . strtolower($labelMember)],
+                                ['months' => 24, 'label' => '2 Tahun',  'sub' => 'Rp 120.000 / ' . strtolower($labelMember)],
+                                ['months' => 36, 'label' => '3 Tahun',  'sub' => 'Rp 180.000 / ' . strtolower($labelMember)],
+                            ];
+                        @endphp
+                        @foreach($durationOptions as $opt)
+                            <button type="button"
+                                    onclick="setDuration({{ $opt['months'] }})"
+                                    data-duration="{{ $opt['months'] }}"
+                                    class="duration-preset-btn p-3 rounded-xl border-2 text-center transition-all duration-150 cursor-pointer flex flex-col items-center justify-center {{ $opt['months'] === 1 ? 'border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/20' : 'border-gray-200 bg-white hover:border-emerald-500' }}">
+                                <span class="text-sm font-black text-gray-900">{{ $opt['label'] }}</span>
+                                <span class="text-[11px] font-semibold text-emerald-700 mt-0.5">{{ $opt['sub'] }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
 
                 {{-- CONTAINER MODE 1: PERPANJANG KUOTA BERJALAN --}}
                 <div id="panePerpanjang" class="space-y-4">
@@ -427,125 +427,17 @@
                     </div>
                 </div>
 
-                {{-- LANGKAH 3: PILIH METODE & RINCIAN PEMBAYARAN (Di Kolom Kiri agar Tampilan Seimbang) --}}
-                <div class="pt-4 border-t border-gray-100 space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center justify-between">
-                            <span class="flex items-center gap-2">
-                                <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">3</span>
-                                <span>Pilih Metode Pembayaran</span>
-                            </span>
-                            <span class="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">Tersedia 2 Opsi</span>
-                        </label>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <!-- Opsi 1: Transfer Bank BCA (Default) -->
-                            <button type="button" onclick="selectPaymentMethod('manual_bca')" id="btnMethodBca"
-                                class="p-3.5 rounded-xl border-2 text-left transition-all duration-150 border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 cursor-pointer flex flex-col justify-between shadow-xs">
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <span class="font-black text-blue-900 text-sm flex items-center gap-2">
-                                        <i class="fas fa-building-columns text-blue-600"></i> Transfer BCA
-                                    </span>
-                                    <div id="checkMethodBca" class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px]">
-                                        <i class="fas fa-check"></i>
-                                    </div>
-                                </div>
-                                <span class="text-xs text-blue-800 font-medium">Rek. 842-171-3359</span>
-                            </button>
-
-                            <!-- Opsi 2: Google Pay -->
-                            <button type="button" onclick="selectPaymentMethod('google_pay')" id="btnMethodGpay"
-                                class="p-3.5 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between">
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <span class="font-bold text-gray-800 text-sm flex items-center gap-2">
-                                        <i class="fab fa-google-pay text-xl text-emerald-600"></i> Google Pay
-                                    </span>
-                                    <div id="checkMethodGpay" class="w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]">
-                                        <i class="fas fa-check"></i>
-                                    </div>
-                                </div>
-                                <span class="text-xs text-gray-500 font-medium">Instan Otomatis (Kartu/GPay)</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Panel Opsi 1: Kartu Rekening BCA -->
-                    <div id="paneMethodBca" class="space-y-3">
-                        <div class="p-5 rounded-2xl bg-gradient-to-br from-blue-900 via-blue-950 to-indigo-950 text-white shadow-md space-y-3.5 border border-blue-800/50">
-                            <div class="flex items-center justify-between border-b border-white/10 pb-3">
-                                <div class="flex items-center gap-2.5">
-                                    <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-blue-300 font-black text-xs">
-                                        BCA
-                                    </div>
-                                    <div>
-                                        <div class="text-xs sm:text-sm font-bold text-white tracking-wide">BANK CENTRAL ASIA</div>
-                                        <div class="text-[10px] sm:text-xs text-blue-200">Transfer Manual / Antar Bank</div>
-                                    </div>
-                                </div>
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/30 text-blue-200 border border-blue-400/30">
-                                    Manual
-                                </span>
-                            </div>
-
-                            <div class="space-y-2.5 text-xs">
-                                <div class="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/10">
-                                    <div>
-                                        <span class="block text-[11px] text-blue-200 font-medium">Nomor Rekening Tujuan:</span>
-                                        <span class="text-lg sm:text-xl font-black tracking-wider font-mono text-white select-all">842-171-3359</span>
-                                    </div>
-                                    <button type="button" onclick="copyText('842-171-3359', 'Nomor rekening BCA')" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs">
-                                        <i class="fas fa-copy"></i> Salin Rekening
-                                    </button>
-                                </div>
-
-                                <div class="flex items-center justify-between px-1">
-                                    <span class="text-xs text-blue-200">Atas Nama (A.N):</span>
-                                    <span class="font-bold text-white text-xs sm:text-sm">Kadavi Raditya Alvino</span>
-                                </div>
-
-                                <div class="flex items-center justify-between px-1 pt-1 border-t border-white/10">
-                                    <span class="text-xs text-blue-200">Total Yang Harus Ditransfer:</span>
-                                    <span class="font-black text-amber-300 text-base sm:text-lg" id="bcaTransferTotalText">Rp {{ number_format($totalPerpanjang, 0, ',', '.') }}</span>
-                                </div>
-                            </div>
-
-                            <div class="text-xs text-blue-100 bg-white/10 p-3 rounded-xl border border-white/10 leading-relaxed flex items-start gap-2.5">
-                                <i class="fab fa-whatsapp text-emerald-400 mt-0.5 text-sm flex-shrink-0"></i>
-                                <div>
-                                    Setelah transfer, klik tombol <strong>"Buat Pesanan & Konfirmasi WhatsApp"</strong> di kolom ringkasan pesanan untuk mengirim bukti transaksi ke WhatsApp admin <strong>+62 895-3831-07479</strong>.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Panel Opsi 2: Info Google Pay -->
-                    <div id="paneMethodGpay" class="space-y-3 hidden">
-                        <div class="p-5 rounded-2xl bg-gray-50 border border-gray-200 space-y-3">
-                            <div class="flex items-center gap-3 text-gray-800">
-                                <div class="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center shadow-xs">
-                                    <i class="fab fa-google-pay text-2xl text-emerald-600"></i>
-                                </div>
-                                <div>
-                                    <div class="text-sm font-bold">Google Pay & Kartu Debit / Kredit</div>
-                                    <div class="text-xs text-gray-500">Pembayaran instan langsung diverifikasi otomatis oleh Google</div>
-                                </div>
-                            </div>
-                            <p class="text-xs text-gray-600 leading-relaxed bg-white p-3 rounded-xl border border-gray-100">
-                                <i class="fas fa-bolt text-amber-500 mr-1"></i>
-                                Lisensi dan penambahan kuota akan langsung <strong>aktif otomatis</strong> dalam hitungan detik setelah transaksi berhasil diverifikasi oleh Google Pay.
-                            </p>
-                        </div>
-                    </div>
-                </div>
 
             </div>
 
             <!-- Right: Order Summary & Action Checkout (5 cols, sticky) -->
-            <div class="lg:col-span-5 bg-gray-50/90 p-6 rounded-2xl border border-gray-200 flex flex-col justify-between shadow-xs lg:sticky lg:top-6 self-start space-y-5">
+            <div class="lg:col-span-5 bg-gray-50/90 p-5 sm:p-6 rounded-2xl border border-gray-200 flex flex-col justify-between shadow-xs lg:sticky lg:top-6 self-start space-y-5">
                 <div>
+                    {{-- Langkah 3: Ringkasan Tagihan --}}
                     <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-200">
                         <div>
-                            <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Langkah 4</span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Langkah 3</span>
                             <h3 class="text-base font-bold text-gray-800">Ringkasan Tagihan</h3>
                         </div>
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">
@@ -579,16 +471,100 @@
                     </div>
                 </div>
 
-                <!-- Indikator Metode Pembayaran yang Dipilih -->
-                <div class="p-3 rounded-xl bg-white border border-gray-200 flex items-center justify-between text-xs">
-                    <span class="text-gray-500 font-medium">Metode Pembayaran:</span>
-                    <span id="selectedMethodBadge" class="font-bold text-blue-900 flex items-center gap-1.5">
-                        <i class="fas fa-building-columns text-blue-600"></i> Transfer BCA
-                    </span>
+                {{-- Langkah 4: Pilih Metode Pembayaran --}}
+                <div class="pt-2 border-t border-gray-200 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Langkah 4</span>
+                            <h4 class="text-xs font-bold text-gray-800">PILIH METODE PEMBAYARAN</h4>
+                        </div>
+                        <span class="text-[10px] font-bold text-gray-500 bg-gray-200/80 px-2 py-0.5 rounded-full">TERSEDIA 2 OPSI</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        {{-- Opsi 1: Transfer BCA --}}
+                        <button type="button" id="btnMethodBca" onclick="selectPaymentMethod('manual_bca')"
+                            class="p-3 rounded-xl border-2 text-left transition-all duration-150 border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 cursor-pointer flex flex-col justify-between shadow-xs">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-xs text-blue-950 flex items-center gap-1.5">
+                                    <i class="fas fa-building-columns text-blue-600"></i>
+                                    <span>Transfer BCA</span>
+                                </span>
+                                <div id="checkMethodBca" class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px]">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <span class="text-[10px] text-blue-700 font-medium">Rek. 842-171-3359</span>
+                        </button>
+
+                        {{-- Opsi 2: Google Pay --}}
+                        <button type="button" id="btnMethodGpay" onclick="selectPaymentMethod('gpay')"
+                            class="p-3 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-xs text-gray-800 flex items-center gap-1.5">
+                                    <i class="fab fa-google-pay text-base text-gray-700"></i>
+                                    <span>Google Pay</span>
+                                </span>
+                                <div id="checkMethodGpay" class="w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <span class="text-[10px] text-gray-500">Instan Otomatis</span>
+                        </button>
+                    </div>
+
+                    {{-- Detail Card: Bank BCA Manual --}}
+                    <div id="paneMethodBca" class="rounded-xl p-4 bg-gradient-to-br from-[#0c2e68] to-[#123e87] text-white space-y-3 shadow-sm border border-blue-900/30">
+                        <div class="flex items-center justify-between pb-2 border-b border-white/10">
+                            <div class="flex items-center gap-2">
+                                <span class="px-1.5 py-0.5 rounded bg-blue-500/30 font-black text-xs tracking-wider text-blue-100 border border-blue-400/30">BCA</span>
+                                <span class="text-xs font-bold tracking-wide text-white">BANK CENTRAL ASIA</span>
+                            </div>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/15 text-blue-100">Manual</span>
+                        </div>
+
+                        <div class="space-y-1.5 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-blue-200 text-[11px]">Nomor Rekening:</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono font-bold text-sm text-white tracking-wider">842-171-3359</span>
+                                    <button type="button" onclick="copyText('8421713359', 'Nomor Rekening BCA')"
+                                        class="px-2 py-0.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-semibold text-[10px] transition-colors cursor-pointer flex items-center gap-1">
+                                        <i class="fas fa-copy"></i>
+                                        <span>Salin</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-blue-200 text-[11px]">
+                                <span>Atas Nama (A.N):</span>
+                                <span class="font-bold text-white text-[12px]">Kadavi Raditya Alvino</span>
+                            </div>
+                            <div class="flex items-center justify-between pt-1 border-t border-white/10">
+                                <span class="text-blue-200 text-[11px]">Total Ditransfer:</span>
+                                <span id="bcaTransferTotalText" class="font-extrabold text-amber-300 text-sm">Rp {{ number_format($totalPerpanjang, 0, ',', '.') }}</span>
+                            </div>
+                        </div>
+
+                        <div class="text-[10px] leading-relaxed text-blue-100 bg-white/10 p-2 rounded-lg border border-white/10 flex items-start gap-1.5">
+                            <i class="fab fa-whatsapp text-emerald-400 text-xs mt-0.5 flex-shrink-0"></i>
+                            <span>Setelah bayar, konfirmasi ke WhatsApp <strong>+62 895-3831-07479</strong> dengan menyertakan Nomor Orderan dan Bukti Transaksi.</span>
+                        </div>
+                    </div>
+
+                    {{-- Detail Card: Google Pay --}}
+                    <div id="paneMethodGpay" class="rounded-xl p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-1 hidden">
+                        <div class="flex items-center gap-1.5 font-bold text-emerald-800">
+                            <i class="fas fa-bolt text-emerald-600"></i>
+                            <span>Pembayaran Instan & Otomatis</span>
+                        </div>
+                        <p class="text-[11px] text-emerald-700">
+                            Masa aktif lisensi dan kuota pengguna akan langsung aktif secara otomatis setelah pembayaran Google Pay / Kartu terverifikasi.
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Tombol Aksi Checkout -->
-                <div class="space-y-3">
+                <div class="space-y-3 pt-1">
                     <!-- Tombol Opsi 1: Transfer Bank BCA -->
                     <div id="actionBtnBcaContainer">
                         <button type="button" id="btnPayWithBca" onclick="executeManualBcaCheckout()"
