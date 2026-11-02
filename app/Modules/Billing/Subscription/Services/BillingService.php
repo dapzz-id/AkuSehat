@@ -136,6 +136,20 @@ class BillingService
         }
 
         $modeTransaksi = $validated['mode_transaksi'] ?? 'perpanjang';
+        $durasiBulan = (int) ($validated['durasi_bulan'] ?? 1);
+        if (!in_array($durasiBulan, [1, 3, 6, 12, 24, 36], true)) {
+            $durasiBulan = 1;
+        }
+
+        $durasiLabel = match ($durasiBulan) {
+            1 => '1 Bulan',
+            3 => '3 Bulan',
+            6 => '6 Bulan',
+            12 => '1 Tahun',
+            24 => '2 Tahun',
+            36 => '3 Tahun',
+            default => "{$durasiBulan} Bulan",
+        };
 
         if ($modeTransaksi === 'perpanjang') {
             $licenseIdInput = $validated['license_id'] ?? null;
@@ -155,11 +169,11 @@ class BillingService
 
             $kuotaTarget = (int) ($targetLicense->kuota_pengguna ?: 8);
             $tambahKuota = 0;
-            $subtotal = $kuotaTarget * self::HARGA_PER_USER_BULAN;
+            $subtotal = $kuotaTarget * self::HARGA_PER_USER_BULAN * $durasiBulan;
             $tipeTransaksi = BillingTransactionType::PERPANJANG_LISENSI->value;
-            $deskripsiItem = "Perpanjangan Paket Lisensi ({$targetLicense->key} - {$kuotaTarget} " . ($instansi->label_member_singular ?? 'User') . " / +1 Bulan)";
+            $deskripsiItem = "Perpanjangan Paket Lisensi ({$targetLicense->key} - {$kuotaTarget} " . ($instansi->label_member_singular ?? 'User') . " / +{$durasiLabel})";
         } else {
-            // Mode TAMBAH KUOTA BARU (Paket Baru Mandiri 1 Bulan Penuh - Model Provider Internet / Bima Tri)
+            // Mode TAMBAH KUOTA BARU (Paket Baru Mandiri Sesuai Durasi Pilihan - Model Provider Internet / Bima Tri)
             $tambahKuota = (int) ($validated['tambah_kuota'] ?? 0);
             if ($tambahKuota <= 0) {
                 return [
@@ -172,9 +186,9 @@ class BillingService
             }
 
             $targetLicense = null;
-            $subtotal = $tambahKuota * self::HARGA_PER_USER_BULAN;
+            $subtotal = $tambahKuota * self::HARGA_PER_USER_BULAN * $durasiBulan;
             $tipeTransaksi = BillingTransactionType::TAMBAH_KUOTA->value;
-            $deskripsiItem = "Paket Kuota Baru (+{$tambahKuota} " . ($instansi->label_member_singular ?? 'User') . " / 1 Bulan Mandiri)";
+            $deskripsiItem = "Paket Kuota Baru (+{$tambahKuota} " . ($instansi->label_member_singular ?? 'User') . " / {$durasiLabel} Mandiri)";
         }
 
         $pajak11 = BillingRate::calculatePpn($subtotal);
@@ -193,14 +207,14 @@ class BillingService
         }
 
         try {
-            $resultData = DB::transaction(function () use ($instansi, $user, $validated, $modeTransaksi, $targetLicense, $tambahKuota, $subtotal, $pajak11, $totalNominal, $tipeTransaksi, $deskripsiItem, $orderIdInput) {
+            $resultData = DB::transaction(function () use ($instansi, $user, $validated, $modeTransaksi, $durasiBulan, $durasiLabel, $targetLicense, $tambahKuota, $subtotal, $pajak11, $totalNominal, $tipeTransaksi, $deskripsiItem, $orderIdInput) {
                 if ($modeTransaksi === 'perpanjang') {
                     $lockedLicense = $this->billingRepository->lockLicenseForUpdate((string) $targetLicense->id) ?? $targetLicense;
 
                     $baseDate = ($lockedLicense->tanggal_berakhir && $lockedLicense->tanggal_berakhir->isFuture()) 
                         ? $lockedLicense->tanggal_berakhir 
                         : now();
-                    $tanggalBerakhirBaru = $baseDate->copy()->addMonths(1);
+                    $tanggalBerakhirBaru = $baseDate->copy()->addMonths($durasiBulan);
 
                     $lockedLicense->tanggal_berakhir = $tanggalBerakhirBaru;
                     $lockedLicense->status = LicenseKey::STATUS_ACTIVE;
@@ -211,13 +225,13 @@ class BillingService
                     }
 
                     $affectedLicense = $lockedLicense;
-                    $durasiBulanTrx = 1;
+                    $durasiBulanTrx = $durasiBulan;
                 } else {
-                    // Tambah Slot Baru: Buat LicenseKey baru mandiri aktif 1 bulan (seperti paket provider Bima Tri)
+                    // Tambah Slot Baru: Buat LicenseKey baru mandiri aktif sesuai durasi pilihan (seperti paket provider Bima Tri)
                     $newLicense = $this->billingRepository->createNewLicense(
                         instansiId: (string) $instansi->id,
                         quota: $tambahKuota,
-                        months: 1
+                        months: $durasiBulan
                     );
 
                     if (!$instansi->license_id_active) {
@@ -226,7 +240,7 @@ class BillingService
 
                     $tanggalBerakhirBaru = $newLicense->tanggal_berakhir;
                     $affectedLicense = $newLicense;
-                    $durasiBulanTrx = 1;
+                    $durasiBulanTrx = $durasiBulan;
                 }
 
                 $orderId = $orderIdInput ?: ('GPAY-AKU-' . time() . '-' . strtoupper(Str::random(4)));
@@ -256,7 +270,8 @@ class BillingService
                         'subtotal' => $subtotal,
                         'ppn_11' => $pajak11,
                         'harga_per_user' => self::HARGA_PER_USER_BULAN,
-                        'durasi_bulan' => 1,
+                        'durasi_bulan' => $durasiBulanTrx,
+                        'durasi_label' => $durasiLabel,
                         'deskripsi_item' => $deskripsiItem,
                     ],
                 ]);

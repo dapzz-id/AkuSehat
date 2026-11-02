@@ -17,6 +17,7 @@ class ProcessGooglePayRequest extends FormRequest
             'mode_transaksi' => 'nullable|in:perpanjang,tambah_kuota',
             'license_id' => 'nullable|string',
             'tambah_kuota' => 'nullable|integer|min:0|max:10000',
+            'durasi_bulan' => 'nullable|integer|in:1,3,6,12,24,36',
             'order_id' => 'nullable|string',
             'payment_token' => 'nullable|string',
             'card_details' => 'nullable|string',

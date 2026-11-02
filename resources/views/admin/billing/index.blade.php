@@ -103,7 +103,7 @@
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-white/10">
                         <span>Model Kuota:</span>
-                        <span class="font-medium text-white">Multi-Bucket (Mandiri 1 Bln)</span>
+                        <span class="font-medium text-white">Multi-Bucket (1 Bln – 3 Thn)</span>
                     </div>
                     <div class="flex items-center justify-between py-1">
                         <span>Metode Pembayaran:</span>
@@ -181,7 +181,7 @@
                                 onclick="selectPackageForRenewal('{{ $pkg->id }}')"
                                 class="w-full py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs {{ $pkgExpired ? 'bg-rose-600 hover:bg-rose-700 text-white' : ($isExpiringSoon ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white') }}">
                             <i class="fas fa-rotate"></i>
-                            <span>{{ $pkgExpired ? 'Aktifkan Kembali (+1 Bln)' : 'Perpanjang Paket (+1 Bln)' }}</span>
+                            <span>{{ $pkgExpired ? 'Aktifkan Kembali Paket' : 'Perpanjang Paket Ini' }}</span>
                         </button>
                     </div>
                 </div>
@@ -225,7 +225,7 @@
                     </div>
                     <div class="font-bold text-gray-900 text-sm sm:text-base">Perpanjang Masa Aktif Lisensi</div>
                     <p class="text-xs text-gray-500 mt-1">
-                        Pilih paket kuota berjalan untuk diperpanjang masa aktifnya <strong>+1 Bulan</strong> tanpa merubah kapasitas siswa pada paket tersebut.
+                        Pilih paket kuota berjalan untuk diperpanjang masa aktifnya (<strong>1, 3, 6 Bulan, atau 1–3 Tahun</strong>) tanpa merubah kapasitas {{ strtolower($labelMember) }} pada paket tersebut.
                     </p>
                 </button>
 
@@ -234,7 +234,7 @@
                     class="p-4 rounded-2xl border-2 text-left transition-all duration-200 border-gray-200 bg-white hover:border-gray-300 relative cursor-pointer">
                     <div class="flex items-center justify-between mb-1.5">
                         <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700">
-                            <i class="fas fa-user-plus"></i> Tambah Slot Baru (1 Bln Mandiri)
+                            <i class="fas fa-user-plus"></i> Tambah Slot Baru (Mandiri)
                         </span>
                         <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center bg-white text-transparent text-[10px]" id="indicatorTambahKuota">
                             <i class="fas fa-check"></i>
@@ -242,9 +242,38 @@
                     </div>
                     <div class="font-bold text-gray-900 text-sm sm:text-base">Tambah Slot Kuota {{ $labelMember }} Baru</div>
                     <p class="text-xs text-gray-500 mt-1">
-                        Beli paket kuota baru yang akan aktif mandiri selama <strong>1 Bulan</strong> bersamaan dengan paket lama tanpa memotong masa aktif yang sudah ada.
+                        Beli paket kuota baru yang akan aktif mandiri sesuai durasi pilihan (<strong>1 Bulan s/d 3 Tahun</strong>) bersamaan dengan paket lama tanpa memotong masa aktif yang sudah ada.
                     </p>
                 </button>
+            </div>
+        </div>
+
+        {{-- Pilihan Durasi Langganan / Perpanjangan (1, 3, 6 Bulan, 1, 2, 3 Tahun) --}}
+        <div class="mb-6">
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+                <span>Pilih Durasi Langganan / Perpanjangan</span>
+            </label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                @php
+                    $durationOptions = [
+                        ['months' => 1,  'label' => '1 Bulan',  'sub' => 'Rp 5.000 / ' . strtolower($labelMember)],
+                        ['months' => 3,  'label' => '3 Bulan',  'sub' => 'Rp 15.000 / ' . strtolower($labelMember)],
+                        ['months' => 6,  'label' => '6 Bulan',  'sub' => 'Rp 30.000 / ' . strtolower($labelMember)],
+                        ['months' => 12, 'label' => '1 Tahun',  'sub' => 'Rp 60.000 / ' . strtolower($labelMember)],
+                        ['months' => 24, 'label' => '2 Tahun',  'sub' => 'Rp 120.000 / ' . strtolower($labelMember)],
+                        ['months' => 36, 'label' => '3 Tahun',  'sub' => 'Rp 180.000 / ' . strtolower($labelMember)],
+                    ];
+                @endphp
+                @foreach($durationOptions as $opt)
+                    <button type="button"
+                            onclick="setDuration({{ $opt['months'] }})"
+                            data-duration="{{ $opt['months'] }}"
+                            class="duration-preset-btn p-3 rounded-xl border-2 text-center transition-all duration-150 cursor-pointer flex flex-col items-center justify-center {{ $opt['months'] === 1 ? 'border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/20' : 'border-gray-200 bg-white hover:border-emerald-500' }}">
+                        <span class="text-sm font-black text-gray-900">{{ $opt['label'] }}</span>
+                        <span class="text-[11px] font-semibold text-emerald-700 mt-0.5">{{ $opt['sub'] }}</span>
+                    </button>
+                @endforeach
             </div>
         </div>
 
@@ -293,7 +322,7 @@
                             <div class="flex items-center justify-between text-xs font-bold text-emerald-900">
                                 <span class="flex items-center gap-1.5">
                                     <i class="fas fa-calendar-check text-emerald-600"></i>
-                                    Perpanjangan Durasi +1 Bulan (30 Hari)
+                                    <span id="renewalDurationHeaderText">Perpanjangan Durasi +1 Bulan</span>
                                 </span>
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
                                     Akumulasi Mandiri
@@ -311,7 +340,7 @@
                                     <span class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full flex items-center gap-1 text-[11px]">
                                         <i class="fas fa-arrow-right hidden sm:inline"></i>
                                         <i class="fas fa-arrow-down sm:hidden"></i>
-                                        +1 Bulan
+                                        <span id="renewalDurationArrowBadge">+1 Bulan</span>
                                     </span>
                                 </div>
                                 <div class="bg-emerald-50/70 p-3 rounded-xl border border-emerald-200">
@@ -324,7 +353,7 @@
 
                             <p class="text-[11px] text-gray-600 leading-relaxed bg-emerald-50/40 p-2.5 rounded-lg border border-emerald-100">
                                 <i class="fas fa-circle-check text-emerald-600 mr-1"></i>
-                                Sisa waktu aktif paket ini tetap utuh tanpa terpotong. Perpanjangan 1 bulan langsung diakumulasikan ke masa berlaku paket tersebut.
+                                Sisa waktu aktif paket ini tetap utuh tanpa terpotong. Perpanjangan langsung diakumulasikan ke masa berlaku paket tersebut.
                             </p>
                         </div>
                     </div>
@@ -336,43 +365,43 @@
                     <div class="bg-blue-50/70 p-3.5 rounded-xl border border-blue-200 text-xs text-blue-900 flex items-start gap-2.5">
                         <i class="fas fa-info-circle text-blue-600 mt-0.5 text-sm flex-shrink-0"></i>
                         <div>
-                            <strong>Model Provider Kuota Mandiri:</strong> Kuota tambahan yang Anda beli akan menjadi paket baru yang aktif selama <strong>1 Bulan Penuh</strong> sejak hari ini dan berjalan bersamaan dengan paket kuota Anda yang lain.
+                            <strong>Model Provider Kuota Mandiri:</strong> Kuota tambahan yang Anda beli akan menjadi paket baru yang aktif selama <strong id="topupDurationNoticeText">1 Bulan</strong> sejak hari ini dan berjalan bersamaan dengan paket kuota Anda yang lain.
                         </div>
                     </div>
 
                     {{-- Opsi: Paket Jumlah Pengguna/Siswa --}}
                     <div>
                         <label class="block text-sm font-bold text-gray-800 mb-2">
-                            1. Pilih Paket Kuota Tambahan <span class="text-xs font-normal text-emerald-700">(Rp 5.000 / {{ strtolower($labelMember) }} / bulan)</span>
+                            1. Pilih Paket Kuota Tambahan <span class="text-xs font-normal text-emerald-700" id="topupPresetRateLabel">(Rp 5.000 / {{ strtolower($labelMember) }} / bulan)</span>
                         </label>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <button type="button" onclick="setQuota(50)" data-quota="50" class="quota-preset-btn border-2 border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20 rounded-xl p-3.5 flex flex-col items-center justify-center text-center transition-all duration-150 hover:border-emerald-500">
                                 <span class="text-xs font-bold text-gray-500 uppercase">+50 {{ $labelMember }}</span>
-                                <span class="text-base font-black text-gray-800 mt-1">Rp 250.000</span>
+                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice50">Rp 250.000</span>
                                 <span class="text-[10px] text-emerald-700 font-semibold mt-0.5">{{ $instansi->getPresetPaketName(50) }}</span>
                             </button>
 
                             <button type="button" onclick="setQuota(100)" data-quota="100" class="quota-preset-btn border-2 border-gray-200 bg-white rounded-xl p-3.5 flex flex-col items-center justify-center text-center transition-all duration-150 hover:border-emerald-500">
                                 <span class="text-xs font-bold text-gray-500 uppercase">+100 {{ $labelMember }}</span>
-                                <span class="text-base font-black text-gray-800 mt-1">Rp 500.000</span>
+                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice100">Rp 500.000</span>
                                 <span class="text-[10px] text-gray-500 mt-0.5">{{ $instansi->getPresetPaketName(100) }}</span>
                             </button>
 
                             <button type="button" onclick="setQuota(250)" data-quota="250" class="quota-preset-btn border-2 border-gray-200 bg-white rounded-xl p-3.5 flex flex-col items-center justify-center text-center transition-all duration-150 hover:border-emerald-500">
                                 <span class="text-xs font-bold text-gray-500 uppercase">+250 {{ $labelMember }}</span>
-                                <span class="text-base font-black text-gray-800 mt-1">Rp 1.250.000</span>
+                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice250">Rp 1.250.000</span>
                                 <span class="text-[10px] text-gray-500 mt-0.5">{{ $instansi->getPresetPaketName(250) }}</span>
                             </button>
 
                             <button type="button" onclick="setQuota(500)" data-quota="500" class="quota-preset-btn border-2 border-gray-200 bg-white rounded-xl p-3.5 flex flex-col items-center justify-center text-center transition-all duration-150 hover:border-emerald-500">
                                 <span class="text-xs font-bold text-gray-500 uppercase">+500 {{ $labelMember }}</span>
-                                <span class="text-base font-black text-gray-800 mt-1">Rp 2.500.000</span>
+                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice500">Rp 2.500.000</span>
                                 <span class="text-[10px] text-emerald-700 font-semibold mt-0.5">{{ $instansi->getPresetPaketName(500) }}</span>
                             </button>
 
                             <button type="button" onclick="setQuota(1000)" data-quota="1000" class="quota-preset-btn border-2 border-gray-200 bg-white rounded-xl p-3.5 flex flex-col items-center justify-center text-center transition-all duration-150 hover:border-emerald-500 col-span-2 sm:col-span-2">
                                 <span class="text-xs font-bold text-gray-500 uppercase">+1.000 {{ $labelMember }}</span>
-                                <span class="text-base font-black text-gray-800 mt-1">Rp 5.000.000</span>
+                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice1000">Rp 5.000.000</span>
                                 <span class="text-[10px] text-purple-700 font-semibold mt-0.5">{{ $instansi->getPresetPaketName(1000) }}</span>
                             </button>
                         </div>
@@ -390,10 +419,10 @@
                                     oninput="onCustomQuotaInput(this.value)"
                                     class="w-full h-11 px-3.5 border border-gray-300 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-[#308a34] focus:border-transparent">
                             </div>
-                            <span class="text-xs font-semibold text-gray-600 bg-gray-100 px-3 py-2.5 rounded-xl whitespace-nowrap">{{ $labelMember }} (1 Bulan)</span>
+                            <span class="text-xs font-semibold text-gray-600 bg-gray-100 px-3 py-2.5 rounded-xl whitespace-nowrap" id="customQuotaDurationBadge">{{ $labelMember }} (1 Bulan)</span>
                         </div>
                         <p class="text-[11px] text-gray-400 mt-1.5">
-                            * Kuota pengguna akan dibuatkan paket lisensi baru mandiri dengan masa aktif 1 bulan sejak hari pembelian.
+                            * Kuota pengguna akan dibuatkan paket lisensi baru mandiri sesuai durasi yang dipilih di atas sejak hari pembelian.
                         </p>
                     </div>
                 </div>
@@ -404,7 +433,7 @@
                 <div>
                     <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-200">
                         <div>
-                            <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Langkah 2</span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Langkah 3</span>
                             <h3 class="text-base font-bold text-gray-800">Ringkasan Tagihan</h3>
                         </div>
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">
@@ -488,9 +517,17 @@
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-4 py-3 font-mono text-xs font-semibold text-gray-700">{{ $trx->order_id }}</td>
                         <td class="px-4 py-3 font-medium text-gray-800">
+                            @php
+                                $trxDurasiStr = match((int) $trx->durasi_bulan) {
+                                    12 => '1 Thn',
+                                    24 => '2 Thn',
+                                    36 => '3 Thn',
+                                    default => (($trx->durasi_bulan ?: 1) . ' Bln'),
+                                };
+                            @endphp
                             @if($trx->tipe_transaksi === 'perpanjang_lisensi')
                                 <span class="inline-flex items-center gap-1 font-semibold text-emerald-800">
-                                    <i class="fas fa-rotate text-xs"></i> Perpanjangan Lisensi (+{{ $trx->durasi_bulan == 12 ? '1 Thn' : ($trx->durasi_bulan ?: 1) . ' Bln' }})
+                                    <i class="fas fa-rotate text-xs"></i> Perpanjangan Lisensi (+{{ $trxDurasiStr }})
                                 </span>
                             @elseif($trx->tipe_transaksi === 'tambah_kuota')
                                 <span class="inline-flex items-center gap-1 font-semibold text-blue-800">
@@ -509,11 +546,11 @@
                         <td class="px-4 py-3 text-xs text-gray-600">
                             @if($trx->tipe_transaksi === 'perpanjang_lisensi')
                                 <span class="inline-block bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded font-medium border border-emerald-100">
-                                    {{ $trx->payload['kuota_paket'] ?? ($trx->payload['kuota_saat_perpanjang'] ?? $kuotaMaksimal) }} {{ $labelMember }} (Perpanjang +{{ $trx->durasi_bulan == 12 ? '1 Thn' : ($trx->durasi_bulan ?: 1) . ' Bln' }})
+                                    {{ $trx->payload['kuota_paket'] ?? ($trx->payload['kuota_saat_perpanjang'] ?? $kuotaMaksimal) }} {{ $labelMember }} (Perpanjang +{{ $trxDurasiStr }})
                                 </span>
                             @elseif($trx->tipe_transaksi === 'tambah_kuota')
                                 <span class="inline-block bg-blue-50 text-blue-800 px-2.5 py-0.5 rounded font-medium border border-blue-100">
-                                    +{{ $trx->tambah_kuota }} {{ $labelMember }} (Mandiri {{ $trx->durasi_bulan == 12 ? '1 Thn' : ($trx->durasi_bulan ?: 1) . ' Bln' }})
+                                    +{{ $trx->tambah_kuota }} {{ $labelMember }} (Mandiri {{ $trxDurasiStr }})
                                 </span>
                             @elseif($trx->tipe_transaksi === 'lisensi_bulanan')
                                 <span class="inline-block bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded font-medium">+{{ $trx->tambah_kuota }} {{ $labelMember }} (1 Bln)</span>
@@ -660,21 +697,86 @@
 <script src="https://pay.google.com/gp/p/js/pay.js" async onload="onGooglePayLoaded()"></script>
 
 <script>
-    const HARGA_USER = {{ $hargaPerUser }}; // 5000
+    const HARGA_USER = {{ $hargaPerUser }}; // 5000 per bulan
     const LABEL_MEMBER = '{{ $labelMember }}';
     const ALL_PACKAGES = @json($packagesPayload ?? []);
 
     let currentMode = 'perpanjang'; // 'perpanjang' or 'tambah_kuota'
     let selectedRenewalPackageId = '{{ $primaryLicense ? $primaryLicense->id : '' }}';
     let selectedQuota = 50;
+    let selectedDuration = 1; // 1, 3, 6, 12, 24, 36 bulan
     let paymentsClient = null;
 
     function formatRupiah(num) {
         return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
 
+    function getDurationLabel(months) {
+        switch (parseInt(months)) {
+            case 1: return '1 Bulan';
+            case 3: return '3 Bulan';
+            case 6: return '6 Bulan';
+            case 12: return '1 Tahun';
+            case 24: return '2 Tahun';
+            case 36: return '3 Tahun';
+            default: return months + ' Bulan';
+        }
+    }
+
     function getPackageById(id) {
         return ALL_PACKAGES.find(p => p.id === id) || ALL_PACKAGES[0] || null;
+    }
+
+    function setDuration(months) {
+        selectedDuration = parseInt(months) || 1;
+        const durLabel = getDurationLabel(selectedDuration);
+
+        document.querySelectorAll('.duration-preset-btn').forEach(btn => {
+            const btnVal = parseInt(btn.getAttribute('data-duration'));
+            if (btnVal === selectedDuration) {
+                btn.classList.add('border-emerald-600', 'bg-emerald-50/60', 'ring-2', 'ring-emerald-500/20');
+                btn.classList.remove('border-gray-200', 'bg-white');
+            } else {
+                btn.classList.remove('border-emerald-600', 'bg-emerald-50/60', 'ring-2', 'ring-emerald-500/20');
+                btn.classList.add('border-gray-200', 'bg-white');
+            }
+        });
+
+        // Update preset quota button prices dynamically based on selectedDuration
+        [50, 100, 250, 500, 1000].forEach(q => {
+            const priceEl = document.getElementById('presetPrice' + q);
+            if (priceEl) {
+                priceEl.textContent = formatRupiah(q * HARGA_USER * selectedDuration);
+            }
+        });
+
+        const topupNoticeEl = document.getElementById('topupDurationNoticeText');
+        if (topupNoticeEl) topupNoticeEl.textContent = durLabel;
+
+        const customBadgeEl = document.getElementById('customQuotaDurationBadge');
+        if (customBadgeEl) customBadgeEl.textContent = `${LABEL_MEMBER} (${durLabel})`;
+
+        const renewalHeaderEl = document.getElementById('renewalDurationHeaderText');
+        if (renewalHeaderEl) renewalHeaderEl.textContent = `Perpanjangan Durasi +${durLabel}`;
+
+        const renewalArrowEl = document.getElementById('renewalDurationArrowBadge');
+        if (renewalArrowEl) renewalArrowEl.textContent = `+${durLabel}`;
+
+        updateRenewalExpiryPreview();
+        calculateTotal();
+    }
+
+    function updateRenewalExpiryPreview() {
+        const pkg = getPackageById(selectedRenewalPackageId);
+        const newExpEl = document.getElementById('renewalNewExpiry');
+        if (!newExpEl) return;
+
+        const baseDate = (pkg && pkg.raw_expiry && !pkg.is_expired)
+            ? new Date(pkg.raw_expiry)
+            : new Date();
+        baseDate.setMonth(baseDate.getMonth() + selectedDuration);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        newExpEl.textContent = `${baseDate.getDate()} ${months[baseDate.getMonth()]} ${baseDate.getFullYear()}`;
     }
 
     function switchBillingMode(mode) {
@@ -728,7 +830,6 @@
 
         const quotaTextEl = document.getElementById('renewalPackageQuotaText');
         const currentExpEl = document.getElementById('renewalCurrentExpiry');
-        const newExpEl = document.getElementById('renewalNewExpiry');
 
         if (quotaTextEl) {
             quotaTextEl.textContent = `${pkg.quota} ${LABEL_MEMBER}`;
@@ -736,12 +837,7 @@
         if (currentExpEl) {
             currentExpEl.textContent = pkg.expiry_formatted;
         }
-        if (newExpEl && pkg.raw_expiry) {
-            const expDate = new Date(pkg.raw_expiry);
-            expDate.setMonth(expDate.getMonth() + 1);
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-            newExpEl.textContent = `${expDate.getDate()} ${months[expDate.getMonth()]} ${expDate.getFullYear()}`;
-        }
+        updateRenewalExpiryPreview();
 
         calculateTotal();
     }
@@ -753,39 +849,39 @@
         const summaryTotalEl = document.getElementById('summaryTotalPrice');
         const summaryExpiryLabel = document.getElementById('summaryExpiryLabel');
         const summaryExpiryBadge = document.getElementById('summaryExpiryBadge');
-        const btnPayLabel = document.getElementById('btnPayLabel');
+        const durLabel = getDurationLabel(selectedDuration);
 
         let total = 0;
         if (currentMode === 'perpanjang') {
             const pkg = getPackageById(selectedRenewalPackageId);
             const quota = pkg ? pkg.quota : 50;
-            const subtotal = quota * HARGA_USER;
+            const subtotal = quota * HARGA_USER * selectedDuration;
             const tax = Math.round(subtotal * 0.11);
             total = subtotal + tax;
 
             if (summaryQuotaEl) {
-                summaryQuotaEl.textContent = `Perpanjangan Paket (${pkg ? pkg.key : 'Lisensi'} - ${quota} ${LABEL_MEMBER})`;
+                summaryQuotaEl.textContent = `Perpanjangan Paket (${pkg ? pkg.key : 'Lisensi'} - ${quota} ${LABEL_MEMBER} × ${durLabel})`;
             }
             if (summaryPriceEl) summaryPriceEl.textContent = formatRupiah(subtotal);
             if (summaryTaxEl) summaryTaxEl.textContent = formatRupiah(tax);
             if (summaryTotalEl) summaryTotalEl.textContent = formatRupiah(total);
             if (summaryExpiryLabel) summaryExpiryLabel.textContent = 'Masa Perpanjangan';
             if (summaryExpiryBadge) {
-                summaryExpiryBadge.textContent = '+1 Bulan (Mandiri)';
+                summaryExpiryBadge.textContent = `+${durLabel} (Mandiri)`;
                 summaryExpiryBadge.className = 'font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-xs';
             }
         } else {
-            const subtotal = selectedQuota * HARGA_USER;
+            const subtotal = selectedQuota * HARGA_USER * selectedDuration;
             const tax = Math.round(subtotal * 0.11);
             total = subtotal + tax;
 
-            if (summaryQuotaEl) summaryQuotaEl.textContent = `Paket Kuota Baru (+${selectedQuota} ${LABEL_MEMBER})`;
+            if (summaryQuotaEl) summaryQuotaEl.textContent = `Paket Kuota Baru (+${selectedQuota} ${LABEL_MEMBER} × ${durLabel})`;
             if (summaryPriceEl) summaryPriceEl.textContent = formatRupiah(subtotal);
             if (summaryTaxEl) summaryTaxEl.textContent = formatRupiah(tax);
             if (summaryTotalEl) summaryTotalEl.textContent = formatRupiah(total);
             if (summaryExpiryLabel) summaryExpiryLabel.textContent = 'Masa Aktif Paket Baru';
             if (summaryExpiryBadge) {
-                summaryExpiryBadge.textContent = '1 Bulan Mandiri (Multi-Paket)';
+                summaryExpiryBadge.textContent = `${durLabel} Mandiri (Multi-Paket)`;
                 summaryExpiryBadge.className = 'font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-xs';
             }
         }
@@ -957,21 +1053,22 @@
         const confirmExpiryEl = document.getElementById('confirmExpiryText');
         const confirmTotalEl = document.getElementById('confirmTotalText');
 
+        const durLabel = getDurationLabel(selectedDuration);
         if (confirmTotalEl) confirmTotalEl.textContent = formatRupiah(total);
 
         if (currentMode === 'perpanjang') {
             const pkg = getPackageById(selectedRenewalPackageId);
-            if (confirmModeEl) confirmModeEl.textContent = 'Perpanjangan Paket Lisensi (+1 Bln)';
+            if (confirmModeEl) confirmModeEl.textContent = `Perpanjangan Paket Lisensi (+${durLabel})`;
             if (confirmQuotaEl) confirmQuotaEl.textContent = `${pkg ? pkg.key : 'Paket'} (${pkg ? pkg.quota : 50} ${LABEL_MEMBER})`;
             if (confirmExpiryEl) {
-                confirmExpiryEl.textContent = '+1 Bulan (Akumulasi Mandiri)';
+                confirmExpiryEl.textContent = `+${durLabel} (Akumulasi Mandiri)`;
                 confirmExpiryEl.className = 'font-semibold text-emerald-700';
             }
         } else {
             if (confirmModeEl) confirmModeEl.textContent = 'Tambah Paket Kuota Baru';
             if (confirmQuotaEl) confirmQuotaEl.textContent = `+${selectedQuota} ${LABEL_MEMBER} Baru`;
             if (confirmExpiryEl) {
-                confirmExpiryEl.textContent = '1 Bulan Mandiri (Aktif Bersamaan)';
+                confirmExpiryEl.textContent = `${durLabel} Mandiri (Aktif Bersamaan)`;
                 confirmExpiryEl.className = 'font-semibold text-blue-700';
             }
         }
@@ -1047,6 +1144,7 @@
                 mode_transaksi: currentMode,
                 license_id: currentMode === 'perpanjang' ? selectedRenewalPackageId : null,
                 tambah_kuota: currentMode === 'perpanjang' ? 0 : selectedQuota,
+                durasi_bulan: selectedDuration,
                 order_id: orderId,
                 payment_token: token,
                 card_details: cardDescription,
