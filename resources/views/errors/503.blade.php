@@ -41,36 +41,66 @@
                 </p>
             </div>
 
-            <!-- SuperAdmin Notice -->
-            <div class="p-4 rounded-2xl bg-white/5 border border-white/10 text-left text-xs text-slate-300 space-y-1.5">
-                <div class="flex items-center gap-2 text-emerald-400 font-bold">
-                    <i class="fas fa-shield-halved"></i>
-                    <span>Akses Super Administrator:</span>
-                </div>
-                <p class="text-[11px] text-slate-400 leading-relaxed">
-                    Jika Anda adalah Super Administrator, silakan masuk melalui tautan di bawah ini untuk mengakses dashboard dan mengelola sistem.
-                </p>
-            </div>
+            <!-- Sesi Non-Admin Terdeteksi & Tombol Log Out -->
+            @if(auth()->check() && !auth()->user()->isSuperAdmin())
+                <div class="p-5 rounded-2xl bg-rose-950/70 border border-rose-500/40 text-left space-y-3 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-rose-400 font-bold text-xs">
+                            <i class="fas fa-user-lock text-sm"></i>
+                            <span>Pemberitahuan Sesi Akun</span>
+                        </div>
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                            {{ auth()->user()->level ?? 'Pengguna' }}
+                        </span>
+                    </div>
 
-            <!-- Action Buttons -->
-            <div class="pt-2 flex flex-col sm:flex-row items-center gap-3">
-                <a href="{{ route('login') }}" 
-                   class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold border border-emerald-800 shadow-lg shadow-emerald-900/30 transition-all">
-                    <i class="fas fa-right-to-bracket"></i>
-                    <span>Masuk sebagai SuperAdmin</span>
-                </a>
-                
-                @if(auth()->check())
-                    <form action="{{ route('logout') }}" method="POST" class="w-full">
+                    <p class="text-xs text-slate-200 leading-relaxed">
+                        Anda saat ini masuk sebagai <strong class="text-white">{{ auth()->user()->nama ?? auth()->user()->name }}</strong>. Karena website sedang dalam <strong>Mode Pemeliharaan (Maintenance)</strong>, akun Anda tidak memiliki akses ke dashboard saat ini.
+                    </p>
+
+                    <form action="{{ route('logout') }}" method="POST" class="pt-1">
                         @csrf
                         <button type="submit" 
-                                class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 text-xs font-semibold border border-white/15 transition-all">
+                                class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 active:scale-98 text-white font-bold text-xs tracking-wide shadow-md shadow-rose-950/50 transition-all flex items-center justify-center gap-2 cursor-pointer">
                             <i class="fas fa-arrow-right-from-bracket"></i>
-                            <span>Keluar Akun</span>
+                            <span>Log Out / Keluar Akun</span>
                         </button>
                     </form>
-                @endif
-            </div>
+                </div>
+            @endif
+
+            <!-- Akses SuperAdmin Notice & Tombol Masuk -->
+            @if(!auth()->check())
+                <div class="p-4 rounded-2xl bg-white/5 border border-white/10 text-left text-xs text-slate-300 space-y-1.5">
+                    <div class="flex items-center gap-2 text-emerald-400 font-bold">
+                        <i class="fas fa-shield-halved"></i>
+                        <span>Akses Super Administrator:</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                        Jika Anda adalah Super Administrator, silakan masuk melalui tautan di bawah ini untuk mengakses dashboard dan mengontrol sistem.
+                    </p>
+                </div>
+
+                <div class="pt-2">
+                    <a href="{{ route('login') }}" 
+                       class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs font-bold border border-emerald-500 shadow-lg shadow-emerald-900/30 transition-all cursor-pointer">
+                        <i class="fas fa-right-to-bracket"></i>
+                        <span>Masuk sebagai SuperAdmin</span>
+                    </a>
+                </div>
+            @elseif(auth()->user()->isSuperAdmin())
+                <div class="pt-2">
+                    <a href="{{ route('dashboard') }}" 
+                       class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs font-bold border border-emerald-500 shadow-lg shadow-emerald-900/30 transition-all cursor-pointer">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Buka Dashboard SuperAdmin</span>
+                    </a>
+                </div>
+            @else
+                <p class="text-[11px] text-slate-400">
+                    Ingin masuk sebagai SuperAdmin? Silakan klik tombol <strong>Log Out / Keluar Akun</strong> di atas terlebih dahulu.
+                </p>
+            @endif
 
             <p class="text-[11px] text-slate-500 pt-2">
                 &copy; {{ date('Y') }} Aku Sehat &bull; PT Neura Cakrawira Solusi

@@ -20,7 +20,7 @@ Route::middleware(['guest'])->group(function () {
 
 // 2. Authenticated Auth & Profile Operations
 Route::middleware(['auth'])->group(function () {
-    Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+    Route::match(['get', 'post'], 'logout', [AuthController::class, 'logout'])->name('logout');
     Route::post('link-instansi', [AuthController::class, 'linkInstansi'])->name('link.instansi');
 
     // Profil Pengguna (Semua Role)

@@ -436,4 +436,24 @@ class SecurityHardeningTest extends TestCase
         $this->assertArrayHasKey('filters', $data);
         $this->assertEquals('BCA-AKU', $data['filters']['search']);
     }
+
+    /**
+     * Test maintenance mode allows login and logout routes.
+     */
+    public function test_maintenance_mode_allows_login_and_logout_routes(): void
+    {
+        $middleware = new \App\Http\Middleware\CheckMaintenance();
+        
+        $loginRequest = \Illuminate\Http\Request::create('/login', 'GET');
+        $response = $middleware->handle($loginRequest, function ($req) {
+            return new \Symfony\Component\HttpFoundation\Response('OK');
+        });
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $logoutRequest = \Illuminate\Http\Request::create('/logout', 'POST');
+        $responseLogout = $middleware->handle($logoutRequest, function ($req) {
+            return new \Symfony\Component\HttpFoundation\Response('LOGGED_OUT');
+        });
+        $this->assertEquals(200, $responseLogout->getStatusCode());
+    }
 }

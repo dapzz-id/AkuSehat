@@ -35,6 +35,16 @@ class AuthController extends Controller
         );
 
         if ($result['success']) {
+            if (\App\Models\MaintenanceMode::isWebInMaintenance()) {
+                $user = Auth::user();
+                if (!$user || !$user->isSuperAdmin()) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    return back()->withErrors(['username' => 'Website sedang dalam mode pemeliharaan (Maintenance Mode). Hanya Super Administrator yang diizinkan masuk saat ini.']);
+                }
+            }
+
             return redirect()->intended('/dashboard');
         }
 
@@ -155,6 +165,16 @@ class AuthController extends Controller
 
         if (!$result['success']) {
             return redirect()->route('login')->with('error', $result['message']);
+        }
+
+        if (\App\Models\MaintenanceMode::isWebInMaintenance()) {
+            $user = Auth::user();
+            if (!$user || !$user->isSuperAdmin()) {
+                Auth::logout();
+                request()->session()->invalidate();
+                request()->session()->regenerateToken();
+                return redirect()->route('login')->withErrors(['username' => 'Website sedang dalam mode pemeliharaan (Maintenance Mode). Hanya Super Administrator yang diizinkan masuk saat ini.']);
+            }
         }
 
         return redirect('/dashboard')->with('success', 'Berhasil masuk dengan akun Google!');

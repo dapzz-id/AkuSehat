@@ -72,8 +72,15 @@ class CheckMaintenance
                 return $next($request);
             }
 
-            // Izinkan route login & logout agar SuperAdmin bisa login ke sistem
-            if ($request->is('login') || $request->is('logout')) {
+            // Izinkan route login, logout, dan Google auth agar otentikasi SuperAdmin tetap bisa berjalan
+            if ($request->is('login') || $request->is('logout') || $request->is('auth/google*')) {
+                // Jika user yang sudah login sebelumnya bukan SuperAdmin dan mengakses halaman /login,
+                // bersihkan sesi non-admin secara otomatis agar form login terbuka bersih untuk SuperAdmin
+                if ($user && !$user->isSuperAdmin() && $request->is('login')) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                }
                 return $next($request);
             }
 

@@ -110,6 +110,17 @@
 
                 <!-- Card Form -->
                 <div class="bg-white rounded-2xl shadow-[0_4px_25px_-5px_rgba(0,0,0,0.06),0_10px_20px_-5px_rgba(0,0,0,0.03)] border border-slate-200/80 p-7 sm:p-9">
+                    {{-- Notice Jika Mode Maintenance Sedang Aktif --}}
+                    @if(\App\Models\MaintenanceMode::isWebInMaintenance())
+                        <div class="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs flex items-start gap-3 shadow-xs">
+                            <i class="fas fa-screwdriver-wrench text-amber-600 mt-0.5 text-base shrink-0 animate-pulse"></i>
+                            <div class="leading-relaxed">
+                                <strong class="text-amber-900 block font-bold text-xs">Website Dalam Mode Pemeliharaan</strong>
+                                <span class="text-amber-800 text-[11px]">Halaman login ini aktif khusus untuk otentikasi akun <strong>Super Administrator</strong>. Akun anggota/instansi dinonaktifkan sementara.</span>
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Error Notification (Satu kartu alert bersih) -->
                     @if (session('error'))
                         <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm animate-fade-in flex items-start gap-3">
