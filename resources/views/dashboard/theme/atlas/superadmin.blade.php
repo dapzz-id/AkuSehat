@@ -32,6 +32,10 @@
                 </div>
 
                 <div id="sa-instansi-content" class="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
+                    @php
+                        $pendingBcaCount = \App\Models\BillingTransaction::where('status', 'pending')->count();
+                    @endphp
+
                     <a href="{{ route('superadmin.instansi.index') }}" 
                        class="cpanel-tool-card atlas-tool-card group flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200/70 hover:border-blue-500/50 hover:bg-blue-50/40 hover:shadow-sm transition-all duration-200"
                        data-keywords="instansi sekolah data npsn profil institusi pendidikan">
@@ -51,6 +55,29 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <h3 class="text-sm font-bold text-slate-800 group-hover:text-amber-700 transition-colors truncate">Lisensi & Kuota Aplikasi</h3>
+                        </div>
+                    </a>
+
+                    <a href="{{ route('superadmin.billing.index') }}" 
+                       class="cpanel-tool-card atlas-tool-card group flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200/70 hover:border-emerald-500/50 hover:bg-emerald-50/40 hover:shadow-sm transition-all duration-200 relative"
+                       data-keywords="billing pembayaran transaksi transfer bca manual verifikasi langganan lisensi siswa pesanan tagihan">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform relative">
+                            <i class="fas fa-receipt text-base"></i>
+                            @if($pendingBcaCount > 0)
+                                <span class="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-black flex items-center justify-center animate-pulse border-2 border-white">
+                                    {{ $pendingBcaCount }}
+                                </span>
+                            @endif
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5">
+                                <h3 class="text-sm font-bold text-slate-800 group-hover:text-emerald-700 transition-colors truncate">Billing & Transaksi</h3>
+                                @if($pendingBcaCount > 0)
+                                    <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                        {{ $pendingBcaCount }} Baru
+                                    </span>
+                                @endif
+                            </div>
                         </div>
                     </a>
 
@@ -271,6 +298,18 @@
                        class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-medium text-white transition-colors">
                         <i class="fas fa-key text-amber-400 text-xs w-4 text-center"></i>
                         <span>Kelola Lisensi & Kuota</span>
+                    </a>
+                    <a href="{{ route('superadmin.billing.index') }}" 
+                       class="flex items-center justify-between px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-medium text-white transition-colors">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fas fa-receipt text-emerald-400 text-xs w-4 text-center"></i>
+                            <span>Verifikasi Billing & Pembayaran</span>
+                        </div>
+                        @if($pendingBcaCount > 0)
+                            <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-500 text-white animate-pulse">
+                                {{ $pendingBcaCount }}
+                            </span>
+                        @endif
                     </a>
                     <a href="{{ route('superadmin.update.index') }}" 
                        class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-medium text-white transition-colors">

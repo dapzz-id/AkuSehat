@@ -29,6 +29,26 @@
     </div>
 </div>
 
+@php
+    $pendingBcaCount = \App\Models\BillingTransaction::where('status', 'pending')->count();
+@endphp
+@if($pendingBcaCount > 0)
+    <div class="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-xl shrink-0">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <div>
+                <h3 class="text-sm sm:text-base font-bold">Ada {{ $pendingBcaCount }} Pembayaran Transfer BCA Menunggu Verifikasi</h3>
+                <p class="text-xs text-amber-100">Pesanan lisensi dari sekolah/instansi memerlukan konfirmasi penerimaan dana dari SuperAdmin.</p>
+            </div>
+        </div>
+        <a href="{{ route('superadmin.billing.index') }}" class="px-4 py-2 rounded-xl bg-white text-amber-900 font-bold text-xs hover:bg-amber-50 transition-all shrink-0 shadow-sm text-center">
+            Verifikasi Sekarang &rarr;
+        </a>
+    </div>
+@endif
+
 <!-- Statistics Cards Grid -->
 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
     <!-- Card 1: Total Sekolah -->

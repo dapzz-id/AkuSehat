@@ -18,3 +18,4 @@ class RejectManualTransferRequest extends FormRequest
         ];
     }
 }
+
