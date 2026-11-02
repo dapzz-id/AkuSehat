@@ -277,8 +277,8 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- Left: Options Selector (7 cols) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <!-- Left: Options Selector & Payment Method (7 cols) -->
             <div class="lg:col-span-7 space-y-6">
 
                 {{-- CONTAINER MODE 1: PERPANJANG KUOTA BERJALAN --}}
@@ -372,7 +372,7 @@
                     {{-- Opsi: Paket Jumlah Pengguna/Siswa --}}
                     <div>
                         <label class="block text-sm font-bold text-gray-800 mb-2">
-                            1. Pilih Paket Kuota Tambahan <span class="text-xs font-normal text-emerald-700" id="topupPresetRateLabel">(Rp 5.000 / {{ strtolower($labelMember) }} / bulan)</span>
+                            Pilih Paket Kuota Tambahan <span class="text-xs font-normal text-emerald-700" id="topupPresetRateLabel">(Rp 5.000 / {{ strtolower($labelMember) }} / bulan)</span>
                         </label>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <button type="button" onclick="setQuota(50)" data-quota="50" class="quota-preset-btn border-2 border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20 rounded-xl p-3.5 flex flex-col items-center justify-center text-center transition-all duration-150 hover:border-emerald-500">
@@ -410,7 +410,7 @@
                     {{-- Opsi 2: Kustom Jumlah Pengguna/Siswa --}}
                     <div>
                         <label class="block text-sm font-bold text-gray-800 mb-2">
-                            2. Atau Masukkan Jumlah {{ $labelMemberPlural }} Tambahan Kustom
+                            Atau Masukkan Jumlah {{ $labelMemberPlural }} Tambahan Kustom
                         </label>
                         <div class="flex items-center gap-3">
                             <div class="flex-1">
@@ -426,14 +426,126 @@
                         </p>
                     </div>
                 </div>
+
+                {{-- LANGKAH 3: PILIH METODE & RINCIAN PEMBAYARAN (Di Kolom Kiri agar Tampilan Seimbang) --}}
+                <div class="pt-4 border-t border-gray-100 space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center justify-between">
+                            <span class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">3</span>
+                                <span>Pilih Metode Pembayaran</span>
+                            </span>
+                            <span class="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">Tersedia 2 Opsi</span>
+                        </label>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <!-- Opsi 1: Transfer Bank BCA (Default) -->
+                            <button type="button" onclick="selectPaymentMethod('manual_bca')" id="btnMethodBca"
+                                class="p-3.5 rounded-xl border-2 text-left transition-all duration-150 border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 cursor-pointer flex flex-col justify-between shadow-xs">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="font-black text-blue-900 text-sm flex items-center gap-2">
+                                        <i class="fas fa-building-columns text-blue-600"></i> Transfer BCA
+                                    </span>
+                                    <div id="checkMethodBca" class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px]">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-blue-800 font-medium">Rek. 842-171-3359</span>
+                            </button>
+
+                            <!-- Opsi 2: Google Pay -->
+                            <button type="button" onclick="selectPaymentMethod('google_pay')" id="btnMethodGpay"
+                                class="p-3.5 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="font-bold text-gray-800 text-sm flex items-center gap-2">
+                                        <i class="fab fa-google-pay text-xl text-emerald-600"></i> Google Pay
+                                    </span>
+                                    <div id="checkMethodGpay" class="w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-gray-500 font-medium">Instan Otomatis (Kartu/GPay)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Panel Opsi 1: Kartu Rekening BCA -->
+                    <div id="paneMethodBca" class="space-y-3">
+                        <div class="p-5 rounded-2xl bg-gradient-to-br from-blue-900 via-blue-950 to-indigo-950 text-white shadow-md space-y-3.5 border border-blue-800/50">
+                            <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-blue-300 font-black text-xs">
+                                        BCA
+                                    </div>
+                                    <div>
+                                        <div class="text-xs sm:text-sm font-bold text-white tracking-wide">BANK CENTRAL ASIA</div>
+                                        <div class="text-[10px] sm:text-xs text-blue-200">Transfer Manual / Antar Bank</div>
+                                    </div>
+                                </div>
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/30 text-blue-200 border border-blue-400/30">
+                                    Manual
+                                </span>
+                            </div>
+
+                            <div class="space-y-2.5 text-xs">
+                                <div class="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/10">
+                                    <div>
+                                        <span class="block text-[11px] text-blue-200 font-medium">Nomor Rekening Tujuan:</span>
+                                        <span class="text-lg sm:text-xl font-black tracking-wider font-mono text-white select-all">842-171-3359</span>
+                                    </div>
+                                    <button type="button" onclick="copyText('842-171-3359', 'Nomor rekening BCA')" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs">
+                                        <i class="fas fa-copy"></i> Salin Rekening
+                                    </button>
+                                </div>
+
+                                <div class="flex items-center justify-between px-1">
+                                    <span class="text-xs text-blue-200">Atas Nama (A.N):</span>
+                                    <span class="font-bold text-white text-xs sm:text-sm">Kadavi Raditya Alvino</span>
+                                </div>
+
+                                <div class="flex items-center justify-between px-1 pt-1 border-t border-white/10">
+                                    <span class="text-xs text-blue-200">Total Yang Harus Ditransfer:</span>
+                                    <span class="font-black text-amber-300 text-base sm:text-lg" id="bcaTransferTotalText">Rp {{ number_format($totalPerpanjang, 0, ',', '.') }}</span>
+                                </div>
+                            </div>
+
+                            <div class="text-xs text-blue-100 bg-white/10 p-3 rounded-xl border border-white/10 leading-relaxed flex items-start gap-2.5">
+                                <i class="fab fa-whatsapp text-emerald-400 mt-0.5 text-sm flex-shrink-0"></i>
+                                <div>
+                                    Setelah transfer, klik tombol <strong>"Buat Pesanan & Konfirmasi WhatsApp"</strong> di kolom ringkasan pesanan untuk mengirim bukti transaksi ke WhatsApp admin <strong>+62 895-3831-07479</strong>.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel Opsi 2: Info Google Pay -->
+                    <div id="paneMethodGpay" class="space-y-3 hidden">
+                        <div class="p-5 rounded-2xl bg-gray-50 border border-gray-200 space-y-3">
+                            <div class="flex items-center gap-3 text-gray-800">
+                                <div class="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center shadow-xs">
+                                    <i class="fab fa-google-pay text-2xl text-emerald-600"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold">Google Pay & Kartu Debit / Kredit</div>
+                                    <div class="text-xs text-gray-500">Pembayaran instan langsung diverifikasi otomatis oleh Google</div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-600 leading-relaxed bg-white p-3 rounded-xl border border-gray-100">
+                                <i class="fas fa-bolt text-amber-500 mr-1"></i>
+                                Lisensi dan penambahan kuota akan langsung <strong>aktif otomatis</strong> dalam hitungan detik setelah transaksi berhasil diverifikasi oleh Google Pay.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- Right: Order Summary & Google Pay Button (5 cols) -->
-            <div class="lg:col-span-5 bg-gray-50/90 p-6 rounded-2xl border border-gray-200 flex flex-col justify-between shadow-xs">
+            <!-- Right: Order Summary & Action Checkout (5 cols, sticky) -->
+            <div class="lg:col-span-5 bg-gray-50/90 p-6 rounded-2xl border border-gray-200 flex flex-col justify-between shadow-xs lg:sticky lg:top-6 self-start space-y-5">
                 <div>
                     <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-200">
                         <div>
-                            <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Langkah 3</span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Langkah 4</span>
                             <h3 class="text-base font-bold text-gray-800">Ringkasan Tagihan</h3>
                         </div>
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">
@@ -467,88 +579,18 @@
                     </div>
                 </div>
 
-                <!-- Pemilihan Metode Pembayaran (BCA Transfer vs Google Pay) -->
-                <div class="mt-5 pt-4 border-t border-gray-200">
-                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2 flex items-center justify-between">
-                        <span>Pilih Metode Pembayaran</span>
-                        <span class="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">Tersedia 2 Opsi</span>
-                    </label>
-                    <div class="grid grid-cols-2 gap-2.5 mb-4">
-                        <!-- Opsi 1: Transfer Bank BCA (Default) -->
-                        <button type="button" onclick="selectPaymentMethod('manual_bca')" id="btnMethodBca"
-                            class="p-3 rounded-xl border-2 text-left transition-all duration-150 border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 cursor-pointer flex flex-col justify-between shadow-xs">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="font-black text-blue-900 text-xs sm:text-sm flex items-center gap-1.5">
-                                    <i class="fas fa-building-columns text-blue-600"></i> Transfer BCA
-                                </span>
-                                <div id="checkMethodBca" class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px]">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <span class="text-[10px] text-blue-800 font-medium">Rek. 842-171-3359</span>
-                        </button>
+                <!-- Indikator Metode Pembayaran yang Dipilih -->
+                <div class="p-3 rounded-xl bg-white border border-gray-200 flex items-center justify-between text-xs">
+                    <span class="text-gray-500 font-medium">Metode Pembayaran:</span>
+                    <span id="selectedMethodBadge" class="font-bold text-blue-900 flex items-center gap-1.5">
+                        <i class="fas fa-building-columns text-blue-600"></i> Transfer BCA
+                    </span>
+                </div>
 
-                        <!-- Opsi 2: Google Pay -->
-                        <button type="button" onclick="selectPaymentMethod('google_pay')" id="btnMethodGpay"
-                            class="p-3 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="font-bold text-gray-800 text-xs sm:text-sm flex items-center gap-1.5">
-                                    <i class="fab fa-google-pay text-lg text-emerald-600"></i> Google Pay
-                                </span>
-                                <div id="checkMethodGpay" class="w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <span class="text-[10px] text-gray-500 font-medium">Instan Otomatis</span>
-                        </button>
-                    </div>
-
-                    <!-- Panel Opsi 1: Transfer Bank BCA -->
-                    <div id="paneMethodBca" class="space-y-3">
-                        <div class="p-4 rounded-2xl bg-gradient-to-br from-blue-900 to-indigo-950 text-white shadow-md space-y-3">
-                            <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-blue-300 font-black text-xs">
-                                        BCA
-                                    </div>
-                                    <div>
-                                        <div class="text-xs font-bold text-white tracking-wide">BANK CENTRAL ASIA</div>
-                                        <div class="text-[10px] text-blue-200">Transfer Manual / Antar Bank</div>
-                                    </div>
-                                </div>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/30 text-blue-200 border border-blue-400/30">
-                                    Manual
-                                </span>
-                            </div>
-
-                            <div class="space-y-2 text-xs">
-                                <div class="flex items-center justify-between bg-white/5 p-2.5 rounded-xl border border-white/10">
-                                    <div>
-                                        <span class="block text-[10px] text-blue-200">Nomor Rekening:</span>
-                                        <span class="text-base font-black tracking-wider font-mono text-white select-all">842-171-3359</span>
-                                    </div>
-                                    <button type="button" onclick="copyText('842-171-3359', 'Nomor rekening BCA')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer">
-                                        <i class="fas fa-copy"></i> Salin
-                                    </button>
-                                </div>
-
-                                <div class="flex items-center justify-between px-1">
-                                    <span class="text-[11px] text-blue-200">Atas Nama (A.N):</span>
-                                    <span class="font-bold text-white text-xs">Kadavi Raditya Alvino</span>
-                                </div>
-
-                                <div class="flex items-center justify-between px-1">
-                                    <span class="text-[11px] text-blue-200">Total Ditransfer:</span>
-                                    <span class="font-black text-amber-300 text-sm" id="bcaTransferTotalText">Rp {{ number_format($totalPerpanjang, 0, ',', '.') }}</span>
-                                </div>
-                            </div>
-
-                            <div class="text-[10px] text-blue-100 bg-white/10 p-2.5 rounded-xl border border-white/10 leading-relaxed">
-                                <i class="fab fa-whatsapp text-emerald-400 mr-1 text-xs"></i>
-                                Setelah bayar, konfirmasi ke WhatsApp <strong>+62 895-3831-07479</strong> dengan menyertakan <strong>Nomor Orderan</strong> dan <strong>Bukti Transaksi</strong>.
-                            </div>
-                        </div>
-
+                <!-- Tombol Aksi Checkout -->
+                <div class="space-y-3">
+                    <!-- Tombol Opsi 1: Transfer Bank BCA -->
+                    <div id="actionBtnBcaContainer">
                         <button type="button" id="btnPayWithBca" onclick="executeManualBcaCheckout()"
                             class="w-full py-3.5 px-5 rounded-xl font-bold text-white bg-[#25D366] hover:bg-[#1EBE5D] active:scale-[0.99] transition-all duration-200 shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer text-sm sm:text-base">
                             <i class="fab fa-whatsapp text-lg"></i>
@@ -556,8 +598,8 @@
                         </button>
                     </div>
 
-                    <!-- Panel Opsi 2: Google Pay -->
-                    <div id="paneMethodGpay" class="space-y-3 hidden">
+                    <!-- Tombol Opsi 2: Google Pay -->
+                    <div id="actionBtnGpayContainer" class="hidden">
                         <div id="gpay-button-container" class="w-full flex justify-center min-h-[48px]">
                             <button type="button" id="btnPayWithGoogle" onclick="openPaymentConfirmation()"
                                 class="w-full py-3 px-5 rounded-xl font-bold text-white bg-black hover:bg-neutral-800 active:scale-[0.99] transition-all duration-200 shadow-md shadow-black/20 flex items-center justify-center cursor-pointer min-h-[48px]">
@@ -570,11 +612,11 @@
                                 </svg>
                             </button>
                         </div>
+                    </div>
 
-                        <div class="flex items-center justify-center gap-2 text-[11px] text-gray-500 text-center">
-                            <i class="fas fa-shield-halved text-emerald-600"></i>
-                            <span>Enkripsi Resmi Google Pay • Struk Pajak PDF Langsung Terbit</span>
-                        </div>
+                    <div class="flex items-center justify-center gap-1.5 text-[11px] text-gray-500 text-center">
+                        <i class="fas fa-shield-halved text-emerald-600"></i>
+                        <span>Enkripsi Aman • Struk & Tagihan Pajak PDF Resmi Diterbitkan</span>
                     </div>
                 </div>
             </div>
@@ -1124,21 +1166,30 @@
         const checkGpay = document.getElementById('checkMethodGpay');
         const paneBca = document.getElementById('paneMethodBca');
         const paneGpay = document.getElementById('paneMethodGpay');
+        const actionBca = document.getElementById('actionBtnBcaContainer');
+        const actionGpay = document.getElementById('actionBtnGpayContainer');
+        const badgeEl = document.getElementById('selectedMethodBadge');
 
         if (method === 'manual_bca') {
-            if (btnBca) btnBca.className = "p-3 rounded-xl border-2 text-left transition-all duration-150 border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 cursor-pointer flex flex-col justify-between shadow-xs";
-            if (btnGpay) btnGpay.className = "p-3 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between";
+            if (btnBca) btnBca.className = "p-3.5 rounded-xl border-2 text-left transition-all duration-150 border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 cursor-pointer flex flex-col justify-between shadow-xs";
+            if (btnGpay) btnGpay.className = "p-3.5 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between";
             if (checkBca) checkBca.className = "w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px]";
             if (checkGpay) checkGpay.className = "w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]";
             if (paneBca) paneBca.classList.remove('hidden');
             if (paneGpay) paneGpay.classList.add('hidden');
+            if (actionBca) actionBca.classList.remove('hidden');
+            if (actionGpay) actionGpay.classList.add('hidden');
+            if (badgeEl) badgeEl.innerHTML = '<i class="fas fa-building-columns text-blue-600"></i> Transfer BCA';
         } else {
-            if (btnGpay) btnGpay.className = "p-3 rounded-xl border-2 text-left transition-all duration-150 border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-500/20 cursor-pointer flex flex-col justify-between shadow-xs";
-            if (btnBca) btnBca.className = "p-3 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between";
+            if (btnGpay) btnGpay.className = "p-3.5 rounded-xl border-2 text-left transition-all duration-150 border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-500/20 cursor-pointer flex flex-col justify-between shadow-xs";
+            if (btnBca) btnBca.className = "p-3.5 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between";
             if (checkGpay) checkGpay.className = "w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[9px]";
             if (checkBca) checkBca.className = "w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]";
             if (paneGpay) paneGpay.classList.remove('hidden');
             if (paneBca) paneBca.classList.add('hidden');
+            if (actionGpay) actionGpay.classList.remove('hidden');
+            if (actionBca) actionBca.classList.add('hidden');
+            if (badgeEl) badgeEl.innerHTML = '<i class="fab fa-google-pay text-lg text-emerald-600"></i> Google Pay';
         }
     }
 
