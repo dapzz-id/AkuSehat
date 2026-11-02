@@ -23,6 +23,12 @@ class BillingService
     public const HARGA_PER_USER_BULAN = BillingRate::HARGA_PER_USER_BULAN->value;
     public const HARGA_PER_USER_TAHUN = BillingRate::HARGA_PER_USER_BULAN->value;
 
+    public const BANK_BCA = 'BCA';
+    public const NO_REK_BCA = '842-171-3359';
+    public const ATAS_NAMA_BCA = 'Kadavi Raditya Alvino';
+    public const WA_KONFIRMASI = '+62 895-3831-07479';
+    public const WA_RAW = '62895383107479';
+
     public function __construct(
         protected BillingRepository $billingRepository
     ) {}
@@ -119,6 +125,13 @@ class BillingService
             'subtotalPerpanjang' => $subtotalPerpanjang,
             'ppnPerpanjang' => $ppnPerpanjang,
             'totalPerpanjang' => $totalPerpanjang,
+            'bankDetails' => [
+                'bank' => self::BANK_BCA,
+                'account_number' => self::NO_REK_BCA,
+                'account_holder' => self::ATAS_NAMA_BCA,
+                'wa_phone' => self::WA_KONFIRMASI,
+                'wa_raw' => self::WA_RAW,
+            ],
         ];
     }
 
@@ -325,6 +338,250 @@ class BillingService
                     'success' => false,
                     'message' => 'Gagal memproses transaksi Google Pay: ' . $e->getMessage() . '. Seluruh perubahan dibatalkan (Rollback).',
                 ],
+            ];
+        }
+    }
+
+    public function processManualTransfer(User $user, array $validated): array
+    {
+        $instansi = $user->sekolah ?: Instansi::find($user->instansi_id);
+        if (!$instansi) {
+            return [
+                'status_code' => 404,
+                'response' => [
+                    'success' => false,
+                    'message' => 'Instansi tidak ditemukan.',
+                ],
+            ];
+        }
+
+        $modeTransaksi = $validated['mode_transaksi'] ?? 'perpanjang';
+        $durasiBulan = (int) ($validated['durasi_bulan'] ?? 1);
+        if (!in_array($durasiBulan, [1, 3, 6, 12, 24, 36], true)) {
+            $durasiBulan = 1;
+        }
+
+        $durasiLabel = match ($durasiBulan) {
+            1 => '1 Bulan',
+            3 => '3 Bulan',
+            6 => '6 Bulan',
+            12 => '1 Tahun',
+            24 => '2 Tahun',
+            36 => '3 Tahun',
+            default => "{$durasiBulan} Bulan",
+        };
+
+        if ($modeTransaksi === 'perpanjang') {
+            $licenseIdInput = $validated['license_id'] ?? null;
+            $targetLicense = null;
+            if ($licenseIdInput) {
+                $targetLicense = $this->billingRepository->findLicenseById($licenseIdInput);
+            }
+            if (!$targetLicense || $targetLicense->instansi_id !== $instansi->id) {
+                $targetLicense = $instansi->getActiveLicense() 
+                    ?? $this->billingRepository->getActiveOrLatestLicense((string) $instansi->id);
+            }
+
+            if (!$targetLicense) {
+                $targetLicense = $this->billingRepository->createDefaultLicense((string) $instansi->id, 8);
+                $instansi->update(['license_id_active' => $targetLicense->id]);
+            }
+
+            $kuotaTarget = (int) ($targetLicense->kuota_pengguna ?: 8);
+            $tambahKuota = 0;
+            $subtotal = $kuotaTarget * self::HARGA_PER_USER_BULAN * $durasiBulan;
+            $tipeTransaksi = BillingTransactionType::PERPANJANG_LISENSI->value;
+            $deskripsiItem = "Perpanjangan Paket Lisensi ({$targetLicense->key} - {$kuotaTarget} " . ($instansi->label_member_singular ?? 'User') . " / +{$durasiLabel})";
+        } else {
+            // Mode TAMBAH KUOTA BARU
+            $tambahKuota = (int) ($validated['tambah_kuota'] ?? 0);
+            if ($tambahKuota <= 0) {
+                return [
+                    'status_code' => 422,
+                    'response' => [
+                        'success' => false,
+                        'message' => 'Tentukan jumlah kuota tambahan (minimal 1 user).',
+                    ],
+                ];
+            }
+
+            $targetLicense = null;
+            $subtotal = $tambahKuota * self::HARGA_PER_USER_BULAN * $durasiBulan;
+            $tipeTransaksi = BillingTransactionType::TAMBAH_KUOTA->value;
+            $deskripsiItem = "Paket Kuota Baru (+{$tambahKuota} " . ($instansi->label_member_singular ?? 'User') . " / {$durasiLabel} Mandiri)";
+        }
+
+        $pajak11 = BillingRate::calculatePpn($subtotal);
+        $totalNominal = $subtotal + $pajak11;
+
+        $orderId = 'BCA-AKU-' . time() . '-' . strtoupper(Str::random(4));
+
+        $bankName = self::BANK_BCA;
+        $accountNumber = self::NO_REK_BCA;
+        $accountHolder = self::ATAS_NAMA_BCA;
+        $waPhone = self::WA_KONFIRMASI;
+        $waPhoneRaw = self::WA_RAW;
+
+        $namaInstansiFormatted = $instansi->nama_instansi ?? ($instansi->nama_sekolah ?? 'Instansi');
+        $namaUserFormatted = $user->nama ?? ($user->name ?? 'Admin');
+
+        $waText = "Halo Admin Aku Sehat, saya ingin konfirmasi pembayaran langganan:\n\n"
+            . "• No. Order: {$orderId}\n"
+            . "• Instansi: {$namaInstansiFormatted}\n"
+            . "• Pemesan: {$namaUserFormatted}\n"
+            . "• Rincian: {$deskripsiItem}\n"
+            . "• Total Transfer: Rp " . number_format($totalNominal, 0, ',', '.') . "\n"
+            . "• Bank Tujuan: BCA ({$accountNumber} a.n {$accountHolder})\n\n"
+            . "Berikut saya lampirkan bukti transfernya. Mohon bantuannya untuk verifikasi dan aktivasi lisensi. Terima kasih!";
+
+        $waUrl = "https://wa.me/{$waPhoneRaw}?text=" . rawurlencode($waText);
+
+        try {
+            $trx = $this->billingRepository->create([
+                'instansi_id' => $instansi->id,
+                'user_id' => $user->id,
+                'order_id' => $orderId,
+                'tipe_transaksi' => $tipeTransaksi,
+                'durasi_bulan' => $durasiBulan,
+                'tambah_kuota' => $tambahKuota,
+                'nominal' => $totalNominal,
+                'payment_method' => PaymentMethod::MANUAL_TRANSFER->value,
+                'payment_token' => null,
+                'status' => BillingTransactionStatus::PENDING->value,
+                'payload' => [
+                    'gateway' => 'Manual Transfer Bank BCA',
+                    'bank_name' => $bankName,
+                    'account_number' => $accountNumber,
+                    'account_holder' => $accountHolder,
+                    'confirmation_wa' => $waPhone,
+                    'confirmation_wa_url' => $waUrl,
+                    'timestamp' => now()->toIso8601String(),
+                    'mode_transaksi' => $modeTransaksi,
+                    'license_id_target' => $targetLicense ? $targetLicense->id : null,
+                    'license_key' => $targetLicense ? $targetLicense->key : null,
+                    'kuota_paket' => $modeTransaksi === 'perpanjang' ? $kuotaTarget : $tambahKuota,
+                    'subtotal' => $subtotal,
+                    'ppn_11' => $pajak11,
+                    'harga_per_user' => self::HARGA_PER_USER_BULAN,
+                    'durasi_bulan' => $durasiBulan,
+                    'durasi_label' => $durasiLabel,
+                    'deskripsi_item' => $deskripsiItem,
+                ],
+            ]);
+
+            AuditLogger::billing(
+                'manual_transfer_order_created',
+                "Pesanan transfer manual BCA dibuat oleh {$user->name} untuk institusi {$namaInstansiFormatted} (Order: {$orderId}) senilai Rp " . number_format($totalNominal, 0, ',', '.'),
+                [
+                    'order_id' => $orderId,
+                    'nominal' => $totalNominal,
+                    'mode' => $modeTransaksi,
+                    'bank' => $bankName,
+                    'account_number' => $accountNumber,
+                ]
+            );
+
+            return [
+                'status_code' => 200,
+                'response' => [
+                    'success' => true,
+                    'message' => 'Pesanan transfer manual BCA berhasil dibuat. Silakan transfer dan kirim bukti transaksi ke WhatsApp Admin.',
+                    'data' => [
+                        'transaction_id' => $trx->id,
+                        'order_id' => $trx->order_id,
+                        'mode_transaksi' => $modeTransaksi,
+                        'total_dibayar' => number_format($totalNominal, 0, ',', '.'),
+                        'nominal_raw' => $totalNominal,
+                        'bank_name' => $bankName,
+                        'account_number' => $accountNumber,
+                        'account_holder' => $accountHolder,
+                        'wa_phone' => $waPhone,
+                        'wa_url' => $waUrl,
+                        'deskripsi_item' => $deskripsiItem,
+                        'durasi_label' => $durasiLabel,
+                    ],
+                ],
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'status_code' => 500,
+                'response' => [
+                    'success' => false,
+                    'message' => 'Gagal membuat pesanan transfer: ' . $e->getMessage(),
+                ],
+            ];
+        }
+    }
+
+    public function approveManualTransfer(int|string $transactionId, User $approver): array
+    {
+        if (!$approver->isSuperAdmin()) {
+            abort(403, 'Hanya SuperAdmin yang berhak menyetujui transaksi manual transfer.');
+        }
+
+        $trx = $this->billingRepository->findTransactionWithDetails($transactionId);
+        if ($trx->status === BillingTransactionStatus::SUCCESS->value || $trx->status === BillingTransactionStatus::PAID->value) {
+            return [
+                'status_code' => 400,
+                'response' => ['success' => false, 'message' => 'Transaksi ini sudah lunas / aktif sebelumnya.'],
+            ];
+        }
+
+        $instansi = $trx->instansi;
+        $modeTransaksi = $trx->payload['mode_transaksi'] ?? ($trx->tipe_transaksi === 'perpanjang_lisensi' ? 'perpanjang' : 'tambah_kuota');
+        $durasiBulan = (int) ($trx->durasi_bulan ?: 1);
+
+        try {
+            DB::transaction(function () use ($trx, $instansi, $modeTransaksi, $durasiBulan, $approver) {
+                if ($modeTransaksi === 'perpanjang') {
+                    $licenseId = $trx->payload['license_id_target'] ?? null;
+                    $targetLicense = $licenseId ? $this->billingRepository->findLicenseById($licenseId) : null;
+                    if (!$targetLicense || $targetLicense->instansi_id !== $instansi->id) {
+                        $targetLicense = $instansi->getActiveLicense() ?? $this->billingRepository->getActiveOrLatestLicense((string) $instansi->id);
+                    }
+                    if (!$targetLicense) {
+                        $targetLicense = $this->billingRepository->createDefaultLicense((string) $instansi->id, 8);
+                    }
+
+                    $locked = $this->billingRepository->lockLicenseForUpdate((string) $targetLicense->id) ?? $targetLicense;
+                    $baseDate = ($locked->tanggal_berakhir && $locked->tanggal_berakhir->isFuture()) ? $locked->tanggal_berakhir : now();
+                    $locked->tanggal_berakhir = $baseDate->copy()->addMonths($durasiBulan);
+                    $locked->status = LicenseKey::STATUS_ACTIVE;
+                    $locked->save();
+
+                    if (!$instansi->license_id_active) {
+                        $instansi->update(['license_id_active' => $locked->id]);
+                    }
+                } else {
+                    $newLicense = $this->billingRepository->createNewLicense(
+                        instansiId: (string) $instansi->id,
+                        quota: $trx->tambah_kuota,
+                        months: $durasiBulan
+                    );
+
+                    if (!$instansi->license_id_active) {
+                        $instansi->update(['license_id_active' => $newLicense->id]);
+                    }
+                }
+
+                $trx->status = BillingTransactionStatus::SUCCESS->value;
+                $trx->save();
+
+                AuditLogger::billing(
+                    'manual_transfer_approved',
+                    "Pembayaran manual transfer BCA untuk Order {$trx->order_id} berhasil diverifikasi dan diaktifkan oleh SuperAdmin {$approver->name}",
+                    ['order_id' => $trx->order_id, 'nominal' => $trx->nominal]
+                );
+            });
+
+            return [
+                'status_code' => 200,
+                'response' => ['success' => true, 'message' => "Order {$trx->order_id} berhasil diverifikasi dan lisensi telah aktif."],
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'status_code' => 500,
+                'response' => ['success' => false, 'message' => 'Gagal menyetujui transaksi: ' . $e->getMessage()],
             ];
         }
     }

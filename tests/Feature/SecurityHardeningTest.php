@@ -323,4 +323,47 @@ class SecurityHardeningTest extends TestCase
 
         $expiredResponse->assertStatus(404);
     }
+
+    /**
+     * Test manual transfer BCA billing flow creates pending transaction with bank details and WA confirmation.
+     */
+    public function test_manual_transfer_bca_billing_order_creation_and_whatsapp_confirmation(): void
+    {
+        $instansi = new \App\Models\Instansi();
+        $instansi->id = (string) Str::uuid7();
+        $instansi->nama_instansi = 'SMK Uji Manual BCA';
+        $instansi->jenis_instansi = 'Sekolah';
+
+        $admin = new \App\Models\User([
+            'id' => (string) Str::uuid7(),
+            'nama' => 'Admin Sekolah BCA',
+            'name' => 'Admin Sekolah BCA',
+            'email' => 'admin.bca@sekolah.test',
+            'level' => 'Admin Instansi',
+            'instansi_id' => $instansi->id,
+        ]);
+        $admin->setRelation('sekolah', $instansi);
+
+        $mockRepo = $this->createMock(\App\Modules\Billing\Subscription\Repositories\BillingRepository::class);
+        $mockRepo->expects($this->once())
+            ->method('create')
+            ->willReturnCallback(function ($data) {
+                return new \App\Models\BillingTransaction($data);
+            });
+
+        $billingService = new \App\Modules\Billing\Subscription\Services\BillingService($mockRepo);
+        $result = $billingService->processManualTransfer($admin, [
+            'mode_transaksi' => 'tambah_kuota',
+            'tambah_kuota' => 50,
+            'durasi_bulan' => 3,
+        ]);
+
+        $this->assertEquals(200, $result['status_code']);
+        $this->assertTrue($result['response']['success']);
+        $this->assertEquals('BCA', $result['response']['data']['bank_name']);
+        $this->assertEquals('842-171-3359', $result['response']['data']['account_number']);
+        $this->assertEquals('Kadavi Raditya Alvino', $result['response']['data']['account_holder']);
+        $this->assertStringContainsString('62895383107479', $result['response']['data']['wa_url']);
+        $this->assertStringContainsString('842-171-3359', $result['response']['data']['wa_url']);
+    }
 }

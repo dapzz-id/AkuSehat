@@ -10,6 +10,7 @@ use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use App\Modules\Billing\Subscription\Services\BillingService;
 use App\Modules\Billing\Subscription\Requests\ProcessGooglePayRequest;
+use App\Modules\Billing\Subscription\Requests\ProcessManualTransferRequest;
 use App\Modules\Billing\Subscription\Requests\ProcessGooglePlayInAppRequest;
 use App\Modules\Billing\Subscription\Requests\DownloadInvoiceRequest;
 
@@ -39,6 +40,25 @@ class BillingController extends Controller
         }
 
         return response()->json($result['response'], $result['status_code'] ?? 200);
+    }
+
+    public function processManualTransfer(ProcessManualTransferRequest $request): JsonResponse
+    {
+        $result = $this->billingService->processManualTransfer(Auth::user(), $request->validated());
+        return response()->json($result['response'], $result['status_code'] ?? 200);
+    }
+
+    public function approveTransaction(int|string $id): JsonResponse|RedirectResponse
+    {
+        $result = $this->billingService->approveManualTransfer($id, Auth::user());
+        if (request()->wantsJson()) {
+            return response()->json($result['response'], $result['status_code'] ?? 200);
+        }
+
+        return redirect()->back()->with(
+            $result['response']['success'] ? 'success' : 'error',
+            $result['response']['message']
+        );
     }
 
     public function processGooglePlayInApp(ProcessGooglePlayInAppRequest $request): JsonResponse

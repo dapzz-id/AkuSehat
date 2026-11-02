@@ -570,7 +570,7 @@
         <td class="t-val">Rp {{ number_format($totalBelanja, 0, ',', '.') }}</td>
     </tr>
     <tr class="row-pay">
-        <td class="t-lbl">BAYAR ({{ $trx->payment_method === 'google_pay' ? 'GOOGLE PAY' : strtoupper($trx->payment_method) }})</td>
+        <td class="t-lbl">BAYAR ({{ $trx->payment_method === 'manual_transfer' ? 'TRANSFER BANK BCA' : ($trx->payment_method === 'google_pay' ? 'GOOGLE PAY' : strtoupper($trx->payment_method)) }})</td>
         <td class="t-val">Rp {{ number_format($totalBelanja, 0, ',', '.') }}</td>
     </tr>
     <tr class="row-change">
@@ -584,13 +584,54 @@
 <!-- ══════════════════════════════════════════ -->
 <!--   STATUS TRANSAKSI                         -->
 <!-- ══════════════════════════════════════════ -->
-<div class="paid-stamp">*** LUNAS / BERHASIL ***</div>
+<div class="paid-stamp">
+    @if($trx->status === 'pending')
+        *** MENUNGGU VERIFIKASI TRANSFER ***
+    @else
+        *** LUNAS / BERHASIL ***
+    @endif
+</div>
 
 <div class="divider"></div>
 
 <!-- ══════════════════════════════════════════ -->
-<!--   STRIP TRANSAKSI NON-TUNAI (EDC/E-WALLET) -->
+<!--   STRIP TRANSAKSI NON-TUNAI / TRANSFER     -->
 <!-- ══════════════════════════════════════════ -->
+@if($trx->payment_method === 'manual_transfer')
+<div class="edc-header">-- TRANSAKSI TRANSFER BANK --</div>
+<table class="edc-table">
+    <tr>
+        <td class="e-lbl">Bank Tujuan</td>
+        <td class="e-sep">:</td>
+        <td class="e-val">BCA (BANK CENTRAL ASIA)</td>
+    </tr>
+    <tr>
+        <td class="e-lbl">No. Rekening</td>
+        <td class="e-sep">:</td>
+        <td class="e-val">842-171-3359</td>
+    </tr>
+    <tr>
+        <td class="e-lbl">Atas Nama</td>
+        <td class="e-sep">:</td>
+        <td class="e-val">Kadavi Raditya Alvino</td>
+    </tr>
+    <tr>
+        <td class="e-lbl">No. Order</td>
+        <td class="e-sep">:</td>
+        <td class="e-val">{{ $trx->order_id }}</td>
+    </tr>
+    <tr>
+        <td class="e-lbl">Konfirmasi WA</td>
+        <td class="e-sep">:</td>
+        <td class="e-val">+62 895-3831-07479</td>
+    </tr>
+    <tr>
+        <td class="e-lbl">Status</td>
+        <td class="e-sep">:</td>
+        <td class="e-val"><strong>{{ $trx->status === 'pending' ? 'MENUNGGU VERIFIKASI BUKTI' : 'APPROVED / SUCCESS' }}</strong></td>
+    </tr>
+</table>
+@else
 <div class="edc-header">-- TRANSAKSI NON TUNAI --</div>
 <table class="edc-table">
     <tr>
@@ -611,9 +652,10 @@
     <tr>
         <td class="e-lbl">Status</td>
         <td class="e-sep">:</td>
-        <td class="e-val"><strong>APPROVED / SUCCESS</strong></td>
+        <td class="e-val"><strong>{{ $trx->status === 'pending' ? 'PENDING' : 'APPROVED / SUCCESS' }}</strong></td>
     </tr>
 </table>
+@endif
 
 <div class="divider"></div>
 

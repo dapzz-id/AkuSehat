@@ -108,7 +108,7 @@
                     <div class="flex items-center justify-between py-1">
                         <span>Metode Pembayaran:</span>
                         <span class="font-bold text-white flex items-center gap-1.5">
-                            <i class="fas fa-wallet text-sm text-emerald-400"></i> Google Pay
+                            <i class="fas fa-wallet text-sm text-emerald-400"></i> BCA & Google Pay
                         </span>
                     </div>
                 </div>
@@ -467,24 +467,114 @@
                     </div>
                 </div>
 
-                <!-- Single Unified Google Pay Action Button Container -->
-                <div class="mt-6 pt-4 border-t border-gray-200 space-y-3">
-                    <div id="gpay-button-container" class="w-full flex justify-center min-h-[48px]">
-                        <button type="button" id="btnPayWithGoogle" onclick="openPaymentConfirmation()"
-                            class="w-full py-3 px-5 rounded-xl font-bold text-white bg-black hover:bg-neutral-800 active:scale-[0.99] transition-all duration-200 shadow-md shadow-black/20 flex items-center justify-center cursor-pointer min-h-[48px]">
-                            <svg class="h-6 w-auto flex-shrink-0" viewBox="9 11 52 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M26.544 24.1659C26.544 23.5831 26.4971 23.0003 26.4034 22.4294H18.4434V25.7239H23.0037C22.8161 26.7825 22.2065 27.734 21.3155 28.3286V30.4695H24.0353C25.6296 28.9828 26.544 26.7825 26.544 24.1659Z" fill="#4285F4"/>
-                                <path d="M18.4442 32.539C20.7185 32.539 22.6411 31.7778 24.0361 30.4695L21.3164 28.3287C20.5544 28.852 19.5814 29.1493 18.4442 29.1493C16.2403 29.1493 14.3763 27.6388 13.7081 25.5908H10.8794V27.7853C12.2625 30.5284 15.148 32.539 18.4442 32.539Z" fill="#34A853"/>
-                                <path d="M13.7083 25.5908C13.3524 24.5322 13.3524 23.3826 13.7083 22.324V19.3995H10.8795C9.6976 21.7554 9.6976 24.5824 10.8795 26.9383L13.7083 25.5908Z" fill="#FBBC04"/>
-                                <path d="M18.4442 15.9287C19.6496 15.9049 20.8219 16.3687 21.6777 17.2251L24.0954 14.8074C22.5601 13.2721 20.5376 12.4157 18.4442 12.4395C15.148 12.4395 12.2625 14.4501 10.8794 17.1932L13.7081 19.3877C14.3763 17.3397 16.2403 15.9287 18.4442 15.9287Z" fill="#EA4335"/>
-                                <path fill-rule="evenodd" clip-rule="evenodd" d="M33.0603 31.5161V25.4741H36.1786C37.4564 25.4741 38.535 25.046 39.4142 24.2015L39.6252 23.9875C41.2313 22.2391 41.1258 19.5155 39.4142 17.898C38.5584 17.0416 37.3861 16.5778 36.1786 16.6016H31.1729V31.5161H33.0603ZM33.0605 23.6425V18.4332H36.2262C36.9063 18.4332 37.5512 18.6948 38.0319 19.1706C39.052 20.1696 39.0754 21.8347 38.0905 22.8694C37.6098 23.3809 36.9297 23.6663 36.2262 23.6425H33.0605ZM48.4293 22.1083C47.6204 21.359 46.5185 20.9784 45.1234 20.9784C43.3298 20.9784 41.9816 21.6444 41.0906 22.9646L42.7553 24.0231C43.3649 23.1192 44.1973 22.6673 45.2524 22.6673C45.9206 22.6673 46.5653 22.9171 47.0694 23.369C47.5618 23.7972 47.8432 24.4156 47.8432 25.0698V25.5098C47.1163 25.1055 46.2019 24.8914 45.0765 24.8914C43.7635 24.8914 42.7084 25.2006 41.923 25.831C41.1375 26.4613 40.739 27.2939 40.739 28.3524C40.7155 29.3158 41.1258 30.2316 41.8527 30.85C42.5912 31.5161 43.5291 31.8491 44.631 31.8491C45.9323 31.8491 46.9639 31.2663 47.7494 30.1007H47.8314V31.5161H49.6368V25.2244C49.6368 23.9042 49.2382 22.8576 48.4293 22.1083ZM43.3066 29.6369C42.9197 29.3514 42.6852 28.8876 42.6852 28.3881C42.6852 27.8291 42.9432 27.3652 43.4473 26.9965C43.9632 26.6278 44.6081 26.4375 45.3702 26.4375C46.4255 26.4256 47.2462 26.6635 47.8325 27.1392C47.8325 27.948 47.5159 28.6497 46.8945 29.2444C46.3317 29.8153 45.5696 30.1364 44.7723 30.1364C44.2446 30.1483 43.7287 29.9699 43.3066 29.6369ZM53.693 35.9999L60.0001 21.3114H57.9485L55.0295 28.6378H54.9943L52.0049 21.3114H49.9534L54.0916 30.8619L51.747 35.9999H53.693Z" fill="#FFFFFF"/>
-                            </svg>
+                <!-- Pemilihan Metode Pembayaran (BCA Transfer vs Google Pay) -->
+                <div class="mt-5 pt-4 border-t border-gray-200">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2 flex items-center justify-between">
+                        <span>Pilih Metode Pembayaran</span>
+                        <span class="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">Tersedia 2 Opsi</span>
+                    </label>
+                    <div class="grid grid-cols-2 gap-2.5 mb-4">
+                        <!-- Opsi 1: Transfer Bank BCA (Default) -->
+                        <button type="button" onclick="selectPaymentMethod('manual_bca')" id="btnMethodBca"
+                            class="p-3 rounded-xl border-2 text-left transition-all duration-150 border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 cursor-pointer flex flex-col justify-between shadow-xs">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-black text-blue-900 text-xs sm:text-sm flex items-center gap-1.5">
+                                    <i class="fas fa-building-columns text-blue-600"></i> Transfer BCA
+                                </span>
+                                <div id="checkMethodBca" class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px]">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <span class="text-[10px] text-blue-800 font-medium">Rek. 842-171-3359</span>
+                        </button>
+
+                        <!-- Opsi 2: Google Pay -->
+                        <button type="button" onclick="selectPaymentMethod('google_pay')" id="btnMethodGpay"
+                            class="p-3 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-gray-800 text-xs sm:text-sm flex items-center gap-1.5">
+                                    <i class="fab fa-google-pay text-lg text-emerald-600"></i> Google Pay
+                                </span>
+                                <div id="checkMethodGpay" class="w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <span class="text-[10px] text-gray-500 font-medium">Instan Otomatis</span>
                         </button>
                     </div>
 
-                    <div class="flex items-center justify-center gap-2 text-[11px] text-gray-500 text-center">
-                        <i class="fas fa-shield-halved text-emerald-600"></i>
-                        <span>Enkripsi Resmi Google Pay • Struk Pajak PDF Langsung Terbit</span>
+                    <!-- Panel Opsi 1: Transfer Bank BCA -->
+                    <div id="paneMethodBca" class="space-y-3">
+                        <div class="p-4 rounded-2xl bg-gradient-to-br from-blue-900 to-indigo-950 text-white shadow-md space-y-3">
+                            <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-blue-300 font-black text-xs">
+                                        BCA
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-white tracking-wide">BANK CENTRAL ASIA</div>
+                                        <div class="text-[10px] text-blue-200">Transfer Manual / Antar Bank</div>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/30 text-blue-200 border border-blue-400/30">
+                                    Manual
+                                </span>
+                            </div>
+
+                            <div class="space-y-2 text-xs">
+                                <div class="flex items-center justify-between bg-white/5 p-2.5 rounded-xl border border-white/10">
+                                    <div>
+                                        <span class="block text-[10px] text-blue-200">Nomor Rekening:</span>
+                                        <span class="text-base font-black tracking-wider font-mono text-white select-all">842-171-3359</span>
+                                    </div>
+                                    <button type="button" onclick="copyText('842-171-3359', 'Nomor rekening BCA')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer">
+                                        <i class="fas fa-copy"></i> Salin
+                                    </button>
+                                </div>
+
+                                <div class="flex items-center justify-between px-1">
+                                    <span class="text-[11px] text-blue-200">Atas Nama (A.N):</span>
+                                    <span class="font-bold text-white text-xs">Kadavi Raditya Alvino</span>
+                                </div>
+
+                                <div class="flex items-center justify-between px-1">
+                                    <span class="text-[11px] text-blue-200">Total Ditransfer:</span>
+                                    <span class="font-black text-amber-300 text-sm" id="bcaTransferTotalText">Rp {{ number_format($totalPerpanjang, 0, ',', '.') }}</span>
+                                </div>
+                            </div>
+
+                            <div class="text-[10px] text-blue-100 bg-white/10 p-2.5 rounded-xl border border-white/10 leading-relaxed">
+                                <i class="fab fa-whatsapp text-emerald-400 mr-1 text-xs"></i>
+                                Setelah bayar, konfirmasi ke WhatsApp <strong>+62 895-3831-07479</strong> dengan menyertakan <strong>Nomor Orderan</strong> dan <strong>Bukti Transaksi</strong>.
+                            </div>
+                        </div>
+
+                        <button type="button" id="btnPayWithBca" onclick="executeManualBcaCheckout()"
+                            class="w-full py-3.5 px-5 rounded-xl font-bold text-white bg-[#25D366] hover:bg-[#1EBE5D] active:scale-[0.99] transition-all duration-200 shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer text-sm sm:text-base">
+                            <i class="fab fa-whatsapp text-lg"></i>
+                            <span>Buat Pesanan & Konfirmasi WhatsApp</span>
+                        </button>
+                    </div>
+
+                    <!-- Panel Opsi 2: Google Pay -->
+                    <div id="paneMethodGpay" class="space-y-3 hidden">
+                        <div id="gpay-button-container" class="w-full flex justify-center min-h-[48px]">
+                            <button type="button" id="btnPayWithGoogle" onclick="openPaymentConfirmation()"
+                                class="w-full py-3 px-5 rounded-xl font-bold text-white bg-black hover:bg-neutral-800 active:scale-[0.99] transition-all duration-200 shadow-md shadow-black/20 flex items-center justify-center cursor-pointer min-h-[48px]">
+                                <svg class="h-6 w-auto flex-shrink-0" viewBox="9 11 52 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M26.544 24.1659C26.544 23.5831 26.4971 23.0003 26.4034 22.4294H18.4434V25.7239H23.0037C22.8161 26.7825 22.2065 27.734 21.3155 28.3286V30.4695H24.0353C25.6296 28.9828 26.544 26.7825 26.544 24.1659Z" fill="#4285F4"/>
+                                    <path d="M18.4442 32.539C20.7185 32.539 22.6411 31.7778 24.0361 30.4695L21.3164 28.3287C20.5544 28.852 19.5814 29.1493 18.4442 29.1493C16.2403 29.1493 14.3763 27.6388 13.7081 25.5908H10.8794V27.7853C12.2625 30.5284 15.148 32.539 18.4442 32.539Z" fill="#34A853"/>
+                                    <path d="M13.7083 25.5908C13.3524 24.5322 13.3524 23.3826 13.7083 22.324V19.3995H10.8795C9.6976 21.7554 9.6976 24.5824 10.8795 26.9383L13.7083 25.5908Z" fill="#FBBC04"/>
+                                    <path d="M18.4442 15.9287C19.6496 15.9049 20.8219 16.3687 21.6777 17.2251L24.0954 14.8074C22.5601 13.2721 20.5376 12.4157 18.4442 12.4395C15.148 12.4395 12.2625 14.4501 10.8794 17.1932L13.7081 19.3877C14.3763 17.3397 16.2403 15.9287 18.4442 15.9287Z" fill="#EA4335"/>
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M33.0603 31.5161V25.4741H36.1786C37.4564 25.4741 38.535 25.046 39.4142 24.2015L39.6252 23.9875C41.2313 22.2391 41.1258 19.5155 39.4142 17.898C38.5584 17.0416 37.3861 16.5778 36.1786 16.6016H31.1729V31.5161H33.0603ZM33.0605 23.6425V18.4332H36.2262C36.9063 18.4332 37.5512 18.6948 38.0319 19.1706C39.052 20.1696 39.0754 21.8347 38.0905 22.8694C37.6098 23.3809 36.9297 23.6663 36.2262 23.6425H33.0605ZM48.4293 22.1083C47.6204 21.359 46.5185 20.9784 45.1234 20.9784C43.3298 20.9784 41.9816 21.6444 41.0906 22.9646L42.7553 24.0231C43.3649 23.1192 44.1973 22.6673 45.2524 22.6673C45.9206 22.6673 46.5653 22.9171 47.0694 23.369C47.5618 23.7972 47.8432 24.4156 47.8432 25.0698V25.5098C47.1163 25.1055 46.2019 24.8914 45.0765 24.8914C43.7635 24.8914 42.7084 25.2006 41.923 25.831C41.1375 26.4613 40.739 27.2939 40.739 28.3524C40.7155 29.3158 41.1258 30.2316 41.8527 30.85C42.5912 31.5161 43.5291 31.8491 44.631 31.8491C45.9323 31.8491 46.9639 31.2663 47.7494 30.1007H47.8314V31.5161H49.6368V25.2244C49.6368 23.9042 49.2382 22.8576 48.4293 22.1083ZM43.3066 29.6369C42.9197 29.3514 42.6852 28.8876 42.6852 28.3881C42.6852 27.8291 42.9432 27.3652 43.4473 26.9965C43.9632 26.6278 44.6081 26.4375 45.3702 26.4375C46.4255 26.4256 47.2462 26.6635 47.8325 27.1392C47.8325 27.948 47.5159 28.6497 46.8945 29.2444C46.3317 29.8153 45.5696 30.1364 44.7723 30.1364C44.2446 30.1483 43.7287 29.9699 43.3066 29.6369ZM53.693 35.9999L60.0001 21.3114H57.9485L55.0295 28.6378H54.9943L52.0049 21.3114H49.9534L54.0916 30.8619L51.747 35.9999H53.693Z" fill="#FFFFFF"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-center gap-2 text-[11px] text-gray-500 text-center">
+                            <i class="fas fa-shield-halved text-emerald-600"></i>
+                            <span>Enkripsi Resmi Google Pay • Struk Pajak PDF Langsung Terbit</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -567,24 +657,57 @@
                         </td>
                         <td class="px-4 py-3 font-bold text-gray-900">Rp {{ number_format($trx->nominal, 0, ',', '.') }}</td>
                         <td class="px-4 py-3">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-neutral-900 text-white">
-                                <i class="fas fa-wallet text-xs text-neutral-300"></i> Google Pay
-                            </span>
+                            @if($trx->payment_method === 'manual_transfer')
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-900 text-white">
+                                    <i class="fas fa-building-columns text-xs text-blue-300"></i> Transfer BCA
+                                </span>
+                            @elseif($trx->payment_method === 'google_play' || $trx->payment_method === 'google_play_inapp')
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-900 text-white">
+                                    <i class="fab fa-google-play text-xs text-emerald-300"></i> Google Play
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-neutral-900 text-white">
+                                    <i class="fas fa-wallet text-xs text-neutral-300"></i> Google Pay
+                                </span>
+                            @endif
                         </td>
                         <td class="px-4 py-3">
-                            <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
-                                Berhasil
-                            </span>
+                            @if($trx->status === 'success' || $trx->status === 'paid')
+                                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                                    Berhasil
+                                </span>
+                            @elseif($trx->status === 'pending')
+                                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 animate-pulse">
+                                    Menunggu Verifikasi
+                                </span>
+                            @else
+                                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-rose-100 text-rose-800">
+                                    {{ ucfirst($trx->status) }}
+                                </span>
+                            @endif
                         </td>
                         <td class="px-4 py-3 text-xs text-gray-500">{{ $trx->created_at->format('d/m/Y H:i') }}</td>
                         <td class="px-4 py-3 text-center">
-                            <a href="{{ route('admin.billing.invoice.pdf', $trx->id) }}?preview=1" 
-                               target="_blank"
-                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300 transition-colors shadow-xs"
-                               title="Lihat & Unduh Struk Belanja Resmi (PDF)">
-                                <i class="fas fa-file-invoice text-emerald-600"></i>
-                                <span>Struk PDF</span>
-                            </a>
+                            <div class="flex items-center justify-center gap-1.5">
+                                <a href="{{ route('admin.billing.invoice.pdf', $trx->id) }}?preview=1" 
+                                   target="_blank"
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300 transition-colors shadow-xs"
+                                   title="Lihat & Unduh Struk Belanja Resmi (PDF)">
+                                    <i class="fas fa-file-invoice text-emerald-600"></i>
+                                    <span>Struk PDF</span>
+                                </a>
+                                @if($trx->status === 'pending' && $trx->payment_method === 'manual_transfer')
+                                    @php
+                                        $waDirectUrl = $trx->payload['confirmation_wa_url'] ?? ('https://wa.me/62895383107479?text=' . rawurlencode("Halo Admin Aku Sehat, saya ingin konfirmasi pembayaran order {$trx->order_id}"));
+                                    @endphp
+                                    <a href="{{ $waDirectUrl }}" target="_blank"
+                                       class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#25D366] hover:bg-[#1EBE5D] text-white transition-colors shadow-xs"
+                                       title="Kirim Bukti Pembayaran ke WhatsApp Admin">
+                                        <i class="fab fa-whatsapp"></i>
+                                        <span>Konfirmasi WA</span>
+                                    </a>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                     @empty
@@ -690,6 +813,64 @@
         </div>
     </div>
 </div>
+
+{{-- MODAL SUKSES PESANAN TRANSFER MANUAL BCA --}}
+<div id="bcaSuccessModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 text-center animate-in fade-in zoom-in-95 duration-200">
+        <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-md shadow-blue-500/20">
+            <i class="fas fa-building-columns"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-1">Pesanan Transfer BCA Dibuat!</h3>
+        <p class="text-xs text-gray-500 mb-4">Silakan selesaikan pembayaran dan kirimkan bukti transfer ke WhatsApp admin.</p>
+
+        <div class="bg-blue-50/70 rounded-2xl p-4 text-left space-y-2.5 mb-5 border border-blue-100 text-xs">
+            <div class="flex justify-between items-center pb-2 border-b border-blue-200/60">
+                <span class="text-gray-500 font-medium">No. Order:</span>
+                <span class="font-mono font-bold text-blue-900 select-all" id="bcaModalOrderId">-</span>
+            </div>
+            <div class="flex justify-between items-center pb-2 border-b border-blue-200/60">
+                <span class="text-gray-500 font-medium">Bank Tujuan:</span>
+                <span class="font-bold text-gray-800">BCA (Bank Central Asia)</span>
+            </div>
+            <div class="flex justify-between items-center pb-2 border-b border-blue-200/60">
+                <span class="text-gray-500 font-medium">No. Rekening:</span>
+                <div class="flex items-center gap-1.5">
+                    <span class="font-mono font-black text-gray-900">842-171-3359</span>
+                    <button type="button" onclick="copyText('842-171-3359', 'Nomor rekening BCA')" class="text-[10px] text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200 cursor-pointer">Salin</button>
+                </div>
+            </div>
+            <div class="flex justify-between items-center pb-2 border-b border-blue-200/60">
+                <span class="text-gray-500 font-medium">Atas Nama:</span>
+                <span class="font-bold text-gray-800">Kadavi Raditya Alvino</span>
+            </div>
+            <div class="flex justify-between items-center pt-0.5">
+                <span class="text-gray-700 font-bold">Total Ditransfer:</span>
+                <span class="font-black text-emerald-700 text-base" id="bcaModalTotalText">-</span>
+            </div>
+        </div>
+
+        <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-900 mb-5 text-left flex items-start gap-2">
+            <i class="fas fa-triangle-exclamation text-amber-600 mt-0.5 flex-shrink-0"></i>
+            <div>
+                <strong>Penting:</strong> Kirimkan screenshot/foto bukti transfer ke WhatsApp <strong>+62 895-3831-07479</strong> dengan menyertakan Nomor Order untuk mempercepat proses aktivasi lisensi.
+            </div>
+        </div>
+
+        <div class="space-y-2">
+            <a href="#" id="bcaModalWaBtn" target="_blank" class="w-full py-3 px-4 bg-[#25D366] hover:bg-[#1EBE5D] text-white rounded-xl font-bold text-sm shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all">
+                <i class="fab fa-whatsapp text-lg"></i>
+                <span>Konfirmasi via WhatsApp Sekarang</span>
+            </a>
+            <a href="#" id="bcaModalDownloadInvoiceBtn" target="_blank" class="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-colors">
+                <i class="fas fa-file-invoice"></i>
+                <span>Unduh Tagihan / Invoice (PDF)</span>
+            </a>
+            <button type="button" onclick="window.location.reload()" class="w-full py-2 bg-transparent text-gray-500 hover:text-gray-700 font-semibold text-xs cursor-pointer">
+                Tutup & Refresh Halaman
+            </button>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -705,6 +886,7 @@
     let selectedRenewalPackageId = '{{ $primaryLicense ? $primaryLicense->id : '' }}';
     let selectedQuota = 50;
     let selectedDuration = 1; // 1, 3, 6, 12, 24, 36 bulan
+    let selectedPaymentMethod = 'manual_bca'; // 'manual_bca' or 'google_pay'
     let paymentsClient = null;
 
     function formatRupiah(num) {
@@ -887,6 +1069,9 @@
         }
 
         // Total calculation complete
+        const bcaTransferTotalEl = document.getElementById('bcaTransferTotalText');
+        if (bcaTransferTotalEl) bcaTransferTotalEl.textContent = formatRupiah(total);
+
         return total;
     }
 
@@ -928,6 +1113,115 @@
         });
 
         calculateTotal();
+    }
+
+    // Pemilihan Metode Pembayaran (BCA vs Google Pay)
+    function selectPaymentMethod(method) {
+        selectedPaymentMethod = method;
+        const btnBca = document.getElementById('btnMethodBca');
+        const btnGpay = document.getElementById('btnMethodGpay');
+        const checkBca = document.getElementById('checkMethodBca');
+        const checkGpay = document.getElementById('checkMethodGpay');
+        const paneBca = document.getElementById('paneMethodBca');
+        const paneGpay = document.getElementById('paneMethodGpay');
+
+        if (method === 'manual_bca') {
+            if (btnBca) btnBca.className = "p-3 rounded-xl border-2 text-left transition-all duration-150 border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 cursor-pointer flex flex-col justify-between shadow-xs";
+            if (btnGpay) btnGpay.className = "p-3 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between";
+            if (checkBca) checkBca.className = "w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px]";
+            if (checkGpay) checkGpay.className = "w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]";
+            if (paneBca) paneBca.classList.remove('hidden');
+            if (paneGpay) paneGpay.classList.add('hidden');
+        } else {
+            if (btnGpay) btnGpay.className = "p-3 rounded-xl border-2 text-left transition-all duration-150 border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-500/20 cursor-pointer flex flex-col justify-between shadow-xs";
+            if (btnBca) btnBca.className = "p-3 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between";
+            if (checkGpay) checkGpay.className = "w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[9px]";
+            if (checkBca) checkBca.className = "w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]";
+            if (paneGpay) paneGpay.classList.remove('hidden');
+            if (paneBca) paneBca.classList.add('hidden');
+        }
+    }
+
+    function copyText(text, label) {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(function() {
+                alert(label + ' berhasil disalin: ' + text);
+            }).catch(function() {
+                fallbackCopy(text, label);
+            });
+        } else {
+            fallbackCopy(text, label);
+        }
+    }
+
+    function fallbackCopy(text, label) {
+        const temp = document.createElement('input');
+        temp.value = text;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+        alert(label + ' berhasil disalin: ' + text);
+    }
+
+    function executeManualBcaCheckout() {
+        const total = calculateTotal();
+        if (currentMode === 'tambah_kuota' && selectedQuota <= 0) {
+            alert('Silakan tentukan jumlah kuota tambahan terlebih dahulu (minimal 1 user).');
+            return;
+        }
+
+        const btn = document.getElementById('btnPayWithBca');
+        const origContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin text-lg mr-2"></i><span>Membuat Pesanan BCA...</span>';
+
+        fetch("{{ route('admin.billing.manual-transfer') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                mode_transaksi: currentMode,
+                license_id: currentMode === 'perpanjang' ? selectedRenewalPackageId : null,
+                tambah_kuota: currentMode === 'perpanjang' ? 0 : selectedQuota,
+                durasi_bulan: selectedDuration
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = origContent;
+
+            if (data.success) {
+                const modal = document.getElementById('bcaSuccessModal');
+                document.getElementById('bcaModalOrderId').textContent = data.data.order_id;
+                document.getElementById('bcaModalTotalText').textContent = 'Rp ' + data.data.total_dibayar;
+                
+                const waBtn = document.getElementById('bcaModalWaBtn');
+                if (waBtn) waBtn.href = data.data.wa_url;
+
+                const invoiceBtn = document.getElementById('bcaModalDownloadInvoiceBtn');
+                if (invoiceBtn) {
+                    invoiceBtn.href = "{{ url('admin/billing/invoice') }}/" + data.data.transaction_id + "/pdf";
+                }
+
+                // Buka WhatsApp di tab baru
+                window.open(data.data.wa_url, '_blank');
+
+                modal.classList.remove('hidden');
+            } else {
+                alert(data.message || 'Gagal memproses pesanan transfer.');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = origContent;
+            console.error(err);
+            alert('Terjadi kesalahan saat menghubungi server.');
+        });
     }
 
     // Google Pay API Client Configuration
@@ -1181,6 +1475,7 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         switchBillingMode('perpanjang');
+        selectPaymentMethod('manual_bca');
     });
 </script>
 @endpush
