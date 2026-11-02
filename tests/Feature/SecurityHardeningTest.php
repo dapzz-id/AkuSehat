@@ -366,4 +366,39 @@ class SecurityHardeningTest extends TestCase
         $this->assertStringContainsString('62895383107479', $result['response']['data']['wa_url']);
         $this->assertStringContainsString('842-171-3359', $result['response']['data']['wa_url']);
     }
+
+    /**
+     * Test superadmin can reject manual transfer billing transaction.
+     */
+    public function test_superadmin_can_reject_manual_transfer_billing(): void
+    {
+        $superadmin = new \App\Models\User([
+            'id' => (string) Str::uuid7(),
+            'nama' => 'Super Admin Test',
+            'name' => 'Super Admin Test',
+            'email' => 'superadmin@test.com',
+            'level' => 'SuperAdmin',
+        ]);
+
+        $mockRepo = $this->createMock(\App\Modules\Billing\Subscription\Repositories\BillingRepository::class);
+        $dummyTrx = $this->getMockBuilder(\App\Models\BillingTransaction::class)
+            ->onlyMethods(['save'])
+            ->getMock();
+        $dummyTrx->order_id = 'BCA-TEST-001';
+        $dummyTrx->nominal = 277500;
+        $dummyTrx->status = 'pending';
+        $dummyTrx->payment_method = 'manual_bca';
+        $dummyTrx->expects($this->once())->method('save')->willReturn(true);
+
+        $mockRepo->expects($this->once())
+            ->method('findTransactionWithDetails')
+            ->willReturn($dummyTrx);
+
+        $billingService = new \App\Modules\Billing\Subscription\Services\BillingService($mockRepo);
+        $result = $billingService->rejectManualTransfer('dummy-id', $superadmin, 'Dana tidak masuk');
+
+        $this->assertEquals(200, $result['status_code']);
+        $this->assertTrue($result['response']['success']);
+        $this->assertEquals('failed', $dummyTrx->status);
+    }
 }

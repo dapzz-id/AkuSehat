@@ -586,6 +586,52 @@ class BillingService
         }
     }
 
+    public function rejectManualTransfer(int|string $transactionId, User $rejector, ?string $reason = null): array
+    {
+        if (!$rejector->isSuperAdmin()) {
+            abort(403, 'Hanya SuperAdmin yang berhak menolak transaksi manual transfer.');
+        }
+
+        $trx = $this->billingRepository->findTransactionWithDetails($transactionId);
+        if ($trx->status === BillingTransactionStatus::SUCCESS->value || $trx->status === BillingTransactionStatus::PAID->value) {
+            return [
+                'status_code' => 400,
+                'response' => ['success' => false, 'message' => 'Transaksi ini sudah lunas, tidak dapat dibatalkan/ditolak.'],
+            ];
+        }
+
+        $trx->status = BillingTransactionStatus::FAILED->value;
+        $payload = $trx->payload ?? [];
+        $payload['rejection_reason'] = $reason ?: 'Ditolak oleh SuperAdmin (Bukti transfer tidak valid/dana tidak masuk)';
+        $payload['rejected_by'] = $rejector->name;
+        $payload['rejected_at'] = now()->toIso8601String();
+        $trx->payload = $payload;
+        $trx->save();
+
+        AuditLogger::billing(
+            'manual_transfer_rejected',
+            "Pesanan manual transfer BCA untuk Order {$trx->order_id} ditolak oleh SuperAdmin {$rejector->name}: " . ($reason ?: 'Bukti transfer tidak valid'),
+            ['order_id' => $trx->order_id, 'nominal' => $trx->nominal, 'reason' => $reason]
+        );
+
+        return [
+            'status_code' => 200,
+            'response' => ['success' => true, 'message' => "Order {$trx->order_id} berhasil ditolak / dibatalkan."],
+        ];
+    }
+
+    public function getSuperAdminBillingData(?string $status = null, int $perPage = 15): array
+    {
+        $transactions = $this->billingRepository->getSuperAdminTransactions($status, $perPage);
+        $stats = $this->billingRepository->getTransactionSummaryStats();
+
+        return [
+            'transactions' => $transactions,
+            'stats' => $stats,
+            'currentStatus' => $status ?: 'all',
+        ];
+    }
+
     public function processGooglePlayInApp(User $user, array $validated): array
     {
         $instansi = $user->sekolah ?: Instansi::find($user->instansi_id);

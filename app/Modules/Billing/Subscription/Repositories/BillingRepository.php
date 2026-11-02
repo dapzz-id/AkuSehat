@@ -5,6 +5,7 @@ namespace App\Modules\Billing\Subscription\Repositories;
 use App\Models\BillingTransaction;
 use App\Models\LicenseKey;
 use App\Models\User;
+use App\Modules\Billing\Subscription\Enums\BillingTransactionStatus;
 use App\Modules\User\Enums\UserRole;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -109,5 +110,30 @@ class BillingRepository
             ->where('level', '!=', UserRole::ADMIN_INSTANSI->value)
             ->whereNotNull('id_divisi')
             ->count();
+    }
+
+    public function getSuperAdminTransactions(?string $status = null, int $perPage = 15): LengthAwarePaginator
+    {
+        $query = BillingTransaction::with(['instansi', 'user'])->latest();
+        if ($status && $status !== 'all') {
+            $query->where('status', $status);
+        }
+        return $query->paginate($perPage);
+    }
+
+    public function getTransactionSummaryStats(): array
+    {
+        return [
+            'total_revenue' => (float) BillingTransaction::whereIn('status', [
+                BillingTransactionStatus::SUCCESS->value, 
+                BillingTransactionStatus::PAID->value
+            ])->sum('nominal'),
+            'pending_count' => BillingTransaction::where('status', BillingTransactionStatus::PENDING->value)->count(),
+            'success_count' => BillingTransaction::whereIn('status', [
+                BillingTransactionStatus::SUCCESS->value, 
+                BillingTransactionStatus::PAID->value
+            ])->count(),
+            'total_count' => BillingTransaction::count(),
+        ];
     }
 }

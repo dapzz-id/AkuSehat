@@ -12,5 +12,8 @@ Route::middleware(['auth', 'role:Admin,Admin Instansi,Health Monitor,Health Cons
 });
 
 Route::middleware(['auth', 'role:SuperAdmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
+    Route::get('billing', [BillingController::class, 'superAdminIndex'])->name('billing.index');
     Route::post('billing/transactions/{id}/approve', [BillingController::class, 'approveTransaction'])->name('billing.approve');
+    Route::post('billing/transactions/{id}/reject', [BillingController::class, 'rejectTransaction'])->name('billing.reject');
+    Route::get('billing/invoice/{id}/pdf', [BillingController::class, 'downloadInvoicePdf'])->name('billing.invoice.pdf');
 });

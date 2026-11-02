@@ -34,7 +34,8 @@
 
     <!-- Group: MANAJEMEN SISTEM -->
     @php
-        $isInstansiActive = request()->routeIs('superadmin.instansi.*') || request()->routeIs('superadmin.users.*') || request()->routeIs('superadmin.license.*') || request()->routeIs('superadmin.modules.*');
+        $isInstansiActive = request()->routeIs('superadmin.instansi.*') || request()->routeIs('superadmin.users.*') || request()->routeIs('superadmin.license.*') || request()->routeIs('superadmin.billing.*') || request()->routeIs('superadmin.modules.*');
+        $saPendingBillingCount = \App\Models\BillingTransaction::where('status', 'pending')->count();
     @endphp
     <div class="sidebar-group space-y-1" data-group-id="sa-instansi" data-has-active="{{ $isInstansiActive ? '1' : '0' }}">
         <button type="button" 
@@ -69,6 +70,21 @@
                     <i class="fas fa-key text-sm"></i>
                 </div>
                 <span>Lisensi Aplikasi</span>
+            </a>
+
+            <a href="{{ route('superadmin.billing.index') }}" 
+               class="group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('superadmin.billing.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('superadmin.billing.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-emerald-400 group-hover:bg-white/10 group-hover:text-emerald-300' }}">
+                        <i class="fas fa-receipt text-sm"></i>
+                    </div>
+                    <span>Billing & Transaksi</span>
+                </div>
+                @if($saPendingBillingCount > 0)
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white shadow-sm animate-pulse">
+                        {{ $saPendingBillingCount }}
+                    </span>
+                @endif
             </a>
 
             <a href="{{ route('superadmin.modules.index') }}" 

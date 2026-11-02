@@ -13,6 +13,8 @@ use App\Modules\Billing\Subscription\Requests\ProcessGooglePayRequest;
 use App\Modules\Billing\Subscription\Requests\ProcessManualTransferRequest;
 use App\Modules\Billing\Subscription\Requests\ProcessGooglePlayInAppRequest;
 use App\Modules\Billing\Subscription\Requests\DownloadInvoiceRequest;
+use App\Modules\Billing\Subscription\Requests\SuperAdminBillingFilterRequest;
+use App\Modules\Billing\Subscription\Requests\RejectManualTransferRequest;
 
 class BillingController extends Controller
 {
@@ -48,10 +50,31 @@ class BillingController extends Controller
         return response()->json($result['response'], $result['status_code'] ?? 200);
     }
 
+    public function superAdminIndex(SuperAdminBillingFilterRequest $request): View
+    {
+        $status = $request->query('status');
+        $data = $this->billingService->getSuperAdminBillingData($status);
+        return view('superadmin.billing.index', $data);
+    }
+
     public function approveTransaction(int|string $id): JsonResponse|RedirectResponse
     {
         $result = $this->billingService->approveManualTransfer($id, Auth::user());
         if (request()->wantsJson()) {
+            return response()->json($result['response'], $result['status_code'] ?? 200);
+        }
+
+        return redirect()->back()->with(
+            $result['response']['success'] ? 'success' : 'error',
+            $result['response']['message']
+        );
+    }
+
+    public function rejectTransaction(RejectManualTransferRequest $request, int|string $id): JsonResponse|RedirectResponse
+    {
+        $reason = $request->input('reason');
+        $result = $this->billingService->rejectManualTransfer($id, Auth::user(), $reason);
+        if ($request->wantsJson()) {
             return response()->json($result['response'], $result['status_code'] ?? 200);
         }
 
