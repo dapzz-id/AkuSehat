@@ -52,8 +52,7 @@ class BillingController extends Controller
 
     public function superAdminIndex(SuperAdminBillingFilterRequest $request): View
     {
-        $status = $request->query('status');
-        $data = $this->billingService->getSuperAdminBillingData($status);
+        $data = $this->billingService->getSuperAdminBillingData($request->validated());
         return view('superadmin.billing.index', $data);
     }
 

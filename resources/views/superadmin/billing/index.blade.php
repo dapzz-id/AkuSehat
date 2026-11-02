@@ -120,11 +120,14 @@
         {{-- Tabs Status Filter --}}
         <div class="p-4 sm:p-5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-                <a href="{{ route('superadmin.billing.index') }}" 
+                @php
+                    $baseParams = request()->except(['status', 'page']);
+                @endphp
+                <a href="{{ route('superadmin.billing.index', array_merge($baseParams, ['status' => 'all'])) }}" 
                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ empty($currentStatus) || $currentStatus === 'all' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                     Semua ({{ $stats['total_count'] }})
                 </a>
-                <a href="{{ route('superadmin.billing.index', ['status' => 'pending']) }}" 
+                <a href="{{ route('superadmin.billing.index', array_merge($baseParams, ['status' => 'pending'])) }}" 
                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 {{ $currentStatus === 'pending' ? 'bg-amber-500 text-white shadow-sm' : 'bg-amber-50 text-amber-800 hover:bg-amber-100' }}">
                     <span>Menunggu Verifikasi</span>
                     @if($stats['pending_count'] > 0)
@@ -133,11 +136,11 @@
                         </span>
                     @endif
                 </a>
-                <a href="{{ route('superadmin.billing.index', ['status' => 'success']) }}" 
+                <a href="{{ route('superadmin.billing.index', array_merge($baseParams, ['status' => 'success'])) }}" 
                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ $currentStatus === 'success' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                     Berhasil / Lunas ({{ $stats['success_count'] }})
                 </a>
-                <a href="{{ route('superadmin.billing.index', ['status' => 'failed']) }}" 
+                <a href="{{ route('superadmin.billing.index', array_merge($baseParams, ['status' => 'failed'])) }}" 
                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ $currentStatus === 'failed' ? 'bg-rose-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                     Gagal / Dibatalkan
                 </a>
@@ -146,6 +149,108 @@
             <div class="text-xs text-gray-400 font-medium">
                 Menampilkan halaman {{ $transactions->currentPage() }} dari {{ $transactions->lastPage() }}
             </div>
+        </div>
+
+        {{-- Filter & Search Toolbar (Searching by Instansi/Order ID, Date Picker, Dropdown Metode) --}}
+        <div class="p-4 sm:p-5 bg-gray-50/80 border-b border-gray-100">
+            <form method="GET" action="{{ route('superadmin.billing.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+                {{-- Maintain current status tab --}}
+                <input type="hidden" name="status" value="{{ $currentStatus ?? 'all' }}">
+
+                {{-- Kolom Searching: Order ID atau Nama Instansi/Sekolah --}}
+                <div class="sm:col-span-2 lg:col-span-4">
+                    <label class="block text-xs font-bold text-gray-700 mb-1 flex items-center gap-1.5">
+                        <i class="fas fa-magnifying-glass text-gray-400"></i>
+                        <span>Pencarian Cepat</span>
+                    </label>
+                    <div class="relative">
+                        <input type="text" name="search" value="{{ $filters['search'] ?? '' }}"
+                               placeholder="Cari Order ID, nama sekolah/instansi, atau pemesan..."
+                               class="w-full h-10 pl-9 pr-3.5 border border-gray-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white shadow-2xs">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 text-xs">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Dropdown Metode Pembayaran --}}
+                <div class="sm:col-span-1 lg:col-span-3">
+                    <label class="block text-xs font-bold text-gray-700 mb-1 flex items-center gap-1.5">
+                        <i class="fas fa-wallet text-gray-400"></i>
+                        <span>Metode Pembayaran</span>
+                    </label>
+                    <select name="payment_method" 
+                            class="w-full h-10 px-3 border border-gray-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white shadow-2xs">
+                        <option value="all" {{ ($filters['payment_method'] ?? 'all') === 'all' ? 'selected' : '' }}>Semua Metode</option>
+                        <option value="manual_bca" {{ in_array(($filters['payment_method'] ?? ''), ['manual_bca', 'manual_transfer', 'bca']) ? 'selected' : '' }}>Transfer BCA (Manual)</option>
+                        <option value="google_pay" {{ in_array(($filters['payment_method'] ?? ''), ['google_pay', 'gpay']) ? 'selected' : '' }}>Google Pay (Otomatis)</option>
+                    </select>
+                </div>
+
+                {{-- Date Picker: Tanggal Mulai --}}
+                <div class="sm:col-span-1 lg:col-span-2">
+                    <label class="block text-xs font-bold text-gray-700 mb-1 flex items-center gap-1.5">
+                        <i class="far fa-calendar-alt text-gray-400"></i>
+                        <span>Dari Tanggal</span>
+                    </label>
+                    <input type="date" name="start_date" value="{{ $filters['start_date'] ?? '' }}"
+                           class="w-full h-10 px-3 border border-gray-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white shadow-2xs">
+                </div>
+
+                {{-- Date Picker: Tanggal Akhir --}}
+                <div class="sm:col-span-1 lg:col-span-2">
+                    <label class="block text-xs font-bold text-gray-700 mb-1 flex items-center gap-1.5">
+                        <i class="far fa-calendar-alt text-gray-400"></i>
+                        <span>Sampai Tanggal</span>
+                    </label>
+                    <input type="date" name="end_date" value="{{ $filters['end_date'] ?? '' }}"
+                           class="w-full h-10 px-3 border border-gray-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white shadow-2xs">
+                </div>
+
+                {{-- Tombol Filter & Reset --}}
+                <div class="sm:col-span-1 lg:col-span-1 flex items-center gap-1.5">
+                    <button type="submit" 
+                            class="w-full h-10 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+                            title="Terapkan Filter">
+                        <i class="fas fa-filter"></i>
+                        <span class="sm:inline lg:hidden">Filter</span>
+                    </button>
+                    @if(!empty($filters['search']) || (!empty($filters['payment_method']) && $filters['payment_method'] !== 'all') || !empty($filters['start_date']) || !empty($filters['end_date']))
+                        <a href="{{ route('superadmin.billing.index', ['status' => $currentStatus ?? 'all']) }}" 
+                           class="h-10 px-3 rounded-xl border border-gray-300 bg-white hover:bg-gray-100 active:scale-95 text-gray-600 text-xs font-bold transition-all flex items-center justify-center shrink-0 cursor-pointer"
+                           title="Reset Semua Filter">
+                            <i class="fas fa-rotate-left"></i>
+                        </a>
+                    @endif
+                </div>
+            </form>
+
+            @if(!empty($filters['search']) || (!empty($filters['payment_method']) && $filters['payment_method'] !== 'all') || !empty($filters['start_date']) || !empty($filters['end_date']))
+                <div class="mt-3 pt-3 border-t border-gray-200/60 flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-1.5 flex-wrap text-gray-600">
+                        <span class="font-bold text-gray-700">Filter Aktif:</span>
+                        @if(!empty($filters['search']))
+                            <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-semibold text-[11px]">
+                                Kata Kunci: "{{ $filters['search'] }}"
+                            </span>
+                        @endif
+                        @if(!empty($filters['payment_method']) && $filters['payment_method'] !== 'all')
+                            <span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-semibold text-[11px]">
+                                Metode: {{ $filters['payment_method'] === 'manual_bca' ? 'Transfer BCA' : 'Google Pay' }}
+                            </span>
+                        @endif
+                        @if(!empty($filters['start_date']) || !empty($filters['end_date']))
+                            <span class="px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 font-semibold text-[11px]">
+                                Tanggal: {{ $filters['start_date'] ?: 'Awal' }} s/d {{ $filters['end_date'] ?: 'Sekarang' }}
+                            </span>
+                        @endif
+                    </div>
+                    <a href="{{ route('superadmin.billing.index', ['status' => $currentStatus ?? 'all']) }}" 
+                       class="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1">
+                        <i class="fas fa-times-circle"></i> Hapus Filter
+                    </a>
+                </div>
+            @endif
         </div>
 
         {{-- Desktop Table View --}}

@@ -620,15 +620,23 @@ class BillingService
         ];
     }
 
-    public function getSuperAdminBillingData(?string $status = null, int $perPage = 15): array
+    public function getSuperAdminBillingData(array|string|null $filters = null, int $perPage = 15): array
     {
-        $transactions = $this->billingRepository->getSuperAdminTransactions($status, $perPage);
+        $filterArr = is_array($filters) ? $filters : ['status' => $filters];
+        $transactions = $this->billingRepository->getSuperAdminTransactions($filterArr, $perPage);
         $stats = $this->billingRepository->getTransactionSummaryStats();
 
         return [
             'transactions' => $transactions,
             'stats' => $stats,
-            'currentStatus' => $status ?: 'all',
+            'currentStatus' => $filterArr['status'] ?? 'all',
+            'filters' => [
+                'search' => $filterArr['search'] ?? $filterArr['q'] ?? '',
+                'payment_method' => $filterArr['payment_method'] ?? 'all',
+                'start_date' => $filterArr['start_date'] ?? '',
+                'end_date' => $filterArr['end_date'] ?? '',
+                'status' => $filterArr['status'] ?? 'all',
+            ],
         ];
     }
 
