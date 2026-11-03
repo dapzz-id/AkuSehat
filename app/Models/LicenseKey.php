@@ -46,6 +46,20 @@ class LicenseKey extends Model
         return $this->hasMany(User::class, 'instansi_id', 'instansi_id');
     }
 
+    /**
+     * Anggota/siswa yang dihitung memotong kuota lisensi (Admin Instansi & SuperAdmin tidak memotong kuota).
+     */
+    public function countableMembers()
+    {
+        return $this->hasMany(User::class, 'instansi_id', 'instansi_id')
+            ->whereNotIn('level', [
+                \App\Modules\User\Enums\UserRole::ADMIN_INSTANSI->value,
+                \App\Modules\User\Enums\UserRole::SUPERADMIN->value,
+                'Admin Instansi',
+                'SuperAdmin',
+            ]);
+    }
+
     public function isActive()
     {
         return $this->status === self::STATUS_ACTIVE && $this->tanggal_berakhir && $this->tanggal_berakhir->copy()->endOfDay()->gte(now());

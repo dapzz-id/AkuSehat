@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\CheckUserDivisionActive::class,
             \App\Http\Middleware\EnforceTenantAccess::class,
+            \App\Http\Middleware\CheckLicenseActive::class,
             \App\Http\Middleware\CheckMaintenance::class,
         ]);
 
@@ -34,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\VerifyS2sSignature::class,
             \App\Http\Middleware\CheckUserDivisionActive::class,
             \App\Http\Middleware\EnforceTenantAccess::class,
+            \App\Http\Middleware\CheckLicenseActive::class,
             \App\Http\Middleware\CheckMaintenance::class,
         ]);
 

@@ -70,10 +70,7 @@
                                 <code class="px-2 py-1 bg-gray-100 text-sm text-gray-800 rounded font-mono">{{ $license->key }}</code>
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-700">
-                                @php
-                                    $countSiswaWithLicense = $license->users()->count();
-                                @endphp
-                                {{ (int)$license->kuota_pengguna - ((int)$countSiswaWithLicense) }}/{{ $license->kuota_pengguna }} User
+                                <span class="font-semibold text-gray-800">{{ $license->kuota_pengguna }} User</span>
                             </td>
                             <td class="px-4 py-3">
                                 <div class="text-sm text-gray-700">
@@ -194,10 +191,7 @@
             <div class="grid grid-cols-2 gap-4 mb-3">
                 <div>
                     <p class="text-xs font-medium text-gray-600 mb-1">Kuota</p>
-                    @php
-                        $countSiswaWithLicense = $license->users()->count();
-                    @endphp
-                    <p class="text-sm font-semibold text-gray-800">{{ 1000 - ((int)$countSiswaWithLicense) }}/1000 User</p>
+                    <p class="text-sm font-semibold text-gray-800">{{ $license->kuota_pengguna }} User</p>
                 </div>
                 <div>
                     <p class="text-xs font-medium text-gray-600 mb-1">Periode</p>

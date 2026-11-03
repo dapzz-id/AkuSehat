@@ -58,6 +58,18 @@ class MidtransAndPaymentMethodsTest extends TestCase
                 $table->timestamps();
             });
         }
+
+        if (!Schema::hasTable('license_keys')) {
+            Schema::create('license_keys', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->uuid('instansi_id')->nullable();
+                $table->string('key')->unique();
+                $table->integer('kuota_pengguna')->default(8);
+                $table->string('status')->default('active');
+                $table->date('tanggal_berakhir');
+                $table->timestamps();
+            });
+        }
     }
     public function test_payment_method_enum_contains_midtrans(): void
     {
@@ -254,5 +266,72 @@ class MidtransAndPaymentMethodsTest extends TestCase
 
         $unauthorizedCancel = $billingService->cancelBillingTransaction($otherAdmin, $pendingTrx->id);
         $this->assertEquals(403, $unauthorizedCancel['status_code']);
+    }
+
+    public function test_expired_license_middleware_allows_admin_billing_and_users_only(): void
+    {
+        $instansi = \App\Models\Instansi::create([
+            'id' => (string) \Illuminate\Support\Str::uuid7(),
+            'nama_instansi' => 'SMK Expired Test',
+            'jenis_instansi' => 'Sekolah',
+        ]);
+
+        $admin = \App\Models\User::create([
+            'id' => (string) \Illuminate\Support\Str::uuid7(),
+            'nama' => 'Admin Instansi',
+            'name' => 'Admin Instansi',
+            'username' => 'admin_exp_' . rand(1000, 9999),
+            'email' => 'admin.exp.' . rand(1000, 9999) . '@test.com',
+            'password' => bcrypt('password'),
+            'level' => 'Admin Instansi',
+            'instansi_id' => $instansi->id,
+        ]);
+
+        // License is expired
+        \App\Models\LicenseKey::create([
+            'id' => (string) \Illuminate\Support\Str::uuid7(),
+            'instansi_id' => $instansi->id,
+            'key' => 'EXP-KEY-' . rand(1000, 9999),
+            'kuota_pengguna' => 8,
+            'status' => 'expired',
+            'tanggal_berakhir' => now()->subDay()->toDateString(),
+        ]);
+
+        $middleware = new \App\Http\Middleware\CheckLicenseActive();
+
+        // 1. Admin accessing billing route -> Allowed ($next called)
+        $reqBilling = \Illuminate\Http\Request::create('/admin/billing', 'GET');
+        $reqBilling->setUserResolver(fn() => $admin);
+        $resBilling = $middleware->handle($reqBilling, fn() => response('allowed_billing'));
+        $this->assertEquals('allowed_billing', $resBilling->getContent());
+
+        // 2. Admin accessing users route -> Allowed ($next called)
+        $reqUsers = \Illuminate\Http\Request::create('/admin/users', 'GET');
+        $reqUsers->setUserResolver(fn() => $admin);
+        $resUsers = $middleware->handle($reqUsers, fn() => response('allowed_users'));
+        $this->assertEquals('allowed_users', $resUsers->getContent());
+
+        // 3. Admin accessing other route (e.g. admin/kesehatan) -> Redirected to billing with warning
+        $reqOther = \Illuminate\Http\Request::create('/admin/kesehatan', 'GET');
+        $reqOther->setUserResolver(fn() => $admin);
+        $resOther = $middleware->handle($reqOther, fn() => response('allowed_other'));
+        $this->assertTrue($resOther->isRedirect(route('admin.billing.index')));
+
+        // 4. Member accessing -> 403 Forbidden
+        $member = \App\Models\User::create([
+            'id' => (string) \Illuminate\Support\Str::uuid7(),
+            'nama' => 'Siswa Member',
+            'name' => 'Siswa Member',
+            'username' => 'member_exp_' . rand(1000, 9999),
+            'email' => 'member.exp.' . rand(1000, 9999) . '@test.com',
+            'password' => bcrypt('password'),
+            'level' => 'Member',
+            'instansi_id' => $instansi->id,
+        ]);
+        $reqMember = \Illuminate\Http\Request::create('/admin/kesehatan', 'GET');
+        $reqMember->headers->set('Accept', 'application/json');
+        $reqMember->setUserResolver(fn() => $member);
+        $resMember = $middleware->handle($reqMember, fn() => response('allowed_member'));
+        $this->assertEquals(403, $resMember->getStatusCode());
     }
 }
