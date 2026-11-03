@@ -161,6 +161,15 @@
             $maskedGpayMerchantId = !empty($rawGpayMerchantId)
                 ? (strlen($rawGpayMerchantId) > 8 ? substr($rawGpayMerchantId, 0, 6) . '••••' . substr($rawGpayMerchantId, -3) : $rawGpayMerchantId)
                 : 'Belum diatur di .env';
+
+            $vaultService = app(\App\Services\Security\DataVaultEncryptionService::class);
+            $hasDedicatedDataSecret = $vaultService->hasDedicatedSecretKey();
+            $bcaRekPlain = $bcaConfig['account_number'] ?? '842-171-3359';
+            $bcaNamePlain = $bcaConfig['account_name'] ?? 'Kadavi Raditya Alvino';
+            $bcaWaPlain = $bcaConfig['whatsapp_number'] ?? '+62 895-3831-07479';
+            $bcaRekMasked = \App\Services\Security\DataVaultEncryptionService::maskAccountNumber($bcaRekPlain);
+            $bcaNameMasked = \App\Services\Security\DataVaultEncryptionService::maskAccountName($bcaNamePlain);
+            $bcaWaMasked = \App\Services\Security\DataVaultEncryptionService::maskPhoneNumber($bcaWaPlain);
         @endphp
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -195,18 +204,39 @@
                         Pengguna membayar ke rekening BCA Anda dan mengirimkan konfirmasi manual via WhatsApp.
                     </p>
 
-                    <div class="bg-white rounded-xl p-2.5 border border-blue-100/80 text-[11px] space-y-1 font-mono text-gray-700">
+                    <div class="bg-white rounded-xl p-2.5 border border-blue-100/80 text-[11px] space-y-1.5 font-mono text-gray-700">
+                        <div class="flex items-center justify-between pb-1 border-b border-blue-50 font-sans">
+                            <span class="text-[10px] font-bold text-blue-700 flex items-center gap-1">
+                                <i class="fas fa-shield-halved text-[10px]"></i>
+                                <span>AES-256-GCM Encrypted</span>
+                            </span>
+                            <button type="button" onclick="toggleBcaCardReveal()"
+                                    title="Klik untuk mendekripsi / menyembunyikan identitas rekening"
+                                    class="text-[10px] font-bold text-gray-500 hover:text-blue-700 flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-50 hover:bg-blue-50 border border-gray-200 transition-colors cursor-pointer">
+                                <i id="bcaCardEyeIcon" class="fas fa-eye text-blue-600"></i>
+                                <span id="bcaCardEyeLabel">Lihat</span>
+                            </button>
+                        </div>
                         <div class="flex justify-between">
                             <span class="text-gray-400 font-sans">Rek:</span>
-                            <span class="font-bold text-blue-900">{{ $bcaConfig['account_number'] ?? '842-171-3359' }}</span>
+                            <span id="bcaCardRekText"
+                                  data-masked="{{ $bcaRekMasked }}"
+                                  data-plain="{{ $bcaRekPlain }}"
+                                  class="font-bold text-blue-900">{{ $bcaRekMasked }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-400 font-sans">A.N:</span>
-                            <span class="font-semibold text-gray-800">{{ $bcaConfig['account_name'] ?? 'Kadavi Raditya Alvino' }}</span>
+                            <span id="bcaCardNameText"
+                                  data-masked="{{ $bcaNameMasked }}"
+                                  data-plain="{{ $bcaNamePlain }}"
+                                  class="font-semibold text-gray-800">{{ $bcaNameMasked }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-400 font-sans">WA:</span>
-                            <span class="text-emerald-700 font-semibold">{{ $bcaConfig['whatsapp_number'] ?? '+62 895-3831-07479' }}</span>
+                            <span id="bcaCardWaText"
+                                  data-masked="{{ $bcaWaMasked }}"
+                                  data-plain="{{ $bcaWaPlain }}"
+                                  class="text-emerald-700 font-semibold">{{ $bcaWaMasked }}</span>
                         </div>
                     </div>
                 </div>
@@ -777,11 +807,30 @@
                 </div>
                 <div>
                     <h3 class="text-sm font-bold text-gray-900">Pengaturan Rekening BCA</h3>
-                    <p class="text-[11px] text-gray-500">Rekening tujuan transfer manual & CS WhatsApp</p>
+                    <p class="text-[11px] text-gray-500">Dienkripsi di database (AES-256-GCM + HKDF-SHA256)</p>
                 </div>
             </div>
-            <button type="button" onclick="closeBcaConfigModal()" class="text-gray-400 hover:text-gray-600">
+            <button type="button" onclick="closeBcaConfigModal()" class="text-gray-400 hover:text-gray-600 cursor-pointer">
                 <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="p-3 rounded-xl {{ $hasDedicatedDataSecret ? 'bg-blue-50/80 border-blue-200 text-blue-900' : 'bg-amber-50 border-amber-200 text-amber-900' }} border text-[11px] flex items-start justify-between gap-2">
+            <div class="flex items-start gap-2">
+                <i class="fas fa-lock {{ $hasDedicatedDataSecret ? 'text-blue-600' : 'text-amber-600' }} mt-0.5"></i>
+                <div>
+                    <span class="font-bold block">
+                        {{ $hasDedicatedDataSecret ? 'Enkripsi Perbankan Aktif (DATA_SECRET_KEY)' : 'Enkripsi Aktif (Mode Fallback Key)' }}
+                    </span>
+                    <span>
+                        {{ $hasDedicatedDataSecret ? 'Menggunakan kunci DATA_SECRET_KEY yang terpisah dari APP_KEY.' : 'Tambahkan DATA_SECRET_KEY di .env untuk memisahkan kunci data dari APP_KEY.' }}
+                    </span>
+                </div>
+            </div>
+            <button type="button" onclick="toggleAllBcaModalEyes()"
+                    class="shrink-0 px-2 py-1 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-[10px] font-bold text-gray-700 flex items-center gap-1 cursor-pointer">
+                <i id="bcaModalMasterEyeIcon" class="fas fa-eye text-blue-600"></i>
+                <span id="bcaModalMasterEyeLabel">Lihat Semua</span>
             </button>
         </div>
 
@@ -794,29 +843,50 @@
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-700 mb-1">Nomor Rekening</label>
-                <input type="text" name="account_number" value="{{ $bcaConfig['account_number'] ?? '842-171-3359' }}" required
-                       class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs font-mono font-bold focus:ring-2 focus:ring-blue-500">
+                <div class="relative">
+                    <input type="password" id="bcaInputRek" name="account_number" value="{{ $bcaRekPlain }}" required
+                           class="w-full pl-3 pr-10 py-2 border border-gray-300 rounded-xl text-xs font-mono font-bold focus:ring-2 focus:ring-blue-500">
+                    <button type="button" onclick="toggleSingleBcaInput('bcaInputRek', 'bcaEyeRek')"
+                            title="Dekripsi / Tampilkan Nomor Rekening"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-blue-600 cursor-pointer">
+                        <i id="bcaEyeRek" class="fas fa-eye text-xs"></i>
+                    </button>
+                </div>
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-700 mb-1">Atas Nama (A.N)</label>
-                <input type="text" name="account_name" value="{{ $bcaConfig['account_name'] ?? 'Kadavi Raditya Alvino' }}" required
-                       class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-blue-500">
+                <div class="relative">
+                    <input type="password" id="bcaInputName" name="account_name" value="{{ $bcaNamePlain }}" required
+                           class="w-full pl-3 pr-10 py-2 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-blue-500">
+                    <button type="button" onclick="toggleSingleBcaInput('bcaInputName', 'bcaEyeName')"
+                            title="Dekripsi / Tampilkan Atas Nama"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-blue-600 cursor-pointer">
+                        <i id="bcaEyeName" class="fas fa-eye text-xs"></i>
+                    </button>
+                </div>
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-700 mb-1">Nomor WhatsApp Konfirmasi</label>
-                <input type="text" name="whatsapp_number" value="{{ $bcaConfig['whatsapp_number'] ?? '+62 895-3831-07479' }}" required
-                       class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-blue-500">
-                <span class="text-[10px] text-gray-400 mt-0.5 block">Format: +62 8xx atau 08xx</span>
+                <div class="relative">
+                    <input type="password" id="bcaInputWa" name="whatsapp_number" value="{{ $bcaWaPlain }}" required
+                           class="w-full pl-3 pr-10 py-2 border border-gray-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-blue-500">
+                    <button type="button" onclick="toggleSingleBcaInput('bcaInputWa', 'bcaEyeWa')"
+                            title="Dekripsi / Tampilkan Nomor WhatsApp"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-blue-600 cursor-pointer">
+                        <i id="bcaEyeWa" class="fas fa-eye text-xs"></i>
+                    </button>
+                </div>
+                <span class="text-[10px] text-gray-400 mt-0.5 block">Format: +62 8xx atau 08xx (Klik ikon mata untuk melihat/mengedit)</span>
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
                 <button type="button" onclick="closeBcaConfigModal()"
-                        class="px-4 py-2 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-50">
+                        class="px-4 py-2 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-50 cursor-pointer">
                     Batal
                 </button>
                 <button type="submit"
-                        class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs">
-                    Simpan Perubahan
+                        class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer">
+                    Simpan & Enkripsi
                 </button>
             </div>
         </form>
@@ -981,6 +1051,65 @@
 </div>
 
 <script>
+    let bcaCardRevealed = false;
+    function toggleBcaCardReveal() {
+        bcaCardRevealed = !bcaCardRevealed;
+        const fields = ['bcaCardRekText', 'bcaCardNameText', 'bcaCardWaText'];
+        fields.forEach(function(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.textContent = bcaCardRevealed ? el.getAttribute('data-plain') : el.getAttribute('data-masked');
+            }
+        });
+        const icon = document.getElementById('bcaCardEyeIcon');
+        const label = document.getElementById('bcaCardEyeLabel');
+        if (icon) {
+            icon.className = bcaCardRevealed ? 'fas fa-eye-slash text-amber-600' : 'fas fa-eye text-blue-600';
+        }
+        if (label) {
+            label.textContent = bcaCardRevealed ? 'Sembunyikan' : 'Lihat';
+        }
+    }
+
+    function toggleSingleBcaInput(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (!input || !icon) return;
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash text-xs text-blue-600';
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye text-xs';
+        }
+    }
+
+    let bcaModalAllRevealed = false;
+    function toggleAllBcaModalEyes() {
+        bcaModalAllRevealed = !bcaModalAllRevealed;
+        const pairs = [
+            ['bcaInputRek', 'bcaEyeRek'],
+            ['bcaInputName', 'bcaEyeName'],
+            ['bcaInputWa', 'bcaEyeWa'],
+        ];
+        pairs.forEach(function(pair) {
+            const input = document.getElementById(pair[0]);
+            const icon = document.getElementById(pair[1]);
+            if (input && icon) {
+                input.type = bcaModalAllRevealed ? 'text' : 'password';
+                icon.className = bcaModalAllRevealed ? 'fas fa-eye-slash text-xs text-blue-600' : 'fas fa-eye text-xs';
+            }
+        });
+        const masterIcon = document.getElementById('bcaModalMasterEyeIcon');
+        const masterLabel = document.getElementById('bcaModalMasterEyeLabel');
+        if (masterIcon) {
+            masterIcon.className = bcaModalAllRevealed ? 'fas fa-eye-slash text-amber-600' : 'fas fa-eye text-blue-600';
+        }
+        if (masterLabel) {
+            masterLabel.textContent = bcaModalAllRevealed ? 'Sembunyikan' : 'Lihat Semua';
+        }
+    }
+
     function openBcaConfigModal() {
         document.getElementById('bcaConfigModal').classList.remove('hidden');
     }

@@ -24,12 +24,25 @@ class PaymentMethodSetting extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'config' => 'array',
+        'config' => \App\Casts\EncryptedVaultConfig::class,
         'sort_order' => 'integer',
     ];
 
     /**
-     * Dapatkan seluruh setting metode pembayaran terurut
+     * Cek apakah kolom config di database sudah terenkripsi dalam format AES-256-GCM Vault
+     */
+    public function isEncryptedInDatabase(): bool
+    {
+        $raw = $this->getRawOriginal('config');
+        if (empty($raw)) {
+            return false;
+        }
+        $decoded = is_string($raw) ? json_decode($raw, true) : $raw;
+        return is_array($decoded) && isset($decoded['_vault']) && str_starts_with((string) $decoded['_vault'], 'enc:vault:v1:');
+    }
+
+    /**
+     * Dapatkan seluruh setting metode pembayaran terurut (otomatis mengenkripsi data legacy plaintext)
      */
     public static function getAllSettings()
     {
@@ -37,7 +50,16 @@ class PaymentMethodSetting extends Model
             return collect(self::getDefaultCollection());
         }
 
-        return self::orderBy('sort_order', 'asc')->get();
+        $items = self::orderBy('sort_order', 'asc')->get();
+
+        foreach ($items as $item) {
+            if ($item->method_key === 'manual_bca' && !$item->isEncryptedInDatabase() && !empty($item->config)) {
+                $item->config = $item->config;
+                $item->saveQuietly();
+            }
+        }
+
+        return $items;
     }
 
     /**

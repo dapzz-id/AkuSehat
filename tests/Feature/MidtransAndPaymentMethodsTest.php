@@ -78,4 +78,32 @@ class MidtransAndPaymentMethodsTest extends TestCase
         $this->assertContains('midtrans', $keys);
         $this->assertContains('google_pay', $keys);
     }
+
+    public function test_bank_grade_data_vault_aes256_gcm_encryption_and_key_separation(): void
+    {
+        config(['services.vault.secret_key' => 'base64:' . base64_encode(random_bytes(32))]);
+        $vault = new \App\Services\Security\DataVaultEncryptionService();
+
+        $this->assertTrue($vault->hasDedicatedSecretKey());
+
+        $bankData = [
+            'bank_name' => 'BANK CENTRAL ASIA',
+            'account_number' => '842-171-3359',
+            'account_name' => 'Kadavi Raditya Alvino',
+            'whatsapp_number' => '+62 895-3831-07479',
+        ];
+
+        $encryptedPayload = $vault->encryptArray($bankData, 'payment_method:manual_bca');
+        $this->assertArrayHasKey('_vault', $encryptedPayload);
+        $this->assertStringStartsWith('enc:vault:v1:', $encryptedPayload['_vault']);
+        $this->assertStringNotContainsString('842-171-3359', json_encode($encryptedPayload));
+
+        // Decrypt back with matching context
+        $decrypted = $vault->decryptArray($encryptedPayload, 'payment_method:manual_bca');
+        $this->assertEquals($bankData, $decrypted);
+
+        // Masking tests
+        $this->assertEquals('•••-•••-3359', \App\Services\Security\DataVaultEncryptionService::maskAccountNumber('842-171-3359'));
+        $this->assertStringContainsString('K•••••', \App\Services\Security\DataVaultEncryptionService::maskAccountName('Kadavi Raditya Alvino'));
+    }
 }

@@ -72,4 +72,8 @@ return [
         'tolerance_seconds' => (int) env('S2S_TOLERANCE_SECONDS', 60),
     ],
 
+    'vault' => [
+        'secret_key' => env('DATA_SECRET_KEY'),
+    ],
+
 ];
