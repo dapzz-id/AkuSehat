@@ -17,6 +17,36 @@ export async function isGooglePlayServicesAvailable(): Promise<boolean> {
 }
 
 /**
+ * Cek apakah aplikasi diinstal secara resmi melalui Google Play Store.
+ * Memeriksa package installer tanpa mensyaratkan sertifikasi device/Play Protect,
+ * sehingga tetap berfungsi untuk perangkat dengan custom ROM / uncertified.
+ */
+export async function isInstalledFromPlayStore(): Promise<boolean> {
+  if (Platform.OS !== 'android' || !PlayIntegrityModule) {
+    return true; // Mode dev / emulator non-android diabaikan
+  }
+  try {
+    return await PlayIntegrityModule.isInstalledFromPlayStore();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Dapatkan nama installer package yang memasang aplikasi ini.
+ */
+export async function getInstallerPackageName(): Promise<string | null> {
+  if (Platform.OS !== 'android' || !PlayIntegrityModule) {
+    return null;
+  }
+  try {
+    return await PlayIntegrityModule.getInstallerPackageName();
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Meminta token integritas dari Google Play Integrity API.
  * Token ini kemudian dikirimkan ke backend Laravel untuk diverifikasi keasliannya.
  * 

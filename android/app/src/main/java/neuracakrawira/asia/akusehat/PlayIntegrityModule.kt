@@ -1,6 +1,7 @@
 package neuracakrawira.asia.akusehat
 
 import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -25,6 +26,49 @@ class PlayIntegrityModule(reactContext: ReactApplicationContext) :
             promise.resolve(false)
         } catch (e: Exception) {
             promise.resolve(false)
+        }
+    }
+
+    /**
+     * Memeriksa apakah aplikasi diinstal secara resmi melalui Google Play Store.
+     * Tidak memblokir custom ROM / root, hanya mengecek installer package name.
+     */
+    @ReactMethod
+    fun isInstalledFromPlayStore(promise: Promise) {
+        try {
+            val packageName = reactApplicationContext.packageName
+            val pm = reactApplicationContext.packageManager
+            val installer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                pm.getInstallSourceInfo(packageName).installingPackageName
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getInstallerPackageName(packageName)
+            }
+            // "com.android.vending" adalah package id resmi dari Google Play Store
+            val isPlayStore = installer == "com.android.vending"
+            promise.resolve(isPlayStore)
+        } catch (e: Exception) {
+            promise.resolve(false)
+        }
+    }
+
+    /**
+     * Mendapatkan nama installer package (misal: "com.android.vending" untuk Play Store)
+     */
+    @ReactMethod
+    fun getInstallerPackageName(promise: Promise) {
+        try {
+            val packageName = reactApplicationContext.packageName
+            val pm = reactApplicationContext.packageManager
+            val installer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                pm.getInstallSourceInfo(packageName).installingPackageName
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getInstallerPackageName(packageName)
+            }
+            promise.resolve(installer)
+        } catch (e: Exception) {
+            promise.resolve(null)
         }
     }
 
