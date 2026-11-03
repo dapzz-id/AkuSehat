@@ -70,7 +70,17 @@
                                 <code class="px-2 py-1 bg-gray-100 text-sm text-gray-800 rounded font-mono">{{ $license->key }}</code>
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-700">
-                                <span class="font-semibold text-gray-800">{{ $license->kuota_pengguna }} User</span>
+                                @php
+                                    $usedQuota = $license->getUsedQuota();
+                                    $totalQuota = (int) $license->kuota_pengguna;
+                                    $remQuota = max(0, $totalQuota - $usedQuota);
+                                @endphp
+                                <div class="font-bold text-gray-800">
+                                    {{ $usedQuota }}/{{ $totalQuota }} User
+                                </div>
+                                <div class="text-[11px] text-gray-400">
+                                    Terpakai: {{ $usedQuota }} (Sisa {{ $remQuota }})
+                                </div>
                             </td>
                             <td class="px-4 py-3">
                                 <div class="text-sm text-gray-700">
@@ -191,7 +201,13 @@
             <div class="grid grid-cols-2 gap-4 mb-3">
                 <div>
                     <p class="text-xs font-medium text-gray-600 mb-1">Kuota</p>
-                    <p class="text-sm font-semibold text-gray-800">{{ $license->kuota_pengguna }} User</p>
+                    @php
+                        $usedQuota = $license->getUsedQuota();
+                        $totalQuota = (int) $license->kuota_pengguna;
+                        $remQuota = max(0, $totalQuota - $usedQuota);
+                    @endphp
+                    <p class="text-sm font-semibold text-gray-800">{{ $usedQuota }}/{{ $totalQuota }} User</p>
+                    <p class="text-[11px] text-gray-500">Terpakai: {{ $usedQuota }} (Sisa {{ $remQuota }})</p>
                 </div>
                 <div>
                     <p class="text-xs font-medium text-gray-600 mb-1">Periode</p>

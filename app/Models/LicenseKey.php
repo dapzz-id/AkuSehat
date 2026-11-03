@@ -66,6 +66,54 @@ class LicenseKey extends Model
     }
 
     /**
+     * Menghitung berapa kuota dari lisensi ini yang telah terpakai oleh anggota/siswa instansi.
+     * Admin Instansi dan SuperAdmin tidak memotong kuota.
+     */
+    public function getUsedQuota(): int
+    {
+        $instansi = $this->sekolah;
+        if (!$instansi) {
+            return 0;
+        }
+
+        // Total anggota aktif di instansi yang memotong kuota
+        $totalMembers = $instansi->users()
+            ->whereNotIn('level', [
+                \App\Modules\User\Enums\UserRole::ADMIN_INSTANSI->value,
+                \App\Modules\User\Enums\UserRole::SUPERADMIN->value,
+                'Admin Instansi',
+                'SuperAdmin',
+            ])
+            ->count();
+
+        // Ambil semua lisensi aktif instansi terurut berdasarkan tanggal dibuat
+        $allLicenses = $instansi->licenseKeys()
+            ->where('status', self::STATUS_ACTIVE)
+            ->whereDate('tanggal_berakhir', '>=', now()->toDateString())
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $accumulatedPrior = 0;
+        foreach ($allLicenses as $lic) {
+            if ($lic->id === $this->id) {
+                $availableMembers = max(0, $totalMembers - $accumulatedPrior);
+                return min((int)$this->kuota_pengguna, $availableMembers);
+            }
+            $accumulatedPrior += (int) $lic->kuota_pengguna;
+        }
+
+        return min((int)$this->kuota_pengguna, max(0, $totalMembers));
+    }
+
+    /**
+     * Menghitung sisa kuota yang masih tersedia pada lisensi ini
+     */
+    public function getRemainingQuota(): int
+    {
+        return max(0, (int) $this->kuota_pengguna - $this->getUsedQuota());
+    }
+
+    /**
      * Cek apakah license sudah expired
      */
     public function isExpired()
