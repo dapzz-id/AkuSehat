@@ -22,11 +22,11 @@ class EncryptedVaultConfig implements CastsAttributes
         return app(DataVaultEncryptionService::class)->decryptArray($value, $context);
     }
 
-    public function set(Model $model, string $key, mixed $value, array $attributes): string
+    public function set(Model $model, string $key, mixed $value, array $attributes): ?string
     {
         $arr = is_array($value) ? $value : [];
         if (empty($arr)) {
-            return json_encode([]);
+            return null;
         }
 
         $context = 'payment_method:' . ($attributes['method_key'] ?? $model->method_key ?? 'default');
@@ -35,3 +35,4 @@ class EncryptedVaultConfig implements CastsAttributes
         return json_encode($vaultArray, JSON_UNESCAPED_UNICODE);
     }
 }
+

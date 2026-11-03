@@ -56,6 +56,9 @@ class PaymentMethodSetting extends Model
             if ($item->method_key === 'manual_bca' && !$item->isEncryptedInDatabase() && !empty($item->config)) {
                 $item->config = $item->config;
                 $item->saveQuietly();
+            } elseif (in_array($item->method_key, ['midtrans', 'google_pay'], true) && $item->getRawOriginal('config') !== null) {
+                $item->config = null;
+                $item->saveQuietly();
             }
         }
 

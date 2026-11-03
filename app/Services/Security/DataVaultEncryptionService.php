@@ -267,3 +267,4 @@ class DataVaultEncryptionService
         return $first3 . $maskedMiddle . $last4;
     }
 }
+
