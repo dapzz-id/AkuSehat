@@ -31,3 +31,4 @@ try {
     console.error('Failed to create public/build.zip:', error.message);
     process.exit(1);
 }
+
