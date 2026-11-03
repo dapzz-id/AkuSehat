@@ -19,12 +19,30 @@ class AuthRepository
                 ->first();
         }
 
-        return User::withoutGlobalScopes()
-            ->where(function ($q) use ($login) {
-                $q->whereRaw('LOWER(username) = ?', [strtolower($login)])
-                  ->orWhere('nomor_induk', $login);
-            })
+        // 1. Prioritaskan pencarian berdasarkan username unik global
+        $userByUsername = User::withoutGlobalScopes()
+            ->whereRaw('LOWER(username) = ?', [strtolower($login)])
             ->first();
+
+        if ($userByUsername) {
+            return $userByUsername;
+        }
+
+        // 2. Jika bukan username, cari berdasarkan nomor_induk.
+        // PENCEGAHAN IDOR & KEBOCORAN AKUN LINTAS INSTANSI:
+        // Karena nomor_induk boleh sama antar instansi yang berbeda,
+        // hanya izinkan login jika ditemukan TEPAT 1 akun di seluruh sistem.
+        // Jika terdapat 2 atau lebih pengguna dengan nomor_induk yang sama di instansi berbeda,
+        // sistem menolak login acak demi keamanan IDOR (pengguna harus login menggunakan username unik atau email).
+        $candidates = User::withoutGlobalScopes()
+            ->where('nomor_induk', $login)
+            ->get();
+
+        if ($candidates->count() === 1) {
+            return $candidates->first();
+        }
+
+        return null;
     }
 
     public function findByGoogleIdOrEmail(string $googleId, string $email): ?User

@@ -3,6 +3,7 @@
 namespace App\Modules\User\ManageUser\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use App\Modules\User\ManageUser\Enums\UserRole;
 use App\Modules\User\ManageUser\Enums\UserGender;
 
@@ -23,6 +24,7 @@ class UpdateSuperAdminUserRequest extends FormRequest
     public function rules(): array
     {
         $userId = $this->route('id') ?? $this->route('user')?->id ?? $this->user;
+        $instansiId = $this->input('instansi_id');
 
         return [
             'nama' => 'required|string|max:75',
@@ -31,7 +33,14 @@ class UpdateSuperAdminUserRequest extends FormRequest
             'level' => 'required|in:' . implode(',', UserRole::values()),
             'jk' => 'required|in:' . implode(',', UserGender::values()),
             'instansi_id' => 'required|exists:instansi,id',
-            'nomor_induk' => 'nullable|string|max:30',
+            'nomor_induk' => [
+                'nullable',
+                'string',
+                'max:30',
+                $instansiId
+                    ? Rule::unique('users', 'nomor_induk')->where('instansi_id', $instansiId)->ignore($userId)
+                    : 'nullable',
+            ],
             'nis' => 'nullable|string|max:30',
             'tgl' => 'nullable|date',
             'id_divisi' => 'nullable|exists:divisi,id',
@@ -44,6 +53,7 @@ class UpdateSuperAdminUserRequest extends FormRequest
         return [
             'instansi_id.required' => 'Asal institusi / instansi wajib dipilih.',
             'instansi_id.exists' => 'Institusi / instansi yang dipilih tidak valid.',
+            'nomor_induk.unique' => 'Nomor induk sudah terdaftar untuk pengguna lain di instansi ini.',
             'username.unique' => 'Username sudah digunakan, silakan pilih yang lain.',
             'password.min' => 'Password minimal 6 karakter.',
         ];

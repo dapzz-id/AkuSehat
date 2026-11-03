@@ -3,6 +3,7 @@
 namespace App\Modules\User\ManageUser\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use App\Modules\User\ManageUser\Enums\UserRole;
 use App\Modules\User\ManageUser\Enums\UserGender;
 
@@ -22,6 +23,8 @@ class StoreSuperAdminUserRequest extends FormRequest
 
     public function rules(): array
     {
+        $instansiId = $this->input('instansi_id');
+
         return [
             'nama' => 'required|string|max:75',
             'username' => 'required|string|max:20|unique:users,username',
@@ -30,7 +33,14 @@ class StoreSuperAdminUserRequest extends FormRequest
             'level' => 'required|in:' . implode(',', UserRole::values()),
             'jk' => 'required|in:' . implode(',', UserGender::values()),
             'instansi_id' => 'required|exists:instansi,id',
-            'nomor_induk' => 'nullable|string|max:30',
+            'nomor_induk' => [
+                'nullable',
+                'string',
+                'max:30',
+                $instansiId
+                    ? Rule::unique('users', 'nomor_induk')->where('instansi_id', $instansiId)
+                    : 'nullable',
+            ],
             'nis' => 'nullable|string|max:30',
             'tgl' => 'nullable|date',
             'id_divisi' => 'nullable|exists:divisi,id',
@@ -42,6 +52,7 @@ class StoreSuperAdminUserRequest extends FormRequest
         return [
             'instansi_id.required' => 'Asal institusi / instansi wajib dipilih.',
             'instansi_id.exists' => 'Institusi / instansi yang dipilih tidak valid.',
+            'nomor_induk.unique' => 'Nomor induk sudah terdaftar di instansi yang dipilih.',
             'username.unique' => 'Username sudah digunakan, silakan pilih yang lain.',
             'password.min' => 'Password minimal 6 karakter.',
         ];

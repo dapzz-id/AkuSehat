@@ -93,6 +93,18 @@ class UserImportExportService
                 continue;
             }
 
+            // Validasi: Username harus unik secara global
+            if (User::withoutGlobalScopes()->whereRaw('LOWER(username) = ?', [strtolower($username)])->exists()) {
+                $errors[] = "Baris $rowNumber: Username '{$username}' sudah digunakan oleh pengguna lain.";
+                continue;
+            }
+
+            // Validasi: Nomor induk harus unik di dalam instansi ini (boleh sama jika beda instansi)
+            if (User::withoutGlobalScopes()->where('instansi_id', $actor->instansi_id)->where('nomor_induk', $nomorInduk)->exists()) {
+                $errors[] = "Baris $rowNumber: Nomor induk '{$nomorInduk}' sudah terdaftar di instansi Anda.";
+                continue;
+            }
+
             $dataToProcess[] = [
                 'nomor_induk' => $nomorInduk,
                 'nama' => $nama,
