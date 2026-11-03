@@ -1203,6 +1203,10 @@ class BillingService
             abort(403, 'Akses tidak sah ke struk pembayaran instansi lain.');
         }
 
+        if ($trx->status === BillingTransactionStatus::CANCELLED->value) {
+            abort(404, 'Struk tidak tersedia untuk pesanan yang telah dibatalkan.');
+        }
+
         $instansi = $trx->instansi ?: ($actor->sekolah ?: Instansi::find($trx->instansi_id));
         $trxUser = $trx->user ?: $actor;
 

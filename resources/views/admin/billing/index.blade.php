@@ -879,13 +879,17 @@
                                     </button>
                                 @endif
 
-                                <a href="{{ route('admin.billing.invoice.pdf', $trx->id) }}?preview=1" 
-                                   target="_blank"
-                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 transition-colors shadow-2xs"
-                                   title="Lihat & Unduh Struk Belanja Resmi (PDF)">
-                                    <i class="fas fa-file-invoice text-emerald-600"></i>
-                                    <span>Struk PDF</span>
-                                </a>
+                                @if($trx->status !== 'cancelled' && $trx->status !== 'failed')
+                                    <a href="{{ route('admin.billing.invoice.pdf', $trx->id) }}?preview=1" 
+                                       target="_blank"
+                                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 transition-colors shadow-2xs"
+                                       title="Lihat & Unduh Struk Belanja Resmi (PDF)">
+                                        <i class="fas fa-file-invoice text-emerald-600"></i>
+                                        <span>Struk PDF</span>
+                                    </a>
+                                @else
+                                    <span class="text-xs text-gray-400 font-medium py-1 px-2">-</span>
+                                @endif
                             </div>
                         </td>
                     </tr>

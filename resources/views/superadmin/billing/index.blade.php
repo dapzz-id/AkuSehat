@@ -664,12 +664,16 @@
                             <td class="px-5 py-4 text-center">
                                 <div class="flex items-center justify-center gap-1.5">
                                     {{-- Tombol Struk PDF --}}
-                                    <a href="{{ route('superadmin.billing.invoice.pdf', $trx->id) }}" target="_blank"
-                                       class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors flex items-center gap-1"
-                                       title="Buka Struk Resmi PDF">
-                                        <i class="fas fa-file-pdf"></i>
-                                        <span class="hidden xl:inline">Struk</span>
-                                    </a>
+                                    @if($trx->status !== 'cancelled' && $trx->status !== 'failed')
+                                        <a href="{{ route('superadmin.billing.invoice.pdf', $trx->id) }}" target="_blank"
+                                           class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors flex items-center gap-1"
+                                           title="Buka Struk Resmi PDF">
+                                            <i class="fas fa-file-pdf"></i>
+                                            <span class="hidden xl:inline">Struk</span>
+                                        </a>
+                                    @elseif(!$isPending)
+                                        <span class="text-xs text-gray-400 font-medium py-1 px-2">-</span>
+                                    @endif
 
                                     @if($isPending)
                                         {{-- Tombol Setujui / Verifikasi --}}
