@@ -69,6 +69,28 @@ class PaymentMethodSetting extends Model
      */
     public static function getMethodConfig(string $methodKey, ?string $field = null, mixed $default = null): mixed
     {
+        // Kredensial sensitif Payment Gateway (Midtrans & Google Pay) diambil langsung dari .env (config/services.php)
+        if ($methodKey === 'midtrans') {
+            $config = [
+                'environment' => strtolower((string) config('services.midtrans.environment', 'sandbox')),
+                'server_key' => trim((string) config('services.midtrans.server_key', '')),
+                'client_key' => trim((string) config('services.midtrans.client_key', '')),
+                'merchant_id' => trim((string) config('services.midtrans.merchant_id', '')),
+            ];
+
+            return $field === null ? $config : ($config[$field] ?? $default);
+        }
+
+        if ($methodKey === 'google_pay') {
+            $config = [
+                'environment' => strtoupper((string) config('services.google_pay.environment', 'TEST')),
+                'merchant_id' => trim((string) config('services.google_pay.merchant_id', '')),
+                'merchant_name' => trim((string) config('services.google_pay.merchant_name', 'AkuSehat Portal')),
+            ];
+
+            return $field === null ? $config : ($config[$field] ?? $default);
+        }
+
         $all = self::getAllSettings();
         $method = $all->firstWhere('method_key', $methodKey);
         if (!$method) {
@@ -76,14 +98,6 @@ class PaymentMethodSetting extends Model
         }
 
         $config = is_array($method->config) ? $method->config : [];
-
-        // Fallback ke config services / env jika kosong di database
-        if ($methodKey === 'midtrans') {
-            $config['environment'] = $config['environment'] ?? config('services.midtrans.environment', 'sandbox');
-            $config['server_key'] = $config['server_key'] ?? config('services.midtrans.server_key', '');
-            $config['client_key'] = $config['client_key'] ?? config('services.midtrans.client_key', '');
-            $config['merchant_id'] = $config['merchant_id'] ?? config('services.midtrans.merchant_id', '');
-        }
 
         if ($field === null) {
             return $config;

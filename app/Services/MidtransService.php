@@ -9,12 +9,12 @@ use Illuminate\Support\Facades\Log;
 class MidtransService
 {
     /**
-     * Dapatkan mode environment (sandbox / production)
+     * Dapatkan mode environment (sandbox / production) dari .env
      */
     public function getEnvironment(): string
     {
-        $env = PaymentMethodSetting::getMethodConfig('midtrans', 'environment');
-        return !empty($env) ? strtolower($env) : config('services.midtrans.environment', 'sandbox');
+        $env = trim((string) config('services.midtrans.environment', 'sandbox'));
+        return !empty($env) ? strtolower($env) : 'sandbox';
     }
 
     public function isProduction(): bool
@@ -23,21 +23,27 @@ class MidtransService
     }
 
     /**
-     * Dapatkan Server Key
+     * Dapatkan Server Key dari .env
      */
     public function getServerKey(): string
     {
-        $key = PaymentMethodSetting::getMethodConfig('midtrans', 'server_key');
-        return !empty($key) ? trim($key) : config('services.midtrans.server_key', '');
+        return trim((string) config('services.midtrans.server_key', ''));
     }
 
     /**
-     * Dapatkan Client Key
+     * Dapatkan Client Key dari .env
      */
     public function getClientKey(): string
     {
-        $key = PaymentMethodSetting::getMethodConfig('midtrans', 'client_key');
-        return !empty($key) ? trim($key) : config('services.midtrans.client_key', '');
+        return trim((string) config('services.midtrans.client_key', ''));
+    }
+
+    /**
+     * Dapatkan Merchant ID dari .env
+     */
+    public function getMerchantId(): string
+    {
+        return trim((string) config('services.midtrans.merchant_id', ''));
     }
 
     /**

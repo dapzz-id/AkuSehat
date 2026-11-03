@@ -991,20 +991,7 @@ class BillingService
 
         $currentConfig = is_array($method->config) ? $method->config : [];
 
-        if ($methodKey === 'midtrans') {
-            if (isset($data['environment'])) {
-                $currentConfig['environment'] = trim($data['environment']);
-            }
-            if (isset($data['server_key'])) {
-                $currentConfig['server_key'] = trim($data['server_key']);
-            }
-            if (isset($data['client_key'])) {
-                $currentConfig['client_key'] = trim($data['client_key']);
-            }
-            if (isset($data['merchant_id'])) {
-                $currentConfig['merchant_id'] = trim($data['merchant_id']);
-            }
-        } elseif ($methodKey === 'manual_bca') {
+        if ($methodKey === 'manual_bca') {
             if (isset($data['bank_name'])) {
                 $currentConfig['bank_name'] = trim($data['bank_name']);
             }
@@ -1017,19 +1004,12 @@ class BillingService
             if (isset($data['whatsapp_number'])) {
                 $currentConfig['whatsapp_number'] = trim($data['whatsapp_number']);
             }
-        } elseif ($methodKey === 'google_pay') {
-            if (isset($data['environment'])) {
-                $currentConfig['environment'] = trim($data['environment']);
-            }
-            if (isset($data['merchant_id'])) {
-                $currentConfig['merchant_id'] = trim($data['merchant_id']);
-            }
-            if (isset($data['merchant_name'])) {
-                $currentConfig['merchant_name'] = trim($data['merchant_name']);
-            }
+            $method->config = $currentConfig;
+        } else {
+            // Midtrans & Google Pay menggunakan kredensial .env (tidak disimpan di database)
+            $method->config = [];
         }
 
-        $method->config = $currentConfig;
         $method->save();
 
         AuditLogger::billing(
