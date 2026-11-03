@@ -767,17 +767,21 @@
                         </td>
                         <td class="px-4 py-3 font-bold text-gray-900">Rp {{ number_format($trx->nominal, 0, ',', '.') }}</td>
                         <td class="px-4 py-3">
-                            @if($trx->payment_method === 'manual_transfer')
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-900 text-white">
+                            @if($trx->payment_method === 'manual_transfer' || $trx->payment_method === 'manual_bca' || str_starts_with($trx->order_id, 'BCA-'))
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-900 text-white shadow-2xs">
                                     <i class="fas fa-building-columns text-xs text-blue-300"></i> Transfer BCA
                                 </span>
+                            @elseif($trx->payment_method === 'midtrans' || str_starts_with($trx->order_id, 'MID-'))
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-blue-700 to-indigo-800 text-white shadow-2xs">
+                                    <i class="fas fa-bolt text-xs text-amber-300"></i> Midtrans Snap
+                                </span>
                             @elseif($trx->payment_method === 'google_play' || $trx->payment_method === 'google_play_inapp')
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-900 text-white">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-900 text-white shadow-2xs">
                                     <i class="fab fa-google-play text-xs text-emerald-300"></i> Google Play
                                 </span>
                             @else
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-neutral-900 text-white">
-                                    <i class="fas fa-wallet text-xs text-neutral-300"></i> Google Pay
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-neutral-900 text-white shadow-2xs">
+                                    <i class="fab fa-google-pay text-sm text-neutral-300"></i> Google Pay
                                 </span>
                             @endif
                         </td>
@@ -799,14 +803,38 @@
                         <td class="px-4 py-3 text-xs text-gray-500">{{ $trx->created_at->format('d/m/Y H:i') }}</td>
                         <td class="px-4 py-3 text-center">
                             <div class="flex items-center justify-center gap-1.5">
+                                {{-- Tombol Bayar Sekarang untuk Midtrans yang masih Pending --}}
+                                @if($trx->status === 'pending' && ($trx->payment_method === 'midtrans' || str_starts_with($trx->order_id, 'MID-')))
+                                    @php
+                                        $snapToken = $trx->payment_token ?? ($trx->payload['snap_token'] ?? null);
+                                        $redirectUrl = $trx->payload['redirect_url'] ?? null;
+                                    @endphp
+                                    @if($snapToken)
+                                        <button type="button" 
+                                                onclick="resumeMidtransPay('{{ $snapToken }}', '{{ $trx->order_id }}', '{{ $redirectUrl }}')"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white transition-all shadow-xs cursor-pointer active:scale-95 animate-pulse"
+                                                title="Buka Jendela Pembayaran Midtrans Snap">
+                                            <i class="fas fa-bolt text-amber-300"></i>
+                                            <span>Bayar Sekarang</span>
+                                        </button>
+                                    @elseif($redirectUrl)
+                                        <a href="{{ $redirectUrl }}" target="_blank"
+                                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white transition-all shadow-xs"
+                                           title="Buka Halaman Pembayaran Midtrans">
+                                            <i class="fas fa-bolt text-amber-300"></i>
+                                            <span>Bayar Sekarang</span>
+                                        </a>
+                                    @endif
+                                @endif
+
                                 <a href="{{ route('admin.billing.invoice.pdf', $trx->id) }}?preview=1" 
                                    target="_blank"
-                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300 transition-colors shadow-xs"
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 transition-colors shadow-2xs"
                                    title="Lihat & Unduh Struk Belanja Resmi (PDF)">
                                     <i class="fas fa-file-invoice text-emerald-600"></i>
                                     <span>Struk PDF</span>
                                 </a>
-                                @if($trx->status === 'pending' && $trx->payment_method === 'manual_transfer')
+                                @if($trx->status === 'pending' && ($trx->payment_method === 'manual_transfer' || $trx->payment_method === 'manual_bca' || str_starts_with($trx->order_id, 'BCA-')))
                                     @php
                                         $waDirectUrl = $trx->payload['confirmation_wa_url'] ?? ('https://wa.me/62895383107479?text=' . rawurlencode("Halo Admin Aku Sehat, saya ingin konfirmasi pembayaran order {$trx->order_id}"));
                                     @endphp
@@ -1448,6 +1476,37 @@
             console.error('Midtrans Checkout error:', err);
             alert('Terjadi kesalahan saat menghubungi gateway Midtrans.');
         });
+    }
+
+    function resumeMidtransPay(snapToken, orderId, redirectUrl) {
+        if (typeof window.snap !== 'undefined' && snapToken) {
+            window.snap.pay(snapToken, {
+                onSuccess: function(result) {
+                    console.log('Midtrans Snap Success:', result);
+                    verifyMidtransPayment(orderId);
+                },
+                onPending: function(result) {
+                    console.log('Midtrans Snap Pending:', result);
+                    alert('Pesanan ' + orderId + ' sedang menunggu pembayaran.');
+                    window.location.reload();
+                },
+                onError: function(result) {
+                    console.error('Midtrans Snap Error:', result);
+                    alert('Pembayaran Midtrans gagal atau dibatalkan.');
+                },
+                onClose: function() {
+                    verifyMidtransPayment(orderId, false);
+                }
+            });
+        } else if (redirectUrl && redirectUrl !== '') {
+            window.location.href = redirectUrl;
+        } else if (snapToken) {
+            const isProd = {{ !empty($midtransConfig['is_production']) ? 'true' : 'false' }};
+            const baseUrl = isProd ? 'https://app.midtrans.com/snap/v2/vtweb/' : 'https://app.sandbox.midtrans.com/snap/v2/vtweb/';
+            window.location.href = baseUrl + snapToken;
+        } else {
+            alert('Token pembayaran Midtrans tidak ditemukan. Silakan hubungi CS.');
+        }
     }
 
     function verifyMidtransPayment(orderId, showAlertOnPending = true) {

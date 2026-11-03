@@ -568,7 +568,9 @@
                             $isPending = $trx->status === 'pending';
                             $isSuccess = in_array($trx->status, ['success', 'paid']);
                             $isFailed = in_array($trx->status, ['failed', 'expired']);
-                            $isBca = str_contains(strtolower($trx->payment_method ?? ''), 'bca') || str_contains(strtolower($trx->payment_method ?? ''), 'manual');
+                            $isBca = str_contains(strtolower($trx->payment_method ?? ''), 'bca') || str_contains(strtolower($trx->payment_method ?? ''), 'manual') || str_starts_with($trx->order_id, 'BCA-');
+                            $isMidtrans = str_contains(strtolower($trx->payment_method ?? ''), 'midtrans') || str_starts_with($trx->order_id, 'MID-');
+                            $isGooglePlay = str_contains(strtolower($trx->payment_method ?? ''), 'google_play');
                             $namaInstansi = $trx->instansi ? ($trx->instansi->nama_instansi ?? $trx->instansi->nama_sekolah ?? 'Instansi') : 'Instansi';
                             $deskripsiItem = $payload['deskripsi_item'] ?? ($trx->tipe_transaksi === 'perpanjang_lisensi' ? 'Perpanjangan Lisensi' : 'Tambah Paket Kuota');
                         @endphp
@@ -619,12 +621,20 @@
                             {{-- Metode Pembayaran --}}
                             <td class="px-5 py-4">
                                 @if($isBca)
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-[#0c2e68] text-white">
-                                        <i class="fas fa-building-columns text-[10px]"></i> Transfer BCA
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-[#0c2e68] text-white">
+                                        <i class="fas fa-building-columns text-[10px] text-blue-300"></i> Transfer BCA
+                                    </span>
+                                @elseif($isMidtrans)
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-gradient-to-r from-blue-700 to-indigo-800 text-white shadow-2xs">
+                                        <i class="fas fa-bolt text-[10px] text-amber-300"></i> Midtrans Snap
+                                    </span>
+                                @elseif($isGooglePlay)
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-900 text-white shadow-2xs">
+                                        <i class="fab fa-google-play text-xs text-emerald-300"></i> Google Play
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-neutral-900 text-white">
-                                        <i class="fab fa-google-pay text-sm"></i> Google Pay
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-neutral-900 text-white shadow-2xs">
+                                        <i class="fab fa-google-pay text-sm text-neutral-300"></i> Google Pay
                                     </span>
                                 @endif
                             </td>
