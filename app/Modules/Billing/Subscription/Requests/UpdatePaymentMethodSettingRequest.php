@@ -27,3 +27,4 @@ class UpdatePaymentMethodSettingRequest extends FormRequest
         ];
     }
 }
+

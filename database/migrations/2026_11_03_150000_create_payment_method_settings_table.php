@@ -88,3 +88,4 @@ return new class extends Migration
         Schema::dropIfExists('payment_method_settings');
     }
 };
+

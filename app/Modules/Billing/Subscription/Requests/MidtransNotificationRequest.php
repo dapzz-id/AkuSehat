@@ -22,3 +22,4 @@ class MidtransNotificationRequest extends FormRequest
         ];
     }
 }
+
