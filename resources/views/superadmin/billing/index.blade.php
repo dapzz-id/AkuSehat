@@ -185,7 +185,8 @@
                                     title="Klik untuk mengaktifkan / menonaktifkan"
                                     class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden {{ $bcaSetting?->is_active ? 'bg-emerald-600' : 'bg-gray-300' }}">
                                 <span class="sr-only">Toggle BCA</span>
-                                <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out {{ $bcaSetting?->is_active ? 'translate-x-5' : 'translate-x-0' }}"></span>
+                                <span style="transform: translateX({{ $bcaSetting?->is_active ? '20px' : '0px' }});"
+                                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out {{ $bcaSetting?->is_active ? 'translate-x-5' : 'translate-x-0' }}"></span>
                             </button>
                         </form>
                     </div>
@@ -250,7 +251,8 @@
                                     title="Klik untuk mengaktifkan / menonaktifkan"
                                     class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden {{ $midtransSetting?->is_active ? 'bg-emerald-600' : 'bg-gray-300' }}">
                                 <span class="sr-only">Toggle Midtrans</span>
-                                <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out {{ $midtransSetting?->is_active ? 'translate-x-5' : 'translate-x-0' }}"></span>
+                                <span style="transform: translateX({{ $midtransSetting?->is_active ? '20px' : '0px' }});"
+                                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out {{ $midtransSetting?->is_active ? 'translate-x-5' : 'translate-x-0' }}"></span>
                             </button>
                         </form>
                     </div>
@@ -326,7 +328,8 @@
                                     title="Klik untuk mengaktifkan / menonaktifkan"
                                     class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden {{ $gpaySetting?->is_active ? 'bg-emerald-600' : 'bg-gray-300' }}">
                                 <span class="sr-only">Toggle Google Pay</span>
-                                <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out {{ $gpaySetting?->is_active ? 'translate-x-5' : 'translate-x-0' }}"></span>
+                                <span style="transform: translateX({{ $gpaySetting?->is_active ? '20px' : '0px' }});"
+                                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out {{ $gpaySetting?->is_active ? 'translate-x-5' : 'translate-x-0' }}"></span>
                             </button>
                         </form>
                     </div>
