@@ -4,12 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
-    if (Auth::check()) {
-        return redirect()->route('dashboard');
-    }
-
-    return redirect()->route('login');
-});
+    return view('landing');
+})->name('landing');
 
 // Public Legal & Privacy Policy
 Route::get('/kebijakan-privasi', function () {
