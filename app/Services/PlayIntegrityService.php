@@ -9,11 +9,13 @@ class PlayIntegrityService
 {
     protected string $packageName;
     protected ?string $serviceAccountJson;
+    protected bool $requireDeviceIntegrity;
 
     public function __construct()
     {
         $this->packageName = config('services.google_play.package_name', 'neuracakrawira.asia.akusehat');
         $this->serviceAccountJson = config('services.google_play.service_account_json');
+        $this->requireDeviceIntegrity = (bool) config('services.google_play.require_device_integrity', false);
     }
 
     /**
@@ -72,31 +74,41 @@ class PlayIntegrityService
         $accountDetails = $payload['accountDetails'] ?? [];
         $environmentDetails = $payload['environmentDetails'] ?? [];
 
-        // 1. Validasi App Recognition (Biner resmi dari Play Store)
+        // 1. Validasi App Recognition (Biner resmi yang di-upload ke Play Store)
         $appRecognitionVerdict = $appIntegrity['appRecognitionVerdict'] ?? '';
         $isRecognizedApp = in_array($appRecognitionVerdict, ['PLAY_RECOGNIZED', 'UNEVALUATED']);
 
-        // 2. Validasi Integritas Perangkat (Bukan emulator modifikasi berbahaya / rooted tanpa proteksi)
-        $deviceVerdicts = $deviceIntegrity['deviceRecognitionVerdict'] ?? [];
-        $meetsIntegrity = in_array('MEETS_DEVICE_INTEGRITY', $deviceVerdicts) || 
-                          in_array('MEETS_BASIC_INTEGRITY', $deviceVerdicts) || 
-                          in_array('MEETS_STRONG_INTEGRITY', $deviceVerdicts);
+        // 2. Validasi Lisensi Pengguna (Apakah diunduh/diinstal resmi dari Google Play Store)
+        $appLicensingVerdict = $accountDetails['appLicensingVerdict'] ?? 'UNKNOWN';
+        $isLicensed = in_array($appLicensingVerdict, ['LICENSED', 'UNEVALUATED']);
 
-        // 3. Validasi Play Protect
+        // 3. Validasi Integritas Perangkat (Custom ROM / Uncertified Google Play check)
+        $deviceVerdicts = $deviceIntegrity['deviceRecognitionVerdict'] ?? [];
+        $meetsDeviceIntegrity = in_array('MEETS_DEVICE_INTEGRITY', $deviceVerdicts) || 
+                                in_array('MEETS_BASIC_INTEGRITY', $deviceVerdicts) || 
+                                in_array('MEETS_STRONG_INTEGRITY', $deviceVerdicts);
+
+        // Jika requireDeviceIntegrity dinonaktifkan (default false), abaikan status Custom ROM / root / uncertified
+        $deviceCheckPassed = $this->requireDeviceIntegrity ? $meetsDeviceIntegrity : true;
+
+        // 4. Validasi Play Protect
         $playProtectVerdict = $environmentDetails['playProtectVerdict'] ?? 'NO_ISSUES';
         $isPlayProtectSafe = in_array($playProtectVerdict, ['NO_ISSUES', 'NO_DATA']);
 
-        $isValid = $isRecognizedApp && $meetsIntegrity && $isPlayProtectSafe;
+        $isValid = $isRecognizedApp && $isLicensed && $deviceCheckPassed;
 
         return [
             'success' => $isValid,
-            'is_genuine_device' => $meetsIntegrity,
+            'is_licensed' => $isLicensed,
+            'is_genuine_device' => $meetsDeviceIntegrity,
+            'device_check_enforced' => $this->requireDeviceIntegrity,
             'is_genuine_app' => $isRecognizedApp,
             'play_protect_safe' => $isPlayProtectSafe,
-            'licensing' => $accountDetails['appLicensingVerdict'] ?? 'UNKNOWN',
+            'licensing' => $appLicensingVerdict,
             'verdicts' => [
                 'device' => $deviceVerdicts,
                 'app' => $appRecognitionVerdict,
+                'licensing' => $appLicensingVerdict,
                 'play_protect' => $playProtectVerdict,
             ],
             'raw' => $payload,
