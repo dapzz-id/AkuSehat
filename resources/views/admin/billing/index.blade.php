@@ -663,7 +663,7 @@
                         <button type="button" id="btnPayWithMidtrans" onclick="executeMidtransCheckout()"
                             class="w-full py-3.5 px-5 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 hover:opacity-95 active:scale-[0.99] transition-all duration-200 shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 cursor-pointer text-sm sm:text-base">
                             <i class="fas fa-bolt text-amber-300"></i>
-                            <span>Bayar Instan Otomatis (Midtrans Snap)</span>
+                            <span>Bayar Instan Otomatis</span>
                         </button>
                     </div>
 
@@ -1257,6 +1257,9 @@
         // Total calculation complete
         const bcaTransferTotalEl = document.getElementById('bcaTransferTotalText');
         if (bcaTransferTotalEl) bcaTransferTotalEl.textContent = formatRupiah(total);
+
+        const midtransTotalEl = document.getElementById('midtransTotalText');
+        if (midtransTotalEl) midtransTotalEl.textContent = formatRupiah(total);
 
         return total;
     }

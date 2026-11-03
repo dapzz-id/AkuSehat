@@ -18,3 +18,4 @@ class SwitchPaymentMethodRequest extends FormRequest
         ];
     }
 }
+
