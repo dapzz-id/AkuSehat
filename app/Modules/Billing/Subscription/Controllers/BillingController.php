@@ -3,6 +3,7 @@
 namespace App\Modules\Billing\Subscription\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -11,6 +12,9 @@ use Illuminate\Http\RedirectResponse;
 use App\Modules\Billing\Subscription\Services\BillingService;
 use App\Modules\Billing\Subscription\Requests\ProcessGooglePayRequest;
 use App\Modules\Billing\Subscription\Requests\ProcessManualTransferRequest;
+use App\Modules\Billing\Subscription\Requests\ProcessMidtransSnapRequest;
+use App\Modules\Billing\Subscription\Requests\MidtransNotificationRequest;
+use App\Modules\Billing\Subscription\Requests\UpdatePaymentMethodSettingRequest;
 use App\Modules\Billing\Subscription\Requests\ProcessGooglePlayInAppRequest;
 use App\Modules\Billing\Subscription\Requests\DownloadInvoiceRequest;
 use App\Modules\Billing\Subscription\Requests\SuperAdminBillingFilterRequest;
@@ -50,6 +54,25 @@ class BillingController extends Controller
         return response()->json($result['response'], $result['status_code'] ?? 200);
     }
 
+    public function createMidtransSnap(ProcessMidtransSnapRequest $request): JsonResponse
+    {
+        $result = $this->billingService->processMidtransSnap(Auth::user(), $request->validated());
+        return response()->json($result['response'], $result['status_code'] ?? 200);
+    }
+
+    public function handleMidtransNotification(MidtransNotificationRequest $request): JsonResponse
+    {
+        $payload = $request->validated();
+        $result = $this->billingService->handleMidtransNotification($payload);
+        return response()->json($result['response'], $result['status_code'] ?? 200);
+    }
+
+    public function checkMidtransStatus(string $orderId): JsonResponse
+    {
+        $result = $this->billingService->checkMidtransStatus(Auth::user(), $orderId);
+        return response()->json($result['response'], $result['status_code'] ?? 200);
+    }
+
     public function superAdminIndex(SuperAdminBillingFilterRequest $request): View
     {
         $data = $this->billingService->getSuperAdminBillingData($request->validated());
@@ -73,6 +96,33 @@ class BillingController extends Controller
     {
         $reason = $request->input('reason');
         $result = $this->billingService->rejectManualTransfer($id, Auth::user(), $reason);
+        if ($request->wantsJson()) {
+            return response()->json($result['response'], $result['status_code'] ?? 200);
+        }
+
+        return redirect()->back()->with(
+            $result['response']['success'] ? 'success' : 'error',
+            $result['response']['message']
+        );
+    }
+
+    public function togglePaymentMethod(string $methodKey): JsonResponse|RedirectResponse
+    {
+        $result = $this->billingService->togglePaymentMethod(Auth::user(), $methodKey);
+        if (request()->wantsJson()) {
+            return response()->json($result['response'], $result['status_code'] ?? 200);
+        }
+
+        return redirect()->back()->with(
+            $result['response']['success'] ? 'success' : 'error',
+            $result['response']['message']
+        );
+    }
+
+    public function updatePaymentMethodSetting(UpdatePaymentMethodSettingRequest $request, string $methodKey): JsonResponse|RedirectResponse
+    {
+        $data = $request->validated();
+        $result = $this->billingService->updatePaymentMethodSetting(Auth::user(), $methodKey, $data);
         if ($request->wantsJson()) {
             return response()->json($result['response'], $result['status_code'] ?? 200);
         }

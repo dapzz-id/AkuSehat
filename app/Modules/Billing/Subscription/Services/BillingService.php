@@ -6,6 +6,8 @@ use App\Models\BillingTransaction;
 use App\Models\Instansi;
 use App\Models\LicenseKey;
 use App\Models\User;
+use App\Models\PaymentMethodSetting;
+use App\Services\MidtransService;
 use App\Modules\Billing\Subscription\Repositories\BillingRepository;
 use App\Modules\Billing\Subscription\Enums\BillingRate;
 use App\Modules\Billing\Subscription\Enums\BillingTransactionType;
@@ -15,6 +17,7 @@ use App\Services\AuditLogger;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Exception;
 
@@ -125,12 +128,25 @@ class BillingService
             'subtotalPerpanjang' => $subtotalPerpanjang,
             'ppnPerpanjang' => $ppnPerpanjang,
             'totalPerpanjang' => $totalPerpanjang,
+            'paymentMethods' => PaymentMethodSetting::getActiveMethods(),
+            'midtransConfig' => [
+                'is_active' => PaymentMethodSetting::isMethodActive('midtrans'),
+                'client_key' => (new MidtransService())->getClientKey(),
+                'snap_js' => (new MidtransService())->getSnapJsUrl(),
+                'environment' => (new MidtransService())->getEnvironment(),
+            ],
+            'googlePayConfig' => [
+                'is_active' => PaymentMethodSetting::isMethodActive('google_pay'),
+                'environment' => PaymentMethodSetting::getMethodConfig('google_pay', 'environment', 'TEST'),
+                'merchant_id' => PaymentMethodSetting::getMethodConfig('google_pay', 'merchant_id', ''),
+                'merchant_name' => PaymentMethodSetting::getMethodConfig('google_pay', 'merchant_name', 'AkuSehat - Neura Cakrawira Solusi'),
+            ],
             'bankDetails' => [
-                'bank' => self::BANK_BCA,
-                'account_number' => self::NO_REK_BCA,
-                'account_holder' => self::ATAS_NAMA_BCA,
-                'wa_phone' => self::WA_KONFIRMASI,
-                'wa_raw' => self::WA_RAW,
+                'bank' => PaymentMethodSetting::getMethodConfig('manual_bca', 'bank_name', self::BANK_BCA),
+                'account_number' => PaymentMethodSetting::getMethodConfig('manual_bca', 'account_number', self::NO_REK_BCA),
+                'account_holder' => PaymentMethodSetting::getMethodConfig('manual_bca', 'account_name', self::ATAS_NAMA_BCA),
+                'wa_phone' => PaymentMethodSetting::getMethodConfig('manual_bca', 'whatsapp_number', self::WA_KONFIRMASI),
+                'wa_raw' => preg_replace('/[^0-9]/', '', (string) PaymentMethodSetting::getMethodConfig('manual_bca', 'whatsapp_number', self::WA_RAW)),
             ],
         ];
     }
@@ -527,51 +543,9 @@ class BillingService
             ];
         }
 
-        $instansi = $trx->instansi;
-        $modeTransaksi = $trx->payload['mode_transaksi'] ?? ($trx->tipe_transaksi === 'perpanjang_lisensi' ? 'perpanjang' : 'tambah_kuota');
-        $durasiBulan = (int) ($trx->durasi_bulan ?: 1);
-
         try {
-            DB::transaction(function () use ($trx, $instansi, $modeTransaksi, $durasiBulan, $approver) {
-                if ($modeTransaksi === 'perpanjang') {
-                    $licenseId = $trx->payload['license_id_target'] ?? null;
-                    $targetLicense = $licenseId ? $this->billingRepository->findLicenseById($licenseId) : null;
-                    if (!$targetLicense || $targetLicense->instansi_id !== $instansi->id) {
-                        $targetLicense = $instansi->getActiveLicense() ?? $this->billingRepository->getActiveOrLatestLicense((string) $instansi->id);
-                    }
-                    if (!$targetLicense) {
-                        $targetLicense = $this->billingRepository->createDefaultLicense((string) $instansi->id, 8);
-                    }
-
-                    $locked = $this->billingRepository->lockLicenseForUpdate((string) $targetLicense->id) ?? $targetLicense;
-                    $baseDate = ($locked->tanggal_berakhir && $locked->tanggal_berakhir->isFuture()) ? $locked->tanggal_berakhir : now();
-                    $locked->tanggal_berakhir = $baseDate->copy()->addMonths($durasiBulan);
-                    $locked->status = LicenseKey::STATUS_ACTIVE;
-                    $locked->save();
-
-                    if (!$instansi->license_id_active) {
-                        $instansi->update(['license_id_active' => $locked->id]);
-                    }
-                } else {
-                    $newLicense = $this->billingRepository->createNewLicense(
-                        instansiId: (string) $instansi->id,
-                        quota: $trx->tambah_kuota,
-                        months: $durasiBulan
-                    );
-
-                    if (!$instansi->license_id_active) {
-                        $instansi->update(['license_id_active' => $newLicense->id]);
-                    }
-                }
-
-                $trx->status = BillingTransactionStatus::SUCCESS->value;
-                $trx->save();
-
-                AuditLogger::billing(
-                    'manual_transfer_approved',
-                    "Pembayaran manual transfer BCA untuk Order {$trx->order_id} berhasil diverifikasi dan diaktifkan oleh SuperAdmin {$approver->name}",
-                    ['order_id' => $trx->order_id, 'nominal' => $trx->nominal]
-                );
+            DB::transaction(function () use ($trx, $approver) {
+                $this->activateLicenseForTransaction($trx, 'manual_transfer', $approver);
             });
 
             return [
@@ -601,7 +575,7 @@ class BillingService
         }
 
         $trx->status = BillingTransactionStatus::FAILED->value;
-        $payload = $trx->payload ?? [];
+        $payload = is_array($trx->payload) ? $trx->payload : [];
         $payload['rejection_reason'] = $reason ?: 'Ditolak oleh SuperAdmin (Bukti transfer tidak valid/dana tidak masuk)';
         $payload['rejected_by'] = $rejector->name;
         $payload['rejected_at'] = now()->toIso8601String();
@@ -620,6 +594,460 @@ class BillingService
         ];
     }
 
+    /**
+     * Aktivasi lisensi atau perpanjangan durasi untuk transaksi yang telah berhasil dibayar.
+     */
+    public function activateLicenseForTransaction(BillingTransaction $trx, string $triggerSource = 'midtrans', ?User $actor = null): void
+    {
+        $instansi = $trx->instansi;
+        $modeTransaksi = $trx->payload['mode_transaksi'] ?? ($trx->tipe_transaksi === 'perpanjang_lisensi' ? 'perpanjang' : 'tambah_kuota');
+        $durasiBulan = (int) ($trx->durasi_bulan ?: 1);
+
+        if ($modeTransaksi === 'perpanjang') {
+            $licenseId = $trx->payload['license_id_target'] ?? null;
+            $targetLicense = $licenseId ? $this->billingRepository->findLicenseById($licenseId) : null;
+            if (!$targetLicense || $targetLicense->instansi_id !== $instansi->id) {
+                $targetLicense = $instansi->getActiveLicense() ?? $this->billingRepository->getActiveOrLatestLicense((string) $instansi->id);
+            }
+            if (!$targetLicense) {
+                $targetLicense = $this->billingRepository->createDefaultLicense((string) $instansi->id, 8);
+            }
+
+            $locked = $this->billingRepository->lockLicenseForUpdate((string) $targetLicense->id) ?? $targetLicense;
+            $baseDate = ($locked->tanggal_berakhir && $locked->tanggal_berakhir->isFuture()) ? $locked->tanggal_berakhir : now();
+            $locked->tanggal_berakhir = $baseDate->copy()->addMonths($durasiBulan);
+            $locked->status = LicenseKey::STATUS_ACTIVE;
+            $locked->save();
+
+            if (!$instansi->license_id_active) {
+                $instansi->update(['license_id_active' => $locked->id]);
+            }
+        } else {
+            $newLicense = $this->billingRepository->createNewLicense(
+                instansiId: (string) $instansi->id,
+                quota: $trx->tambah_kuota,
+                months: $durasiBulan
+            );
+
+            if (!$instansi->license_id_active) {
+                $instansi->update(['license_id_active' => $newLicense->id]);
+            }
+        }
+
+        $trx->status = BillingTransactionStatus::SUCCESS->value;
+        $trx->save();
+
+        $actorName = $actor ? $actor->name : 'Sistem Gateway (' . ucfirst($triggerSource) . ')';
+        AuditLogger::billing(
+            "{$triggerSource}_success",
+            "Pembayaran Order {$trx->order_id} via {$trx->payment_method} berhasil diverifikasi dan diaktifkan oleh {$actorName}",
+            ['order_id' => $trx->order_id, 'nominal' => $trx->nominal, 'trigger' => $triggerSource]
+        );
+    }
+
+    /**
+     * Proses pembuatan sesi Snap Midtrans untuk pembayaran instan
+     */
+    public function processMidtransSnap(User $user, array $validated): array
+    {
+        if (!PaymentMethodSetting::isMethodActive('midtrans')) {
+            return [
+                'status_code' => 403,
+                'response' => [
+                    'success' => false,
+                    'message' => 'Metode pembayaran Midtrans sedang dinonaktifkan oleh Administrator.',
+                ],
+            ];
+        }
+
+        $instansi = $user->sekolah ?: Instansi::find($user->instansi_id);
+        if (!$instansi) {
+            return [
+                'status_code' => 404,
+                'response' => ['success' => false, 'message' => 'Instansi Anda tidak ditemukan.'],
+            ];
+        }
+
+        $modeTransaksi = $validated['mode_transaksi'] ?? 'perpanjang';
+        $durasiBulan = (int) ($validated['durasi_bulan'] ?? 1);
+        $tambahKuota = (int) ($validated['tambah_kuota'] ?? 0);
+
+        if ($modeTransaksi === 'perpanjang') {
+            $licenseId = $validated['license_id'] ?? null;
+            $targetLicense = $licenseId ? $this->billingRepository->findLicenseById($licenseId) : null;
+            if (!$targetLicense || $targetLicense->instansi_id !== $instansi->id) {
+                $targetLicense = $instansi->getActiveLicense() ?? $this->billingRepository->getActiveOrLatestLicense((string) $instansi->id);
+            }
+            if (!$targetLicense) {
+                return [
+                    'status_code' => 400,
+                    'response' => ['success' => false, 'message' => 'Tidak ditemukan paket lisensi untuk diperpanjang.'],
+                ];
+            }
+            $kuotaTarget = (int) $targetLicense->kuota_pengguna;
+            $subtotal = $this->calculateTotalAmount(BillingTransactionType::EXTEND_SUBSCRIPTION, $kuotaTarget, $durasiBulan);
+            $tipeTransaksi = BillingTransactionType::EXTEND_SUBSCRIPTION->value;
+            $deskripsiItem = "Perpanjangan Lisensi ({$kuotaTarget} Siswa, {$durasiBulan} Bulan)";
+            $targetLicenseId = $targetLicense->id;
+        } else {
+            if ($tambahKuota <= 0) {
+                return [
+                    'status_code' => 400,
+                    'response' => ['success' => false, 'message' => 'Jumlah kuota tambahan harus lebih dari 0.'],
+                ];
+            }
+            $subtotal = $this->calculateTotalAmount(BillingTransactionType::ADD_QUOTA, $tambahKuota, $durasiBulan);
+            $tipeTransaksi = BillingTransactionType::ADD_QUOTA->value;
+            $deskripsiItem = "Tambah Kuota Baru (+{$tambahKuota} Siswa, {$durasiBulan} Bulan)";
+            $targetLicenseId = null;
+        }
+
+        $pajak11 = round($subtotal * 0.11);
+        $totalNominal = $subtotal + $pajak11;
+        $orderId = 'MID-AKU-' . time() . '-' . strtoupper(Str::random(4));
+
+        try {
+            $midtransService = new MidtransService();
+            $snapParams = [
+                'transaction_details' => [
+                    'order_id' => $orderId,
+                    'gross_amount' => (int) round($totalNominal),
+                ],
+                'customer_details' => [
+                    'first_name' => Str::limit($instansi->nama_instansi ?: $user->name, 45, ''),
+                    'email' => $user->email,
+                    'phone' => $user->no_hp ?: '081234567890',
+                ],
+                'item_details' => [
+                    [
+                        'id' => 'AKU-' . strtoupper($modeTransaksi),
+                        'price' => (int) round($totalNominal),
+                        'quantity' => 1,
+                        'name' => Str::limit($deskripsiItem, 50, ''),
+                    ],
+                ],
+            ];
+
+            $snapResult = $midtransService->createSnapTransaction($snapParams);
+
+            if (!$snapResult['success']) {
+                return [
+                    'status_code' => 400,
+                    'response' => [
+                        'success' => false,
+                        'message' => $snapResult['message'] ?? 'Gagal membuat transaksi Midtrans Snap.',
+                    ],
+                ];
+            }
+
+            $snapToken = $snapResult['token'];
+            $redirectUrl = $snapResult['redirect_url'];
+
+            $trx = $this->billingRepository->create([
+                'instansi_id' => $instansi->id,
+                'user_id' => $user->id,
+                'order_id' => $orderId,
+                'tipe_transaksi' => $tipeTransaksi,
+                'durasi_bulan' => $durasiBulan,
+                'tambah_kuota' => $modeTransaksi === 'perpanjang' ? 0 : $tambahKuota,
+                'nominal' => $totalNominal,
+                'payment_method' => PaymentMethod::MIDTRANS->value,
+                'payment_token' => $snapToken,
+                'status' => BillingTransactionStatus::PENDING->value,
+                'payload' => [
+                    'gateway' => 'Midtrans Snap',
+                    'environment' => $midtransService->getEnvironment(),
+                    'mode_transaksi' => $modeTransaksi,
+                    'license_id_target' => $targetLicenseId,
+                    'subtotal' => $subtotal,
+                    'ppn_11' => $pajak11,
+                    'durasi_bulan' => $durasiBulan,
+                    'deskripsi_item' => $deskripsiItem,
+                    'redirect_url' => $redirectUrl,
+                    'snap_token' => $snapToken,
+                    'created_at' => now()->toIso8601String(),
+                ],
+            ]);
+
+            return [
+                'status_code' => 200,
+                'response' => [
+                    'success' => true,
+                    'order_id' => $orderId,
+                    'snap_token' => $snapToken,
+                    'redirect_url' => $redirectUrl,
+                    'total_nominal' => $totalNominal,
+                    'total_formatted' => 'Rp ' . number_format($totalNominal, 0, ',', '.'),
+                    'deskripsi_item' => $deskripsiItem,
+                    'message' => 'Sesi pembayaran Midtrans berhasil dibuat.',
+                ],
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'status_code' => 500,
+                'response' => [
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan sistem saat menghubungi Midtrans: ' . $e->getMessage(),
+                ],
+            ];
+        }
+    }
+
+    /**
+     * Webhook Notifikasi dari Midtrans (S2S Callback)
+     */
+    public function handleMidtransNotification(array $payload): array
+    {
+        $midtransService = new MidtransService();
+
+        // Validasi signature dari Midtrans
+        if (!$midtransService->verifySignature($payload)) {
+            Log::warning('Midtrans Webhook: Signature tidak valid', $payload);
+            return [
+                'status_code' => 403,
+                'response' => ['success' => false, 'message' => 'Invalid signature key.'],
+            ];
+        }
+
+        $orderId = $payload['order_id'] ?? '';
+        $transactionStatus = $payload['transaction_status'] ?? '';
+        $fraudStatus = $payload['fraud_status'] ?? null;
+
+        $trx = BillingTransaction::where('order_id', $orderId)->first();
+        if (!$trx) {
+            Log::warning("Midtrans Webhook: Order {$orderId} tidak ditemukan di database.");
+            return [
+                'status_code' => 404,
+                'response' => ['success' => false, 'message' => 'Order tidak ditemukan.'],
+            ];
+        }
+
+        if ($trx->status === BillingTransactionStatus::SUCCESS->value) {
+            return [
+                'status_code' => 200,
+                'response' => ['success' => true, 'message' => 'Order sudah lunas sebelumnya.'],
+            ];
+        }
+
+        try {
+            if ($midtransService->isTransactionSettled($transactionStatus, $fraudStatus)) {
+                DB::transaction(function () use ($trx, $payload) {
+                    $this->activateLicenseForTransaction($trx, 'midtrans_webhook');
+                    $existingPayload = is_array($trx->payload) ? $trx->payload : [];
+                    $existingPayload['midtrans_notification'] = $payload;
+                    $existingPayload['settled_at'] = now()->toIso8601String();
+                    $trx->payload = $existingPayload;
+                    $trx->save();
+                });
+            } elseif (in_array($transactionStatus, ['deny', 'cancel', 'expire', 'failure'])) {
+                $trx->status = BillingTransactionStatus::FAILED->value;
+                $existingPayload = is_array($trx->payload) ? $trx->payload : [];
+                $existingPayload['midtrans_failure'] = $payload;
+                $trx->payload = $existingPayload;
+                $trx->save();
+            }
+
+            return [
+                'status_code' => 200,
+                'response' => ['success' => true, 'message' => 'Notifikasi Midtrans berhasil diproses.'],
+            ];
+        } catch (\Throwable $e) {
+            Log::error('Midtrans Webhook Error: ' . $e->getMessage());
+            return [
+                'status_code' => 500,
+                'response' => ['success' => false, 'message' => 'Error: ' . $e->getMessage()],
+            ];
+        }
+    }
+
+    /**
+     * Cek status pembayaran Midtrans dari frontend setelah modal Snap ditutup
+     */
+    public function checkMidtransStatus(User $user, string $orderId): array
+    {
+        $trx = BillingTransaction::where('order_id', $orderId)->first();
+        if (!$trx) {
+            return [
+                'status_code' => 404,
+                'response' => ['success' => false, 'message' => 'Transaksi tidak ditemukan.'],
+            ];
+        }
+
+        if ($trx->status === BillingTransactionStatus::SUCCESS->value) {
+            return [
+                'status_code' => 200,
+                'response' => [
+                    'success' => true,
+                    'status' => 'success',
+                    'message' => 'Pembayaran telah berhasil diverifikasi dan lisensi aktif!',
+                ],
+            ];
+        }
+
+        $midtransService = new MidtransService();
+        $check = $midtransService->getTransactionStatus($orderId);
+
+        if ($check['success'] && isset($check['data'])) {
+            $data = $check['data'];
+            $status = $data['transaction_status'] ?? '';
+            $fraud = $data['fraud_status'] ?? null;
+
+            if ($midtransService->isTransactionSettled($status, $fraud)) {
+                DB::transaction(function () use ($trx, $data, $user) {
+                    $this->activateLicenseForTransaction($trx, 'midtrans_check', $user);
+                    $existingPayload = is_array($trx->payload) ? $trx->payload : [];
+                    $existingPayload['midtrans_check'] = $data;
+                    $trx->payload = $existingPayload;
+                    $trx->save();
+                });
+
+                return [
+                    'status_code' => 200,
+                    'response' => [
+                        'success' => true,
+                        'status' => 'success',
+                        'message' => 'Pembayaran Midtrans berhasil dikonfirmasi dan lisensi telah aktif!',
+                    ],
+                ];
+            }
+
+            return [
+                'status_code' => 200,
+                'response' => [
+                    'success' => true,
+                    'status' => $status,
+                    'message' => 'Status pembayaran Midtrans: ' . $status,
+                ],
+            ];
+        }
+
+        return [
+            'status_code' => 200,
+            'response' => [
+                'success' => false,
+                'status' => $trx->status,
+                'message' => 'Menunggu konfirmasi pembayaran.',
+            ],
+        ];
+    }
+
+    /**
+     * SuperAdmin: Toggle aktif/nonaktif metode pembayaran
+     */
+    public function togglePaymentMethod(User $actor, string $methodKey): array
+    {
+        if (!$actor->isSuperAdmin()) {
+            abort(403, 'Hanya SuperAdmin yang dapat mengelola metode pembayaran.');
+        }
+
+        $method = PaymentMethodSetting::where('method_key', $methodKey)->first();
+        if (!$method) {
+            return [
+                'status_code' => 404,
+                'response' => ['success' => false, 'message' => "Metode pembayaran '{$methodKey}' tidak ditemukan."],
+            ];
+        }
+
+        $method->is_active = !$method->is_active;
+        $method->save();
+
+        $statusStr = $method->is_active ? 'Diaktifkan' : 'Dinonaktifkan';
+        AuditLogger::billing(
+            'payment_method_toggled',
+            "Metode pembayaran {$method->name} ({$methodKey}) berhasil {$statusStr} oleh SuperAdmin {$actor->name}",
+            ['method_key' => $methodKey, 'is_active' => $method->is_active]
+        );
+
+        return [
+            'status_code' => 200,
+            'response' => [
+                'success' => true,
+                'is_active' => $method->is_active,
+                'message' => "Metode pembayaran {$method->name} berhasil {$statusStr}.",
+            ],
+        ];
+    }
+
+    /**
+     * SuperAdmin: Update konfigurasi kredensial metode pembayaran
+     */
+    public function updatePaymentMethodSetting(User $actor, string $methodKey, array $data): array
+    {
+        if (!$actor->isSuperAdmin()) {
+            abort(403, 'Hanya SuperAdmin yang dapat mengelola metode pembayaran.');
+        }
+
+        $method = PaymentMethodSetting::where('method_key', $methodKey)->first();
+        if (!$method) {
+            return [
+                'status_code' => 404,
+                'response' => ['success' => false, 'message' => "Metode pembayaran '{$methodKey}' tidak ditemukan."],
+            ];
+        }
+
+        if (isset($data['is_active'])) {
+            $method->is_active = filter_var($data['is_active'], FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $currentConfig = is_array($method->config) ? $method->config : [];
+
+        if ($methodKey === 'midtrans') {
+            if (isset($data['environment'])) {
+                $currentConfig['environment'] = trim($data['environment']);
+            }
+            if (isset($data['server_key'])) {
+                $currentConfig['server_key'] = trim($data['server_key']);
+            }
+            if (isset($data['client_key'])) {
+                $currentConfig['client_key'] = trim($data['client_key']);
+            }
+            if (isset($data['merchant_id'])) {
+                $currentConfig['merchant_id'] = trim($data['merchant_id']);
+            }
+        } elseif ($methodKey === 'manual_bca') {
+            if (isset($data['bank_name'])) {
+                $currentConfig['bank_name'] = trim($data['bank_name']);
+            }
+            if (isset($data['account_number'])) {
+                $currentConfig['account_number'] = trim($data['account_number']);
+            }
+            if (isset($data['account_name'])) {
+                $currentConfig['account_name'] = trim($data['account_name']);
+            }
+            if (isset($data['whatsapp_number'])) {
+                $currentConfig['whatsapp_number'] = trim($data['whatsapp_number']);
+            }
+        } elseif ($methodKey === 'google_pay') {
+            if (isset($data['environment'])) {
+                $currentConfig['environment'] = trim($data['environment']);
+            }
+            if (isset($data['merchant_id'])) {
+                $currentConfig['merchant_id'] = trim($data['merchant_id']);
+            }
+            if (isset($data['merchant_name'])) {
+                $currentConfig['merchant_name'] = trim($data['merchant_name']);
+            }
+        }
+
+        $method->config = $currentConfig;
+        $method->save();
+
+        AuditLogger::billing(
+            'payment_method_updated',
+            "Konfigurasi metode pembayaran {$method->name} ({$methodKey}) berhasil diperbarui oleh SuperAdmin {$actor->name}",
+            ['method_key' => $methodKey, 'is_active' => $method->is_active]
+        );
+
+        return [
+            'status_code' => 200,
+            'response' => [
+                'success' => true,
+                'message' => "Pengaturan {$method->name} berhasil disimpan.",
+                'method' => $method,
+            ],
+        ];
+    }
+
     public function getSuperAdminBillingData(array|string|null $filters = null, int $perPage = 15): array
     {
         $filterArr = is_array($filters) ? $filters : ['status' => $filters];
@@ -630,6 +1058,8 @@ class BillingService
             'transactions' => $transactions,
             'stats' => $stats,
             'currentStatus' => $filterArr['status'] ?? 'all',
+            'paymentMethodsSettings' => PaymentMethodSetting::getAllSettings(),
+            'midtransService' => new MidtransService(),
             'filters' => [
                 'search' => $filterArr['search'] ?? $filterArr['q'] ?? '',
                 'payment_method' => $filterArr['payment_method'] ?? 'all',

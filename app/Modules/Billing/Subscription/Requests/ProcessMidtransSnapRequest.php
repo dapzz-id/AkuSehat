@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Modules\Billing\Subscription\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class ProcessMidtransSnapRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'mode_transaksi' => 'nullable|in:perpanjang,tambah_kuota',
+            'license_id' => 'nullable|string',
+            'tambah_kuota' => 'nullable|integer|min:0|max:10000',
+            'durasi_bulan' => 'nullable|integer|in:1,3,6,12,24,36',
+        ];
+    }
+}

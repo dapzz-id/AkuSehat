@@ -478,95 +478,179 @@
                             <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Langkah 4</span>
                             <h4 class="text-xs font-bold text-gray-800">PILIH METODE PEMBAYARAN</h4>
                         </div>
-                        <span class="text-[10px] font-bold text-gray-500 bg-gray-200/80 px-2 py-0.5 rounded-full">TERSEDIA 2 OPSI</span>
+                        @php
+                            $activeCount = count($paymentMethods);
+                        @endphp
+                        <span class="text-[10px] font-bold text-gray-500 bg-gray-200/80 px-2 py-0.5 rounded-full">
+                            TERSEDIA {{ $activeCount }} OPSI
+                        </span>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2.5">
-                        {{-- Opsi 1: Transfer BCA --}}
-                        <button type="button" id="btnMethodBca" onclick="selectPaymentMethod('manual_bca')"
-                            class="p-3 rounded-xl border-2 text-left transition-all duration-150 border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 cursor-pointer flex flex-col justify-between shadow-xs">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="font-bold text-xs text-blue-950 flex items-center gap-1.5">
-                                    <i class="fas fa-building-columns text-blue-600"></i>
-                                    <span>Transfer BCA</span>
-                                </span>
-                                <div id="checkMethodBca" class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px]">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <span class="text-[10px] text-blue-700 font-medium">Rek. 842-171-3359</span>
-                        </button>
+                    @php
+                        $isBcaActive = $paymentMethods->contains('method_key', 'manual_bca');
+                        $isMidtransActive = $paymentMethods->contains('method_key', 'midtrans');
+                        $isGpayActive = $paymentMethods->contains('method_key', 'google_pay');
 
-                        {{-- Opsi 2: Google Pay --}}
-                        <button type="button" id="btnMethodGpay" onclick="selectPaymentMethod('gpay')"
-                            class="p-3 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="font-bold text-xs text-gray-800 flex items-center gap-1.5">
-                                    <i class="fab fa-google-pay text-base text-gray-700"></i>
-                                    <span>Google Pay</span>
-                                </span>
-                                <div id="checkMethodGpay" class="w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <span class="text-[10px] text-gray-500">Instan Otomatis</span>
-                        </button>
-                    </div>
+                        // Metode default yang terpilih
+                        $defaultMethod = $isBcaActive ? 'manual_bca' : ($isMidtransActive ? 'midtrans' : ($isGpayActive ? 'gpay' : ''));
 
-                    {{-- Detail Card: Bank BCA Manual --}}
-                    <div id="paneMethodBca" class="rounded-xl p-4 bg-gradient-to-br from-[#0c2e68] to-[#123e87] text-white space-y-3 shadow-sm border border-blue-900/30">
-                        <div class="flex items-center justify-between pb-2 border-b border-white/10">
-                            <div class="flex items-center gap-2">
-                                <span class="px-1.5 py-0.5 rounded bg-blue-500/30 font-black text-xs tracking-wider text-blue-100 border border-blue-400/30">BCA</span>
-                                <span class="text-xs font-bold tracking-wide text-white">BANK CENTRAL ASIA</span>
-                            </div>
-                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/15 text-blue-100">Manual</span>
+                        // Responsive grid class
+                        $gridColsClass = match($activeCount) {
+                            1 => 'grid-cols-1',
+                            2 => 'grid grid-cols-1 sm:grid-cols-2 gap-2.5',
+                            default => 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5',
+                        };
+                    @endphp
+
+                    @if($activeCount === 0)
+                        <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2">
+                            <i class="fas fa-exclamation-triangle text-amber-600"></i>
+                            <span>Saat ini belum ada metode pembayaran yang diaktifkan oleh Administrator.</span>
+                        </div>
+                    @else
+                        <div class="{{ $gridColsClass }}">
+                            {{-- Opsi 1: Transfer BCA --}}
+                            @if($isBcaActive)
+                                <button type="button" id="btnMethodBca" onclick="selectPaymentMethod('manual_bca')"
+                                    class="p-3 rounded-xl border-2 text-left transition-all duration-150 {{ $defaultMethod === 'manual_bca' ? 'border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 shadow-xs' : 'border-gray-200 bg-white hover:border-gray-300' }} cursor-pointer flex flex-col justify-between">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="font-bold text-xs text-blue-950 flex items-center gap-1.5">
+                                            <i class="fas fa-building-columns text-blue-600"></i>
+                                            <span>Transfer BCA</span>
+                                        </span>
+                                        <div id="checkMethodBca" class="w-4 h-4 rounded-full {{ $defaultMethod === 'manual_bca' ? 'bg-blue-600 text-white' : 'border border-gray-300 bg-white text-transparent' }} flex items-center justify-center text-[9px]">
+                                            <i class="fas fa-check"></i>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] text-blue-700 font-medium">Rek. {{ $bankDetails['account_number'] ?? '842-171-3359' }}</span>
+                                </button>
+                            @endif
+
+                            {{-- Opsi 2: Midtrans Snap --}}
+                            @if($isMidtransActive)
+                                <button type="button" id="btnMethodMidtrans" onclick="selectPaymentMethod('midtrans')"
+                                    class="p-3 rounded-xl border-2 text-left transition-all duration-150 {{ $defaultMethod === 'midtrans' ? 'border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-500/20 shadow-xs' : 'border-gray-200 bg-white hover:border-gray-300' }} cursor-pointer flex flex-col justify-between">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="font-bold text-xs text-indigo-950 flex items-center gap-1.5">
+                                            <i class="fas fa-bolt text-indigo-600"></i>
+                                            <span>Midtrans Snap</span>
+                                        </span>
+                                        <div id="checkMethodMidtrans" class="w-4 h-4 rounded-full {{ $defaultMethod === 'midtrans' ? 'bg-indigo-600 text-white' : 'border border-gray-300 bg-white text-transparent' }} flex items-center justify-center text-[9px]">
+                                            <i class="fas fa-check"></i>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] text-indigo-700 font-medium">QRIS, VA Bank, E-Wallet</span>
+                                </button>
+                            @endif
+
+                            {{-- Opsi 3: Google Pay --}}
+                            @if($isGpayActive)
+                                <button type="button" id="btnMethodGpay" onclick="selectPaymentMethod('gpay')"
+                                    class="p-3 rounded-xl border-2 text-left transition-all duration-150 {{ $defaultMethod === 'gpay' ? 'border-purple-600 bg-purple-50/70 ring-2 ring-purple-500/20 shadow-xs' : 'border-gray-200 bg-white hover:border-gray-300' }} cursor-pointer flex flex-col justify-between">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="font-bold text-xs text-gray-800 flex items-center gap-1.5">
+                                            <i class="fab fa-google-pay text-base text-gray-700"></i>
+                                            <span>Google Pay</span>
+                                        </span>
+                                        <div id="checkMethodGpay" class="w-4 h-4 rounded-full {{ $defaultMethod === 'gpay' ? 'bg-purple-600 text-white' : 'border border-gray-300 bg-white text-transparent' }} flex items-center justify-center text-[9px]">
+                                            <i class="fas fa-check"></i>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] text-gray-500">Instan Otomatis</span>
+                                </button>
+                            @endif
                         </div>
 
-                        <div class="space-y-1.5 text-xs">
-                            <div class="flex items-center justify-between">
-                                <span class="text-blue-200 text-[11px]">Nomor Rekening:</span>
+                        {{-- Detail Card: Bank BCA Manual --}}
+                        <div id="paneMethodBca" class="rounded-xl p-4 bg-gradient-to-br from-[#0c2e68] to-[#123e87] text-white space-y-3 shadow-sm border border-blue-900/30 {{ $defaultMethod === 'manual_bca' ? '' : 'hidden' }}">
+                            <div class="flex items-center justify-between pb-2 border-b border-white/10">
                                 <div class="flex items-center gap-2">
-                                    <span class="font-mono font-bold text-sm text-white tracking-wider">842-171-3359</span>
-                                    <button type="button" onclick="copyText('8421713359', 'Nomor Rekening BCA')"
-                                        class="px-2 py-0.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-semibold text-[10px] transition-colors cursor-pointer flex items-center gap-1">
-                                        <i class="fas fa-copy"></i>
-                                        <span>Salin</span>
-                                    </button>
+                                    <span class="px-1.5 py-0.5 rounded bg-blue-500/30 font-black text-xs tracking-wider text-blue-100 border border-blue-400/30">{{ $bankDetails['bank'] ?? 'BCA' }}</span>
+                                    <span class="text-xs font-bold tracking-wide text-white">BANK CENTRAL ASIA</span>
+                                </div>
+                                <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/15 text-blue-100">Manual</span>
+                            </div>
+
+                            <div class="space-y-1.5 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-blue-200 text-[11px]">Nomor Rekening:</span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono font-bold text-sm text-white tracking-wider">{{ $bankDetails['account_number'] ?? '842-171-3359' }}</span>
+                                        <button type="button" onclick="copyText('{{ preg_replace('/[^0-9]/', '', (string) ($bankDetails['account_number'] ?? '8421713359')) }}', 'Nomor Rekening BCA')"
+                                            class="px-2 py-0.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-semibold text-[10px] transition-colors cursor-pointer flex items-center gap-1">
+                                            <i class="fas fa-copy"></i>
+                                            <span>Salin</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between text-blue-200 text-[11px]">
+                                    <span>Atas Nama (A.N):</span>
+                                    <span class="font-bold text-white text-[12px]">{{ $bankDetails['account_holder'] ?? 'Kadavi Raditya Alvino' }}</span>
+                                </div>
+                                <div class="flex items-center justify-between pt-1 border-t border-white/10">
+                                    <span class="text-blue-200 text-[11px]">Total Ditransfer:</span>
+                                    <span id="bcaTransferTotalText" class="font-extrabold text-amber-300 text-sm">Rp {{ number_format($totalPerpanjang, 0, ',', '.') }}</span>
                                 </div>
                             </div>
-                            <div class="flex items-center justify-between text-blue-200 text-[11px]">
-                                <span>Atas Nama (A.N):</span>
-                                <span class="font-bold text-white text-[12px]">Kadavi Raditya Alvino</span>
-                            </div>
-                            <div class="flex items-center justify-between pt-1 border-t border-white/10">
-                                <span class="text-blue-200 text-[11px]">Total Ditransfer:</span>
-                                <span id="bcaTransferTotalText" class="font-extrabold text-amber-300 text-sm">Rp {{ number_format($totalPerpanjang, 0, ',', '.') }}</span>
+
+                            <div class="text-[10px] leading-relaxed text-blue-100 bg-white/10 p-2 rounded-lg border border-white/10 flex items-start gap-1.5">
+                                <i class="fab fa-whatsapp text-emerald-400 text-xs mt-0.5 flex-shrink-0"></i>
+                                <span>Setelah bayar, konfirmasi ke WhatsApp <strong>{{ $bankDetails['wa_phone'] ?? '+62 895-3831-07479' }}</strong> dengan menyertakan Nomor Orderan dan Bukti Transaksi.</span>
                             </div>
                         </div>
 
-                        <div class="text-[10px] leading-relaxed text-blue-100 bg-white/10 p-2 rounded-lg border border-white/10 flex items-start gap-1.5">
-                            <i class="fab fa-whatsapp text-emerald-400 text-xs mt-0.5 flex-shrink-0"></i>
-                            <span>Setelah bayar, konfirmasi ke WhatsApp <strong>+62 895-3831-07479</strong> dengan menyertakan Nomor Orderan dan Bukti Transaksi.</span>
-                        </div>
-                    </div>
+                        {{-- Detail Card: Midtrans Snap Gateway --}}
+                        <div id="paneMethodMidtrans" class="rounded-xl p-4 bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#1e293b] text-white space-y-3 shadow-sm border border-indigo-900/40 {{ $defaultMethod === 'midtrans' ? '' : 'hidden' }}">
+                            <div class="flex items-center justify-between pb-2 border-b border-white/10">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shadow-xs font-black">
+                                        <i class="fas fa-bolt text-amber-300"></i>
+                                    </span>
+                                    <span class="text-xs font-bold tracking-wide text-white">MIDTRANS SNAP GATEWAY</span>
+                                </div>
+                                <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Instan Otomatis</span>
+                            </div>
 
-                    {{-- Detail Card: Google Pay --}}
-                    <div id="paneMethodGpay" class="rounded-xl p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-1 hidden">
-                        <div class="flex items-center gap-1.5 font-bold text-emerald-800">
-                            <i class="fas fa-bolt text-emerald-600"></i>
-                            <span>Pembayaran Instan & Otomatis</span>
+                            <div class="space-y-2 text-xs">
+                                <div class="flex items-center justify-between text-slate-300 text-[11px]">
+                                    <span>Metode Didukung:</span>
+                                    <span class="font-semibold text-white">QRIS, VA Bank, E-Wallet, Kartu</span>
+                                </div>
+                                <div class="flex flex-wrap gap-1.5 pt-1">
+                                    <span class="px-2 py-0.5 rounded bg-white/10 text-[10px] font-bold text-slate-200">QRIS (BCA, Gopay, OVO)</span>
+                                    <span class="px-2 py-0.5 rounded bg-white/10 text-[10px] font-bold text-slate-200">Virtual Account (BCA/Mandiri/BRI)</span>
+                                    <span class="px-2 py-0.5 rounded bg-white/10 text-[10px] font-bold text-slate-200">ShopeePay</span>
+                                    <span class="px-2 py-0.5 rounded bg-white/10 text-[10px] font-bold text-slate-200">Kartu Kredit/Debit</span>
+                                </div>
+                                <div class="flex items-center justify-between pt-1 border-t border-white/10">
+                                    <span class="text-slate-300 text-[11px]">Total Tagihan:</span>
+                                    <span id="midtransTotalText" class="font-extrabold text-amber-300 text-sm">Rp {{ number_format($totalPerpanjang, 0, ',', '.') }}</span>
+                                </div>
+                            </div>
+
+                            <div class="text-[10px] leading-relaxed text-indigo-200 bg-white/10 p-2 rounded-lg border border-white/10 flex items-start gap-1.5">
+                                <i class="fas fa-circle-check text-emerald-400 text-xs mt-0.5 flex-shrink-0"></i>
+                                <span>Setelah pembayaran diverifikasi oleh Midtrans, lisensi dan kuota pengguna akan <strong>langsung aktif otomatis</strong> dalam hitungan detik.</span>
+                            </div>
                         </div>
-                        <p class="text-[11px] text-emerald-700">
-                            Masa aktif lisensi dan kuota pengguna akan langsung aktif secara otomatis setelah pembayaran Google Pay / Kartu terverifikasi.
-                        </p>
-                    </div>
+
+                        {{-- Detail Card: Google Pay --}}
+                        <div id="paneMethodGpay" class="rounded-xl p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-1 {{ $defaultMethod === 'gpay' ? '' : 'hidden' }}">
+                            <div class="flex items-center gap-1.5 font-bold text-emerald-800">
+                                <i class="fas fa-bolt text-emerald-600"></i>
+                                <span>Pembayaran Instan Google Pay</span>
+                            </div>
+                            <p class="text-[11px] text-emerald-700">
+                                Masa aktif lisensi dan kuota pengguna akan langsung aktif secara otomatis setelah pembayaran kartu Google Pay terverifikasi.
+                            </p>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Tombol Aksi Checkout -->
                 <div class="space-y-3 pt-1">
                     <!-- Tombol Opsi 1: Transfer Bank BCA -->
-                    <div id="actionBtnBcaContainer">
+                    <div id="actionBtnBcaContainer" class="{{ $defaultMethod === 'manual_bca' ? '' : 'hidden' }}">
                         <button type="button" id="btnPayWithBca" onclick="executeManualBcaCheckout()"
                             class="w-full py-3.5 px-5 rounded-xl font-bold text-white bg-[#25D366] hover:bg-[#1EBE5D] active:scale-[0.99] transition-all duration-200 shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer text-sm sm:text-base">
                             <i class="fab fa-whatsapp text-lg"></i>
@@ -574,8 +658,17 @@
                         </button>
                     </div>
 
-                    <!-- Tombol Opsi 2: Google Pay -->
-                    <div id="actionBtnGpayContainer" class="hidden">
+                    <!-- Tombol Opsi 2: Midtrans Snap -->
+                    <div id="actionBtnMidtransContainer" class="{{ $defaultMethod === 'midtrans' ? '' : 'hidden' }}">
+                        <button type="button" id="btnPayWithMidtrans" onclick="executeMidtransCheckout()"
+                            class="w-full py-3.5 px-5 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 hover:opacity-95 active:scale-[0.99] transition-all duration-200 shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 cursor-pointer text-sm sm:text-base">
+                            <i class="fas fa-bolt text-amber-300"></i>
+                            <span>Bayar Instan Otomatis (Midtrans Snap)</span>
+                        </button>
+                    </div>
+
+                    <!-- Tombol Opsi 3: Google Pay -->
+                    <div id="actionBtnGpayContainer" class="{{ $defaultMethod === 'gpay' ? '' : 'hidden' }}">
                         <div id="gpay-button-container" class="w-full flex justify-center min-h-[48px]">
                             <button type="button" id="btnPayWithGoogle" onclick="openPaymentConfirmation()"
                                 class="w-full py-3 px-5 rounded-xl font-bold text-white bg-black hover:bg-neutral-800 active:scale-[0.99] transition-all duration-200 shadow-md shadow-black/20 flex items-center justify-center cursor-pointer min-h-[48px]">
@@ -584,7 +677,6 @@
                                     <path d="M18.4442 32.539C20.7185 32.539 22.6411 31.7778 24.0361 30.4695L21.3164 28.3287C20.5544 28.852 19.5814 29.1493 18.4442 29.1493C16.2403 29.1493 14.3763 27.6388 13.7081 25.5908H10.8794V27.7853C12.2625 30.5284 15.148 32.539 18.4442 32.539Z" fill="#34A853"/>
                                     <path d="M13.7083 25.5908C13.3524 24.5322 13.3524 23.3826 13.7083 22.324V19.3995H10.8795C9.6976 21.7554 9.6976 24.5824 10.8795 26.9383L13.7083 25.5908Z" fill="#FBBC04"/>
                                     <path d="M18.4442 15.9287C19.6496 15.9049 20.8219 16.3687 21.6777 17.2251L24.0954 14.8074C22.5601 13.2721 20.5376 12.4157 18.4442 12.4395C15.148 12.4395 12.2625 14.4501 10.8794 17.1932L13.7081 19.3877C14.3763 17.3397 16.2403 15.9287 18.4442 15.9287Z" fill="#EA4335"/>
-                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M33.0603 31.5161V25.4741H36.1786C37.4564 25.4741 38.535 25.046 39.4142 24.2015L39.6252 23.9875C41.2313 22.2391 41.1258 19.5155 39.4142 17.898C38.5584 17.0416 37.3861 16.5778 36.1786 16.6016H31.1729V31.5161H33.0603ZM33.0605 23.6425V18.4332H36.2262C36.9063 18.4332 37.5512 18.6948 38.0319 19.1706C39.052 20.1696 39.0754 21.8347 38.0905 22.8694C37.6098 23.3809 36.9297 23.6663 36.2262 23.6425H33.0605ZM48.4293 22.1083C47.6204 21.359 46.5185 20.9784 45.1234 20.9784C43.3298 20.9784 41.9816 21.6444 41.0906 22.9646L42.7553 24.0231C43.3649 23.1192 44.1973 22.6673 45.2524 22.6673C45.9206 22.6673 46.5653 22.9171 47.0694 23.369C47.5618 23.7972 47.8432 24.4156 47.8432 25.0698V25.5098C47.1163 25.1055 46.2019 24.8914 45.0765 24.8914C43.7635 24.8914 42.7084 25.2006 41.923 25.831C41.1375 26.4613 40.739 27.2939 40.739 28.3524C40.7155 29.3158 41.1258 30.2316 41.8527 30.85C42.5912 31.5161 43.5291 31.8491 44.631 31.8491C45.9323 31.8491 46.9639 31.2663 47.7494 30.1007H47.8314V31.5161H49.6368V25.2244C49.6368 23.9042 49.2382 22.8576 48.4293 22.1083ZM43.3066 29.6369C42.9197 29.3514 42.6852 28.8876 42.6852 28.3881C42.6852 27.8291 42.9432 27.3652 43.4473 26.9965C43.9632 26.6278 44.6081 26.4375 45.3702 26.4375C46.4255 26.4256 47.2462 26.6635 47.8325 27.1392C47.8325 27.948 47.5159 28.6497 46.8945 29.2444C46.3317 29.8153 45.5696 30.1364 44.7723 30.1364C44.2446 30.1483 43.7287 29.9699 43.3066 29.6369ZM53.693 35.9999L60.0001 21.3114H57.9485L55.0295 28.6378H54.9943L52.0049 21.3114H49.9534L54.0916 30.8619L51.747 35.9999H53.693Z" fill="#FFFFFF"/>
                                 </svg>
                             </button>
                         </div>
@@ -892,8 +984,15 @@
 @endsection
 
 @push('scripts')
+@if(!empty($midtransConfig['is_active']))
+{{-- Midtrans Snap Client SDK --}}
+<script src="{{ $midtransConfig['snap_js'] }}" data-client-key="{{ $midtransConfig['client_key'] }}"></script>
+@endif
+
+@if(!empty($googlePayConfig['is_active']))
 {{-- Google Payment API Client SDK --}}
 <script src="https://pay.google.com/gp/p/js/pay.js" async onload="onGooglePayLoaded()"></script>
+@endif
 
 <script>
     const HARGA_USER = {{ $hargaPerUser }}; // 5000 per bulan
@@ -904,7 +1003,7 @@
     let selectedRenewalPackageId = '{{ $primaryLicense ? $primaryLicense->id : '' }}';
     let selectedQuota = 50;
     let selectedDuration = 1; // 1, 3, 6, 12, 24, 36 bulan
-    let selectedPaymentMethod = 'manual_bca'; // 'manual_bca' or 'google_pay'
+    let selectedPaymentMethod = '{{ $defaultMethod ?? 'manual_bca' }}';
     let paymentsClient = null;
 
     function formatRupiah(num) {
@@ -1133,39 +1232,61 @@
         calculateTotal();
     }
 
-    // Pemilihan Metode Pembayaran (BCA vs Google Pay)
+    // Pemilihan Metode Pembayaran Dinamis (BCA vs Midtrans vs Google Pay)
     function selectPaymentMethod(method) {
         selectedPaymentMethod = method;
         const btnBca = document.getElementById('btnMethodBca');
+        const btnMidtrans = document.getElementById('btnMethodMidtrans');
         const btnGpay = document.getElementById('btnMethodGpay');
+
         const checkBca = document.getElementById('checkMethodBca');
+        const checkMidtrans = document.getElementById('checkMethodMidtrans');
         const checkGpay = document.getElementById('checkMethodGpay');
+
         const paneBca = document.getElementById('paneMethodBca');
+        const paneMidtrans = document.getElementById('paneMethodMidtrans');
         const paneGpay = document.getElementById('paneMethodGpay');
+
         const actionBca = document.getElementById('actionBtnBcaContainer');
+        const actionMidtrans = document.getElementById('actionBtnMidtransContainer');
         const actionGpay = document.getElementById('actionBtnGpayContainer');
         const badgeEl = document.getElementById('selectedMethodBadge');
 
+        // Reset semua tombol ke status default
+        if (btnBca) btnBca.className = "p-3 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between";
+        if (btnMidtrans) btnMidtrans.className = "p-3 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between";
+        if (btnGpay) btnGpay.className = "p-3 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between";
+
+        if (checkBca) checkBca.className = "w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]";
+        if (checkMidtrans) checkMidtrans.className = "w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]";
+        if (checkGpay) checkGpay.className = "w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]";
+
+        if (paneBca) paneBca.classList.add('hidden');
+        if (paneMidtrans) paneMidtrans.classList.add('hidden');
+        if (paneGpay) paneGpay.classList.add('hidden');
+
+        if (actionBca) actionBca.classList.add('hidden');
+        if (actionMidtrans) actionMidtrans.classList.add('hidden');
+        if (actionGpay) actionGpay.classList.add('hidden');
+
         if (method === 'manual_bca') {
-            if (btnBca) btnBca.className = "p-3.5 rounded-xl border-2 text-left transition-all duration-150 border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 cursor-pointer flex flex-col justify-between shadow-xs";
-            if (btnGpay) btnGpay.className = "p-3.5 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between";
+            if (btnBca) btnBca.className = "p-3 rounded-xl border-2 text-left transition-all duration-150 border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 cursor-pointer flex flex-col justify-between shadow-xs";
             if (checkBca) checkBca.className = "w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px]";
-            if (checkGpay) checkGpay.className = "w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]";
             if (paneBca) paneBca.classList.remove('hidden');
-            if (paneGpay) paneGpay.classList.add('hidden');
             if (actionBca) actionBca.classList.remove('hidden');
-            if (actionGpay) actionGpay.classList.add('hidden');
             if (badgeEl) badgeEl.innerHTML = '<i class="fas fa-building-columns text-blue-600"></i> Transfer BCA';
-        } else {
-            if (btnGpay) btnGpay.className = "p-3.5 rounded-xl border-2 text-left transition-all duration-150 border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-500/20 cursor-pointer flex flex-col justify-between shadow-xs";
-            if (btnBca) btnBca.className = "p-3.5 rounded-xl border-2 text-left transition-all duration-150 border-gray-200 bg-white hover:border-gray-300 cursor-pointer flex flex-col justify-between";
-            if (checkGpay) checkGpay.className = "w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[9px]";
-            if (checkBca) checkBca.className = "w-4 h-4 rounded-full border border-gray-300 bg-white text-transparent flex items-center justify-center text-[9px]";
+        } else if (method === 'midtrans') {
+            if (btnMidtrans) btnMidtrans.className = "p-3 rounded-xl border-2 text-left transition-all duration-150 border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-500/20 cursor-pointer flex flex-col justify-between shadow-xs";
+            if (checkMidtrans) checkMidtrans.className = "w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[9px]";
+            if (paneMidtrans) paneMidtrans.classList.remove('hidden');
+            if (actionMidtrans) actionMidtrans.classList.remove('hidden');
+            if (badgeEl) badgeEl.innerHTML = '<i class="fas fa-bolt text-indigo-600"></i> Midtrans Snap';
+        } else if (method === 'gpay') {
+            if (btnGpay) btnGpay.className = "p-3 rounded-xl border-2 text-left transition-all duration-150 border-purple-600 bg-purple-50/70 ring-2 ring-purple-500/20 cursor-pointer flex flex-col justify-between shadow-xs";
+            if (checkGpay) checkGpay.className = "w-4 h-4 rounded-full bg-purple-600 text-white flex items-center justify-center text-[9px]";
             if (paneGpay) paneGpay.classList.remove('hidden');
-            if (paneBca) paneBca.classList.add('hidden');
             if (actionGpay) actionGpay.classList.remove('hidden');
-            if (actionBca) actionBca.classList.add('hidden');
-            if (badgeEl) badgeEl.innerHTML = '<i class="fab fa-google-pay text-lg text-emerald-600"></i> Google Pay';
+            if (badgeEl) badgeEl.innerHTML = '<i class="fab fa-google-pay text-lg text-purple-600"></i> Google Pay';
         }
     }
 
@@ -1248,6 +1369,116 @@
             btn.innerHTML = origContent;
             console.error(err);
             alert('Terjadi kesalahan saat menghubungi server.');
+        });
+    }
+
+    // Eksekusi Pembayaran Instan Midtrans Snap
+    function executeMidtransCheckout() {
+        const total = calculateTotal();
+        if (currentMode === 'tambah_kuota' && selectedQuota <= 0) {
+            alert('Silakan tentukan jumlah kuota tambahan terlebih dahulu (minimal 1 user).');
+            return;
+        }
+
+        const btn = document.getElementById('btnPayWithMidtrans');
+        const origContent = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin text-lg mr-2"></i><span>Mempersiapkan Midtrans Snap...</span>';
+        }
+
+        fetch("{{ route('admin.billing.midtrans.snap-token') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                mode_transaksi: currentMode,
+                license_id: currentMode === 'perpanjang' ? selectedRenewalPackageId : null,
+                tambah_kuota: currentMode === 'perpanjang' ? 0 : selectedQuota,
+                durasi_bulan: selectedDuration
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origContent;
+            }
+
+            if (data.success && data.snap_token) {
+                if (typeof window.snap === 'undefined') {
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                        return;
+                    }
+                    alert('SDK Midtrans Snap belum termuat. Silakan refresh halaman dan coba kembali.');
+                    return;
+                }
+
+                window.snap.pay(data.snap_token, {
+                    onSuccess: function(result) {
+                        console.log('Midtrans Snap Success:', result);
+                        verifyMidtransPayment(data.order_id);
+                    },
+                    onPending: function(result) {
+                        console.log('Midtrans Snap Pending:', result);
+                        alert('Pesanan ' + data.order_id + ' sedang menunggu pembayaran. Silakan selesaikan pembayaran sesuai petunjuk yang diberikan.');
+                        window.location.reload();
+                    },
+                    onError: function(result) {
+                        console.error('Midtrans Snap Error:', result);
+                        alert('Pembayaran Midtrans gagal atau dibatalkan.');
+                    },
+                    onClose: function() {
+                        verifyMidtransPayment(data.order_id, false);
+                    }
+                });
+            } else {
+                alert(data.message || 'Gagal memproses sesi pembayaran Midtrans.');
+            }
+        })
+        .catch(err => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origContent;
+            }
+            console.error('Midtrans Checkout error:', err);
+            alert('Terjadi kesalahan saat menghubungi gateway Midtrans.');
+        });
+    }
+
+    function verifyMidtransPayment(orderId, showAlertOnPending = true) {
+        fetch("{{ url('admin/billing/midtrans/status') }}/" + orderId, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success && res.status === 'success') {
+                const modal = document.getElementById('paymentSuccessModal');
+                if (modal) {
+                    const descEl = document.getElementById('modalSuccessItemDesc');
+                    const totalEl = document.getElementById('modalSuccessTotal');
+                    const orderIdEl = document.getElementById('modalSuccessOrderId');
+                    if (orderIdEl) orderIdEl.textContent = orderId;
+                    if (descEl) descEl.textContent = 'Pembayaran Midtrans Snap Berhasil';
+                    if (totalEl) totalEl.textContent = 'Lunas Otomatis';
+                    modal.classList.remove('hidden');
+                } else {
+                    alert('Pembayaran Berhasil! Lisensi Anda telah aktif.');
+                    window.location.reload();
+                }
+            } else if (showAlertOnPending) {
+                alert('Status pembayaran: ' + (res.message || 'Menunggu konfirmasi.'));
+                window.location.reload();
+            }
+        })
+        .catch(err => {
+            console.error(err);
         });
     }
 

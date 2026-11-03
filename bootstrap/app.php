@@ -40,6 +40,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->use([
             \App\Http\Middleware\SecurityHeaders::class,
         ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'billing/midtrans/notification',
+            'api/billing/midtrans/notification',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
