@@ -85,8 +85,34 @@ class PaymentMethodSetting extends Model
     public static function isMethodActive(string $methodKey): bool
     {
         $all = self::getAllSettings();
-        $method = $all->firstWhere('method_key', $methodKey);
+        $normalizedKey = ($methodKey === 'manual_transfer') ? 'manual_bca' : $methodKey;
+        $method = $all->firstWhere('method_key', $normalizedKey) ?? $all->firstWhere('method_key', $methodKey);
         return $method ? (bool) $method->is_active : false;
+    }
+
+    /**
+     * Dapatkan setting spesifik berdasarkan method_key
+     */
+    public static function getSetting(string $methodKey): ?self
+    {
+        $normalizedKey = ($methodKey === 'manual_transfer') ? 'manual_bca' : $methodKey;
+
+        if (!Schema::hasTable('payment_method_settings')) {
+            $defaults = collect(self::getDefaultCollection());
+            $found = $defaults->firstWhere('method_key', $normalizedKey) ?? $defaults->firstWhere('method_key', $methodKey);
+            if ($found) {
+                $model = new self();
+                $model->method_key = $found->method_key;
+                $model->name = $found->name;
+                $model->description = $found->description;
+                $model->is_active = $found->is_active;
+                $model->config = $found->config;
+                return $model;
+            }
+            return null;
+        }
+
+        return self::where('method_key', $normalizedKey)->first() ?? self::where('method_key', $methodKey)->first();
     }
 
     /**

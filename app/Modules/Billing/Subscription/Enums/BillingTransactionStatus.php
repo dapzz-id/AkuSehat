@@ -9,6 +9,7 @@ enum BillingTransactionStatus: string
     case PAID = 'paid';
     case FAILED = 'failed';
     case EXPIRED = 'expired';
+    case CANCELLED = 'cancelled';
 
     public function label(): string
     {
@@ -17,6 +18,7 @@ enum BillingTransactionStatus: string
             self::SUCCESS, self::PAID => 'Berhasil / Lunas',
             self::FAILED => 'Gagal',
             self::EXPIRED => 'Kedaluwarsa',
+            self::CANCELLED => 'Dibatalkan',
         };
     }
 
@@ -26,6 +28,7 @@ enum BillingTransactionStatus: string
             self::PENDING => 'bg-amber-100 text-amber-800 border-amber-200',
             self::SUCCESS, self::PAID => 'bg-emerald-100 text-emerald-800 border-emerald-200',
             self::FAILED, self::EXPIRED => 'bg-rose-100 text-rose-800 border-rose-200',
+            self::CANCELLED => 'bg-gray-100 text-gray-700 border-gray-200',
         };
     }
 

@@ -6,9 +6,59 @@ use Tests\TestCase;
 use App\Models\PaymentMethodSetting;
 use App\Modules\Billing\Subscription\Enums\PaymentMethod;
 use App\Services\MidtransService;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class MidtransAndPaymentMethodsTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (!Schema::hasTable('instansi')) {
+            Schema::create('instansi', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->string('nama_instansi')->nullable();
+                $table->string('jenis_instansi')->nullable();
+                $table->string('tipe_instansi')->nullable();
+                $table->string('invite_code')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        if (!Schema::hasTable('users')) {
+            Schema::create('users', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->uuid('instansi_id')->nullable();
+                $table->string('nama')->nullable();
+                $table->string('name')->nullable();
+                $table->string('username')->nullable();
+                $table->string('email')->nullable();
+                $table->string('password')->nullable();
+                $table->string('level')->nullable();
+                $table->string('no_telp')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        if (!Schema::hasTable('billing_transactions')) {
+            Schema::create('billing_transactions', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->uuid('instansi_id')->nullable();
+                $table->uuid('user_id')->nullable();
+                $table->string('order_id')->nullable();
+                $table->string('tipe_transaksi')->nullable();
+                $table->integer('durasi_bulan')->default(1);
+                $table->integer('tambah_kuota')->default(0);
+                $table->decimal('nominal', 14, 2)->default(0);
+                $table->string('payment_method')->nullable();
+                $table->text('payment_token')->nullable();
+                $table->string('status')->default('pending');
+                $table->json('payload')->nullable();
+                $table->timestamps();
+            });
+        }
+    }
     public function test_payment_method_enum_contains_midtrans(): void
     {
         $this->assertEquals('midtrans', PaymentMethod::MIDTRANS->value);
@@ -111,5 +161,98 @@ class MidtransAndPaymentMethodsTest extends TestCase
         // Masking tests
         $this->assertEquals('•••-•••-3359', \App\Services\Security\DataVaultEncryptionService::maskAccountNumber('842-171-3359'));
         $this->assertStringContainsString('K•••••', \App\Services\Security\DataVaultEncryptionService::maskAccountName('Kadavi Raditya Alvino'));
+    }
+
+    public function test_switch_payment_method_and_cancel_transaction_workflow(): void
+    {
+        $instansi = \App\Models\Instansi::create([
+            'id' => (string) \Illuminate\Support\Str::uuid7(),
+            'nama_instansi' => 'SMK Switch Method Test',
+            'jenis_instansi' => 'Sekolah',
+        ]);
+
+        $admin = \App\Models\User::create([
+            'id' => (string) \Illuminate\Support\Str::uuid7(),
+            'nama' => 'Admin Switch Test',
+            'name' => 'Admin Switch Test',
+            'username' => 'adminswitch' . rand(1000, 9999),
+            'email' => 'admin.switch.' . rand(1000, 9999) . '@test.com',
+            'password' => bcrypt('password'),
+            'level' => 'Admin Instansi',
+            'instansi_id' => $instansi->id,
+        ]);
+
+        $billingService = app(\App\Modules\Billing\Subscription\Services\BillingService::class);
+
+        // 1. Create a pending Midtrans transaction
+        $trx = \App\Models\BillingTransaction::create([
+            'id' => (string) \Illuminate\Support\Str::uuid7(),
+            'instansi_id' => $instansi->id,
+            'user_id' => $admin->id,
+            'order_id' => 'MID-TEST-' . time(),
+            'tipe_transaksi' => 'perpanjang_lisensi',
+            'durasi_bulan' => 1,
+            'nominal' => 55500,
+            'payment_method' => 'midtrans',
+            'payment_token' => 'snap-test-token-123',
+            'status' => 'pending',
+            'payload' => ['deskripsi_item' => 'Perpanjangan Lisensi 1 Bulan'],
+        ]);
+
+        // 2. Switch from Midtrans to manual BCA
+        $switchResult = $billingService->switchPaymentMethod($admin, $trx->id, 'manual_transfer');
+        $this->assertEquals(200, $switchResult['status_code']);
+        $this->assertTrue($switchResult['response']['success']);
+        $this->assertStringStartsWith('BCA-AKU-', $switchResult['response']['order_id']);
+
+        $trx->refresh();
+        $this->assertEquals('manual_transfer', $trx->payment_method);
+        $this->assertStringStartsWith('BCA-AKU-', $trx->order_id);
+        $this->assertNull($trx->payment_token);
+
+        // 3. Cancel the transaction
+        $cancelResult = $billingService->cancelBillingTransaction($admin, $trx->id, 'Salah pilih paket');
+        $this->assertEquals(200, $cancelResult['status_code']);
+        $this->assertTrue($cancelResult['response']['success']);
+
+        $trx->refresh();
+        $this->assertEquals('cancelled', $trx->status);
+
+        // 4. Cannot switch or cancel an already cancelled transaction
+        $cannotSwitch = $billingService->switchPaymentMethod($admin, $trx->id, 'manual_transfer');
+        $this->assertEquals(400, $cannotSwitch['status_code']);
+
+        // 5. Tenant isolation: Another user cannot cancel or switch
+        $otherInstansi = \App\Models\Instansi::create([
+            'id' => (string) \Illuminate\Support\Str::uuid7(),
+            'nama_instansi' => 'Instansi Lain',
+            'jenis_instansi' => 'Sekolah',
+        ]);
+        $otherAdmin = \App\Models\User::create([
+            'id' => (string) \Illuminate\Support\Str::uuid7(),
+            'nama' => 'Admin Lain',
+            'name' => 'Admin Lain',
+            'username' => 'adminlain' . rand(1000, 9999),
+            'email' => 'admin.lain.' . rand(1000, 9999) . '@test.com',
+            'password' => bcrypt('password'),
+            'level' => 'Admin Instansi',
+            'instansi_id' => $otherInstansi->id,
+        ]);
+
+        $pendingTrx = \App\Models\BillingTransaction::create([
+            'id' => (string) \Illuminate\Support\Str::uuid7(),
+            'instansi_id' => $instansi->id,
+            'user_id' => $admin->id,
+            'order_id' => 'BCA-TEST-' . time(),
+            'tipe_transaksi' => 'perpanjang_lisensi',
+            'durasi_bulan' => 1,
+            'nominal' => 55500,
+            'payment_method' => 'manual_transfer',
+            'status' => 'pending',
+            'payload' => [],
+        ]);
+
+        $unauthorizedCancel = $billingService->cancelBillingTransaction($otherAdmin, $pendingTrx->id);
+        $this->assertEquals(403, $unauthorizedCancel['status_code']);
     }
 }

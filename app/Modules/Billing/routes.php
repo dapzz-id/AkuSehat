@@ -10,6 +10,8 @@ Route::middleware(['auth', 'role:Admin,Admin Instansi,Health Monitor,Health Cons
     Route::post('billing/manual-transfer', [BillingController::class, 'processManualTransfer'])->name('billing.manual-transfer');
     Route::post('billing/midtrans/snap-token', [BillingController::class, 'createMidtransSnap'])->name('billing.midtrans.snap-token');
     Route::get('billing/midtrans/status/{orderId}', [BillingController::class, 'checkMidtransStatus'])->name('billing.midtrans.status');
+    Route::post('billing/transactions/{id}/switch-method', [BillingController::class, 'switchPaymentMethod'])->name('billing.switch-method');
+    Route::post('billing/transactions/{id}/cancel', [BillingController::class, 'cancelTransaction'])->name('billing.cancel');
     Route::get('billing/invoice/{id}/pdf', [BillingController::class, 'downloadInvoicePdf'])->name('billing.invoice.pdf');
 });
 
@@ -22,5 +24,6 @@ Route::middleware(['auth', 'role:SuperAdmin'])->prefix('superadmin')->name('supe
     Route::post('billing/payment-methods/{methodKey}/update', [BillingController::class, 'updatePaymentMethodSetting'])->name('billing.payment-methods.update');
     Route::post('billing/transactions/{id}/approve', [BillingController::class, 'approveTransaction'])->name('billing.approve');
     Route::post('billing/transactions/{id}/reject', [BillingController::class, 'rejectTransaction'])->name('billing.reject');
+    Route::post('billing/transactions/{id}/cancel', [BillingController::class, 'cancelTransaction'])->name('billing.cancel');
     Route::get('billing/invoice/{id}/pdf', [BillingController::class, 'downloadInvoicePdf'])->name('billing.invoice.pdf');
 });

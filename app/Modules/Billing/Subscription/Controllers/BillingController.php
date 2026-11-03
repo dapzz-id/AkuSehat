@@ -19,6 +19,8 @@ use App\Modules\Billing\Subscription\Requests\ProcessGooglePlayInAppRequest;
 use App\Modules\Billing\Subscription\Requests\DownloadInvoiceRequest;
 use App\Modules\Billing\Subscription\Requests\SuperAdminBillingFilterRequest;
 use App\Modules\Billing\Subscription\Requests\RejectManualTransferRequest;
+use App\Modules\Billing\Subscription\Requests\SwitchPaymentMethodRequest;
+use App\Modules\Billing\Subscription\Requests\CancelBillingTransactionRequest;
 
 class BillingController extends Controller
 {
@@ -143,5 +145,19 @@ class BillingController extends Controller
     {
         $isPreview = $request->boolean('preview') || $request->boolean('stream');
         return $this->billingService->generateInvoicePdf($id, Auth::user(), $isPreview);
+    }
+
+    public function switchPaymentMethod(SwitchPaymentMethodRequest $request, int|string $id): JsonResponse
+    {
+        $targetMethod = $request->input('target_method');
+        $result = $this->billingService->switchPaymentMethod(Auth::user(), $id, $targetMethod);
+        return response()->json($result['response'], $result['status_code'] ?? 200);
+    }
+
+    public function cancelTransaction(CancelBillingTransactionRequest $request, int|string $id): JsonResponse
+    {
+        $reason = $request->input('reason');
+        $result = $this->billingService->cancelBillingTransaction(Auth::user(), $id, $reason);
+        return response()->json($result['response'], $result['status_code'] ?? 200);
     }
 }

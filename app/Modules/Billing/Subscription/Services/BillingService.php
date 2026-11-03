@@ -1214,4 +1214,246 @@ class BillingService
 
         return $pdf->download($fileName);
     }
+
+    /**
+     * Alihkan metode pembayaran untuk transaksi yang masih pending (misal Manual BCA <-> Midtrans Snap).
+     */
+    public function switchPaymentMethod(User $actor, int|string $id, string $targetMethod): array
+    {
+        $trx = BillingTransaction::find($id);
+        if (!$trx) {
+            return [
+                'status_code' => 404,
+                'response' => ['success' => false, 'message' => 'Transaksi tidak ditemukan.'],
+            ];
+        }
+
+        if (!$actor->isSuperAdmin() && $trx->instansi_id !== $actor->instansi_id) {
+            return [
+                'status_code' => 403,
+                'response' => ['success' => false, 'message' => 'Anda tidak memiliki hak akses untuk transaksi ini.'],
+            ];
+        }
+
+        if ($trx->status !== BillingTransactionStatus::PENDING->value) {
+            return [
+                'status_code' => 400,
+                'response' => ['success' => false, 'message' => 'Hanya transaksi berstatus Menunggu Pembayaran (Pending) yang dapat dialihkan.'],
+            ];
+        }
+
+        $instansi = $trx->instansi ?: ($actor->sekolah ?: Instansi::find($trx->instansi_id));
+        $user = $trx->user ?: $actor;
+        $namaInstansiFormatted = $instansi ? ($instansi->nama_instansi ?? ($instansi->nama_sekolah ?? 'Instansi')) : 'Instansi';
+        $namaUserFormatted = $user->nama ?? ($user->name ?? 'Admin');
+        $deskripsiItem = $trx->payload['deskripsi_item'] ?? ($trx->tipe_transaksi === 'perpanjang_lisensi' ? 'Perpanjangan Lisensi' : 'Tambah Paket Kuota');
+
+        if ($targetMethod === 'midtrans') {
+            if (!PaymentMethodSetting::isMethodActive('midtrans')) {
+                return [
+                    'status_code' => 400,
+                    'response' => ['success' => false, 'message' => 'Metode Midtrans Snap sedang dinonaktifkan oleh Administrator.'],
+                ];
+            }
+
+            $midtransService = new MidtransService();
+            $newOrderId = 'MID-AKU-' . time() . '-' . strtoupper(Str::random(4));
+
+            $customerDetails = [
+                'first_name' => $user->name,
+                'email' => $user->email ?: ('billing.' . ($instansi->id ?? 'org') . '@akusehat.id'),
+                'phone' => $user->no_telp ?: '081234567890',
+            ];
+
+            $snapResult = $midtransService->createSnapToken(
+                $newOrderId,
+                (int) round($trx->nominal),
+                $customerDetails,
+                [
+                    [
+                        'id' => $trx->tipe_transaksi,
+                        'price' => (int) round($trx->nominal),
+                        'quantity' => 1,
+                        'name' => mb_strimwidth($deskripsiItem, 0, 48, '...'),
+                    ],
+                ]
+            );
+
+            if (!$snapResult['success']) {
+                return [
+                    'status_code' => 400,
+                    'response' => [
+                        'success' => false,
+                        'message' => $snapResult['message'] ?? 'Gagal membuat sesi pembayaran Midtrans Snap.',
+                    ],
+                ];
+            }
+
+            $snapToken = $snapResult['token'];
+            $redirectUrl = $snapResult['redirect_url'];
+
+            $payload = is_array($trx->payload) ? $trx->payload : [];
+            $payload['previous_order_id'] = $trx->order_id;
+            $payload['previous_method'] = $trx->payment_method;
+            $payload['gateway'] = 'Midtrans Snap';
+            $payload['environment'] = $midtransService->getEnvironment();
+            $payload['snap_token'] = $snapToken;
+            $payload['redirect_url'] = $redirectUrl;
+            $payload['switched_at'] = now()->toIso8601String();
+            $payload['switched_by'] = $actor->name;
+
+            $trx->update([
+                'order_id' => $newOrderId,
+                'payment_method' => PaymentMethod::MIDTRANS->value,
+                'payment_token' => $snapToken,
+                'payload' => $payload,
+            ]);
+
+            AuditLogger::billing(
+                'billing_method_switched',
+                "Metode transaksi {$payload['previous_order_id']} dialihkan ke Midtrans Snap (Order: {$newOrderId}) oleh {$actor->name}."
+            );
+
+            return [
+                'status_code' => 200,
+                'response' => [
+                    'success' => true,
+                    'message' => 'Metode pembayaran berhasil dialihkan ke Midtrans Snap.',
+                    'order_id' => $newOrderId,
+                    'payment_method' => 'midtrans',
+                    'snap_token' => $snapToken,
+                    'redirect_url' => $redirectUrl,
+                ],
+            ];
+        }
+
+        if ($targetMethod === 'manual_transfer' || $targetMethod === 'manual_bca') {
+            if (!PaymentMethodSetting::isMethodActive('manual_transfer')) {
+                return [
+                    'status_code' => 400,
+                    'response' => ['success' => false, 'message' => 'Metode Transfer Bank BCA sedang dinonaktifkan oleh Administrator.'],
+                ];
+            }
+
+            $newOrderId = 'BCA-AKU-' . time() . '-' . strtoupper(Str::random(4));
+
+            $bankSetting = PaymentMethodSetting::getSetting('manual_transfer');
+            $config = $bankSetting?->config ?? [];
+            $bankName = $config['bank_name'] ?? self::BANK_BCA;
+            $accountNumber = $config['account_number'] ?? self::NO_REK_BCA;
+            $accountHolder = $config['account_holder'] ?? self::ATAS_NAMA_BCA;
+            $waPhone = $config['confirmation_wa'] ?? self::WA_KONFIRMASI;
+            $waPhoneRaw = preg_replace('/[^0-9]/', '', $waPhone) ?: self::WA_RAW;
+
+            $waText = "Halo Admin Aku Sehat, saya ingin konfirmasi pembayaran langganan:\n\n"
+                . "• No. Order: {$newOrderId}\n"
+                . "• Instansi: {$namaInstansiFormatted}\n"
+                . "• Pemesan: {$namaUserFormatted}\n"
+                . "• Rincian: {$deskripsiItem}\n"
+                . "• Total Transfer: Rp " . number_format($trx->nominal, 0, ',', '.') . "\n"
+                . "• Bank Tujuan: {$bankName} ({$accountNumber} a.n {$accountHolder})\n\n"
+                . "Berikut saya lampirkan bukti transfernya. Mohon bantuannya untuk verifikasi dan aktivasi lisensi. Terima kasih!";
+
+            $waUrl = "https://wa.me/{$waPhoneRaw}?text=" . rawurlencode($waText);
+
+            $payload = is_array($trx->payload) ? $trx->payload : [];
+            $payload['previous_order_id'] = $trx->order_id;
+            $payload['previous_method'] = $trx->payment_method;
+            $payload['gateway'] = 'Manual Transfer Bank BCA';
+            $payload['bank_name'] = $bankName;
+            $payload['account_number'] = $accountNumber;
+            $payload['account_holder'] = $accountHolder;
+            $payload['confirmation_wa'] = $waPhone;
+            $payload['confirmation_wa_url'] = $waUrl;
+            $payload['switched_at'] = now()->toIso8601String();
+            $payload['switched_by'] = $actor->name;
+
+            $trx->update([
+                'order_id' => $newOrderId,
+                'payment_method' => PaymentMethod::MANUAL_TRANSFER->value,
+                'payment_token' => null,
+                'payload' => $payload,
+            ]);
+
+            AuditLogger::billing(
+                'billing_method_switched',
+                "Metode transaksi {$payload['previous_order_id']} dialihkan ke Transfer Manual BCA (Order: {$newOrderId}) oleh {$actor->name}."
+            );
+
+            return [
+                'status_code' => 200,
+                'response' => [
+                    'success' => true,
+                    'message' => 'Metode pembayaran berhasil dialihkan ke Transfer Bank BCA.',
+                    'order_id' => $newOrderId,
+                    'payment_method' => 'manual_transfer',
+                    'wa_url' => $waUrl,
+                    'bank_info' => [
+                        'bank_name' => $bankName,
+                        'account_number' => $accountNumber,
+                        'account_holder' => $accountHolder,
+                        'wa_phone' => $waPhone,
+                    ],
+                ],
+            ];
+        }
+
+        return [
+            'status_code' => 400,
+            'response' => ['success' => false, 'message' => 'Metode pembayaran tujuan tidak didukung.'],
+        ];
+    }
+
+    /**
+     * Batalkan pesanan billing yang masih berstatus pending.
+     */
+    public function cancelBillingTransaction(User $actor, int|string $id, ?string $reason = null): array
+    {
+        $trx = BillingTransaction::find($id);
+        if (!$trx) {
+            return [
+                'status_code' => 404,
+                'response' => ['success' => false, 'message' => 'Transaksi tidak ditemukan.'],
+            ];
+        }
+
+        if (!$actor->isSuperAdmin() && $trx->instansi_id !== $actor->instansi_id) {
+            return [
+                'status_code' => 403,
+                'response' => ['success' => false, 'message' => 'Akses ditolak.'],
+            ];
+        }
+
+        if ($trx->status !== BillingTransactionStatus::PENDING->value) {
+            return [
+                'status_code' => 400,
+                'response' => ['success' => false, 'message' => 'Hanya transaksi berstatus Menunggu Pembayaran (Pending) yang dapat dibatalkan.'],
+            ];
+        }
+
+        $payload = is_array($trx->payload) ? $trx->payload : [];
+        $payload['cancelled_at'] = now()->toIso8601String();
+        $payload['cancelled_by'] = $actor->name;
+        if ($reason) {
+            $payload['cancel_reason'] = $reason;
+        }
+
+        $trx->update([
+            'status' => BillingTransactionStatus::CANCELLED->value,
+            'payload' => $payload,
+        ]);
+
+        AuditLogger::billing(
+            'billing_order_cancelled',
+            "Pesanan {$trx->order_id} dibatalkan oleh {$actor->name}."
+        );
+
+        return [
+            'status_code' => 200,
+            'response' => [
+                'success' => true,
+                'message' => "Pesanan #{$trx->order_id} berhasil dibatalkan.",
+            ],
+        ];
+    }
 }

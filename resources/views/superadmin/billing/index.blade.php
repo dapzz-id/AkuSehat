@@ -649,6 +649,10 @@
                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                                         <i class="fas fa-circle-check text-[10px]"></i> Berhasil / Lunas
                                     </span>
+                                @elseif($trx->status === 'cancelled')
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">
+                                        <i class="fas fa-ban text-[10px]"></i> Dibatalkan
+                                    </span>
                                 @else
                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
                                         <i class="fas fa-circle-xmark text-[10px]"></i> Gagal / Ditolak

@@ -794,6 +794,10 @@
                                 <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 animate-pulse">
                                     Menunggu Verifikasi
                                 </span>
+                            @elseif($trx->status === 'cancelled')
+                                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                                    Dibatalkan
+                                </span>
                             @else
                                 <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-rose-100 text-rose-800">
                                     {{ ucfirst($trx->status) }}
@@ -802,7 +806,7 @@
                         </td>
                         <td class="px-4 py-3 text-xs text-gray-500">{{ $trx->created_at->format('d/m/Y H:i') }}</td>
                         <td class="px-4 py-3 text-center">
-                            <div class="flex items-center justify-center gap-1.5">
+                            <div class="flex items-center justify-center gap-1.5 flex-wrap">
                                 {{-- Tombol Bayar Sekarang untuk Midtrans yang masih Pending --}}
                                 @if($trx->status === 'pending' && ($trx->payment_method === 'midtrans' || str_starts_with($trx->order_id, 'MID-')))
                                     @php
@@ -825,15 +829,26 @@
                                             <span>Bayar Sekarang</span>
                                         </a>
                                     @endif
+
+                                    {{-- Ganti Metode ke Transfer BCA --}}
+                                    <button type="button" 
+                                            onclick="confirmSwitchMethod('{{ $trx->id }}', 'manual_transfer', '{{ $trx->order_id }}')"
+                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors shadow-2xs cursor-pointer active:scale-95"
+                                            title="Ganti metode ke Transfer Bank BCA">
+                                        <i class="fas fa-building-columns text-blue-600"></i>
+                                        <span>Ganti BCA</span>
+                                    </button>
+
+                                    {{-- Batalkan Pesanan --}}
+                                    <button type="button" 
+                                            onclick="confirmCancelOrder('{{ $trx->id }}', '{{ $trx->order_id }}')"
+                                            class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-colors shadow-2xs cursor-pointer active:scale-95"
+                                            title="Batalkan pesanan ini">
+                                        <i class="fas fa-times text-rose-500"></i>
+                                        <span>Batal</span>
+                                    </button>
                                 @endif
 
-                                <a href="{{ route('admin.billing.invoice.pdf', $trx->id) }}?preview=1" 
-                                   target="_blank"
-                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 transition-colors shadow-2xs"
-                                   title="Lihat & Unduh Struk Belanja Resmi (PDF)">
-                                    <i class="fas fa-file-invoice text-emerald-600"></i>
-                                    <span>Struk PDF</span>
-                                </a>
                                 @if($trx->status === 'pending' && ($trx->payment_method === 'manual_transfer' || $trx->payment_method === 'manual_bca' || str_starts_with($trx->order_id, 'BCA-')))
                                     @php
                                         $waDirectUrl = $trx->payload['confirmation_wa_url'] ?? ('https://wa.me/62895383107479?text=' . rawurlencode("Halo Admin Aku Sehat, saya ingin konfirmasi pembayaran order {$trx->order_id}"));
@@ -844,7 +859,33 @@
                                         <i class="fab fa-whatsapp"></i>
                                         <span>Konfirmasi WA</span>
                                     </a>
+
+                                    {{-- Ganti Metode ke Midtrans Snap --}}
+                                    <button type="button" 
+                                            onclick="confirmSwitchMethod('{{ $trx->id }}', 'midtrans', '{{ $trx->order_id }}')"
+                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors shadow-2xs cursor-pointer active:scale-95"
+                                            title="Ganti metode ke Midtrans Snap (QRIS, VA Bank, E-Wallet)">
+                                        <i class="fas fa-bolt text-indigo-600"></i>
+                                        <span>Ganti Midtrans</span>
+                                    </button>
+
+                                    {{-- Batalkan Pesanan --}}
+                                    <button type="button" 
+                                            onclick="confirmCancelOrder('{{ $trx->id }}', '{{ $trx->order_id }}')"
+                                            class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-colors shadow-2xs cursor-pointer active:scale-95"
+                                            title="Batalkan pesanan ini">
+                                        <i class="fas fa-times text-rose-500"></i>
+                                        <span>Batal</span>
+                                    </button>
                                 @endif
+
+                                <a href="{{ route('admin.billing.invoice.pdf', $trx->id) }}?preview=1" 
+                                   target="_blank"
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 transition-colors shadow-2xs"
+                                   title="Lihat & Unduh Struk Belanja Resmi (PDF)">
+                                    <i class="fas fa-file-invoice text-emerald-600"></i>
+                                    <span>Struk PDF</span>
+                                </a>
                             </div>
                         </td>
                     </tr>
@@ -1507,6 +1548,111 @@
         } else {
             alert('Token pembayaran Midtrans tidak ditemukan. Silakan hubungi CS.');
         }
+    }
+
+    function confirmSwitchMethod(trxId, targetMethod, orderId) {
+        const methodLabel = targetMethod === 'midtrans' ? 'Midtrans Snap (QRIS, VA Bank, E-Wallet)' : 'Transfer Bank BCA Manual';
+        if (!confirm(`Apakah Anda yakin ingin mengalihkan metode pembayaran pesanan #${orderId} ke ${methodLabel}?`)) {
+            return;
+        }
+
+        const btn = event.currentTarget;
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Memproses...';
+        }
+
+        fetch(`{{ url('admin/billing/transactions') }}/${trxId}/switch-method`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ target_method: targetMethod })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+
+            if (data.success) {
+                if (targetMethod === 'midtrans' && data.snap_token) {
+                    alert(data.message || 'Metode berhasil dialihkan ke Midtrans Snap. Jendela pembayaran akan terbuka otomatis.');
+                    resumeMidtransPay(data.snap_token, data.order_id, data.redirect_url);
+                } else if (targetMethod === 'manual_transfer') {
+                    alert(data.message || 'Metode berhasil dialihkan ke Transfer BCA.');
+                    if (data.wa_url) {
+                        window.open(data.wa_url, '_blank');
+                    }
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Berhasil mengalihkan metode pembayaran.');
+                    window.location.reload();
+                }
+            } else {
+                alert(data.message || 'Gagal mengalihkan metode pembayaran.');
+            }
+        })
+        .catch(err => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+            console.error('Error switching payment method:', err);
+            alert('Terjadi kesalahan saat mengalihkan metode pembayaran.');
+        });
+    }
+
+    function confirmCancelOrder(trxId, orderId) {
+        if (!confirm(`Apakah Anda yakin ingin membatalkan pesanan #${orderId}? Transaksi yang dibatalkan tidak dapat diproses lagi.`)) {
+            return;
+        }
+
+        const reason = prompt('Masukkan alasan pembatalan (opsional):', 'Ingin mengubah pesanan/metode');
+        if (reason === null) return;
+
+        const btn = event.currentTarget;
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Membatalkan...';
+        }
+
+        fetch(`{{ url('admin/billing/transactions') }}/${trxId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ reason: reason })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+
+            if (data.success) {
+                alert(data.message || 'Pesanan berhasil dibatalkan.');
+                window.location.reload();
+            } else {
+                alert(data.message || 'Gagal membatalkan pesanan.');
+            }
+        })
+        .catch(err => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+            console.error('Error cancelling order:', err);
+            alert('Terjadi kesalahan saat membatalkan pesanan.');
+        });
     }
 
     function verifyMidtransPayment(orderId, showAlertOnPending = true) {
