@@ -650,73 +650,79 @@ class BillingService
      */
     public function processMidtransSnap(User $user, array $validated): array
     {
-        if (!PaymentMethodSetting::isMethodActive('midtrans')) {
-            return [
-                'status_code' => 403,
-                'response' => [
-                    'success' => false,
-                    'message' => 'Metode pembayaran Midtrans sedang dinonaktifkan oleh Administrator.',
-                ],
-            ];
-        }
-
-        $instansi = $user->sekolah ?: Instansi::find($user->instansi_id);
-        if (!$instansi) {
-            return [
-                'status_code' => 404,
-                'response' => ['success' => false, 'message' => 'Instansi Anda tidak ditemukan.'],
-            ];
-        }
-
-        $modeTransaksi = $validated['mode_transaksi'] ?? 'perpanjang';
-        $durasiBulan = (int) ($validated['durasi_bulan'] ?? 1);
-        $tambahKuota = (int) ($validated['tambah_kuota'] ?? 0);
-
-        if ($modeTransaksi === 'perpanjang') {
-            $licenseId = $validated['license_id'] ?? null;
-            $targetLicense = $licenseId ? $this->billingRepository->findLicenseById($licenseId) : null;
-            if (!$targetLicense || $targetLicense->instansi_id !== $instansi->id) {
-                $targetLicense = $instansi->getActiveLicense() ?? $this->billingRepository->getActiveOrLatestLicense((string) $instansi->id);
-            }
-            if (!$targetLicense) {
-                return [
-                    'status_code' => 400,
-                    'response' => ['success' => false, 'message' => 'Tidak ditemukan paket lisensi untuk diperpanjang.'],
-                ];
-            }
-            $kuotaTarget = (int) $targetLicense->kuota_pengguna;
-            $subtotal = $this->calculateTotalAmount(BillingTransactionType::EXTEND_SUBSCRIPTION, $kuotaTarget, $durasiBulan);
-            $tipeTransaksi = BillingTransactionType::EXTEND_SUBSCRIPTION->value;
-            $deskripsiItem = "Perpanjangan Lisensi ({$kuotaTarget} Siswa, {$durasiBulan} Bulan)";
-            $targetLicenseId = $targetLicense->id;
-        } else {
-            if ($tambahKuota <= 0) {
-                return [
-                    'status_code' => 400,
-                    'response' => ['success' => false, 'message' => 'Jumlah kuota tambahan harus lebih dari 0.'],
-                ];
-            }
-            $subtotal = $this->calculateTotalAmount(BillingTransactionType::ADD_QUOTA, $tambahKuota, $durasiBulan);
-            $tipeTransaksi = BillingTransactionType::ADD_QUOTA->value;
-            $deskripsiItem = "Tambah Kuota Baru (+{$tambahKuota} Siswa, {$durasiBulan} Bulan)";
-            $targetLicenseId = null;
-        }
-
-        $pajak11 = round($subtotal * 0.11);
-        $totalNominal = $subtotal + $pajak11;
-        $orderId = 'MID-AKU-' . time() . '-' . strtoupper(Str::random(4));
-
         try {
+            if (!PaymentMethodSetting::isMethodActive('midtrans')) {
+                return [
+                    'status_code' => 403,
+                    'response' => [
+                        'success' => false,
+                        'message' => 'Metode pembayaran Midtrans sedang dinonaktifkan oleh Administrator.',
+                    ],
+                ];
+            }
+
+            $instansi = $user->sekolah ?: Instansi::find($user->instansi_id);
+            if (!$instansi) {
+                return [
+                    'status_code' => 404,
+                    'response' => ['success' => false, 'message' => 'Instansi Anda tidak ditemukan.'],
+                ];
+            }
+
+            $modeTransaksi = $validated['mode_transaksi'] ?? 'perpanjang';
+            $durasiBulan = (int) ($validated['durasi_bulan'] ?? 1);
+            $tambahKuota = (int) ($validated['tambah_kuota'] ?? 0);
+
+            if ($modeTransaksi === 'perpanjang') {
+                $licenseId = $validated['license_id'] ?? null;
+                $targetLicense = $licenseId ? $this->billingRepository->findLicenseById($licenseId) : null;
+                if (!$targetLicense || $targetLicense->instansi_id !== $instansi->id) {
+                    $targetLicense = $instansi->getActiveLicense() ?? $this->billingRepository->getActiveOrLatestLicense((string) $instansi->id);
+                }
+                if (!$targetLicense) {
+                    return [
+                        'status_code' => 400,
+                        'response' => ['success' => false, 'message' => 'Tidak ditemukan paket lisensi untuk diperpanjang.'],
+                    ];
+                }
+                $kuotaTarget = (int) $targetLicense->kuota_pengguna;
+                $subtotal = $this->calculateTotalAmount(BillingTransactionType::PERPANJANG_LISENSI, $kuotaTarget, $durasiBulan);
+                $tipeTransaksi = BillingTransactionType::PERPANJANG_LISENSI->value;
+                $deskripsiItem = "Perpanjangan Lisensi ({$kuotaTarget} Siswa, {$durasiBulan} Bulan)";
+                $targetLicenseId = $targetLicense->id;
+            } else {
+                if ($tambahKuota <= 0) {
+                    return [
+                        'status_code' => 400,
+                        'response' => ['success' => false, 'message' => 'Jumlah kuota tambahan harus lebih dari 0.'],
+                    ];
+                }
+                $subtotal = $this->calculateTotalAmount(BillingTransactionType::TAMBAH_KUOTA, $tambahKuota, $durasiBulan);
+                $tipeTransaksi = BillingTransactionType::TAMBAH_KUOTA->value;
+                $deskripsiItem = "Tambah Kuota Baru (+{$tambahKuota} Siswa, {$durasiBulan} Bulan)";
+                $targetLicenseId = null;
+            }
+
+            $pajak11 = round($subtotal * 0.11);
+            $totalNominal = $subtotal + $pajak11;
+            $orderId = 'MID-AKU-' . time() . '-' . strtoupper(Str::random(4));
+
             $midtransService = new MidtransService();
+            $userEmail = !empty($user->email)
+                ? $user->email
+                : ('admin.' . ($user->username ?: 'instansi') . '@akusehat.neuracakrawira.asia');
+            $userPhone = !empty($user->no_hp) ? $user->no_hp : '081234567890';
+            $customerName = !empty($instansi->nama_instansi) ? $instansi->nama_instansi : ($user->nama ?: 'Admin Instansi');
+
             $snapParams = [
                 'transaction_details' => [
                     'order_id' => $orderId,
                     'gross_amount' => (int) round($totalNominal),
                 ],
                 'customer_details' => [
-                    'first_name' => Str::limit($instansi->nama_instansi ?: $user->name, 45, ''),
-                    'email' => $user->email,
-                    'phone' => $user->no_hp ?: '081234567890',
+                    'first_name' => Str::limit($customerName, 45, ''),
+                    'email' => $userEmail,
+                    'phone' => $userPhone,
                 ],
                 'item_details' => [
                     [
@@ -783,6 +789,7 @@ class BillingService
                 ],
             ];
         } catch (\Throwable $e) {
+            Log::error('processMidtransSnap exception: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return [
                 'status_code' => 500,
                 'response' => [

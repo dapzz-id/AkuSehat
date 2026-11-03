@@ -15,6 +15,12 @@ class MidtransAndPaymentMethodsTest extends TestCase
         $this->assertStringContainsString('Midtrans', PaymentMethod::MIDTRANS->label());
     }
 
+    public function test_billing_transaction_type_enums(): void
+    {
+        $this->assertEquals('perpanjang_lisensi', \App\Modules\Billing\Subscription\Enums\BillingTransactionType::PERPANJANG_LISENSI->value);
+        $this->assertEquals('tambah_kuota', \App\Modules\Billing\Subscription\Enums\BillingTransactionType::TAMBAH_KUOTA->value);
+    }
+
     public function test_midtrans_service_urls_and_environment(): void
     {
         $service = new MidtransService();
