@@ -955,7 +955,7 @@
         <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-md shadow-emerald-500/20">
             <i class="fas fa-check"></i>
         </div>
-        <h3 class="text-xl font-bold text-gray-800 mb-1">Pembayaran Google Pay Berhasil!</h3>
+        <h3 class="text-xl font-bold text-gray-800 mb-1" id="paymentSuccessModalTitle">Pembayaran Berhasil!</h3>
         <p class="text-xs text-gray-500 mb-5" id="successOrderSubtext">Transaksi berhasil diverifikasi.</p>
 
         <div class="bg-gray-50 rounded-2xl p-4 text-left space-y-2 mb-6 border border-gray-100 text-xs">
@@ -1669,12 +1669,33 @@
             if (res.success && res.status === 'success') {
                 const modal = document.getElementById('paymentSuccessModal');
                 if (modal) {
-                    const descEl = document.getElementById('modalSuccessItemDesc');
-                    const totalEl = document.getElementById('modalSuccessTotal');
-                    const orderIdEl = document.getElementById('modalSuccessOrderId');
-                    if (orderIdEl) orderIdEl.textContent = orderId;
-                    if (descEl) descEl.textContent = 'Pembayaran Midtrans Snap Berhasil';
-                    if (totalEl) totalEl.textContent = 'Lunas Otomatis';
+                    const titleEl = document.getElementById('paymentSuccessModalTitle');
+                    if (titleEl) titleEl.textContent = 'Pembayaran Midtrans Snap Berhasil!';
+
+                    const subtextEl = document.getElementById('successOrderSubtext');
+                    if (subtextEl) subtextEl.textContent = 'Pembayaran instan online telah terverifikasi lunas otomatis.';
+
+                    const d = res.data || {};
+                    const orderIdEl = document.getElementById('successOrderId');
+                    if (orderIdEl) orderIdEl.textContent = d.order_id || orderId;
+
+                    const amountEl = document.getElementById('successAmount');
+                    if (amountEl) amountEl.textContent = d.total_dibayar ? ('Rp ' + d.total_dibayar) : '-';
+
+                    const pkgEl = document.getElementById('successPackageKey');
+                    if (pkgEl) pkgEl.textContent = d.license_key || 'Multi-Paket';
+
+                    const quotaEl = document.getElementById('successQuota');
+                    if (quotaEl) quotaEl.textContent = d.kuota_sekarang ? (d.kuota_sekarang + ' ' + LABEL_MEMBER + ' (Total Aktif)') : '-';
+
+                    const expiryEl = document.getElementById('successExpiry');
+                    if (expiryEl) expiryEl.textContent = d.tanggal_berakhir ? (d.tanggal_berakhir + ' (Masa Aktif Paket)') : '-';
+
+                    const modalBtn = document.getElementById('modalDownloadInvoiceBtn');
+                    if (modalBtn && d.transaction_id) {
+                        modalBtn.href = "{{ url('admin/billing/invoice') }}/" + d.transaction_id + "/pdf";
+                    }
+
                     modal.classList.remove('hidden');
                 } else {
                     alert('Pembayaran Berhasil! Lisensi Anda telah aktif.');
@@ -1915,6 +1936,11 @@
         .then(data => {
             resetPayBtn();
             if (data.success) {
+                const titleEl = document.getElementById('paymentSuccessModalTitle');
+                if (titleEl) titleEl.textContent = 'Pembayaran Google Pay Berhasil!';
+                const subtextEl = document.getElementById('successOrderSubtext');
+                if (subtextEl) subtextEl.textContent = 'Transaksi berhasil diverifikasi.';
+
                 document.getElementById('successOrderId').textContent = data.data.order_id;
                 document.getElementById('successAmount').textContent = 'Rp ' + data.data.total_dibayar;
                 document.getElementById('successPackageKey').textContent = data.data.license_key || '-';

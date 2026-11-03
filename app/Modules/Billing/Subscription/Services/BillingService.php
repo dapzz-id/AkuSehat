@@ -880,13 +880,30 @@ class BillingService
             ];
         }
 
-        if ($trx->status === BillingTransactionStatus::SUCCESS->value) {
+        $buildSuccessData = function (BillingTransaction $transaction) {
+            $instansi = $transaction->instansi ?: Instansi::find($transaction->instansi_id);
+            $activeLicense = $instansi ? $instansi->getActiveLicense() : null;
+            $totalActiveQuota = $instansi ? $instansi->getTotalActiveQuota() : 0;
+            $tanggalBerakhir = $activeLicense ? $activeLicense->tanggal_berakhir : null;
+
+            return [
+                'transaction_id' => $transaction->id,
+                'order_id' => $transaction->order_id,
+                'total_dibayar' => number_format($transaction->nominal, 0, ',', '.'),
+                'kuota_sekarang' => $totalActiveQuota,
+                'license_key' => $activeLicense ? $activeLicense->key : ($transaction->payload['license_key'] ?? '-'),
+                'tanggal_berakhir' => $tanggalBerakhir ? $tanggalBerakhir->format('d/m/Y') : '-',
+            ];
+        };
+
+        if ($trx->status === BillingTransactionStatus::SUCCESS->value || $trx->status === BillingTransactionStatus::PAID->value) {
             return [
                 'status_code' => 200,
                 'response' => [
                     'success' => true,
                     'status' => 'success',
                     'message' => 'Pembayaran telah berhasil diverifikasi dan lisensi aktif!',
+                    'data' => $buildSuccessData($trx),
                 ],
             ];
         }
@@ -908,12 +925,15 @@ class BillingService
                     $trx->save();
                 });
 
+                $trx->refresh();
+
                 return [
                     'status_code' => 200,
                     'response' => [
                         'success' => true,
                         'status' => 'success',
                         'message' => 'Pembayaran Midtrans berhasil dikonfirmasi dan lisensi telah aktif!',
+                        'data' => $buildSuccessData($trx),
                     ],
                 ];
             }
