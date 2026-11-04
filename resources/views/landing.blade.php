@@ -79,30 +79,27 @@
     <!-- ============================================================== -->
     <!-- TOP NAVIGATION BAR (Sticky with Blur & Mobile Drawer)          -->
     <!-- ============================================================== -->
-    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/80 transition-all duration-300" id="main-header">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs transition-all duration-300" id="main-header">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <!-- Brand Logo -->
             <a href="{{ url('/') }}" class="flex items-center gap-3 group">
                 <img src="{{ asset('src/aku_sehat_icon.png') }}" alt="Aku Sehat" class="w-10 h-10 object-contain group-hover:scale-105 transition-transform duration-300">
                 <div class="flex flex-col">
-                    <span class="font-extrabold text-slate-900 text-lg leading-tight tracking-tight flex items-center gap-1.5">
+                    <span class="font-black text-slate-900 text-lg leading-tight tracking-tight flex items-center gap-1.5">
                         Aku Sehat
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">V1</span>
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">V1</span>
                     </span>
-                    <span class="text-[10px] text-emerald-700 font-medium tracking-wide">Neura Cakrawira Asia</span>
+                    <span class="text-[10px] text-emerald-700 font-semibold tracking-wide">Neura Cakrawira Asia</span>
                 </div>
             </a>
 
             <!-- Desktop Navigation Links -->
-            <nav class="hidden lg:flex items-center gap-7 text-sm font-semibold text-slate-600">
+            <nav class="hidden lg:flex items-center gap-6 xl:gap-8 text-sm font-semibold text-slate-600">
                 <a href="#tentang" class="hover:text-emerald-700 transition-colors">Tentang</a>
                 <a href="#fitur" class="hover:text-emerald-700 transition-colors">Fitur Unggulan</a>
-                <a href="#demo-section" class="flex items-center gap-1.5 text-emerald-700 hover:text-emerald-800 transition-colors font-bold">
+                <a href="#demo-section" class="inline-flex items-center gap-1.5 text-emerald-700 hover:text-emerald-800 transition-colors font-bold">
                     <span>Demo & Walkthrough</span>
-                    <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">LIVE</span>
                 </a>
                 <a href="#ekosistem" class="hover:text-emerald-700 transition-colors">Peran & Akses</a>
                 <a href="#paket" class="hover:text-emerald-700 transition-colors">Paket & Lisensi</a>
@@ -110,19 +107,19 @@
             </nav>
 
             <!-- Action Buttons (Login / Dashboard / Demo) -->
-            <div class="hidden sm:flex items-center gap-3">
-                <button type="button" onclick="openDemoModal('admin')" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-emerald-800 bg-slate-100 hover:bg-emerald-50 border border-slate-200 transition-all">
-                    <i class="fas fa-play text-emerald-800 text-[10px]"></i>
+            <div class="hidden lg:flex items-center gap-3">
+                <button type="button" onclick="openDemoModal('admin')" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-emerald-800 bg-slate-100 hover:bg-emerald-50 border border-slate-200 shadow-2xs transition-all">
+                    <i class="fas fa-play text-emerald-700 text-[10px]"></i>
                     <span>Walkthrough Web</span>
                 </button>
 
                 @auth
-                    <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-800 hover:bg-emerald-900 shadow-sm hover:shadow-md transition-all">
+                    <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 shadow-sm hover:shadow-md transition-all">
                         <i class="fas fa-columns"></i>
                         <span>Buka Dashboard</span>
                     </a>
                 @else
-                    <a href="{{ route('login') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-800 hover:bg-emerald-900 shadow-sm hover:shadow-md transition-all">
+                    <a href="{{ route('login') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 shadow-sm hover:shadow-md transition-all">
                         <i class="fas fa-arrow-right-to-bracket"></i>
                         <span>Masuk Portal</span>
                     </a>
@@ -938,13 +935,13 @@
             <div class="text-center max-w-3xl mx-auto mb-14">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 mb-3">
                     <i class="fas fa-credit-card"></i>
-                    <span>TRANSPARAN & MUDAH</span>
+                    <span>TARIF RESMI & TRANSPARAN</span>
                 </div>
                 <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight mb-4">
                     Paket Kuota Lisensi Sesuai Kapasitas Sekolah
                 </h2>
                 <p class="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
-                    Fleksibel disesuaikan dengan jumlah siswa Anda. Didukung pembayaran instan otomatis via <strong>Midtrans Snap</strong> (QRIS, VA Bank, GoPay, ShopeePay) serta Transfer Manual BCA resmi.
+                    Biaya resmi terstandarisasi <strong class="text-emerald-700 font-extrabold">Rp 5.000 / siswa / tahun (5k/siswa)</strong> (All-In Seluruh Modul). Didukung pembayaran instan otomatis via <strong>Midtrans Snap</strong> (QRIS, VA Bank, GoPay, ShopeePay) serta Transfer BCA resmi.
                 </p>
             </div>
 
@@ -953,7 +950,8 @@
                     <div>
                         <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Paket Angkatan</div>
                         <h3 class="text-xl font-extrabold text-slate-900 mb-1">+100 Siswa</h3>
-                        <div class="text-2xl font-black text-slate-900 my-4">Rp 500.000 <span class="text-xs font-normal text-slate-500">/ periode</span></div>
+                        <div class="text-2xl font-black text-slate-900 mt-4 mb-0.5">Rp 500.000 <span class="text-xs font-normal text-slate-500">/ tahun</span></div>
+                        <div class="text-xs font-bold text-emerald-700 mb-4">Rp 5.000 / siswa / tahun (5k/siswa)</div>
                         <p class="text-xs text-slate-600 mb-6">Cocok untuk 1 tingkatan angkatan atau sekolah rintisan.</p>
                         <ul class="text-xs text-slate-600 space-y-2.5 mb-6">
                             <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-800"></i> Kuota 100 Akun Siswa</li>
@@ -974,7 +972,8 @@
                     <div>
                         <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Sekolah Menengah</div>
                         <h3 class="text-xl font-extrabold text-white mb-1">+250 Siswa</h3>
-                        <div class="text-3xl font-black text-white my-4">Rp 1.250.000 <span class="text-xs font-normal text-slate-400">/ periode</span></div>
+                        <div class="text-3xl font-black text-white mt-4 mb-0.5">Rp 1.250.000 <span class="text-xs font-normal text-slate-400">/ tahun</span></div>
+                        <div class="text-xs font-bold text-emerald-400 mb-4">Rp 5.000 / siswa / tahun (5k/siswa)</div>
                         <p class="text-xs text-slate-300 mb-6">Pilihan ideal untuk SMP / SMA / SMK skala menengah.</p>
                         <ul class="text-xs text-slate-200 space-y-2.5 mb-6">
                             <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-400"></i> Kuota 250 Akun Siswa</li>
@@ -993,7 +992,8 @@
                     <div>
                         <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Yayasan / Besar</div>
                         <h3 class="text-xl font-extrabold text-slate-900 mb-1">+1.000 Siswa</h3>
-                        <div class="text-2xl font-black text-slate-900 my-4">Rp 5.000.000 <span class="text-xs font-normal text-slate-500">/ periode</span></div>
+                        <div class="text-2xl font-black text-slate-900 mt-4 mb-0.5">Rp 5.000.000 <span class="text-xs font-normal text-slate-500">/ tahun</span></div>
+                        <div class="text-xs font-bold text-emerald-700 mb-4">Rp 5.000 / siswa / tahun (5k/siswa)</div>
                         <p class="text-xs text-slate-600 mb-6">Untuk sekolah besar, yayasan pendidikan, atau pesantren.</p>
                         <ul class="text-xs text-slate-600 space-y-2.5 mb-6">
                             <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-800"></i> Kuota 1.000+ Akun Siswa</li>
@@ -1009,7 +1009,7 @@
             </div>
 
             <div class="mt-8 text-center text-xs text-slate-500">
-                <i class="fas fa-circle-info text-emerald-800 mr-1"></i> Admin Instansi dapat membeli tambahan kuota satuan secara fleksibel kapan saja langsung dari menu Billing.
+                <i class="fas fa-circle-info text-emerald-800 mr-1"></i> Biaya resmi terstandarisasi Rp 5.000 / siswa / tahun (All-In). Admin Instansi dapat membeli tambahan kuota satuan secara fleksibel kapan saja langsung dari menu Billing.
             </div>
         </div>
     </section>
@@ -1506,33 +1506,291 @@
                         `
                     },
                     {
+                        id: 'femhealth',
+                        title: 'Siklus Menstruasi & Peminjaman Pita UKS / Cuti Haid',
+                        url: 'https://akusehat.neuracakrawira.asia/admin/femhealth',
+                        html: `
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-sm">
+                                        <i class="fas fa-venus"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-extrabold text-sm text-slate-900">Siklus Menstruasi & Peminjaman Pita UKS</h4>
+                                        <p class="text-[11px] text-slate-500">Pemantauan kesehatan reproduksi siswi & sirkulasi pita UKS</p>
+                                    </div>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-pink-50 text-pink-700 border border-pink-200">
+                                    <i class="fas fa-chart-pie mr-1"></i> Monitoring Mode
+                                </span>
+                            </div>
+
+                            <!-- Warning Banner Keterlambatan Pita -->
+                            <div class="p-3 bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl border border-rose-200 mb-3 flex items-start gap-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center text-xs shrink-0 mt-0.5">
+                                    <i class="fas fa-triangle-exclamation"></i>
+                                </div>
+                                <div class="text-xs">
+                                    <div class="font-bold text-rose-900">Peringatan: 1 Siswi Melebihi Batas Waktu 7 Hari</div>
+                                    <div class="text-[11px] text-rose-700 mt-0.5">Masa pinjam pita maksimal 7 hari. Siswi terlambat terdeteksi otomatis untuk evaluasi medis dan kedisiplinan.</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden text-xs">
+                                <div class="grid grid-cols-6 font-bold text-slate-500 p-2.5 bg-slate-50 border-b border-slate-200">
+                                    <span>Siswi</span>
+                                    <span>Kelas / Divisi</span>
+                                    <span>Tgl Pinjam</span>
+                                    <span>Batas Tempo</span>
+                                    <span>Status Medis</span>
+                                    <span class="text-right">Tindakan</span>
+                                </div>
+                                <div class="grid grid-cols-6 p-2.5 border-b border-slate-100 items-center">
+                                    <div><strong class="text-slate-900">Maya Putri</strong><div class="text-[10px] text-slate-400">NIS: 2026115</div></div>
+                                    <span class="text-slate-600">XI-MM 2</span>
+                                    <span class="font-mono text-slate-700">28 Okt 2026</span>
+                                    <span class="font-mono text-rose-600 font-bold">04 Nov 2026</span>
+                                    <span><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 animate-pulse">Telat 1 Hari (Warning)</span></span>
+                                    <span class="text-right"><button class="px-2 py-1 rounded bg-rose-600 text-white text-[10px] font-bold">Rujuk BK</button></span>
+                                </div>
+                                <div class="grid grid-cols-6 p-2.5 items-center">
+                                    <div><strong class="text-slate-900">Annisa Larasati</strong><div class="text-[10px] text-slate-400">NIS: 2026118</div></div>
+                                    <span class="text-slate-600">X-RPL 1</span>
+                                    <span class="font-mono text-slate-700">02 Nov 2026</span>
+                                    <span class="font-mono text-slate-700">09 Nov 2026</span>
+                                    <span><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Normal (Sisa 5 Hari)</span></span>
+                                    <span class="text-right text-emerald-700 font-bold"><i class="fas fa-check-circle"></i> Terpantau</span>
+                                </div>
+                            </div>
+                        `
+                    },
+                    {
+                        id: 'divisi',
+                        title: 'Data Divisi & Kelas Terdaftar SMKS TELKOMUNIKASI TELESANDI',
+                        url: 'https://akusehat.neuracakrawira.asia/admin/divisi',
+                        html: `
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm">
+                                        <i class="fas fa-school"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-extrabold text-sm text-slate-900">Data Divisi & Kelas</h4>
+                                        <p class="text-[11px] text-slate-500">Struktur kelas dan pengelompokan anggota aktif sekolah</p>
+                                    </div>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-700 text-white flex items-center gap-1 shadow-xs">
+                                    <i class="fas fa-plus"></i> Tambah Divisi Baru
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-3 mb-3">
+                                <div class="p-3 bg-white rounded-xl border border-slate-200">
+                                    <div class="text-[10px] text-slate-500 uppercase font-semibold">Total Divisi / Kelas</div>
+                                    <div class="text-xl font-black text-slate-900 mt-0.5">12 Kelas</div>
+                                    <div class="text-[9px] text-emerald-700 font-bold mt-0.5">3 Tingkatan (X, XI, XII)</div>
+                                </div>
+                                <div class="p-3 bg-white rounded-xl border border-slate-200">
+                                    <div class="text-[10px] text-slate-500 uppercase font-semibold">Total Siswa Terdaftar</div>
+                                    <div class="text-xl font-black text-slate-900 mt-0.5">450 Siswa</div>
+                                    <div class="text-[9px] text-slate-400 mt-0.5">Terhubung ke Aplikasi Mobile</div>
+                                </div>
+                                <div class="p-3 bg-white rounded-xl border border-slate-200">
+                                    <div class="text-[10px] text-slate-500 uppercase font-semibold">Sinkronisasi Lisensi</div>
+                                    <div class="text-xl font-black text-emerald-700 mt-0.5">100% Valid</div>
+                                    <div class="text-[9px] text-emerald-600 font-bold mt-0.5">Kuota Multi-Paket Aktif</div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-3 text-xs">
+                                <div class="p-3 bg-white rounded-xl border border-slate-200 border-t-4 border-t-emerald-600">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-extrabold text-slate-900">Kelas X-RPL 1</span>
+                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold">36 Siswa</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-500 mt-1">Wali Kelas: Budi Santoso, S.Kom</p>
+                                    <div class="mt-2 pt-2 border-t border-slate-100 flex justify-between text-[10px] text-emerald-700 font-bold">
+                                        <span>Skrining Lengkap</span>
+                                        <span class="cursor-pointer hover:underline">Kelola Siswa →</span>
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-white rounded-xl border border-slate-200 border-t-4 border-t-sky-600">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-extrabold text-slate-900">Kelas XI-TKJ 2</span>
+                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 font-bold">34 Siswa</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-500 mt-1">Wali Kelas: Siti Rahma, M.Pd</p>
+                                    <div class="mt-2 pt-2 border-t border-slate-100 flex justify-between text-[10px] text-sky-700 font-bold">
+                                        <span>Skrining Lengkap</span>
+                                        <span class="cursor-pointer hover:underline">Kelola Siswa →</span>
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-white rounded-xl border border-slate-200 border-t-4 border-t-rose-600">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-extrabold text-slate-900">Kelas XII-MM 1</span>
+                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 font-bold">32 Siswa</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-500 mt-1">Wali Kelas: Hendra Kurniawan</p>
+                                    <div class="mt-2 pt-2 border-t border-slate-100 flex justify-between text-[10px] text-rose-700 font-bold">
+                                        <span>Skrining Lengkap</span>
+                                        <span class="cursor-pointer hover:underline">Kelola Siswa →</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `
+                    },
+                    {
+                        id: 'users',
+                        title: 'Manajemen Data Pengguna & Akun Siswa Terpadu',
+                        url: 'https://akusehat.neuracakrawira.asia/admin/users',
+                        html: `
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-extrabold text-sm text-slate-900">Manajemen Akun Siswa & Anggota</h4>
+                                        <p class="text-[11px] text-slate-500">Pendaftaran akun, alokasi lisensi, dan hak akses mobile</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white flex items-center gap-1 shadow-xs">
+                                        <i class="fas fa-file-import"></i> Import Excel
+                                    </span>
+                                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-700 text-white flex items-center gap-1 shadow-xs">
+                                        <i class="fas fa-plus"></i> Tambah User
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden text-xs">
+                                <div class="grid grid-cols-6 font-bold text-slate-500 p-2.5 bg-slate-50 border-b border-slate-200">
+                                    <span>Nama Lengkap</span>
+                                    <span>NIS / Identitas</span>
+                                    <span>Divisi / Kelas</span>
+                                    <span>Peran Akun</span>
+                                    <span>Lisensi Terkait</span>
+                                    <span class="text-right">Status</span>
+                                </div>
+                                <div class="grid grid-cols-6 p-2.5 border-b border-slate-100 items-center">
+                                    <div><strong class="text-slate-900">Aditya Pratama</strong><div class="text-[10px] text-slate-400">aditya@student.sch.id</div></div>
+                                    <span class="font-mono text-slate-700">2026101</span>
+                                    <span class="text-slate-600">XII-RPL 1</span>
+                                    <span class="text-emerald-700 font-bold">Siswa</span>
+                                    <span class="font-mono text-[10px] text-slate-500">RDVZ-CS0T-7ARC</span>
+                                    <span class="text-right"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Aktif</span></span>
+                                </div>
+                                <div class="grid grid-cols-6 p-2.5 border-b border-slate-100 items-center">
+                                    <div><strong class="text-slate-900">Bagas Mahardika</strong><div class="text-[10px] text-slate-400">bagas@student.sch.id</div></div>
+                                    <span class="font-mono text-slate-700">2026102</span>
+                                    <span class="text-slate-600">XII-RPL 1</span>
+                                    <span class="text-emerald-700 font-bold">Siswa</span>
+                                    <span class="font-mono text-[10px] text-slate-500">RDVZ-CS0T-7ARC</span>
+                                    <span class="text-right"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Aktif</span></span>
+                                </div>
+                                <div class="grid grid-cols-6 p-2.5 items-center">
+                                    <div><strong class="text-slate-900">Citra Kirana</strong><div class="text-[10px] text-slate-400">citra@student.sch.id</div></div>
+                                    <span class="font-mono text-slate-700">2026103</span>
+                                    <span class="text-slate-600">XI-TKJ 2</span>
+                                    <span class="text-emerald-700 font-bold">Siswi</span>
+                                    <span class="font-mono text-[10px] text-slate-500">RDVZ-CS0T-7ARC</span>
+                                    <span class="text-right"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Aktif</span></span>
+                                </div>
+                            </div>
+                        `
+                    },
+                    {
                         id: 'billing',
-                        title: 'Langganan Kuota & Billing Midtrans Snap Otomatis',
+                        title: 'Langganan Kuota & Billing Midtrans Snap (Rp 5.000 / Siswa / Tahun)',
                         url: 'https://akusehat.neuracakrawira.asia/admin/billing',
                         html: `
-                            <div class="p-4 rounded-xl bg-gradient-to-r from-emerald-950 to-slate-900 text-white flex justify-between items-center mb-3">
-                                <div>
-                                    <h4 class="font-bold text-sm">Pembayaran Instan Otomatis (Midtrans Snap)</h4>
-                                    <p class="text-[11px] text-emerald-200">Didukung QRIS, VA Bank (BCA/Mandiri/BRI), ShopeePay, dan Struk PDF Resmi</p>
+                            <!-- Top Overview Cards -->
+                            <div class="grid grid-cols-3 gap-3 mb-3 text-xs">
+                                <div class="p-3 bg-white rounded-xl border border-slate-200">
+                                    <div class="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
+                                        <span>Status Layanan</span>
+                                        <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px] font-bold">Aktif</span>
+                                    </div>
+                                    <div class="text-base font-black text-slate-900 mt-1">1 Paket Aktif</div>
+                                    <div class="text-[10px] text-emerald-700 font-semibold mt-0.5">335 Hari Sisa Terdekat</div>
+                                    <div class="text-[9px] font-mono text-slate-400 truncate mt-1">Key: RDVZ-CS0T-7ARC-ISNQ</div>
                                 </div>
-                                <span class="px-2.5 py-1 rounded text-xs font-bold bg-emerald-400 text-slate-950">VERIFIKASI REALTIME</span>
+
+                                <div class="p-3 bg-white rounded-xl border border-slate-200">
+                                    <div class="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
+                                        <span>Total Kuota Siswa</span>
+                                        <span class="text-[10px] font-bold text-emerald-700">90%</span>
+                                    </div>
+                                    <div class="text-base font-black text-slate-900 mt-1">450 <span class="text-xs font-normal text-slate-400">/ 500 Siswa</span></div>
+                                    <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden my-1">
+                                        <div class="h-1.5 bg-emerald-600 rounded-full" style="width: 90%"></div>
+                                    </div>
+                                    <div class="text-[9px] text-slate-500">Sisa Slot: <strong class="text-slate-800">50 Siswa Tersedia</strong></div>
+                                </div>
+
+                                <div class="p-3 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-xl">
+                                    <div class="text-[10px] font-bold text-emerald-400 uppercase">Tarif Lisensi Resmi</div>
+                                    <div class="text-sm font-black text-white mt-1">Rp 5.000 / siswa / tahun</div>
+                                    <div class="text-[10px] text-slate-300 mt-0.5">5k / siswa / tahun (All-In)</div>
+                                    <div class="text-[9px] text-emerald-300 mt-1 flex items-center gap-1"><i class="fas fa-shield-check"></i> Multi-Bucket Midtrans</div>
+                                </div>
                             </div>
-                            <div class="grid grid-cols-3 gap-3 text-xs">
-                                <div class="p-3 bg-white rounded-xl border border-slate-200">
-                                    <div class="text-[10px] text-slate-400">Order ID Terakhir</div>
-                                    <div class="font-mono font-bold text-slate-900 mt-1">MID-AKU-1793717539</div>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 mt-2 inline-block">Berhasil</span>
+
+                            <!-- Checkout & Billing Box -->
+                            <div class="p-4 bg-white rounded-xl border border-slate-200 text-xs space-y-3">
+                                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                                    <div>
+                                        <h4 class="font-bold text-sm text-slate-900">Formulir Billing & Transaksi Lisensi Sekolah</h4>
+                                        <p class="text-[11px] text-slate-500">Biaya langganan resmi <strong class="text-emerald-700">Rp 5.000 / siswa / tahun (5k/siswa)</strong>. Akun siswa didaftarkan langsung oleh Admin.</p>
+                                    </div>
+                                    <span class="px-2.5 py-1 rounded bg-emerald-50 text-emerald-800 font-bold text-[10px] border border-emerald-200">
+                                        <i class="fas fa-bolt text-emerald-600 mr-1"></i> VERIFIKASI REALTIME
+                                    </span>
                                 </div>
-                                <div class="p-3 bg-white rounded-xl border border-slate-200">
-                                    <div class="text-[10px] text-slate-400">Metode Digunakan</div>
-                                    <div class="font-bold text-slate-800 mt-1 flex items-center gap-1.5"><i class="fas fa-qrcode text-emerald-700"></i> QRIS Instan</div>
-                                    <div class="text-[10px] text-slate-500 mt-1">Rp 500.000 (100 Siswa)</div>
+
+                                <div class="grid grid-cols-2 gap-3">
+                                    <!-- Paket Duration & Size Selection -->
+                                    <div class="p-3 rounded-lg border-2 border-emerald-600 bg-emerald-50/40">
+                                        <div class="flex justify-between items-center text-[10px] font-bold text-emerald-800">
+                                            <span>PAKET TERPILIH</span>
+                                            <i class="fas fa-check-circle text-emerald-600"></i>
+                                        </div>
+                                        <div class="text-sm font-black text-slate-900 mt-1">+100 Siswa (1 Tahun)</div>
+                                        <div class="text-xs font-bold text-emerald-700 mt-0.5">Rp 500.000 / tahun <span class="text-[10px] font-normal text-slate-500">(5k/siswa/thn)</span></div>
+                                        <div class="text-[10px] text-slate-500 mt-1">Termasuk PPN 11%: Total <strong class="text-slate-800">Rp 555.000</strong></div>
+                                    </div>
+
+                                    <!-- Payment Method (Midtrans Snap) -->
+                                    <div class="p-3 rounded-lg border border-slate-200 bg-slate-900 text-white flex flex-col justify-between">
+                                        <div>
+                                            <div class="flex justify-between items-center text-[10px] text-emerald-400 font-bold">
+                                                <span>⚡ MIDTRANS SNAP GATEWAY</span>
+                                                <span class="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[9px]">OTOMATIS</span>
+                                            </div>
+                                            <div class="text-[11px] text-slate-300 mt-1">QRIS (BCA, GoPay, OVO), Virtual Account, ShopeePay</div>
+                                        </div>
+                                        <div class="mt-2 pt-2 border-t border-slate-800 flex justify-between items-center">
+                                            <span class="text-[10px] text-slate-400">Total Tagihan:</span>
+                                            <span class="font-mono font-bold text-emerald-400 text-xs">Rp 555.000</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="p-3 bg-white rounded-xl border border-slate-200 flex flex-col justify-between">
-                                    <div class="text-[10px] text-slate-400">Struk & Faktur Pajak</div>
-                                    <button class="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 font-bold border border-emerald-200 hover:bg-emerald-100 transition-colors mt-2 text-[11px]">
-                                        <i class="fas fa-file-pdf mr-1"></i> Unduh Struk Resmi
-                                    </button>
+
+                                <!-- Action Buttons -->
+                                <div class="flex items-center justify-between pt-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        <span class="text-[10px] text-slate-500">Order ID: <strong class="font-mono text-slate-700">MID-AKU-1793717539</strong></span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 font-bold border border-emerald-200 hover:bg-emerald-100 transition-colors text-[11px] flex items-center gap-1">
+                                            <i class="fas fa-file-pdf"></i> Unduh Struk Resmi (PDF)
+                                        </button>
+                                        <button class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-[11px] shadow-sm flex items-center gap-1.5">
+                                            <i class="fas fa-bolt"></i> Bayar Instan Otomatis
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         `
@@ -1639,6 +1897,45 @@
                                 </div>
                             </div>
                         `
+                    },
+                    {
+                        id: 'kesehatan',
+                        title: 'Monitoring Siswa Indikasi Anomali & Rekomendasi Medis BK',
+                        url: 'https://akusehat.neuracakrawira.asia/admin/kesehatan',
+                        html: `
+                            <div class="flex justify-between items-center mb-3">
+                                <div>
+                                    <h4 class="font-extrabold text-sm text-slate-900">Daftar Rujukan & Siswa Anomali Medis</h4>
+                                    <p class="text-[11px] text-slate-500">Siswa dengan status gizi kurang/obesitas berat atau anemia yang membutuhkan konseling</p>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                    3 Siswa Perlu Intervensi
+                                </span>
+                            </div>
+                            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden text-xs">
+                                <div class="grid grid-cols-5 font-bold text-slate-500 p-2.5 bg-slate-50 border-b border-slate-200">
+                                    <span>Nama Siswa</span>
+                                    <span>Kelas</span>
+                                    <span>Kondisi Klinis</span>
+                                    <span>Rekomendasi UKS</span>
+                                    <span class="text-right">Tindakan Konselor</span>
+                                </div>
+                                <div class="grid grid-cols-5 p-2.5 border-b border-slate-100 items-center">
+                                    <div><strong class="text-slate-900">Intan Permata</strong><div class="text-[10px] text-slate-400">NIS: 2026105</div></div>
+                                    <span class="text-slate-600">XI-MM 2</span>
+                                    <span class="text-rose-600 font-bold">Hb 10.4 g/dL (Anemia)</span>
+                                    <span class="text-slate-500">Konsumsi TTD + Konseling Pola Makan</span>
+                                    <span class="text-right"><button class="px-2 py-1 rounded bg-teal-700 text-white text-[10px] font-bold">Mulai Sesi</button></span>
+                                </div>
+                                <div class="grid grid-cols-5 p-2.5 items-center">
+                                    <div><strong class="text-slate-900">Citra Kirana</strong><div class="text-[10px] text-slate-400">NIS: 2026103</div></div>
+                                    <span class="text-slate-600">XI-TKJ 2</span>
+                                    <span class="text-sky-700 font-bold">IMT 16.23 (Gizi Kurang)</span>
+                                    <span class="text-slate-500">Edukasi Gizi Seimbang & Sarapan</span>
+                                    <span class="text-right"><button class="px-2 py-1 rounded bg-teal-700 text-white text-[10px] font-bold">Mulai Sesi</button></span>
+                                </div>
+                            </div>
+                        `
                     }
                 ]
             },
@@ -1718,6 +2015,36 @@
                         `
                     },
                     {
+                        id: 'hb',
+                        title: 'Input Tes Rapid Hemoglobin (Hb) di Lapangan UKS',
+                        url: 'https://akusehat.neuracakrawira.asia/admin/hb/create',
+                        html: `
+                            <div class="p-3.5 bg-white rounded-xl border border-slate-200 mb-3">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-bold text-sm text-slate-900">Entri Hasil Rapid Test Hb Siswi</h4>
+                                    <span class="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">Skrining Anemia Cepat</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2.5 text-xs">
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 font-semibold">Pilih Siswi</label>
+                                        <div class="p-1.5 bg-slate-100 rounded border border-slate-300 font-bold">Dewi Sartika (X-RPL 1)</div>
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 font-semibold">Kadar Hb Terukur (g/dL)</label>
+                                        <div class="p-1.5 bg-white rounded border border-emerald-500 font-mono font-bold text-emerald-800">13.4 g/dL</div>
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 font-semibold">Klasifikasi Medis Langsung</label>
+                                        <div class="p-1.5 bg-emerald-100 rounded border border-emerald-300 font-bold text-emerald-900">Normal (Aman)</div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 text-right">
+                                    <button class="px-3 py-1.5 rounded-lg bg-emerald-700 text-white font-bold text-xs shadow-xs"><i class="fas fa-save mr-1"></i> Simpan Catatan Hb</button>
+                                </div>
+                            </div>
+                        `
+                    },
+                    {
                         id: 'femhealth',
                         title: 'Validasi & Sirkulasi Peminjaman Fasilitas/Pita UKS',
                         url: 'https://akusehat.neuracakrawira.asia/admin/femhealth',
@@ -1756,12 +2083,12 @@
         };
 
         let currentActiveRole = 'admin';
-        let currentRoleScreenIndex = 0;
+        let currentActiveScreenId = 'dashboard';
 
         function setRoleWebDemo(roleKey) {
             currentActiveRole = roleKey;
-            currentRoleScreenIndex = 0;
             const data = rolesData[roleKey];
+            currentActiveScreenId = data.screens[0].id;
 
             ['admin', 'consultant', 'monitor'].forEach(r => {
                 const pill = document.getElementById('role-pill-' + r);
@@ -1782,13 +2109,23 @@
             renderActiveScreen();
         }
 
+        function setWebScreenById(screenId) {
+            const data = rolesData[currentActiveRole];
+            const found = data.screens.find(s => s.id === screenId);
+            if (found) {
+                currentActiveScreenId = screenId;
+                renderSidebarLinks();
+                renderActiveScreen();
+            }
+        }
+
         function renderSidebarLinks() {
             const data = rolesData[currentActiveRole];
             const container = document.getElementById('sidebar-links-container');
             container.innerHTML = '';
 
-            data.sidebarLinks.forEach((link, idx) => {
-                const isActive = (idx === currentRoleScreenIndex);
+            data.sidebarLinks.forEach((link) => {
+                const isActive = (link.id === currentActiveScreenId);
                 const a = document.createElement('div');
                 a.className = `group flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer transition-all duration-200 ${
                     isActive 
@@ -1796,12 +2133,7 @@
                     : 'text-slate-300 hover:bg-white/10 hover:text-white'
                 }`;
                 a.onclick = () => {
-                    const screenIdx = data.screens.findIndex(s => s.id === link.id);
-                    if (screenIdx !== -1) {
-                        currentRoleScreenIndex = screenIdx;
-                        renderSidebarLinks();
-                        renderActiveScreen();
-                    }
+                    setWebScreenById(link.id);
                 };
                 a.innerHTML = `
                     <div class="w-6 h-6 rounded-lg flex items-center justify-center text-xs ${isActive ? 'bg-white/20 text-white' : 'bg-white/5 text-emerald-400'}">
@@ -1815,7 +2147,8 @@
 
         function renderActiveScreen() {
             const data = rolesData[currentActiveRole];
-            const screen = data.screens[currentRoleScreenIndex] || data.screens[0];
+            const screen = data.screens.find(s => s.id === currentActiveScreenId) || data.screens[0];
+            currentActiveScreenId = screen.id;
 
             document.getElementById('web-url-bar').innerText = screen.url;
             document.getElementById('current-screen-title').innerText = screen.title;
@@ -1824,14 +2157,18 @@
 
         function nextWebScreen() {
             const data = rolesData[currentActiveRole];
-            currentRoleScreenIndex = (currentRoleScreenIndex + 1) % data.screens.length;
+            const currentIndex = data.screens.findIndex(s => s.id === currentActiveScreenId);
+            const nextIndex = (currentIndex + 1) % data.screens.length;
+            currentActiveScreenId = data.screens[nextIndex].id;
             renderSidebarLinks();
             renderActiveScreen();
         }
 
         function prevWebScreen() {
             const data = rolesData[currentActiveRole];
-            currentRoleScreenIndex = (currentRoleScreenIndex - 1 + data.screens.length) % data.screens.length;
+            const currentIndex = data.screens.findIndex(s => s.id === currentActiveScreenId);
+            const prevIndex = (currentIndex - 1 + data.screens.length) % data.screens.length;
+            currentActiveScreenId = data.screens[prevIndex].id;
             renderSidebarLinks();
             renderActiveScreen();
         }
@@ -1884,28 +2221,28 @@
                     title: 'Dashboard Admin Instansi: Analitik & Status Gizi Sekolah',
                     cursorTarget: { x: '82%', y: '16%' },
                     cursorText: 'Catat Skrining',
-                    render: () => rolesData.admin.screens[0].html
+                    render: () => (rolesData.admin.screens.find(s => s.id === 'dashboard') || rolesData.admin.screens[0]).html
                 },
                 {
                     start: 15, end: 30,
                     title: 'Skrining Antropometri: Input TB/BB & Kalkulasi Otomatis IMT',
                     cursorTarget: { x: '75%', y: '65%' },
                     cursorText: 'Simpan Data',
-                    render: () => rolesData.admin.screens[1].html
+                    render: () => (rolesData.admin.screens.find(s => s.id === 'kesehatan') || rolesData.admin.screens[1]).html
                 },
                 {
                     start: 30, end: 45,
                     title: 'Pusat Hemoglobin: Klasifikasi Anemia & Intervensi Medis',
                     cursorTarget: { x: '80%', y: '60%' },
                     cursorText: 'Rujuk Anemia',
-                    render: () => rolesData.admin.screens[2].html
+                    render: () => (rolesData.admin.screens.find(s => s.id === 'hb') || rolesData.admin.screens[2]).html
                 },
                 {
                     start: 45, end: 60,
-                    title: 'Langganan & Kuota: Aktivasi Midtrans Snap & Struk PDF Resmi',
+                    title: 'Langganan & Kuota: Aktivasi Midtrans Snap & Struk PDF Resmi (5k/siswa/thn)',
                     cursorTarget: { x: '80%', y: '80%' },
                     cursorText: 'Unduh Struk PDF',
-                    render: () => rolesData.admin.screens[3].html
+                    render: () => (rolesData.admin.screens.find(s => s.id === 'billing') || rolesData.admin.screens[6]).html
                 }
             ],
             consultant: [
@@ -1914,21 +2251,21 @@
                     title: 'Dashboard Health Consultant: Pemantauan Siswa Binaan',
                     cursorTarget: { x: '35%', y: '45%' },
                     cursorText: 'Lihat Tiket Masuk',
-                    render: () => rolesData.consultant.screens[0].html
+                    render: () => (rolesData.consultant.screens.find(s => s.id === 'dashboard') || rolesData.consultant.screens[0]).html
                 },
                 {
                     start: 20, end: 40,
                     title: 'Konseling SafeSpace: Merespons Tiket & Jadwalkan Sesi Konseling',
                     cursorTarget: { x: '85%', y: '50%' },
                     cursorText: 'Jadwalkan Konseling',
-                    render: () => rolesData.consultant.screens[1].html
+                    render: () => (rolesData.consultant.screens.find(s => s.id === 'counseling') || rolesData.consultant.screens[1]).html
                 },
                 {
                     start: 40, end: 60,
                     title: 'Skrining Burnout: Analisis Tingkat Stres & Rekomendasi Bimbingan',
                     cursorTarget: { x: '60%', y: '65%' },
                     cursorText: 'Beri Bimbingan',
-                    render: () => rolesData.consultant.screens[2].html
+                    render: () => (rolesData.consultant.screens.find(s => s.id === 'burnout') || rolesData.consultant.screens[2]).html
                 }
             ],
             monitor: [
@@ -1937,21 +2274,21 @@
                     title: 'Dashboard Health Monitor: Operasional UKS & Kunjungan Harian',
                     cursorTarget: { x: '25%', y: '45%' },
                     cursorText: 'Pemeriksaan UKS',
-                    render: () => rolesData.monitor.screens[0].html
+                    render: () => (rolesData.monitor.screens.find(s => s.id === 'dashboard') || rolesData.monitor.screens[0]).html
                 },
                 {
                     start: 20, end: 40,
                     title: 'Entri Cepat Antropometri: Input Hasil Timbangan & IMT Baku',
                     cursorTarget: { x: '78%', y: '75%' },
                     cursorText: 'Simpan Hasil',
-                    render: () => rolesData.monitor.screens[1].html
+                    render: () => (rolesData.monitor.screens.find(s => s.id === 'kesehatan') || rolesData.monitor.screens[1]).html
                 },
                 {
                     start: 40, end: 60,
                     title: 'Sirkulasi Pita UKS: Validasi Peminjaman & Deteksi Keterlambatan',
                     cursorTarget: { x: '82%', y: '60%' },
                     cursorText: 'Peringatan Terlambat',
-                    render: () => rolesData.monitor.screens[2].html
+                    render: () => (rolesData.monitor.screens.find(s => s.id === 'femhealth') || rolesData.monitor.screens[3]).html
                 }
             ]
         };
