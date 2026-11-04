@@ -21,16 +21,40 @@
         </div>
 
         <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
-            <a href="{{ route('admin.kesehatan.create') }}" 
-               class="btn-press flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white text-emerald-900 hover:bg-emerald-50 shadow-md shadow-black/20 transition-all duration-200">
-                <i class="fas fa-plus text-emerald-700"></i>
-                <span>Catat Kesehatan</span>
-            </a>
-            <a href="{{ route('admin.hb.create') }}" 
-               class="btn-press flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-500/20 hover:bg-emerald-500/30 text-white border border-emerald-400/30 backdrop-blur-md transition-all duration-200">
-                <i class="fas fa-droplet text-rose-400"></i>
-                <span>Input HB</span>
-            </a>
+            @if(auth()->user()->isHealthConsultant())
+                <a href="{{ route('admin.counseling.index') }}" 
+                   class="btn-press flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white text-indigo-900 hover:bg-indigo-50 shadow-md shadow-black/20 transition-all duration-200">
+                    <i class="fas fa-comments text-indigo-600"></i>
+                    <span>Sesi SafeSpace</span>
+                </a>
+                <a href="{{ route('admin.femhealth.index') }}" 
+                   class="btn-press flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-pink-500/20 hover:bg-pink-500/30 text-white border border-pink-400/30 backdrop-blur-md transition-all duration-200">
+                    <i class="fas fa-calendar-alt text-pink-300"></i>
+                    <span>Siklus & Pita Haid</span>
+                </a>
+            @elseif(auth()->user()->isHealthMonitor())
+                <a href="{{ route('admin.activities.index') }}" 
+                   class="btn-press flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white text-emerald-900 hover:bg-emerald-50 shadow-md shadow-black/20 transition-all duration-200">
+                    <i class="fas fa-person-running text-emerald-700"></i>
+                    <span>Run Tracker Siswa</span>
+                </a>
+                <a href="{{ route('admin.counseling.index') }}" 
+                   class="btn-press flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-500/20 hover:bg-indigo-500/30 text-white border border-indigo-400/30 backdrop-blur-md transition-all duration-200">
+                    <i class="fas fa-comments text-indigo-300"></i>
+                    <span>Sesi SafeSpace</span>
+                </a>
+            @else
+                <a href="{{ route('admin.kesehatan.create') }}" 
+                   class="btn-press flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white text-emerald-900 hover:bg-emerald-50 shadow-md shadow-black/20 transition-all duration-200">
+                    <i class="fas fa-plus text-emerald-700"></i>
+                    <span>Catat Kesehatan</span>
+                </a>
+                <a href="{{ route('admin.hb.create') }}" 
+                   class="btn-press flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-500/20 hover:bg-emerald-500/30 text-white border border-emerald-400/30 backdrop-blur-md transition-all duration-200">
+                    <i class="fas fa-droplet text-rose-400"></i>
+                    <span>Input HB</span>
+                </a>
+            @endif
         </div>
     </div>
 </div>
@@ -121,57 +145,163 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Action 1 -->
-        <a href="{{ route('admin.kesehatan.create') }}" 
-           class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-emerald-50/80 border border-slate-200/70 hover:border-emerald-300 transition-all duration-200">
-            <div class="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
-                <i class="fas fa-plus"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-                <h3 class="text-sm font-bold text-slate-800 group-hover:text-emerald-900 truncate">Tambah Kesehatan</h3>
-                <p class="text-xs text-slate-500 truncate">Rekam data fisik member</p>
-            </div>
-            <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all"></i>
-        </a>
+        @if(auth()->user()->isHealthConsultant())
+            <!-- HC Action 1: Konseling SafeSpace -->
+            <a href="{{ route('admin.counseling.index') }}" 
+               class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-indigo-50/80 border border-slate-200/70 hover:border-indigo-300 transition-all duration-200">
+                <div class="w-11 h-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-indigo-900 truncate">Konseling SafeSpace</h3>
+                    <p class="text-xs text-slate-500 truncate">Kelola sesi bimbingan mental</p>
+                </div>
+                <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all"></i>
+            </a>
 
-        <!-- Action 2 -->
-        <a href="{{ route('admin.hb.create') }}" 
-           class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-rose-50/80 border border-slate-200/70 hover:border-rose-300 transition-all duration-200">
-            <div class="w-11 h-11 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-600/20 group-hover:scale-105 transition-transform">
-                <i class="fas fa-droplet"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-                <h3 class="text-sm font-bold text-slate-800 group-hover:text-rose-900 truncate">Input Data HB</h3>
-                <p class="text-xs text-slate-500 truncate">Catat level hemoglobin</p>
-            </div>
-            <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-rose-600 group-hover:translate-x-1 transition-all"></i>
-        </a>
+            <!-- HC Action 2: Siklus & Pita Haid -->
+            <a href="{{ route('admin.femhealth.index') }}" 
+               class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-pink-50/80 border border-slate-200/70 hover:border-pink-300 transition-all duration-200">
+                <div class="w-11 h-11 rounded-xl bg-pink-600 text-white flex items-center justify-center shadow-md shadow-pink-600/20 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-pink-900 truncate">Siklus & Pita Siswi</h3>
+                    <p class="text-xs text-slate-500 truncate">Pantau peminjaman & siklus</p>
+                </div>
+                <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-pink-600 group-hover:translate-x-1 transition-all"></i>
+            </a>
 
-        <!-- Action 3 -->
-        <a href="{{ route('admin.users.index') }}" 
-           class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-sky-50/80 border border-slate-200/70 hover:border-sky-300 transition-all duration-200">
-            <div class="w-11 h-11 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-md shadow-sky-600/20 group-hover:scale-105 transition-transform">
-                <i class="fas fa-users-gear"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-                <h3 class="text-sm font-bold text-slate-800 group-hover:text-sky-900 truncate">Daftar Member</h3>
-                <p class="text-xs text-slate-500 truncate">Kelola data seluruh siswa/anggota</p>
-            </div>
-            <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-sky-600 group-hover:translate-x-1 transition-all"></i>
-        </a>
+            <!-- HC Action 3: Skrining Burnout -->
+            <a href="{{ route('admin.burnout.index') }}" 
+               class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-purple-50/80 border border-slate-200/70 hover:border-purple-300 transition-all duration-200">
+                <div class="w-11 h-11 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-600/20 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-purple-900 truncate">Skrining Stres</h3>
+                    <p class="text-xs text-slate-500 truncate">Deteksi burnout & beban pikiran</p>
+                </div>
+                <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all"></i>
+            </a>
 
-        <!-- Action 4 -->
-        <a href="{{ route('admin.divisi.index') }}" 
-           class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-teal-50/80 border border-slate-200/70 hover:border-teal-300 transition-all duration-200">
-            <div class="w-11 h-11 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-md shadow-teal-600/20 group-hover:scale-105 transition-transform">
-                <i class="fas fa-layer-group"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-                <h3 class="text-sm font-bold text-slate-800 group-hover:text-teal-900 truncate">Kelola Divisi</h3>
-                <p class="text-xs text-slate-500 truncate">Atur struktur kelas / bagian</p>
-            </div>
-            <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-teal-600 group-hover:translate-x-1 transition-all"></i>
-        </a>
+            <!-- HC Action 4: Data Siswa -->
+            <a href="{{ route('admin.users.index') }}" 
+               class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-sky-50/80 border border-slate-200/70 hover:border-sky-300 transition-all duration-200">
+                <div class="w-11 h-11 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-md shadow-sky-600/20 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-users-gear"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-sky-900 truncate">Daftar Siswa</h3>
+                    <p class="text-xs text-slate-500 truncate">Lihat data seluruh siswa</p>
+                </div>
+                <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-sky-600 group-hover:translate-x-1 transition-all"></i>
+            </a>
+        @elseif(auth()->user()->isHealthMonitor())
+            <!-- HM Action 1: Run Tracker & Aktivitas -->
+            <a href="{{ route('admin.activities.index') }}" 
+               class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-emerald-50/80 border border-slate-200/70 hover:border-emerald-300 transition-all duration-200">
+                <div class="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-person-running"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-emerald-900 truncate">Run Tracker Siswa</h3>
+                    <p class="text-xs text-slate-500 truncate">Pantau lari & aktivitas per divisi</p>
+                </div>
+                <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- HM Action 2: Konseling SafeSpace Kebugaran -->
+            <a href="{{ route('admin.counseling.index') }}" 
+               class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-indigo-50/80 border border-slate-200/70 hover:border-indigo-300 transition-all duration-200">
+                <div class="w-11 h-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-indigo-900 truncate">Konseling SafeSpace</h3>
+                    <p class="text-xs text-slate-500 truncate">Bimbingan kebugaran siswa</p>
+                </div>
+                <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- HM Action 3: Tambah Kesehatan Fisik -->
+            <a href="{{ route('admin.kesehatan.create') }}" 
+               class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-teal-50/80 border border-slate-200/70 hover:border-teal-300 transition-all duration-200">
+                <div class="w-11 h-11 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-md shadow-teal-600/20 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-notes-medical"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-teal-900 truncate">Pemeriksaan Fisik</h3>
+                    <p class="text-xs text-slate-500 truncate">Catat rekam kesehatan member</p>
+                </div>
+                <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-teal-600 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- HM Action 4: Data Siswa -->
+            <a href="{{ route('admin.users.index') }}" 
+               class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-sky-50/80 border border-slate-200/70 hover:border-sky-300 transition-all duration-200">
+                <div class="w-11 h-11 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-md shadow-sky-600/20 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-users-gear"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-sky-900 truncate">Daftar Siswa</h3>
+                    <p class="text-xs text-slate-500 truncate">Lihat data seluruh siswa</p>
+                </div>
+                <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-sky-600 group-hover:translate-x-1 transition-all"></i>
+            </a>
+        @else
+            <!-- Action 1 -->
+            <a href="{{ route('admin.kesehatan.create') }}" 
+               class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-emerald-50/80 border border-slate-200/70 hover:border-emerald-300 transition-all duration-200">
+                <div class="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-emerald-900 truncate">Tambah Kesehatan</h3>
+                    <p class="text-xs text-slate-500 truncate">Rekam data fisik member</p>
+                </div>
+                <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- Action 2 -->
+            <a href="{{ route('admin.hb.create') }}" 
+               class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-rose-50/80 border border-slate-200/70 hover:border-rose-300 transition-all duration-200">
+                <div class="w-11 h-11 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-600/20 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-droplet"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-rose-900 truncate">Input Data HB</h3>
+                    <p class="text-xs text-slate-500 truncate">Catat level hemoglobin</p>
+                </div>
+                <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-rose-600 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- Action 3 -->
+            <a href="{{ route('admin.users.index') }}" 
+               class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-sky-50/80 border border-slate-200/70 hover:border-sky-300 transition-all duration-200">
+                <div class="w-11 h-11 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-md shadow-sky-600/20 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-users-gear"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-sky-900 truncate">Daftar Member</h3>
+                    <p class="text-xs text-slate-500 truncate">Kelola data seluruh siswa/anggota</p>
+                </div>
+                <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-sky-600 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- Action 4 -->
+            <a href="{{ route('admin.divisi.index') }}" 
+               class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-teal-50/80 border border-slate-200/70 hover:border-teal-300 transition-all duration-200">
+                <div class="w-11 h-11 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-md shadow-teal-600/20 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-teal-900 truncate">Kelola Divisi</h3>
+                    <p class="text-xs text-slate-500 truncate">Atur struktur kelas / bagian</p>
+                </div>
+                <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-teal-600 group-hover:translate-x-1 transition-all"></i>
+            </a>
+        @endif
     </div>
 </div>
 

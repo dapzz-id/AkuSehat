@@ -544,6 +544,8 @@
             <nav id="sidebar-nav" class="flex-1 px-4 py-5 overflow-y-auto space-y-4">
                 @if(auth()->user()->isAdmin() || auth()->user()->isAdminInstansi())
                     @include('layouts.sidebar-admin')
+                @elseif(auth()->user()->isHealthConsultant())
+                    @include('layouts.sidebar-healthconsultant')
                 @elseif(auth()->user()->isHealthMonitor())
                     @include('layouts.sidebar-healthmonitor')
                 @elseif(auth()->user()->isSuperAdmin())

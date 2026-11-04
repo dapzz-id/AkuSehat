@@ -20,8 +20,15 @@ class CounselingService
         $status = $filters['status'] ?? null;
         $divisiId = $filters['divisi_id'] ?? null;
         $search = $filters['search'] ?? null;
+        $consultantId = null;
 
-        $counts = $this->counselingRepository->getStatusCounts($instansiId, $status, $divisiId, $search);
+        if ($actor->isHealthConsultant() || $actor->isHealthMonitor()) {
+            $consultantId = (string) $actor->id;
+        } elseif (!empty($filters['consultant_id'])) {
+            $consultantId = (string) $filters['consultant_id'];
+        }
+
+        $counts = $this->counselingRepository->getStatusCounts($instansiId, $status, $divisiId, $search, $consultantId);
         $totalSessions = $counts['total'];
         $pendingSessions = $counts['pending'];
         $scheduledSessions = $counts['scheduled'];
@@ -50,7 +57,7 @@ class CounselingService
             'data' => $topicStats->pluck('total')->toArray(),
         ];
 
-        $sessions = $this->counselingRepository->getPaginatedSessions($instansiId, $status, $divisiId, $search, 15);
+        $sessions = $this->counselingRepository->getPaginatedSessions($instansiId, $status, $divisiId, $search, 15, $consultantId);
         $divisiList = $this->counselingRepository->getInstansiDivisions($instansiId);
         $divisions = $divisiList;
         $consultants = $this->counselingRepository->getInstansiConsultants($instansiId);
@@ -65,10 +72,14 @@ class CounselingService
 
     public function storeAdminSession(User $actor, array $validated): CounselingSession
     {
+        $consultantId = ($actor->isHealthConsultant() || $actor->isHealthMonitor())
+            ? $actor->id
+            : ($validated['consultant_id'] ?? $actor->id);
+
         return $this->counselingRepository->createSession([
             'instansi_id' => $actor->instansi_id,
             'user_id' => $validated['user_id'],
-            'consultant_id' => $validated['consultant_id'] ?? $actor->id,
+            'consultant_id' => $consultantId,
             'session_date' => $validated['session_date'],
             'topic' => $validated['topic'],
             'notes' => $validated['notes'] ?? null,
@@ -162,6 +173,11 @@ class CounselingService
     public function getMemberSessions(User $user): Collection
     {
         return $this->counselingRepository->getUserSessions($user->id, $user->instansi_id);
+    }
+
+    public function getInstansiConsultants(string|int $instansiId): Collection
+    {
+        return $this->counselingRepository->getInstansiConsultants($instansiId);
     }
 
     public function getHealthSummary(User $user): array

@@ -10,12 +10,16 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ActivityRepository
 {
-    public function getActivitiesForAdmin(int|string $instansiId, ?string $divisiId = null, ?string $activityType = null)
+    public function getActivitiesForAdmin(int|string $instansiId, ?string $divisiId = null, ?string $activityType = null, ?string $search = null, ?string $userId = null)
     {
         $query = UserActivity::join('users', 'user_activities.user_id', '=', 'users.id')
             ->leftJoin('divisi', 'users.id_divisi', '=', 'divisi.id')
             ->where('users.instansi_id', $instansiId)
             ->select('user_activities.*', 'users.nama as user_nama', 'users.nomor_induk', 'users.id_divisi', 'divisi.divisi_name');
+
+        if (!empty($userId)) {
+            $query->where('user_activities.user_id', $userId);
+        }
 
         if (!empty($divisiId)) {
             $query->where('users.id_divisi', $divisiId);
@@ -23,6 +27,14 @@ class ActivityRepository
 
         if (!empty($activityType)) {
             $query->where('user_activities.activity_type', $activityType);
+        }
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('users.nama', 'like', "%{$search}%")
+                  ->orWhere('users.nomor_induk', 'like', "%{$search}%")
+                  ->orWhere('user_activities.title', 'like', "%{$search}%");
+            });
         }
 
         return $query;
@@ -61,9 +73,9 @@ class ActivityRepository
         ];
     }
 
-    public function getPaginatedActivities(int|string $instansiId, ?string $divisiId = null, ?string $activityType = null, int $perPage = 15): LengthAwarePaginator
+    public function getPaginatedActivities(int|string $instansiId, ?string $divisiId = null, ?string $activityType = null, int $perPage = 15, ?string $search = null, ?string $userId = null): LengthAwarePaginator
     {
-        return $this->getActivitiesForAdmin($instansiId, $divisiId, $activityType)
+        return $this->getActivitiesForAdmin($instansiId, $divisiId, $activityType, $search, $userId)
             ->orderBy('user_activities.started_at', 'desc')
             ->paginate($perPage);
     }

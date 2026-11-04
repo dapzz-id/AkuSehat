@@ -19,6 +19,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // 2. Konseling Mental & SafeSpace (Member Booking)
     Route::prefix('member')->group(function () {
         Route::get('/counseling', [MemberApiController::class, 'listCounseling']);
+        Route::get('/counseling/consultants', [MemberApiController::class, 'listConsultants']);
         Route::post('/counseling/book', [MemberApiController::class, 'bookCounseling']);
         Route::put('/counseling/{id}/cancel', [MemberApiController::class, 'cancelCounseling']);
     });
@@ -39,11 +40,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/counseling', [HealthConsultantApiController::class, 'listCounseling']);
         Route::put('/counseling/{id}/approve', [HealthConsultantApiController::class, 'approveCounseling']);
         Route::put('/counseling/{id}/reject', [HealthConsultantApiController::class, 'rejectCounseling']);
+        Route::put('/counseling/{id}/complete', [HealthConsultantApiController::class, 'completeCounseling']);
     });
 
     // 5. Activities (GPS Trackers, Running, Walking, Cycling)
     Route::prefix('activities')->group(function () {
         Route::get('/', [ActivityApiController::class, 'index']);
+        Route::get('/monitoring', [ActivityApiController::class, 'monitoring'])->middleware('role:Health Monitor,Health Consultant,Admin,Admin Instansi,SuperAdmin');
         Route::post('/', [ActivityApiController::class, 'store']);
         Route::get('/leaderboard', [ActivityApiController::class, 'leaderboard']);
         Route::get('/leaderboard/podium', [ActivityApiController::class, 'podium']);

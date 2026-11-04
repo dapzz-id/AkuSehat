@@ -215,8 +215,14 @@
             </div>
 
             <form action="{{ route('admin.activities.index') }}" method="GET" class="flex flex-wrap items-center gap-2">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama / NIS siswa..."
+                           class="pl-7 pr-3 py-1.5 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-600 w-44 sm:w-56">
+                </div>
+
                 <select name="divisi_id" onchange="this.form.submit()" class="px-3 py-1.5 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-600">
-                    <option value="">Semua Divisi</option>
+                    <option value="">Semua Divisi / Kelas</option>
                     @foreach($divisions as $div)
                         <option value="{{ $div->id }}" {{ request('divisi_id') == $div->id ? 'selected' : '' }}>{{ $div->divisi_name }}</option>
                     @endforeach
@@ -228,6 +234,15 @@
                     <option value="walk" {{ request('activity_type') == 'walk' ? 'selected' : '' }}>Jalan Santai</option>
                     <option value="cycling" {{ request('activity_type') == 'cycling' ? 'selected' : '' }}>Bersepeda</option>
                 </select>
+
+                <button type="submit" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
+                    Filter
+                </button>
+                @if(request()->hasAny(['search', 'divisi_id', 'activity_type']))
+                    <a href="{{ route('admin.activities.index') }}" class="px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="Reset filter">
+                        <i class="fas fa-rotate-left"></i>
+                    </a>
+                @endif
             </form>
         </div>
 

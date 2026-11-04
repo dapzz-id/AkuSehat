@@ -18,6 +18,8 @@ class ActivityService
         $instansiId = (string) $actor->instansi_id;
         $divisiId = $filters['divisi_id'] ?? null;
         $activityType = $filters['activity_type'] ?? null;
+        $search = $filters['search'] ?? null;
+        $userId = $filters['user_id'] ?? null;
 
         $stats = $this->activityRepository->getDashboardAggregates($instansiId, $divisiId, $activityType);
 
@@ -42,7 +44,7 @@ class ActivityService
             'data' => collect($divisionStats)->pluck('total_km')->toArray(),
         ];
 
-        $recentActivities = $this->activityRepository->getPaginatedActivities($instansiId, $divisiId, $activityType, 15);
+        $recentActivities = $this->activityRepository->getPaginatedActivities($instansiId, $divisiId, $activityType, 15, $search, $userId);
         $divisiList = $this->activityRepository->getInstansiDivisions($instansiId);
         $divisions = $divisiList;
         $activities = $recentActivities;

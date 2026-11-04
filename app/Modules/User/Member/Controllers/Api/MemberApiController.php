@@ -29,6 +29,7 @@ use App\Modules\Kesehatan\Counseling\Services\CounselingService;
 use App\Modules\Kesehatan\Counseling\Requests\BookCounselingRequest;
 use App\Modules\Kesehatan\Counseling\Requests\CancelCounselingRequest;
 use App\Modules\Kesehatan\Counseling\Requests\ListMemberCounselingRequest;
+use App\Modules\User\Member\Requests\ListConsultantsRequest;
 
 class MemberApiController extends Controller
 {
@@ -551,5 +552,34 @@ class MemberApiController extends Controller
             'status' => $res['status'],
             'message' => $res['message'],
         ], $res['code']);
+    }
+
+    public function listConsultants(ListConsultantsRequest $req): JsonResponse
+    {
+        $u = $req->user();
+        if (!$u->instansi_id) {
+            return response()->json(['status' => false, 'data' => []]);
+        }
+
+        $consultants = $this->counselingService->getInstansiConsultants($u->instansi_id);
+
+        return response()->json([
+            'status' => true,
+            'data' => $consultants->map(fn($c) => [
+                'id' => $c->id,
+                'nama' => $c->nama,
+                'level' => $c->level,
+                'role_label' => match($c->level) {
+                    UserRole::HEALTH_CONSULTANT->value => 'Guru BK / Konselor',
+                    UserRole::HEALTH_MONITOR->value => 'Guru PJOK / Health Monitor',
+                    UserRole::ADMIN->value => 'Admin PMR / Unit Medis',
+                    UserRole::ADMIN_INSTANSI->value => 'Penanggung Jawab Instansi',
+                    default => $c->level,
+                },
+                'nomor_induk' => $c->nomor_induk,
+                'jk' => $c->jk,
+                'avatar' => $c->avatar,
+            ])
+        ]);
     }
 }

@@ -10,6 +10,7 @@ use App\Modules\Kesehatan\Activities\Requests\StoreActivityRequest;
 use App\Modules\Kesehatan\Activities\Requests\ShowActivityRequest;
 use App\Modules\Kesehatan\Activities\Requests\DeleteActivityRequest;
 use App\Modules\Kesehatan\Activities\Requests\LeaderboardActivityRequest;
+use App\Modules\Kesehatan\Activities\Requests\MonitoringActivityRequest;
 use Illuminate\Http\JsonResponse;
 
 class ActivityApiController extends Controller
@@ -156,6 +157,43 @@ class ActivityApiController extends Controller
             'tipe_sebutan' => $tipeSebutan,
             'instansi_name' => $instansiName,
             'data' => $runners,
+        ]);
+    }
+
+    public function monitoring(MonitoringActivityRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        $instansiId = (string) $user->instansi_id;
+        $divisiId = $request->query('divisi_id');
+        $activityType = $request->query('activity_type');
+        $search = $request->query('search');
+        $userId = $request->query('user_id');
+
+        $activities = $this->activityRepository->getPaginatedActivities(
+            $instansiId,
+            $divisiId,
+            $activityType,
+            (int) $request->query('per_page', 20),
+            $search,
+            $userId
+        );
+
+        $divisions = $this->activityRepository->getInstansiDivisions($instansiId);
+        $stats = $this->activityRepository->getDashboardAggregates($instansiId, $divisiId, $activityType);
+
+        return response()->json([
+            'success' => true,
+            'summary' => [
+                'total_distance_km' => round($stats['total_distance_meters'] / 1000, 2),
+                'total_sessions' => $stats['total_sessions'],
+                'total_calories' => $stats['total_calories'],
+                'total_steps' => $stats['total_steps'],
+                'count_run' => $stats['count_run'],
+                'count_walk' => $stats['count_walk'],
+                'count_cycling' => $stats['count_cycling'],
+            ],
+            'divisions' => $divisions,
+            'data' => $activities,
         ]);
     }
 

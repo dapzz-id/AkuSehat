@@ -47,7 +47,7 @@ class HealthConsultantApiController extends Controller
         $instansiId = $req->user()->instansi_id;
 
         $notifications = $this->counselingRepository->getHealthNotifications($instansiId, 30);
-        $pendingCount = $this->counselingRepository->getPendingCount($instansiId);
+        $pendingCount = $this->counselingRepository->getPendingCount($instansiId, $req->user()->id);
 
         return response()->json([
             'status' => true,
@@ -60,6 +60,7 @@ class HealthConsultantApiController extends Controller
     {
         $sessions = $this->counselingRepository->getSessionsForConsultant(
             $req->user()->instansi_id,
+            $req->user()->id,
             $req->validated('status'),
             $req->validated('search')
         );

@@ -16,10 +16,20 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class CounselingRepository
 {
-    public function getSessionsForAdmin(int|string $instansiId, ?string $status = null, ?string $divisiId = null, ?string $search = null)
+    public function getSessionsForAdmin(int|string $instansiId, ?string $status = null, ?string $divisiId = null, ?string $search = null, ?string $consultantId = null)
     {
         $query = CounselingSession::with(['user.divisi', 'consultant'])
             ->where('instansi_id', $instansiId);
+
+        if (!empty($consultantId)) {
+            $query->where(function ($q) use ($consultantId) {
+                $q->where('consultant_id', $consultantId)
+                  ->orWhere(function ($q2) {
+                      $q2->whereNull('consultant_id')
+                         ->where('status', CounselingSessionStatus::MENUNGGU->value);
+                  });
+            });
+        }
 
         if (!empty($divisiId)) {
             $query->whereHas('user', function ($q) use ($divisiId) {
@@ -43,17 +53,17 @@ class CounselingRepository
         return $query;
     }
 
-    public function getPaginatedSessions(int|string $instansiId, ?string $status = null, ?string $divisiId = null, ?string $search = null, int $perPage = 15): LengthAwarePaginator
+    public function getPaginatedSessions(int|string $instansiId, ?string $status = null, ?string $divisiId = null, ?string $search = null, int $perPage = 15, ?string $consultantId = null): LengthAwarePaginator
     {
-        return $this->getSessionsForAdmin($instansiId, $status, $divisiId, $search)
+        return $this->getSessionsForAdmin($instansiId, $status, $divisiId, $search, $consultantId)
             ->orderBy('counseling_sessions.session_date', 'desc')
             ->paginate($perPage)
             ->withQueryString();
     }
 
-    public function getStatusCounts(int|string $instansiId, ?string $status = null, ?string $divisiId = null, ?string $search = null): array
+    public function getStatusCounts(int|string $instansiId, ?string $status = null, ?string $divisiId = null, ?string $search = null, ?string $consultantId = null): array
     {
-        $query = $this->getSessionsForAdmin($instansiId, $status, $divisiId, $search);
+        $query = $this->getSessionsForAdmin($instansiId, $status, $divisiId, $search, $consultantId);
 
         $countQuery = (clone $query)->reorder();
         $countQuery->getQuery()->columns = null;
@@ -93,7 +103,12 @@ class CounselingRepository
     public function getInstansiConsultants(int|string $instansiId): Collection
     {
         return User::where('instansi_id', $instansiId)
-            ->whereIn('level', [UserRole::HEALTH_CONSULTANT->value, UserRole::ADMIN->value, UserRole::ADMIN_INSTANSI->value])
+            ->whereIn('level', [
+                UserRole::HEALTH_CONSULTANT->value,
+                UserRole::HEALTH_MONITOR->value,
+                UserRole::ADMIN->value,
+                UserRole::ADMIN_INSTANSI->value
+            ])
             ->get();
     }
 
@@ -139,11 +154,21 @@ class CounselingRepository
             ->get();
     }
 
-    public function getSessionsForConsultant(int|string $instansiId, ?string $status = null, ?string $search = null): Collection
+    public function getSessionsForConsultant(int|string $instansiId, int|string|null $consultantId = null, ?string $status = null, ?string $search = null): Collection
     {
         $query = CounselingSession::where('instansi_id', $instansiId)
             ->with(['user.divisi', 'consultant'])
             ->orderBy('created_at', 'desc');
+
+        if (!empty($consultantId)) {
+            $query->where(function ($q) use ($consultantId) {
+                $q->where('consultant_id', $consultantId)
+                  ->orWhere(function ($q2) {
+                      $q2->whereNull('consultant_id')
+                         ->where('status', CounselingSessionStatus::MENUNGGU->value);
+                  });
+            });
+        }
 
         if (!empty($status) && $status !== 'all') {
             $query->where('status', $status);
@@ -170,11 +195,19 @@ class CounselingRepository
             ->get();
     }
 
-    public function getPendingCount(int|string $instansiId): int
+    public function getPendingCount(int|string $instansiId, int|string|null $consultantId = null): int
     {
-        return CounselingSession::where('instansi_id', $instansiId)
-            ->where('status', CounselingSessionStatus::MENUNGGU->value)
-            ->count();
+        $query = CounselingSession::where('instansi_id', $instansiId)
+            ->where('status', CounselingSessionStatus::MENUNGGU->value);
+
+        if (!empty($consultantId)) {
+            $query->where(function ($q) use ($consultantId) {
+                $q->where('consultant_id', $consultantId)
+                  ->orWhereNull('consultant_id');
+            });
+        }
+
+        return $query->count();
     }
 
     public function getHealthNotifications(int|string $instansiId, int $limit = 30): Collection
