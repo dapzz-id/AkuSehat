@@ -438,7 +438,7 @@
             $hargaSatuan = (int) ($trx->payload['harga_per_user'] ?? 5000);
             $kuotaTrx = $trx->payload['kuota_paket'] ?? ($trx->payload['kuota_saat_perpanjang'] ?? ($instansi->getActiveLicense()->kuota_pengguna ?? 0));
             if ($kuotaTrx <= 0 && $trx->nominal > 0) {
-                $kuotaTrx = (int) round($trx->nominal / 1.11 / ($hargaSatuan * $durasiBln));
+                $kuotaTrx = (int) round($trx->nominal / ($hargaSatuan * $durasiBln));
             }
             $itemSubtotal = $trx->payload['subtotal'] ?? ($kuotaTrx * $hargaSatuan * $durasiBln);
             $itemCount = 1;
@@ -534,10 +534,10 @@
 <!-- ══════════════════════════════════════════ -->
 @php
     if (!isset($itemSubtotal) || $itemSubtotal <= 0) {
-        $itemSubtotal = (int) round($trx->nominal / 1.11);
+        $itemSubtotal = (int) $trx->nominal;
     }
-    $ppn11 = (int) round($itemSubtotal * 0.11);
-    $totalBelanja = $itemSubtotal + $ppn11;
+    $ppnVal = (int) ($trx->payload['ppn_11'] ?? 0);
+    $totalBelanja = $itemSubtotal + $ppnVal;
 @endphp
 
 <table class="calc-table">
@@ -550,8 +550,8 @@
         <td class="c-val">0</td>
     </tr>
     <tr>
-        <td class="c-lbl">PPN (11%)</td>
-        <td class="c-val">{{ number_format($ppn11, 0, ',', '.') }}</td>
+        <td class="c-lbl">Pajak (Bebas PPN / Non-PKP)</td>
+        <td class="c-val">{{ number_format($ppnVal, 0, ',', '.') }}</td>
     </tr>
     <tr>
         <td class="c-lbl">Biaya Transaksi</td>

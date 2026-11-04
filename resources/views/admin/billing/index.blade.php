@@ -457,14 +457,14 @@
                         </div>
 
                         <div class="flex items-center justify-between text-gray-600">
-                            <span>Pajak PPN (11%)</span>
-                            <span id="summaryTaxPrice" class="font-semibold text-gray-800">Rp {{ number_format($ppnPerpanjang, 0, ',', '.') }}</span>
+                            <span>Pajak (Bebas PPN / Non-PKP)</span>
+                            <span id="summaryTaxPrice" class="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-xs">Rp 0 (Bebas PPN)</span>
                         </div>
 
                         <div class="pt-3 border-t border-gray-300 flex items-baseline justify-between">
                             <div>
                                 <span class="text-base font-bold text-gray-900 block">Total Tagihan</span>
-                                <span class="text-[11px] text-gray-500">Termasuk PPN 11% Resmi</span>
+                                <span class="text-[11px] text-emerald-700 font-semibold">Harga Bersih / Bebas PPN (Non-PKP)</span>
                             </div>
                             <span id="summaryTotalPrice" class="text-2xl font-black text-emerald-800">Rp {{ number_format($totalPerpanjang, 0, ',', '.') }}</span>
                         </div>
@@ -1228,14 +1228,14 @@
             const pkg = getPackageById(selectedRenewalPackageId);
             const quota = pkg ? pkg.quota : 50;
             const subtotal = quota * HARGA_USER * selectedDuration;
-            const tax = Math.round(subtotal * 0.11);
-            total = subtotal + tax;
+            const tax = 0; // Bebas PPN (Usaha Non-PKP / UMKM)
+            total = subtotal;
 
             if (summaryQuotaEl) {
                 summaryQuotaEl.textContent = `Perpanjangan Paket (${pkg ? pkg.key : 'Lisensi'} - ${quota} ${LABEL_MEMBER} × ${durLabel})`;
             }
             if (summaryPriceEl) summaryPriceEl.textContent = formatRupiah(subtotal);
-            if (summaryTaxEl) summaryTaxEl.textContent = formatRupiah(tax);
+            if (summaryTaxEl) summaryTaxEl.textContent = 'Rp 0 (Bebas PPN)';
             if (summaryTotalEl) summaryTotalEl.textContent = formatRupiah(total);
             if (summaryExpiryLabel) summaryExpiryLabel.textContent = 'Masa Perpanjangan';
             if (summaryExpiryBadge) {
@@ -1244,12 +1244,12 @@
             }
         } else {
             const subtotal = selectedQuota * HARGA_USER * selectedDuration;
-            const tax = Math.round(subtotal * 0.11);
-            total = subtotal + tax;
+            const tax = 0; // Bebas PPN (Usaha Non-PKP / UMKM)
+            total = subtotal;
 
             if (summaryQuotaEl) summaryQuotaEl.textContent = `Paket Kuota Baru (+${selectedQuota} ${LABEL_MEMBER} × ${durLabel})`;
             if (summaryPriceEl) summaryPriceEl.textContent = formatRupiah(subtotal);
-            if (summaryTaxEl) summaryTaxEl.textContent = formatRupiah(tax);
+            if (summaryTaxEl) summaryTaxEl.textContent = 'Rp 0 (Bebas PPN)';
             if (summaryTotalEl) summaryTotalEl.textContent = formatRupiah(total);
             if (summaryExpiryLabel) summaryExpiryLabel.textContent = 'Masa Aktif Paket Baru';
             if (summaryExpiryBadge) {

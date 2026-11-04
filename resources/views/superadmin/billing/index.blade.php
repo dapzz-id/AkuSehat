@@ -615,7 +615,7 @@
                                 <span class="font-black text-gray-900 text-sm whitespace-nowrap">
                                     Rp {{ number_format($trx->nominal, 0, ',', '.') }}
                                 </span>
-                                <div class="text-[10px] text-gray-400">Termasuk PPN 11%</div>
+                                <div class="text-[10px] text-gray-400">Harga Bersih (Non-PKP)</div>
                             </td>
 
                             {{-- Metode Pembayaran --}}

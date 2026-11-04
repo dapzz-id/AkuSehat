@@ -27,9 +27,9 @@ enum BillingRate: int
     }
 
     /**
-     * Hitung PPN 11% dari subtotal
+     * Hitung PPN dari subtotal (Default 0.0 / Bebas PPN untuk entitas Non-PKP / UMKM)
      */
-    public static function calculatePpn(float $subtotal, float $rate = 0.11): int
+    public static function calculatePpn(float $subtotal, float $rate = 0.0): int
     {
         return (int) round($subtotal * $rate);
     }

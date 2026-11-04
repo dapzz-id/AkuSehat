@@ -91,8 +91,8 @@ class BillingService
             : now()->addMonths(1);
 
         $subtotalPerpanjang = $kuotaPerpanjangDefault * self::HARGA_PER_USER_BULAN;
-        $ppnPerpanjang = (int) round($subtotalPerpanjang * 0.11);
-        $totalPerpanjang = $subtotalPerpanjang + $ppnPerpanjang;
+        $ppnPerpanjang = 0; // Bebas PPN (Non-PKP / UMKM)
+        $totalPerpanjang = $subtotalPerpanjang;
 
         $packagesPayload = $allLicenses->map(function ($p) {
             return [
@@ -688,7 +688,7 @@ class BillingService
                 $kuotaTarget = (int) $targetLicense->kuota_pengguna;
                 $subtotal = $this->calculateTotalAmount(BillingTransactionType::PERPANJANG_LISENSI, $kuotaTarget, $durasiBulan);
                 $tipeTransaksi = BillingTransactionType::PERPANJANG_LISENSI->value;
-                $deskripsiItem = "Perpanjangan Lisensi ({$kuotaTarget} Siswa, {$durasiBulan} Bulan)";
+                $deskripsiItem = "Perpanjangan Lisensi ({$kuotaTarget} Pengguna, {$durasiBulan} Bulan)";
                 $targetLicenseId = $targetLicense->id;
             } else {
                 if ($tambahKuota <= 0) {
@@ -699,11 +699,11 @@ class BillingService
                 }
                 $subtotal = $this->calculateTotalAmount(BillingTransactionType::TAMBAH_KUOTA, $tambahKuota, $durasiBulan);
                 $tipeTransaksi = BillingTransactionType::TAMBAH_KUOTA->value;
-                $deskripsiItem = "Tambah Kuota Baru (+{$tambahKuota} Siswa, {$durasiBulan} Bulan)";
+                $deskripsiItem = "Tambah Kuota Baru (+{$tambahKuota} Pengguna, {$durasiBulan} Bulan)";
                 $targetLicenseId = null;
             }
 
-            $pajak11 = round($subtotal * 0.11);
+            $pajak11 = BillingRate::calculatePpn($subtotal);
             $totalNominal = $subtotal + $pajak11;
             $orderId = 'MID-AKU-' . time() . '-' . strtoupper(Str::random(4));
 
