@@ -158,7 +158,7 @@ class DivisiService
         $payload = [
             'description' => $validated['description'] ?? null,
             'active_modules' => $useCustom ? $activeModules : null,
-            'module_permissions' => $normalizedPermissions,
+            'module_permissions' => $useCustom ? $normalizedPermissions : null,
         ];
 
         $updated = $this->divisiRepository->update($divisi, $payload);

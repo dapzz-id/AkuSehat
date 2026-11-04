@@ -275,17 +275,31 @@ class User extends Authenticatable
             return false;
         }
 
-        // 1. User level custom override
-        if (!is_null($this->custom_modules)) {
+        // 1. PRIORITAS TERTINGGI: Kustomisasi Khusus Akun Pengguna (User Custom Override)
+        // A. Cek per-modul CRUD permission jika dikustomisasi secara spesifik pada user
+        if (is_array($this->custom_permissions) && isset($this->custom_permissions['modules'][$moduleKey])) {
+            $modPerm = $this->custom_permissions['modules'][$moduleKey];
+            $hasAnyCrud = !empty($modPerm['c']) || !empty($modPerm['r']) || !empty($modPerm['u']) || !empty($modPerm['d'])
+                || !empty($modPerm['create']) || !empty($modPerm['read']) || !empty($modPerm['update']) || !empty($modPerm['delete']);
+
+            if (is_array($this->custom_modules)) {
+                return in_array($moduleKey, $this->custom_modules) || $hasAnyCrud;
+            }
+
+            return $hasAnyCrud;
+        }
+
+        // B. Cek daftar modul custom_modules akun user
+        if (is_array($this->custom_modules)) {
             return in_array($moduleKey, $this->custom_modules);
         }
 
-        // 2. Division level settings
-        if ($this->divisi && !is_null($this->divisi->active_modules)) {
-            return in_array($moduleKey, $this->divisi->active_modules);
+        // 2. Division level settings (Hanya berlaku jika user TIDAK memiliki kustom khusus)
+        if ($this->divisi) {
+            return $this->divisi->isModuleActive($moduleKey);
         }
 
-        // 3. Institution global default
+        // 3. Institution global default (Fallback terakhir jika divisi & user tidak dikustom)
         if ($this->instansi) {
             return $this->instansi->isModuleActive($moduleKey);
         }
@@ -450,6 +464,11 @@ class User extends Authenticatable
         // 1. Superadmin & Admin Instansi selalu memiliki hak akses CRUD penuh ke semua modul
         if ($this->isSuperAdmin() || $this->isAdminInstansi()) {
             return true;
+        }
+
+        // Modul nonaktif? Jika $moduleKey diberikan dan modul nonaktif untuk pengguna ini, akses CRUD ditolak
+        if ($moduleKey && !$this->isModuleActive($moduleKey)) {
+            return false;
         }
 
         // 2. Custom Permissions override khusus pada akun user bersangkutan

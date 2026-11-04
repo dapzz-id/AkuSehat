@@ -31,7 +31,7 @@
     </div>
 
     <!-- Group: DATA MEDIS & KLINIS -->
-    @if(!$instansi || $instansi->isModuleActive('kesehatan') || $instansi->isModuleActive('hemoglobin') || $instansi->isModuleActive('haid_pita') || $instansi->isModuleActive('vaksinasi'))
+    @if(auth()->user()->isModuleActive('kesehatan') || auth()->user()->isModuleActive('hemoglobin') || auth()->user()->isModuleActive('haid_pita') || auth()->user()->isModuleActive('vaksinasi'))
     @php
         $isMedisActive = request()->routeIs('admin.kesehatan.*') || request()->routeIs('admin.hb.*') || request()->routeIs('admin.femhealth.*') || request()->routeIs('admin.vaccine.*');
     @endphp
@@ -46,7 +46,7 @@
             <i id="data-medis-chevron" class="fas fa-chevron-down text-[9px] text-emerald-400/60 group-hover/toggle:text-emerald-300 transition-transform duration-200"></i>
         </button>
         <div id="data-medis-content" class="space-y-1 transition-all duration-200">
-            @if(!$instansi || $instansi->isModuleActive('kesehatan'))
+            @if(auth()->user()->isModuleActive('kesehatan') && auth()->user()->canRead('kesehatan'))
             <a href="{{ route('admin.kesehatan.index') }}" 
                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.kesehatan.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.kesehatan.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-teal-400 group-hover:bg-white/10 group-hover:text-teal-300' }}">
@@ -56,7 +56,7 @@
             </a>
             @endif
 
-            @if(!$instansi || $instansi->isModuleActive('hemoglobin'))
+            @if(auth()->user()->isModuleActive('hemoglobin') && auth()->user()->canRead('hemoglobin'))
             <a href="{{ route('admin.hb.index') }}" 
                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.hb.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.hb.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-rose-400 group-hover:bg-white/10 group-hover:text-rose-300' }}">
@@ -66,7 +66,7 @@
             </a>
             @endif
 
-            @if(!$instansi || $instansi->isModuleActive('haid_pita'))
+            @if(auth()->user()->isModuleActive('haid_pita') && auth()->user()->canRead('haid_pita'))
             @php
                 $userInstansiId = auth()->user()->instansi_id;
                 $latePitaCount = \Illuminate\Support\Facades\Cache::remember('late_pita_cnt_' . $userInstansiId, 60, function() use ($userInstansiId) {
@@ -94,7 +94,7 @@
             </a>
             @endif
 
-            @if(!$instansi || $instansi->isModuleActive('vaksinasi'))
+            @if(auth()->user()->isModuleActive('vaksinasi') && auth()->user()->canRead('vaksinasi'))
             <a href="{{ route('admin.vaccine.index') }}" 
                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.vaccine.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.vaccine.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-blue-400 group-hover:bg-white/10 group-hover:text-blue-300' }}">
@@ -108,7 +108,7 @@
     @endif
 
     <!-- Group: KEBUGARAN & GAYA HIDUP -->
-    @if(!$instansi || $instansi->isModuleActive('olahraga') || $instansi->isModuleActive('vitalitas') || $instansi->isModuleActive('nutrisi') || $instansi->isModuleActive('ergonomi'))
+    @if(auth()->user()->isModuleActive('olahraga') || auth()->user()->isModuleActive('vitalitas') || auth()->user()->isModuleActive('nutrisi') || auth()->user()->isModuleActive('ergonomi'))
     @php
         $isKebugaranActive = request()->routeIs('admin.activities.*') || request()->routeIs('admin.vital-logs.*') || request()->routeIs('admin.nutrition.*') || request()->routeIs('admin.ergonomics.*');
     @endphp
@@ -123,7 +123,7 @@
             <i id="kebugaran-chevron" class="fas fa-chevron-down text-[9px] text-emerald-400/60 group-hover/toggle:text-emerald-300 transition-transform duration-200"></i>
         </button>
         <div id="kebugaran-content" class="space-y-1 transition-all duration-200">
-            @if(!$instansi || $instansi->isModuleActive('olahraga'))
+            @if(auth()->user()->isModuleActive('olahraga') && auth()->user()->canRead('olahraga'))
             <a href="{{ route('admin.activities.index') }}" 
                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.activities.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.activities.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-emerald-400 group-hover:bg-white/10 group-hover:text-emerald-300' }}">
@@ -133,7 +133,7 @@
             </a>
             @endif
 
-            @if(!$instansi || $instansi->isModuleActive('vitalitas'))
+            @if(auth()->user()->isModuleActive('vitalitas') && auth()->user()->canRead('vitalitas'))
             <a href="{{ route('admin.vital-logs.index') }}" 
                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.vital-logs.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.vital-logs.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-sky-400 group-hover:bg-white/10 group-hover:text-sky-300' }}">
@@ -143,7 +143,7 @@
             </a>
             @endif
 
-            @if(!$instansi || $instansi->isModuleActive('nutrisi'))
+            @if(auth()->user()->isModuleActive('nutrisi') && auth()->user()->canRead('nutrisi'))
             <a href="{{ route('admin.nutrition.index') }}" 
                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.nutrition.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.nutrition.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-amber-400 group-hover:bg-white/10 group-hover:text-amber-300' }}">
@@ -153,7 +153,7 @@
             </a>
             @endif
 
-            @if(!$instansi || $instansi->isModuleActive('ergonomi'))
+            @if(auth()->user()->isModuleActive('ergonomi') && auth()->user()->canRead('ergonomi'))
             <a href="{{ route('admin.ergonomics.index') }}" 
                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.ergonomics.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.ergonomics.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-cyan-400 group-hover:bg-white/10 group-hover:text-cyan-300' }}">
@@ -167,7 +167,7 @@
     @endif
 
     <!-- Group: KESEHATAN MENTAL & KONSELING -->
-    @if(!$instansi || $instansi->isModuleActive('konsultasi') || $instansi->isModuleActive('burnout'))
+    @if(auth()->user()->isModuleActive('konsultasi') || auth()->user()->isModuleActive('burnout'))
     @php
         $isMentalActive = request()->routeIs('admin.counseling.*') || request()->routeIs('admin.burnout.*');
     @endphp
@@ -182,7 +182,7 @@
             <i id="kesehatan-mental-chevron" class="fas fa-chevron-down text-[9px] text-emerald-400/60 group-hover/toggle:text-emerald-300 transition-transform duration-200"></i>
         </button>
         <div id="kesehatan-mental-content" class="space-y-1 transition-all duration-200">
-            @if(!$instansi || $instansi->isModuleActive('konsultasi'))
+            @if(auth()->user()->isModuleActive('konsultasi') && auth()->user()->canRead('konsultasi'))
             <a href="{{ route('admin.counseling.index') }}" 
                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.counseling.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.counseling.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-indigo-400 group-hover:bg-white/10 group-hover:text-indigo-300' }}">
@@ -192,7 +192,7 @@
             </a>
             @endif
 
-            @if(!$instansi || $instansi->isModuleActive('burnout'))
+            @if(auth()->user()->isModuleActive('burnout') && auth()->user()->canRead('burnout'))
             <a href="{{ route('admin.burnout.index') }}" 
                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.burnout.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.burnout.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-purple-400 group-hover:bg-white/10 group-hover:text-purple-300' }}">

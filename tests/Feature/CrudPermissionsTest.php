@@ -709,4 +709,116 @@ class CrudPermissionsTest extends TestCase
         $this->assertTrue($member->canCreate('kesehatan'));
         $this->assertTrue($member->canAddUser());
     }
+
+    public function test_custom_user_permissions_and_module_active_takes_top_priority_over_division_conflict(): void
+    {
+        $adminInstansi = User::create([
+            'instansi_id' => $this->instansi->id,
+            'nama' => 'Admin Instansi Conflict Test',
+            'username' => 'admin_conflict_' . Str::random(5),
+            'password' => bcrypt('password123'),
+            'level' => UserRole::ADMIN_INSTANSI->value,
+            'status' => UserStatus::AKTIF->value,
+            'jk' => UserGender::LAKI_LAKI->value,
+        ]);
+
+        // Atur Divisi:
+        // - Modul 'haid_pita': NONAKTIF (tidak ada di active_modules divisi)
+        // - Modul 'kesehatan': AKTIF dengan full CRUD (c=1, r=1, u=1, d=1)
+        // - Modul 'olahraga': AKTIF dengan full CRUD (c=1, r=1, u=1, d=1)
+        $this->divisi->update([
+            'active_modules' => ['kesehatan', 'olahraga'],
+            'module_permissions' => [
+                'modules' => [
+                    'kesehatan' => ['c' => true, 'r' => true, 'u' => true, 'd' => true],
+                    'olahraga' => ['c' => true, 'r' => true, 'u' => true, 'd' => true],
+                    'haid_pita' => ['c' => false, 'r' => false, 'u' => false, 'd' => false],
+                ],
+                'can_create' => true,
+                'can_read' => true,
+                'can_update' => true,
+                'can_delete' => true,
+            ],
+        ]);
+
+        // Buat user dalam divisi ini
+        $user = User::create([
+            'instansi_id' => $this->instansi->id,
+            'id_divisi' => $this->divisi->id,
+            'nama' => 'Pengguna Uji Konflik',
+            'username' => 'user_conflict_' . Str::random(5),
+            'password' => bcrypt('password123'),
+            'level' => UserRole::HEALTH_MONITOR->value,
+            'status' => UserStatus::AKTIF->value,
+            'jk' => UserGender::LAKI_LAKI->value,
+        ]);
+
+        // Sebelum kustomisasi: user mengikuti divisi
+        $this->assertFalse($user->isModuleActive('haid_pita'));
+        $this->assertFalse($user->canCreate('haid_pita'));
+        $this->assertTrue($user->isModuleActive('kesehatan'));
+        $this->assertTrue($user->canDelete('kesehatan'));
+        $this->assertTrue($user->isModuleActive('olahraga'));
+        $this->assertTrue($user->canCreate('olahraga'));
+
+        // =========================================================================
+        // SEKARANG ADMIN MELAKUKAN KUSTOMISASI KHUSUS PADA AKUN USER INI:
+        // 1. Nabrak 1: 'haid_pita' di divisi nonaktif, tapi di user dikustom AKTIF [c=1, r=1]
+        // 2. Nabrak 2: 'kesehatan' di divisi aktif full CRUD, tapi di user dikustom NONAKTIF (semua 0)
+        // 3. Nabrak 3: 'olahraga' di divisi aktif full CRUD, tapi di user dikustom READ ONLY [c=0, r=1, u=0, d=0]
+        // =========================================================================
+        $responseCustom = $this->actingAs($adminInstansi)->post(route('admin.users.permissions', $user->id), [
+            'use_custom_modules' => '1',
+            'custom_permissions' => [
+                'modules' => [
+                    'haid_pita' => ['c' => '1', 'r' => '1', 'u' => '0', 'd' => '0'],
+                    'kesehatan' => ['c' => '0', 'r' => '0', 'u' => '0', 'd' => '0'],
+                    'olahraga' => ['c' => '0', 'r' => '1', 'u' => '0', 'd' => '0'],
+                ],
+                'can_add_user' => '0',
+            ],
+        ]);
+        $responseCustom->assertRedirect();
+
+        $user->refresh();
+
+        // 1. Verifikasi Nabrak 1: 'haid_pita' HARUS AKTIF & BISA CREATE/READ (Prioritas User Kustom)
+        $this->assertTrue($user->isModuleActive('haid_pita'), 'haid_pita harus aktif karena user dikustom khusus aktif meskipun divisi nonaktif');
+        $this->assertTrue($user->canCreate('haid_pita'), 'user harus bisa create haid_pita sesuai kustom khusus');
+        $this->assertTrue($user->canRead('haid_pita'), 'user harus bisa read haid_pita sesuai kustom khusus');
+        $this->assertFalse($user->canDelete('haid_pita'), 'user tidak boleh delete haid_pita');
+
+        // 2. Verifikasi Nabrak 2: 'kesehatan' HARUS NONAKTIF & DITOLAK CRUD (Prioritas User Kustom)
+        $this->assertFalse($user->isModuleActive('kesehatan'), 'kesehatan harus nonaktif karena user dikustom nonaktif meskipun divisi aktif');
+        $this->assertFalse($user->canCreate('kesehatan'), 'user tidak boleh create kesehatan karena modul dinonaktifkan di kustom user');
+        $this->assertFalse($user->canRead('kesehatan'), 'user tidak boleh read kesehatan karena modul dinonaktifkan di kustom user');
+        $this->assertFalse($user->canUpdate('kesehatan'), 'user tidak boleh update kesehatan');
+        $this->assertFalse($user->canDelete('kesehatan'), 'user tidak boleh delete kesehatan');
+
+        // 3. Verifikasi Nabrak 3: 'olahraga' HARUS READ ONLY (Prioritas User Kustom)
+        $this->assertTrue($user->isModuleActive('olahraga'), 'olahraga harus aktif karena ada read di kustom user');
+        $this->assertTrue($user->canRead('olahraga'), 'user harus bisa read olahraga');
+        $this->assertFalse($user->canCreate('olahraga'), 'user tidak boleh create olahraga karena kustom user adalah Read Only meskipun divisi izinkan Create');
+        $this->assertFalse($user->canUpdate('olahraga'), 'user tidak boleh update olahraga karena kustom user Read Only');
+        $this->assertFalse($user->canDelete('olahraga'), 'user tidak boleh delete olahraga karena kustom user Read Only');
+
+        // =========================================================================
+        // 4. RESET KEMBALI KE "IKUTI DIVISI / INSTANSI" (use_custom_modules = 0)
+        // =========================================================================
+        $responseReset = $this->actingAs($adminInstansi)->post(route('admin.users.permissions', $user->id), [
+            'use_custom_modules' => '0',
+        ]);
+        $responseReset->assertRedirect();
+
+        $user->refresh();
+        $this->assertNull($user->custom_modules);
+        $this->assertNull($user->custom_permissions);
+
+        // Setelah di-reset, user kembali mewarisi pengaturan divisi
+        $this->assertFalse($user->isModuleActive('haid_pita'));
+        $this->assertTrue($user->isModuleActive('kesehatan'));
+        $this->assertTrue($user->canCreate('kesehatan'));
+        $this->assertTrue($user->canDelete('kesehatan'));
+        $this->assertTrue($user->canCreate('olahraga'));
+    }
 }

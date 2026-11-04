@@ -159,7 +159,7 @@ class UserService
 
         $payload = [
             'custom_modules' => $useCustom ? $customModules : null,
-            'custom_permissions' => $customPermissions,
+            'custom_permissions' => $useCustom ? $customPermissions : null,
         ];
 
         $updated = $this->userRepository->update($user, $payload);

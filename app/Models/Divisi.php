@@ -174,9 +174,25 @@ class Divisi extends Model
 
     public function isModuleActive($moduleKey)
     {
+        // 1. Cek module_permissions per modul jika ada kustomisasi CRUD pada divisi
+        if (is_array($this->module_permissions) && isset($this->module_permissions['modules'][$moduleKey])) {
+            $divModPerm = $this->module_permissions['modules'][$moduleKey];
+            $hasDivCrud = !empty($divModPerm['c']) || !empty($divModPerm['r']) || !empty($divModPerm['u']) || !empty($divModPerm['d'])
+                || !empty($divModPerm['create']) || !empty($divModPerm['read']) || !empty($divModPerm['update']) || !empty($divModPerm['delete']);
+
+            if (is_array($this->active_modules)) {
+                return in_array($moduleKey, $this->active_modules) || $hasDivCrud;
+            }
+
+            return $hasDivCrud;
+        }
+
+        // 2. Cek active_modules divisi
         if (!is_null($this->active_modules)) {
             return in_array($moduleKey, $this->active_modules);
         }
+
+        // 3. Fallback instansi
         return $this->instansi ? $this->instansi->isModuleActive($moduleKey) : true;
     }
 
