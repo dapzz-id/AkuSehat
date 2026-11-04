@@ -406,22 +406,26 @@
             <!-- ======================================================== -->
             <div id="demo-content-web" class="transition-all duration-300">
                 
-                <!-- Role Selector Sub-Pills (Admin Instansi, Health Consultant, Health Monitor) -->
+                <!-- Role Selector Sub-Pills (4 Peran Web Terpadu: Admin Instansi, Admin PMR/UKS, Health Monitor, Health Consultant) -->
                 <div class="flex flex-wrap items-center justify-center gap-2 mb-6">
                     <span class="text-xs font-bold text-slate-400 mr-2 flex items-center gap-1.5">
-                        <i class="fas fa-user-tag text-emerald-400"></i> Pilih Peran Pengguna:
+                        <i class="fas fa-user-tag text-emerald-400"></i> Pilih Peran Web:
                     </span>
-                    <button type="button" onclick="setRoleWebDemo('admin')" id="role-pill-admin" class="role-pill px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 bg-emerald-600 text-white shadow-sm border border-emerald-500">
+                    <button type="button" onclick="setRoleWebDemo('admin')" id="role-pill-admin" class="role-pill px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 bg-emerald-600 text-white shadow-sm border border-emerald-500">
                         <i class="fas fa-school"></i>
-                        <span>Admin Instansi (Kepala Sekolah/UKS)</span>
+                        <span>Admin Instansi (Kepala Sekolah)</span>
                     </button>
-                    <button type="button" onclick="setRoleWebDemo('consultant')" id="role-pill-consultant" class="role-pill px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 bg-slate-800 text-slate-300 hover:text-white border border-slate-700">
+                    <button type="button" onclick="setRoleWebDemo('adminpmr')" id="role-pill-adminpmr" class="role-pill px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 bg-slate-800 text-slate-300 hover:text-white border border-slate-700">
+                        <i class="fas fa-hand-holding-medical text-rose-400"></i>
+                        <span>Admin PMR (Pengurus UKS)</span>
+                    </button>
+                    <button type="button" onclick="setRoleWebDemo('monitor')" id="role-pill-monitor" class="role-pill px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 bg-slate-800 text-slate-300 hover:text-white border border-slate-700">
+                        <i class="fas fa-heart-pulse text-sky-400"></i>
+                        <span>Health Monitor (Guru Penjas / Medis)</span>
+                    </button>
+                    <button type="button" onclick="setRoleWebDemo('consultant')" id="role-pill-consultant" class="role-pill px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 bg-slate-800 text-slate-300 hover:text-white border border-slate-700">
                         <i class="fas fa-user-doctor text-teal-400"></i>
                         <span>Health Consultant (Konselor / BK)</span>
-                    </button>
-                    <button type="button" onclick="setRoleWebDemo('monitor')" id="role-pill-monitor" class="role-pill px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 bg-slate-800 text-slate-300 hover:text-white border border-slate-700">
-                        <i class="fas fa-kit-medical text-sky-400"></i>
-                        <span>Health Monitor (Petugas Lapangan UKS)</span>
                     </button>
                 </div>
 
@@ -863,65 +867,80 @@
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 <!-- Role 1: Admin Instansi -->
-                <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
+                <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
                     <div>
                         <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm mb-3">
                             <i class="fas fa-school"></i>
                         </div>
-                        <h4 class="text-base font-extrabold text-slate-900 mb-1">Admin Instansi</h4>
-                        <p class="text-xs text-slate-500 mb-3">Kepala Sekolah / Pengelola UKS</p>
+                        <h4 class="text-base font-extrabold text-slate-900 mb-0.5">Admin Instansi</h4>
+                        <p class="text-xs text-emerald-700 font-semibold mb-2">Kepala Sekolah / Yayasan</p>
                         <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                            Mengatur divisi/kelas, kuota akun siswa, billing paket lisensi Midtrans, dan mengunduh laporan rekapitulasi kesehatan resmi (PDF) untuk dinas/instansi terkait.
+                            Pengambil kebijakan utama. Mengatur struktur kelas/divisi, lisensi kuota siswa, pembayaran billing Midtrans, serta mengunduh rekapitulasi laporan resmi (PDF).
                         </p>
                     </div>
-                    <span class="text-[11px] font-bold text-emerald-800">Akses: Web Portal</span>
+                    <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200 text-center">Akses: Web Portal</span>
                 </div>
 
-                <!-- Role 2: Health Consultant -->
-                <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
+                <!-- Role 2: Admin PMR / Pengurus UKS -->
+                <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+                    <div>
+                        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center font-bold text-sm mb-3">
+                            <i class="fas fa-hand-holding-medical"></i>
+                        </div>
+                        <h4 class="text-base font-extrabold text-slate-900 mb-0.5">Admin PMR / UKS</h4>
+                        <p class="text-xs text-rose-700 font-semibold mb-2">Pengurus Lapangan UKS / PMI</p>
+                        <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                            Mengelola operasional harian ruang UKS: sirkulasi peminjaman pita haid & cuti menstruasi siswi, sistem deteksi keterlambatan > 7 hari, dan registrasi anggota.
+                        </p>
+                    </div>
+                    <span class="text-[11px] font-bold text-rose-800 bg-rose-50 px-2 py-1 rounded-lg border border-rose-200 text-center">Akses: Web Portal</span>
+                </div>
+
+                <!-- Role 3: Health Monitor -->
+                <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+                    <div>
+                        <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center font-bold text-sm mb-3">
+                            <i class="fas fa-heart-pulse"></i>
+                        </div>
+                        <h4 class="text-base font-extrabold text-slate-900 mb-0.5">Health Monitor</h4>
+                        <p class="text-xs text-sky-700 font-semibold mb-2">Guru Penjas / Tim Skrining</p>
+                        <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                            Fokus pada skrining fisik klinis: input cepat timbangan antropometri (TB/BB dengan kalkulasi otomatis IMT Kemenkes) dan tes rapid Hemoglobin (Hb anemia siswi).
+                        </p>
+                    </div>
+                    <span class="text-[11px] font-bold text-sky-800 bg-sky-50 px-2 py-1 rounded-lg border border-sky-200 text-center">Akses: Web Portal</span>
+                </div>
+
+                <!-- Role 4: Health Consultant -->
+                <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
                     <div>
                         <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center font-bold text-sm mb-3">
                             <i class="fas fa-user-doctor"></i>
                         </div>
-                        <h4 class="text-base font-extrabold text-slate-900 mb-1">Health Consultant</h4>
-                        <p class="text-xs text-slate-500 mb-3">Guru BK / Konselor Medis</p>
+                        <h4 class="text-base font-extrabold text-slate-900 mb-0.5">Health Consultant</h4>
+                        <p class="text-xs text-teal-700 font-semibold mb-2">Guru BK / Konselor / Dokter</p>
                         <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                            Menerima tiket konseling SafeSpace dari siswa, menganalisis riwayat klinis yang memerlukan tindak lanjut khusus, serta evaluasi tingkat burnout siswa.
+                            Menangani konsultasi privat SafeSpace, evaluasi skrining burnout dan stres akademik, serta memberikan rekomendasi klinis dan rujukan lanjutan ke Puskesmas.
                         </p>
                     </div>
-                    <span class="text-[11px] font-bold text-teal-800">Akses: Web Portal</span>
+                    <span class="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-1 rounded-lg border border-teal-200 text-center">Akses: Web Portal</span>
                 </div>
 
-                <!-- Role 3: Health Monitor -->
-                <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
-                    <div>
-                        <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center font-bold text-sm mb-3">
-                            <i class="fas fa-kit-medical"></i>
-                        </div>
-                        <h4 class="text-base font-extrabold text-slate-900 mb-1">Health Monitor</h4>
-                        <p class="text-xs text-slate-500 mb-3">Petugas Lapangan UKS / PMR</p>
-                        <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                            Melakukan input cepat penimbangan antropometri berkala di ruang UKS, input tes Hb program TTD, serta validasi permohonan pinjam pita haid UKS.
-                        </p>
-                    </div>
-                    <span class="text-[11px] font-bold text-sky-800">Akses: Web Portal</span>
-                </div>
-
-                <!-- Role 4: Member (Siswa) -->
-                <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
+                <!-- Role 5: Member (Siswa) -->
+                <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
                     <div>
                         <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold text-sm mb-3">
                             <i class="fas fa-user-graduate"></i>
                         </div>
-                        <h4 class="text-base font-extrabold text-slate-900 mb-1">Siswa / Member</h4>
-                        <p class="text-xs text-slate-500 mb-3">Peserta Didik / Anggota</p>
+                        <h4 class="text-base font-extrabold text-slate-900 mb-0.5">Siswa / Siswi</h4>
+                        <p class="text-xs text-indigo-700 font-semibold mb-2">Peserta Didik / Anggota</p>
                         <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                            Melihat rekam medis pribadi, IMT, riwayat Hb, siklus haid, pelacakan lari GPS, serta mengajukan peminjaman fasilitas UKS dengan mudah via smartphone.
+                            Pengguna aplikasi mobile Android untuk melihat rekam medis mandiri, log siklus haid, pengajuan pinjam pita UKS, pelacak lari GPS, dan chat SafeSpace dengan BK.
                         </p>
                     </div>
-                    <span class="text-[11px] font-bold text-indigo-800">Akses: Mobile Android</span>
+                    <span class="text-[11px] font-bold text-indigo-800 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-200 text-center">Akses: Mobile Android</span>
                 </div>
             </div>
         </div>
@@ -1181,16 +1200,19 @@
                     </div>
                 </div>
 
-                <!-- Video Role Tabs -->
+                <!-- Video Role Tabs (4 Peran Web Lengkap) -->
                 <div class="flex items-center gap-1.5 p-1 bg-slate-900 rounded-xl border border-slate-700/80 text-[11px] font-bold">
                     <button type="button" onclick="changeVideoRole('admin')" id="v-role-admin" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white transition-colors">
                         Admin Instansi
                     </button>
-                    <button type="button" onclick="changeVideoRole('consultant')" id="v-role-consultant" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition-colors">
-                        Health Consultant
+                    <button type="button" onclick="changeVideoRole('adminpmr')" id="v-role-adminpmr" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition-colors">
+                        Admin PMR / UKS
                     </button>
                     <button type="button" onclick="changeVideoRole('monitor')" id="v-role-monitor" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition-colors">
                         Health Monitor
+                    </button>
+                    <button type="button" onclick="changeVideoRole('consultant')" id="v-role-consultant" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition-colors">
+                        Health Consultant
                     </button>
                 </div>
 
@@ -1338,8 +1360,8 @@
         const rolesData = {
             admin: {
                 name: 'Admin Instansi',
-                badgeText: 'Admin Instansi (Kepala Sekolah/UKS)',
-                username: 'Admin Sekolah',
+                badgeText: 'Admin Instansi (Kepala Sekolah / Yayasan)',
+                username: 'Kepala Sekolah / Yayasan',
                 instansi: 'SMKS TELEKOMUNIKASI TELESANDI BEKASI',
                 sidebarLinks: [
                     { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard Utama', active: true },
@@ -1940,55 +1962,226 @@
                 ]
             },
 
-            monitor: {
-                name: 'Health Monitor',
-                badgeText: 'Health Monitor (Petugas Lapangan UKS)',
-                username: 'Petugas UKS / PMR',
+            adminpmr: {
+                name: 'Admin PMR / Pengurus UKS',
+                badgeText: 'Admin PMR (Pengurus Operasional UKS)',
+                username: 'Koordinator PMR & UKS',
                 instansi: 'SMKS TELEKOMUNIKASI TELESANDI BEKASI',
                 sidebarLinks: [
-                    { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard UKS Harian', active: true },
-                    { id: 'kesehatan', icon: 'fa-notes-medical', label: 'Input Skrining Antropometri' },
-                    { id: 'hb', icon: 'fa-droplet', label: 'Input Tes Rapid Hb' },
-                    { id: 'femhealth', icon: 'fa-ribbon', label: 'Peminjaman Pita & Fasilitas' }
+                    { id: 'femhealth', icon: 'fa-ribbon', label: 'Sirkulasi Pita Haid & Cuti', active: true },
+                    { id: 'users', icon: 'fa-users', label: 'Pendaftaran Siswa / Anggota' },
+                    { id: 'kesehatan', icon: 'fa-notes-medical', label: 'Buku Tamu Ruang UKS' },
+                    { id: 'hb', icon: 'fa-droplet', label: 'Monitoring Siswi Anemia (TTD)' }
                 ],
                 screens: [
                     {
-                        id: 'dashboard',
-                        title: 'Dashboard Operasional Ruang UKS Harian',
-                        url: 'https://akusehat.neuracakrawira.asia/dashboard',
+                        id: 'femhealth',
+                        title: 'Sirkulasi Pita UKS & Deteksi Keterlambatan > 7 Hari',
+                        url: 'https://akusehat.neuracakrawira.asia/admin/femhealth',
                         html: `
-                            <div class="rounded-2xl bg-gradient-to-r from-sky-950 via-slate-900 to-slate-950 p-4 sm:p-5 text-white shadow-md border border-sky-800/40 mb-4">
-                                <h3 class="text-base sm:text-lg font-extrabold text-white">Dashboard Petugas Lapangan UKS</h3>
-                                <p class="text-xs text-sky-100/80">Entri cepat penimbangan fisik, cek Hb rutin, dan validasi peminjaman obat/fasilitas.</p>
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-sm">
+                                        <i class="fas fa-venus"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-extrabold text-sm text-slate-900">Manajemen Sirkulasi Pita UKS & Cuti Haid</h4>
+                                        <p class="text-[11px] text-slate-500">Operasional UKS harian: validasi pengembalian pita & penanganan siswi haid</p>
+                                    </div>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-pink-600 text-white flex items-center gap-1 shadow-xs">
+                                    <i class="fas fa-ribbon"></i> Catat Peminjaman Baru
+                                </span>
                             </div>
-                            <div class="grid grid-cols-3 gap-3 mb-4">
-                                <div class="p-3 bg-white rounded-xl border border-slate-200">
-                                    <div class="text-[10px] text-slate-500 uppercase font-semibold">Siswa Diperiksa Hari Ini</div>
-                                    <div class="text-xl font-black text-slate-900 mt-1">28 Siswa</div>
-                                    <div class="text-[9px] text-emerald-700 font-bold mt-0.5">Skrining Kelas X-TKJ</div>
+
+                            <!-- Warning Banner Keterlambatan Pita -->
+                            <div class="p-3 bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl border border-rose-200 mb-3 flex items-start gap-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center text-xs shrink-0 mt-0.5">
+                                    <i class="fas fa-triangle-exclamation"></i>
                                 </div>
-                                <div class="p-3 bg-white rounded-xl border border-slate-200">
-                                    <div class="text-[10px] text-slate-500 uppercase font-semibold">Pita UKS Dipinjam</div>
-                                    <div class="text-xl font-black text-teal-700 mt-1">6 Pita Aktif</div>
-                                    <div class="text-[9px] text-slate-400 mt-0.5">Sirkulasi Normal</div>
+                                <div class="text-xs">
+                                    <div class="font-bold text-rose-900">Peringatan Pengurus UKS: 1 Siswi Melebihi Batas Waktu 7 Hari</div>
+                                    <div class="text-[11px] text-rose-700 mt-0.5">Siswa berikut belum mengembalikan pita UKS atau mengalami siklus haid berkepanjangan (indikasi menorrhagia/anemia). Admin PMR berwenang mengenakan denda kedisiplinan dan merujuk siswi ke Guru BK.</div>
                                 </div>
-                                <div class="p-3 bg-white rounded-xl border border-slate-200">
-                                    <div class="text-[10px] text-slate-500 uppercase font-semibold">Peringatan Terlambat</div>
-                                    <div class="text-xl font-black text-rose-600 mt-1">1 Warning</div>
-                                    <div class="text-[9px] text-rose-500 font-bold mt-0.5">Jatuh Tempo Kemarin</div>
+                            </div>
+
+                            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden text-xs">
+                                <div class="grid grid-cols-6 font-bold text-slate-500 p-2.5 bg-slate-50 border-b border-slate-200">
+                                    <span>Nama Siswi</span>
+                                    <span>Kelas / Divisi</span>
+                                    <span>Tgl Pinjam</span>
+                                    <span>Batas Waktu</span>
+                                    <span>Status Medis</span>
+                                    <span class="text-right">Tindakan Admin PMR</span>
+                                </div>
+                                <div class="grid grid-cols-6 p-2.5 border-b border-slate-100 items-center">
+                                    <div><strong class="text-slate-900">Maya Putri</strong><div class="text-[10px] text-slate-400">NIS: 2026115</div></div>
+                                    <span class="text-slate-600">XI-MM 2</span>
+                                    <span class="font-mono text-slate-700">28 Okt 2026</span>
+                                    <span class="font-mono text-rose-600 font-bold">04 Nov 2026</span>
+                                    <span><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 animate-pulse">Telat 1 Hari (Warning)</span></span>
+                                    <span class="text-right"><button class="px-2 py-1 rounded bg-rose-600 text-white text-[10px] font-bold">Rujuk ke Guru BK</button></span>
+                                </div>
+                                <div class="grid grid-cols-6 p-2.5 items-center">
+                                    <div><strong class="text-slate-900">Annisa Larasati</strong><div class="text-[10px] text-slate-400">NIS: 2026118</div></div>
+                                    <span class="text-slate-600">X-RPL 1</span>
+                                    <span class="font-mono text-slate-700">02 Nov 2026</span>
+                                    <span class="font-mono text-slate-700">09 Nov 2026</span>
+                                    <span><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Normal (Sisa 5 Hari)</span></span>
+                                    <span class="text-right text-emerald-700 font-bold"><i class="fas fa-check-circle"></i> Selesai Dipinjam</span>
+                                </div>
+                            </div>
+                        `
+                    },
+                    {
+                        id: 'users',
+                        title: 'Pendaftaran Akun Siswa & Anggota Lapangan UKS',
+                        url: 'https://akusehat.neuracakrawira.asia/admin/users',
+                        html: `
+                            <div class="flex justify-between items-center mb-3">
+                                <div>
+                                    <h4 class="font-extrabold text-sm text-slate-900">Daftar Akun Anggota & Siswa</h4>
+                                    <p class="text-[11px] text-slate-500">Pendaftaran mandiri & aktivasi akun mobile siswa di ruang UKS</p>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-700 text-white flex items-center gap-1 shadow-xs">
+                                    <i class="fas fa-user-plus"></i> + Tambah Siswa Baru
+                                </span>
+                            </div>
+                            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden text-xs">
+                                <div class="grid grid-cols-5 font-bold text-slate-500 p-2.5 bg-slate-50 border-b border-slate-200">
+                                    <span>Nama Siswa</span>
+                                    <span>NIS</span>
+                                    <span>Kelas</span>
+                                    <span>Status Akun</span>
+                                    <span class="text-right">Aksi</span>
+                                </div>
+                                <div class="grid grid-cols-5 p-2.5 border-b border-slate-100 items-center">
+                                    <div><strong class="text-slate-900">Fajar Nugraha</strong></div>
+                                    <span class="font-mono text-slate-700">2026110</span>
+                                    <span class="text-slate-600">X-RPL 1</span>
+                                    <span class="text-emerald-700 font-bold"><i class="fas fa-circle-check"></i> Aktif</span>
+                                    <span class="text-right"><button class="px-2 py-1 rounded bg-slate-100 text-slate-700 font-bold text-[10px] border border-slate-300">Edit</button></span>
+                                </div>
+                                <div class="grid grid-cols-5 p-2.5 items-center">
+                                    <div><strong class="text-slate-900">Dewi Sartika</strong></div>
+                                    <span class="font-mono text-slate-700">2026111</span>
+                                    <span class="text-slate-600">X-RPL 1</span>
+                                    <span class="text-emerald-700 font-bold"><i class="fas fa-circle-check"></i> Aktif</span>
+                                    <span class="text-right"><button class="px-2 py-1 rounded bg-slate-100 text-slate-700 font-bold text-[10px] border border-slate-300">Edit</button></span>
                                 </div>
                             </div>
                         `
                     },
                     {
                         id: 'kesehatan',
-                        title: 'Form Entri Cepat Penimbangan UKS (Antropometri)',
+                        title: 'Buku Tamu & Kunjungan Ruang UKS Harian',
+                        url: 'https://akusehat.neuracakrawira.asia/admin/kesehatan',
+                        html: `
+                            <div class="p-3.5 bg-white rounded-xl border border-slate-200 mb-3">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-bold text-sm text-slate-900">Log Siswa Berobat / Istirahat di UKS Hari Ini</h4>
+                                    <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">5 Kunjungan</span>
+                                </div>
+                                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden text-xs">
+                                    <div class="grid grid-cols-5 font-bold text-slate-500 p-2.5 bg-slate-50 border-b border-slate-200">
+                                        <span>Nama Siswa</span>
+                                        <span>Kelas</span>
+                                        <span>Keluhan Fisik</span>
+                                        <span>Penanganan PMR</span>
+                                        <span class="text-right">Status</span>
+                                    </div>
+                                    <div class="grid grid-cols-5 p-2.5 border-b border-slate-100 items-center">
+                                        <strong class="text-slate-900">Rendi Kurnia</strong>
+                                        <span class="text-slate-600">XI-TKJ 2</span>
+                                        <span class="text-slate-700">Luka Lecet Olahraga</span>
+                                        <span class="text-slate-500">Pembersihan Antiseptik & Perban</span>
+                                        <span class="text-right"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Kembali ke Kelas</span></span>
+                                    </div>
+                                    <div class="grid grid-cols-5 p-2.5 items-center">
+                                        <strong class="text-slate-900">Nabila Zahra</strong>
+                                        <span class="text-slate-600">X-MM 1</span>
+                                        <span class="text-slate-700">Demam & Pusing</span>
+                                        <span class="text-slate-500">Kompres Hangat & Paracetamol</span>
+                                        <span class="text-right"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">Istirahat di Bed</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        `
+                    },
+                    {
+                        id: 'hb',
+                        title: 'Monitoring Siswi Anemia untuk Tablet Tambah Darah (TTD)',
+                        url: 'https://akusehat.neuracakrawira.asia/admin/hb',
+                        html: `
+                            <div class="p-3.5 bg-white rounded-xl border border-slate-200 mb-3">
+                                <h4 class="font-bold text-sm text-slate-900 mb-1">Daftar Distribusi Tablet Tambah Darah (TTD) UKS</h4>
+                                <p class="text-xs text-slate-500">Memastikan siswi yang terindikasi anemia mendapatkan suplemen zat besi rutin setiap minggu.</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 text-xs">
+                                <div class="p-3 bg-white rounded-xl border border-slate-200">
+                                    <div class="font-bold text-slate-800 mb-1">Siswi Terindikasi Anemia</div>
+                                    <div class="text-lg font-black text-rose-600">8 Siswi (Hb &lt; 12.0)</div>
+                                    <p class="text-[10px] text-slate-500 mt-1">Diprioritaskan untuk pemantauan nutrisi dan konsumsi TTD mingguan.</p>
+                                </div>
+                                <div class="p-3 bg-white rounded-xl border border-slate-200">
+                                    <div class="font-bold text-slate-800 mb-1">Jadwal Minum Bersama</div>
+                                    <div class="text-emerald-700 font-bold">Setiap Jumat Pagi di UKS</div>
+                                    <p class="text-[10px] text-slate-500 mt-1">Dikoordinasikan oleh pengurus PMR bersama pembina UKS.</p>
+                                </div>
+                            </div>
+                        `
+                    }
+                ]
+            },
+
+            monitor: {
+                name: 'Health Monitor',
+                badgeText: 'Health Monitor (Guru Penjas / Tim Skrining Fisik)',
+                username: 'Guru Penjaskes / Tim Skrining',
+                instansi: 'SMKS TELEKOMUNIKASI TELESANDI BEKASI',
+                sidebarLinks: [
+                    { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard Skrining Fisik', active: true },
+                    { id: 'kesehatan', icon: 'fa-notes-medical', label: 'Input Antropometri (TB/BB)' },
+                    { id: 'hb', icon: 'fa-droplet', label: 'Input Tes Rapid Hemoglobin (Hb)' }
+                ],
+                screens: [
+                    {
+                        id: 'dashboard',
+                        title: 'Dashboard Skrining Antropometri & Hb Berkala',
+                        url: 'https://akusehat.neuracakrawira.asia/dashboard',
+                        html: `
+                            <div class="rounded-2xl bg-gradient-to-r from-sky-950 via-slate-900 to-slate-950 p-4 sm:p-5 text-white shadow-md border border-sky-800/40 mb-4">
+                                <h3 class="text-base sm:text-lg font-extrabold text-white">Dashboard Guru Penjas & Tim Skrining Fisik</h3>
+                                <p class="text-xs text-sky-100/80">Entri massal pengukuran tinggi & berat badan siswa serta skrining hemoglobin berkala.</p>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3 mb-4">
+                                <div class="p-3 bg-white rounded-xl border border-slate-200">
+                                    <div class="text-[10px] text-slate-500 uppercase font-semibold">Siswa Diperiksa Hari Ini</div>
+                                    <div class="text-xl font-black text-slate-900 mt-1">28 Siswa</div>
+                                    <div class="text-[9px] text-emerald-700 font-bold mt-0.5">Kelas X-TKJ (Praktek Penjas)</div>
+                                </div>
+                                <div class="p-3 bg-white rounded-xl border border-slate-200">
+                                    <div class="text-[10px] text-slate-500 uppercase font-semibold">Rata-Rata IMT Normal</div>
+                                    <div class="text-xl font-black text-emerald-700 mt-1">77% Normal</div>
+                                    <div class="text-[9px] text-slate-400 mt-0.5">Standar Baku Kemenkes RI</div>
+                                </div>
+                                <div class="p-3 bg-white rounded-xl border border-slate-200">
+                                    <div class="text-[10px] text-slate-500 uppercase font-semibold">Skrining Hb Berjalan</div>
+                                    <div class="text-xl font-black text-rose-600 mt-1">100% Siswi</div>
+                                    <div class="text-[9px] text-rose-500 font-bold mt-0.5">Target Bebas Anemia</div>
+                                </div>
+                            </div>
+                        `
+                    },
+                    {
+                        id: 'kesehatan',
+                        title: 'Form Entri Cepat Penimbangan Antropometri (TB / BB -> IMT Otomatis)',
                         url: 'https://akusehat.neuracakrawira.asia/admin/kesehatan/create',
                         html: `
                             <div class="p-3.5 bg-white rounded-xl border border-slate-200 mb-3">
                                 <div class="flex justify-between items-center mb-2">
-                                    <h4 class="font-bold text-sm text-slate-900">Input Cepat Skrining Fisik Berkala</h4>
-                                    <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Auto IMT Active</span>
+                                    <h4 class="font-bold text-sm text-slate-900">Input Cepat Antropometri Fisik Siswa</h4>
+                                    <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Kalkulasi Otomatis IMT Aktif</span>
                                 </div>
                                 <div class="grid grid-cols-4 gap-2.5 text-xs">
                                     <div>
@@ -2009,14 +2202,14 @@
                                     </div>
                                 </div>
                                 <div class="mt-3 text-right">
-                                    <button class="px-3 py-1.5 rounded-lg bg-emerald-700 text-white font-bold text-xs shadow-xs"><i class="fas fa-save mr-1"></i> Simpan Hasil Pemeriksaan</button>
+                                    <button class="px-3 py-1.5 rounded-lg bg-emerald-700 text-white font-bold text-xs shadow-xs"><i class="fas fa-save mr-1"></i> Simpan Hasil Pengukuran</button>
                                 </div>
                             </div>
                         `
                     },
                     {
                         id: 'hb',
-                        title: 'Input Tes Rapid Hemoglobin (Hb) di Lapangan UKS',
+                        title: 'Input Hasil Rapid Test Hemoglobin (Hb Bebas Anemia)',
                         url: 'https://akusehat.neuracakrawira.asia/admin/hb/create',
                         html: `
                             <div class="p-3.5 bg-white rounded-xl border border-slate-200 mb-3">
@@ -2043,40 +2236,6 @@
                                 </div>
                             </div>
                         `
-                    },
-                    {
-                        id: 'femhealth',
-                        title: 'Validasi & Sirkulasi Peminjaman Fasilitas/Pita UKS',
-                        url: 'https://akusehat.neuracakrawira.asia/admin/femhealth',
-                        html: `
-                            <div class="p-3.5 bg-white rounded-xl border border-slate-200 mb-3">
-                                <h4 class="font-bold text-sm text-slate-900 mb-1">Daftar Sirkulasi Peminjaman Pita Kesehatan Haid</h4>
-                                <p class="text-xs text-slate-500">Scan QR atau konfirmasi permohonan pinjam pita dari siswa.</p>
-                            </div>
-                            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden text-xs">
-                                <div class="grid grid-cols-5 font-bold text-slate-500 p-2.5 bg-slate-50 border-b border-slate-200">
-                                    <span>Nama Siswi</span>
-                                    <span>Tgl Pinjam</span>
-                                    <span>Estimasi Selesai</span>
-                                    <span>Status Sirkulasi</span>
-                                    <span class="text-right">Aksi Petugas</span>
-                                </div>
-                                <div class="grid grid-cols-5 p-2.5 border-b border-slate-100 items-center">
-                                    <strong class="text-slate-900">Annisa Larasati</strong>
-                                    <span class="text-slate-600">03 Nov 2026</span>
-                                    <span class="font-mono text-slate-700">07 Nov 2026</span>
-                                    <span><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-800">Aktif Dipinjam</span></span>
-                                    <span class="text-right"><button class="px-2 py-1 rounded bg-slate-100 text-slate-700 font-bold text-[10px] border border-slate-300">Kembalikan</button></span>
-                                </div>
-                                <div class="grid grid-cols-5 p-2.5 items-center">
-                                    <strong class="text-slate-900">Maya Putri</strong>
-                                    <span class="text-slate-600">28 Okt 2026</span>
-                                    <span class="font-mono text-rose-600 font-bold">02 Nov 2026</span>
-                                    <span><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 animate-pulse">Terlambat (Warning)</span></span>
-                                    <span class="text-right"><button class="px-2 py-1 rounded bg-rose-600 text-white font-bold text-[10px]">Kirim Notifikasi</button></span>
-                                </div>
-                            </div>
-                        `
                     }
                 ]
             }
@@ -2090,13 +2249,13 @@
             const data = rolesData[roleKey];
             currentActiveScreenId = data.screens[0].id;
 
-            ['admin', 'consultant', 'monitor'].forEach(r => {
+            ['admin', 'adminpmr', 'monitor', 'consultant'].forEach(r => {
                 const pill = document.getElementById('role-pill-' + r);
                 if (pill) {
                     if (r === roleKey) {
-                        pill.className = 'role-pill px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 bg-emerald-600 text-white shadow-sm border border-emerald-500';
+                        pill.className = 'role-pill px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 bg-emerald-600 text-white shadow-sm border border-emerald-500';
                     } else {
-                        pill.className = 'role-pill px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 bg-slate-800 text-slate-300 hover:text-white border border-slate-700';
+                        pill.className = 'role-pill px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 bg-slate-800 text-slate-300 hover:text-white border border-slate-700';
                     }
                 }
             });
@@ -2245,6 +2404,52 @@
                     render: () => (rolesData.admin.screens.find(s => s.id === 'billing') || rolesData.admin.screens[6]).html
                 }
             ],
+            adminpmr: [
+                {
+                    start: 0, end: 20,
+                    title: 'Sirkulasi Pita UKS: Validasi Peminjaman & Deteksi Keterlambatan',
+                    cursorTarget: { x: '82%', y: '60%' },
+                    cursorText: 'Peringatan Terlambat',
+                    render: () => (rolesData.adminpmr.screens.find(s => s.id === 'femhealth') || rolesData.adminpmr.screens[0]).html
+                },
+                {
+                    start: 20, end: 40,
+                    title: 'Pendaftaran Anggota: Registrasi Siswa & Aktivasi Akun Mobile',
+                    cursorTarget: { x: '85%', y: '25%' },
+                    cursorText: 'Tambah Siswa',
+                    render: () => (rolesData.adminpmr.screens.find(s => s.id === 'users') || rolesData.adminpmr.screens[1]).html
+                },
+                {
+                    start: 40, end: 60,
+                    title: 'Log Harian UKS: Catatan Pasien Berobat & Distribusi Obat',
+                    cursorTarget: { x: '70%', y: '50%' },
+                    cursorText: 'Buku Tamu UKS',
+                    render: () => (rolesData.adminpmr.screens.find(s => s.id === 'kesehatan') || rolesData.adminpmr.screens[2]).html
+                }
+            ],
+            monitor: [
+                {
+                    start: 0, end: 20,
+                    title: 'Dashboard Health Monitor: Skrining Antropometri & Hb Berkala',
+                    cursorTarget: { x: '25%', y: '45%' },
+                    cursorText: 'Skrining Fisik',
+                    render: () => (rolesData.monitor.screens.find(s => s.id === 'dashboard') || rolesData.monitor.screens[0]).html
+                },
+                {
+                    start: 20, end: 40,
+                    title: 'Entri Cepat Antropometri: Input Hasil Timbangan & IMT Baku Kemenkes',
+                    cursorTarget: { x: '78%', y: '75%' },
+                    cursorText: 'Simpan Hasil',
+                    render: () => (rolesData.monitor.screens.find(s => s.id === 'kesehatan') || rolesData.monitor.screens[1]).html
+                },
+                {
+                    start: 40, end: 60,
+                    title: 'Input Hasil Rapid Test Hemoglobin: Skrining Bebas Anemia',
+                    cursorTarget: { x: '82%', y: '60%' },
+                    cursorText: 'Catat Rapid Hb',
+                    render: () => (rolesData.monitor.screens.find(s => s.id === 'hb') || rolesData.monitor.screens[2]).html
+                }
+            ],
             consultant: [
                 {
                     start: 0, end: 20,
@@ -2267,29 +2472,6 @@
                     cursorText: 'Beri Bimbingan',
                     render: () => (rolesData.consultant.screens.find(s => s.id === 'burnout') || rolesData.consultant.screens[2]).html
                 }
-            ],
-            monitor: [
-                {
-                    start: 0, end: 20,
-                    title: 'Dashboard Health Monitor: Operasional UKS & Kunjungan Harian',
-                    cursorTarget: { x: '25%', y: '45%' },
-                    cursorText: 'Pemeriksaan UKS',
-                    render: () => (rolesData.monitor.screens.find(s => s.id === 'dashboard') || rolesData.monitor.screens[0]).html
-                },
-                {
-                    start: 20, end: 40,
-                    title: 'Entri Cepat Antropometri: Input Hasil Timbangan & IMT Baku',
-                    cursorTarget: { x: '78%', y: '75%' },
-                    cursorText: 'Simpan Hasil',
-                    render: () => (rolesData.monitor.screens.find(s => s.id === 'kesehatan') || rolesData.monitor.screens[1]).html
-                },
-                {
-                    start: 40, end: 60,
-                    title: 'Sirkulasi Pita UKS: Validasi Peminjaman & Deteksi Keterlambatan',
-                    cursorTarget: { x: '82%', y: '60%' },
-                    cursorText: 'Peringatan Terlambat',
-                    render: () => (rolesData.monitor.screens.find(s => s.id === 'femhealth') || rolesData.monitor.screens[3]).html
-                }
             ]
         };
 
@@ -2308,7 +2490,7 @@
             videoRole = role;
             videoSeconds = 0;
             
-            ['admin', 'consultant', 'monitor'].forEach(r => {
+            ['admin', 'adminpmr', 'monitor', 'consultant'].forEach(r => {
                 const btn = document.getElementById('v-role-' + r);
                 if (btn) {
                     if (r === role) {
