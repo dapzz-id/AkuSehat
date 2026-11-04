@@ -35,17 +35,21 @@
                                 <span>Mode Laporan & Rekapitulasi (Read-Only)</span>
                             </div>
                         @else
+                            @if(auth()->user()->canCreate())
                             <button onclick="window.location.href='{{ route('admin.hb.create') }}'"
                                 class="w-32 flex-1 sm:flex-none bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center">
                                 <i class="fas fa-plus text-xs md:text-sm mr-1.5 md:mr-2"></i>
                                 <span>Tambah</span>
                             </button>
+                            @endif
+                            @if(auth()->user()->canDelete())
                             <button type="submit" form="bulkDeleteForm" id="bulkDeleteBtn"
                                 class="w-40 flex-1 sm:flex-none bg-[#d32f2f] hover:bg-[#b71c1c] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled>
                                 <i class="fas fa-trash text-xs md:text-sm mr-1.5 md:mr-2"></i>
                                 <span>Hapus Terpilih</span>
                             </button>
+                            @endif
                         @endif
                     </div>
                     <form id="searchForm" action="{{ route('admin.hb.index') }}" method="GET"
@@ -282,11 +286,14 @@
                                                     title="Lihat Detail">
                                                     <i class="fas fa-eye text-sm md:text-base"></i>
                                                 </button>
+                                                @if(auth()->user()->canUpdate())
                                                 <a href="{{ route('admin.hb.edit', $item->id_hb) }}"
                                                     class="text-[#2e7d32] hover:text-[#1b5e20] p-1 transition-colors duration-200"
                                                     title="Edit">
                                                     <i class="fas fa-edit text-sm md:text-base"></i>
                                                 </a>
+                                                @endif
+                                                @if(auth()->user()->canDelete())
                                                 <form action="{{ route('admin.hb.destroy', $item->id_hb) }}" method="POST"
                                                     class="inline"
                                                     onsubmit="return confirm('Yakin ingin menghapus data HB ini?')">
@@ -298,6 +305,7 @@
                                                         <i class="fas fa-trash text-sm md:text-base"></i>
                                                     </button>
                                                 </form>
+                                                @endif
                                             </div>
                                         @endif
                                     </td>

@@ -275,12 +275,14 @@
                         <span id="bulkRemoveDivisiBtnText">{{ $tabActionInfo['btn_label'] }}</span>
                     </button>
 
+                    @if(auth()->user()->canDelete())
                     <button type="submit" form="bulkDeleteForm" id="bulkDeleteBtn"
                         class="flex-1 sm:flex-none bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-lg text-xs md:text-sm font-semibold transition-colors inline-flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
                         disabled>
                         <i class="fas fa-trash text-xs"></i>
                         <span>Hapus Terpilih</span>
                     </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -585,12 +587,15 @@
                                                 <i class="fas fa-sliders-h text-xs sm:text-sm md:text-base"></i>
                                             </button>
 
+                                            @if(auth()->user()->canUpdate())
                                             <a href="{{ route('admin.users.edit', $item->id) }}"
                                                 class="text-[#2e7d32] hover:text-[#1b5e20] p-1 transition-colors duration-200"
                                                 title="Edit">
                                                 <i class="fas fa-edit text-xs sm:text-sm md:text-base"></i>
                                             </a>
+                                            @endif
 
+                                            @if(auth()->user()->canDelete())
                                             <form action="{{ route('admin.users.destroy', $item->id) }}" method="POST"
                                                 class="inline"
                                                 onsubmit="return confirm('Yakin ingin menghapus users ini?')">
@@ -602,6 +607,7 @@
                                                     <i class="fas fa-trash text-xs sm:text-sm md:text-base"></i>
                                                 </button>
                                             </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -1147,15 +1153,86 @@
                         </div>
                     </div>
 
-                    <!-- Wewenang Add User Khusus Pengguna -->
-                    <div class="pt-3 border-t border-gray-100 mt-3">
-                        <label class="flex items-center justify-between p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer">
+                    <!-- Hak Akses Operasional & CRUD Khusus Akun Pengguna -->
+                    <div class="pt-4 border-t border-gray-100 space-y-3">
+                        <div class="flex items-center justify-between">
                             <div>
-                                <span class="text-xs font-semibold text-gray-800 block">Izinkan Akun Ini Menambah / Import User</span>
-                                <span class="text-[11px] text-gray-500">Memberikan wewenang pendaftaran akun baru khusus akun ini.</span>
+                                <span class="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center gap-1.5">
+                                    <i class="fas fa-shield-halved text-indigo-600"></i>
+                                    <span>Hak Akses Operasional (CRUD Pengguna)</span>
+                                </span>
+                                <p class="text-[11px] text-gray-500 mt-0.5">Tentukan izin Create, Read, Update, Delete operasional khusus akun ini.</p>
                             </div>
-                            <input type="checkbox" name="custom_permissions[can_add_user]" value="1" id="userPermCanAddUser" class="rounded text-indigo-600 focus:ring-indigo-500">
-                        </label>
+                            <div class="space-x-2 text-[11px] shrink-0">
+                                <button type="button" onclick="setAllUserCrud(true)" class="text-indigo-600 hover:underline font-semibold">Pilih Semua</button>
+                                <span class="text-gray-300">|</span>
+                                <button type="button" onclick="setAllUserCrud(false)" class="text-gray-500 hover:underline">Kosongkan</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <!-- Create -->
+                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
+                                <input type="checkbox" name="custom_permissions[can_create]" value="1" id="userPermCanCreate" class="userCrudCheckbox mt-0.5 rounded text-emerald-600 focus:ring-emerald-500">
+                                <div>
+                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
+                                        <i class="fas fa-plus-circle text-emerald-500"></i>
+                                        <span>Create (Tambah Data)</span>
+                                    </span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Membuat rekam kesehatan, aktivitas, dan entri baru.</span>
+                                </div>
+                            </label>
+
+                            <!-- Read -->
+                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
+                                <input type="checkbox" name="custom_permissions[can_read]" value="1" id="userPermCanRead" class="userCrudCheckbox mt-0.5 rounded text-blue-600 focus:ring-blue-500">
+                                <div>
+                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
+                                        <i class="fas fa-eye text-blue-500"></i>
+                                        <span>Read (Lihat Data)</span>
+                                    </span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Melihat tabel data, analitik, dan riwayat rekam.</span>
+                                </div>
+                            </label>
+
+                            <!-- Update -->
+                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
+                                <input type="checkbox" name="custom_permissions[can_update]" value="1" id="userPermCanUpdate" class="userCrudCheckbox mt-0.5 rounded text-amber-600 focus:ring-amber-500">
+                                <div>
+                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
+                                        <i class="fas fa-pen-to-square text-amber-500"></i>
+                                        <span>Update (Ubah Data)</span>
+                                    </span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Mengubah dan mengoreksi data yang sudah ada.</span>
+                                </div>
+                            </label>
+
+                            <!-- Delete -->
+                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
+                                <input type="checkbox" name="custom_permissions[can_delete]" value="1" id="userPermCanDelete" class="userCrudCheckbox mt-0.5 rounded text-rose-600 focus:ring-rose-500">
+                                <div>
+                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
+                                        <i class="fas fa-trash-can text-rose-500"></i>
+                                        <span>Delete (Hapus Data)</span>
+                                    </span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Menghapus baris data atau pembatalan entri.</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Wewenang Add User Khusus Pengguna -->
+                        <div class="pt-2">
+                            <label class="flex items-center justify-between p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer">
+                                <div>
+                                    <span class="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
+                                        <i class="fas fa-user-plus text-indigo-600"></i>
+                                        <span>Wewenang Tambah / Import Pengguna</span>
+                                    </span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Memberikan wewenang pendaftaran akun baru khusus akun ini.</span>
+                                </div>
+                                <input type="checkbox" name="custom_permissions[can_add_user]" value="1" id="userPermCanAddUser" class="rounded text-indigo-600 focus:ring-indigo-500">
+                            </label>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -1377,7 +1454,9 @@
                     countText.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600 border border-gray-200 transition-colors';
                 }
             }
-            bulkDeleteBtn.disabled = checkedCount === 0;
+            if (bulkDeleteBtn) {
+                bulkDeleteBtn.disabled = checkedCount === 0;
+            }
             bulkChangeDivisiBtn.disabled = checkedCount === 0;
             if (bulkRemoveDivisiBtn) {
                 bulkRemoveDivisiBtn.disabled = checkedCount === 0;
@@ -1425,7 +1504,15 @@
             }
 
             const customPerms = user.custom_permissions || {};
+            document.getElementById('userPermCanCreate').checked = customPerms.can_create !== undefined ? !!customPerms.can_create : true;
+            document.getElementById('userPermCanRead').checked = customPerms.can_read !== undefined ? !!customPerms.can_read : true;
+            document.getElementById('userPermCanUpdate').checked = customPerms.can_update !== undefined ? !!customPerms.can_update : true;
+            document.getElementById('userPermCanDelete').checked = !!customPerms.can_delete;
             document.getElementById('userPermCanAddUser').checked = !!customPerms.can_add_user;
+        }
+
+        function setAllUserCrud(check) {
+            document.querySelectorAll('.userCrudCheckbox').forEach(cb => cb.checked = check);
         }
 
         function closeUserPermModal() {

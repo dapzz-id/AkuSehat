@@ -41,6 +41,10 @@ class DivisiController extends Controller
 
     public function store(StoreDivisiRequest $request)
     {
+        if (!Auth::user()->canCreate()) {
+            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menambah divisi.');
+        }
+
         try {
             $this->divisiService->createDivisi($request->validated(), Auth::user());
             return redirect()->route('admin.divisi.index')->with('success', 'Divisi berhasil ditambahkan.');
@@ -51,6 +55,10 @@ class DivisiController extends Controller
 
     public function update(UpdateDivisiRequest $request, Divisi $divisi)
     {
+        if (!Auth::user()->canUpdate()) {
+            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk memperbarui divisi.');
+        }
+
         try {
             $this->divisiService->updateDivisi($divisi, $request->validated(), Auth::user());
             return redirect()->route('admin.divisi.index')->with('success', 'Divisi berhasil diperbarui.');
@@ -63,6 +71,10 @@ class DivisiController extends Controller
     {
         if (!Auth::user()->instansi_id || $divisi->instansi_id !== Auth::user()->instansi_id) {
             return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak atau divisi tidak ditemukan.');
+        }
+
+        if (!Auth::user()->canCreate()) {
+            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk mengkloning/menambah divisi.');
         }
 
         $cloned = $this->divisiService->cloneDivisi($divisi, $request->validated(), Auth::user());
@@ -90,6 +102,10 @@ class DivisiController extends Controller
             return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak.');
         }
 
+        if (!Auth::user()->canDelete()) {
+            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menghapus divisi.');
+        }
+
         $name = $divisi->divisi_name;
         $affected = $this->divisiRepository->deleteWithUserCleanups($divisi);
 
@@ -103,6 +119,10 @@ class DivisiController extends Controller
 
     public function mass_destroy(MassDestroyDivisiRequest $request)
     {
+        if (!Auth::user()->canDelete()) {
+            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menghapus divisi.');
+        }
+
         $result = $this->divisiRepository->massDeleteWithUserCleanups($request->validated('ids'), Auth::user()->instansi_id);
 
         return redirect()->route('admin.divisi.index')

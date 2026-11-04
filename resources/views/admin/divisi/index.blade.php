@@ -17,17 +17,21 @@
                 </div>
                 <div class="flex flex-col gap-2 w-full lg:w-auto">
                     <div class="flex flex-wrap gap-2">
+                        @if(Auth::user()->canCreate())
                         <button onclick="openModal()"
                             class="w-52 flex-1 sm:flex-none bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center">
                             <i class="fas fa-plus text-xs md:text-sm mr-1.5 md:mr-2"></i>
                             <span>Tambah</span>
                         </button>
+                        @endif
+                        @if(Auth::user()->canDelete())
                         <button type="submit" form="bulkDeleteForm" id="bulkDeleteBtn"
                             class="w-52 flex-1 sm:flex-none bg-[#d32f2f] hover:bg-[#b71c1c] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled>
                             <i class="fas fa-trash text-xs md:text-sm mr-1.5 md:mr-2"></i>
                             <span>Hapus Terpilih</span>
                         </button>
+                        @endif
                     </div>
                     <form id="searchForm" action="{{ route('admin.divisi.index') }}" method="GET" class="w-full flex-1 mt-1 flex flex-col sm:flex-row gap-2">
                         <div class="relative w-full sm:flex-1">
@@ -204,21 +208,26 @@
                                                 <i class="fas fa-sliders-h"></i>
                                             </button>
                                             <!-- Tombol Clone Divisi -->
+                                            @if(Auth::user()->canCreate())
                                             <button type="button" onclick="openCloneModal({{ json_encode($item) }})"
                                                 class="text-emerald-600 hover:text-emerald-800 p-1.5 rounded-full hover:bg-emerald-50 transition-colors"
                                                 title="Kloning Divisi (Duplikasi Hak Akses & Pengaturan)">
                                                 <i class="fas fa-copy"></i>
                                             </button>
+                                            @endif
+                                            @if(Auth::user()->canUpdate())
                                             <button type="button" onclick="editDivisi({{ json_encode($item) }})"
                                                 class="text-[#2e7d32] hover:text-[#1b5e20] p-1.5 rounded-full hover:bg-green-50 transition-colors"
                                                 title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </button>
+                                            @endif
                                             <a href="{{ route('admin.users.index') }}?divisi={{ $item->id }}"
                                                 class="text-[#0288d1] hover:text-[#01579b] p-1.5 rounded-full hover:bg-blue-50 transition-colors"
                                                 title="Lihat Members">
                                                 <i class="fas fa-users"></i>
                                             </a>
+                                            @if(Auth::user()->canDelete())
                                             <form action="{{ route('admin.divisi.destroy', $item->id) }}" method="POST"
                                                 onsubmit="return confirm('Apakah Anda yakin ingin menghapus divisi {{ $item->divisi_name }}? Tindakan ini tidak dapat dibatalkan.')">
                                                 @csrf
@@ -229,6 +238,7 @@
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -587,13 +597,84 @@
                             </label>
                             @endforeach
                         </div>
+                    </div>
+
+                    <!-- Hak Akses Operasional & CRUD Divisi -->
+                    <div class="pt-4 border-t border-gray-100 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center gap-1.5">
+                                    <i class="fas fa-shield-halved text-indigo-600"></i>
+                                    <span>Hak Akses Operasional (CRUD Divisi)</span>
+                                </span>
+                                <p class="text-[11px] text-gray-500 mt-0.5">Tentukan izin Create, Read, Update, Delete untuk operasional data divisi ini.</p>
+                            </div>
+                            <div class="space-x-2 text-[11px] shrink-0">
+                                <button type="button" onclick="setAllDivisiCrud(true)" class="text-indigo-600 hover:underline font-semibold">Pilih Semua</button>
+                                <span class="text-gray-300">|</span>
+                                <button type="button" onclick="setAllDivisiCrud(false)" class="text-gray-500 hover:underline">Kosongkan</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <!-- Create -->
+                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
+                                <input type="checkbox" name="permissions[can_create]" value="1" id="permCanCreate" class="divisiCrudCheckbox mt-0.5 rounded text-emerald-600 focus:ring-emerald-500">
+                                <div>
+                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
+                                        <i class="fas fa-plus-circle text-emerald-500"></i>
+                                        <span>Create (Tambah Data)</span>
+                                    </span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Membuat rekam kesehatan, aktivitas, dan entri data baru.</span>
+                                </div>
+                            </label>
+
+                            <!-- Read -->
+                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
+                                <input type="checkbox" name="permissions[can_read]" value="1" id="permCanRead" class="divisiCrudCheckbox mt-0.5 rounded text-blue-600 focus:ring-blue-500">
+                                <div>
+                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
+                                        <i class="fas fa-eye text-blue-500"></i>
+                                        <span>Read (Lihat Data)</span>
+                                    </span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Melihat tabel data, analitik, dan riwayat rekam.</span>
+                                </div>
+                            </label>
+
+                            <!-- Update -->
+                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
+                                <input type="checkbox" name="permissions[can_update]" value="1" id="permCanUpdate" class="divisiCrudCheckbox mt-0.5 rounded text-amber-600 focus:ring-amber-500">
+                                <div>
+                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
+                                        <i class="fas fa-pen-to-square text-amber-500"></i>
+                                        <span>Update (Ubah Data)</span>
+                                    </span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Mengubah dan mengoreksi data yang sudah ada.</span>
+                                </div>
+                            </label>
+
+                            <!-- Delete -->
+                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
+                                <input type="checkbox" name="permissions[can_delete]" value="1" id="permCanDelete" class="divisiCrudCheckbox mt-0.5 rounded text-rose-600 focus:ring-rose-500">
+                                <div>
+                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
+                                        <i class="fas fa-trash-can text-rose-500"></i>
+                                        <span>Delete (Hapus Data)</span>
+                                    </span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Menghapus baris data atau pembatalan entri.</span>
+                                </div>
+                            </label>
+                        </div>
 
                         <!-- Wewenang Add User Divisi -->
-                        <div class="pt-3 border-t border-gray-100">
+                        <div class="pt-2">
                             <label class="flex items-center justify-between p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer">
                                 <div>
-                                    <span class="text-xs font-semibold text-gray-800 block">Izinkan Role / Staf Divisi Ini Menambah User</span>
-                                    <span class="text-[11px] text-gray-500">Staf yang bertugas pada divisi ini dapat mendaftarkan anggota baru.</span>
+                                    <span class="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
+                                        <i class="fas fa-user-plus text-indigo-600"></i>
+                                        <span>Wewenang Tambah / Import Pengguna</span>
+                                    </span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Staf yang bertugas pada divisi ini dapat mendaftarkan akun baru.</span>
                                 </div>
                                 <input type="checkbox" name="permissions[can_add_user]" value="1" id="permCanAddUser" class="rounded text-indigo-600 focus:ring-indigo-500">
                             </label>
@@ -818,7 +899,15 @@
             }
 
             const perms = divisi.module_permissions || {};
+            document.getElementById('permCanCreate').checked = perms.can_create !== undefined ? !!perms.can_create : true;
+            document.getElementById('permCanRead').checked = perms.can_read !== undefined ? !!perms.can_read : true;
+            document.getElementById('permCanUpdate').checked = perms.can_update !== undefined ? !!perms.can_update : true;
+            document.getElementById('permCanDelete').checked = !!perms.can_delete;
             document.getElementById('permCanAddUser').checked = !!perms.can_add_user;
+        }
+
+        function setAllDivisiCrud(check) {
+            document.querySelectorAll('.divisiCrudCheckbox').forEach(cb => cb.checked = check);
         }
 
         function closePermissionsModal() {

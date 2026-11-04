@@ -105,20 +105,36 @@ class UserService
         return $count;
     }
 
-    public function updateUserPermissions(User $user, bool $canAddUser, User $actor): bool
+    public function updateUserPermissions(User $user, array $validated, bool $useCustom, User $actor): bool
     {
         if ($user->instansi_id !== $actor->instansi_id && !$actor->isSuperAdmin()) {
             abort(404);
         }
 
-        $updated = $this->userRepository->update($user, [
-            'can_add_user' => $canAddUser,
-        ]);
+        $perms = $validated['custom_permissions'] ?? [];
+        $customPermissions = [
+            'can_create' => !empty($perms['can_create']),
+            'can_read' => !empty($perms['can_read']),
+            'can_update' => !empty($perms['can_update']),
+            'can_delete' => !empty($perms['can_delete']),
+            'can_add_user' => !empty($perms['can_add_user']),
+        ];
+
+        $payload = [
+            'custom_modules' => $useCustom ? ($validated['custom_modules'] ?? []) : null,
+            'custom_permissions' => $customPermissions,
+        ];
+
+        $updated = $this->userRepository->update($user, $payload);
 
         AuditLogger::userAction(
             'update_user_permissions',
-            "Admin memperbarui izin can_add_user untuk {$user->nama} menjadi " . ($canAddUser ? 'true' : 'false'),
-            ['user_id' => $user->id, 'can_add_user' => $canAddUser]
+            "Admin memperbarui izin akses CRUD personal untuk {$user->nama}",
+            [
+                'user_id' => $user->id,
+                'custom_permissions' => $customPermissions,
+                'custom_modules' => $payload['custom_modules'],
+            ]
         );
 
         return $updated;

@@ -30,6 +30,11 @@ class HbController extends Controller
                 ->with('error', 'Akses ditolak: Admin Instansi hanya memiliki hak akses pelaporan dan monitoring. Pemeriksaan Hemoglobin (Hb) dilakukan oleh Petugas Kesehatan.');
         }
 
+        if (!Auth::user()->canCreate()) {
+            return redirect()->route('admin.hb.index')
+                ->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menambah data pemeriksaan hemoglobin.');
+        }
+
         $data = $this->hbService->getFormData(Auth::user());
         return view('admin.hb.create', $data);
     }
@@ -39,6 +44,11 @@ class HbController extends Controller
         if (Auth::user()->isAdminInstansi()) {
             return redirect()->route('admin.hb.index')
                 ->with('error', 'Akses ditolak: Admin Instansi hanya memiliki hak akses pelaporan dan monitoring. Pemeriksaan Hemoglobin (Hb) dilakukan oleh Petugas Kesehatan.');
+        }
+
+        if (!Auth::user()->canCreate()) {
+            return redirect()->route('admin.hb.index')
+                ->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menambah data pemeriksaan hemoglobin.');
         }
 
         $this->hbService->recordExamination($request->validated(), Auth::user());
@@ -54,6 +64,11 @@ class HbController extends Controller
                 ->with('error', 'Akses ditolak: Admin Instansi hanya memiliki hak akses pelaporan dan monitoring. Perubahan data pemeriksaan Hb dilakukan oleh Petugas Kesehatan.');
         }
 
+        if (!Auth::user()->canUpdate()) {
+            return redirect()->route('admin.hb.index')
+                ->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk mengubah data pemeriksaan hemoglobin.');
+        }
+
         $data = $this->hbService->getEditFormData($id, Auth::user());
         return view('admin.hb.edit', $data);
     }
@@ -63,6 +78,11 @@ class HbController extends Controller
         if (Auth::user()->isAdminInstansi()) {
             return redirect()->route('admin.hb.index')
                 ->with('error', 'Akses ditolak: Admin Instansi hanya memiliki hak akses pelaporan dan monitoring. Perubahan data pemeriksaan Hb dilakukan oleh Petugas Kesehatan.');
+        }
+
+        if (!Auth::user()->canUpdate()) {
+            return redirect()->route('admin.hb.index')
+                ->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk mengubah data pemeriksaan hemoglobin.');
         }
 
         $this->hbService->updateExaminationById($id, $request->validated(), Auth::user());
@@ -78,6 +98,11 @@ class HbController extends Controller
                 ->with('error', 'Akses ditolak: Admin Instansi hanya memiliki hak akses pelaporan dan monitoring. Penghapusan data pemeriksaan Hb dilakukan oleh Petugas Kesehatan.');
         }
 
+        if (!Auth::user()->canDelete()) {
+            return redirect()->route('admin.hb.index')
+                ->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menghapus data pemeriksaan hemoglobin.');
+        }
+
         $this->hbService->deleteExamination($id, Auth::user());
 
         return redirect()->route('admin.hb.index')
@@ -89,6 +114,11 @@ class HbController extends Controller
         if (Auth::user()->isAdminInstansi()) {
             return redirect()->route('admin.hb.index')
                 ->with('error', 'Akses ditolak: Admin Instansi hanya memiliki hak akses pelaporan dan monitoring. Penghapusan data pemeriksaan Hb dilakukan oleh Petugas Kesehatan.');
+        }
+
+        if (!Auth::user()->canDelete()) {
+            return redirect()->route('admin.hb.index')
+                ->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menghapus data pemeriksaan hemoglobin.');
         }
 
         $deletedCount = $this->hbService->massDeleteExaminations($request->validated('ids'), Auth::user());

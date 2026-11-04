@@ -57,12 +57,20 @@ class AdminUserController extends Controller
 
     public function edit(int|string $id)
     {
+        if (!Auth::user()->canUpdate()) {
+            return redirect()->route('admin.users.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk mengubah data pengguna.');
+        }
+
         $data = $this->userService->getEditFormData($id, Auth::user());
         return view('admin.users.edit', $data);
     }
 
     public function update(UpdateUserRequest $request, int|string $id)
     {
+        if (!Auth::user()->canUpdate()) {
+            return redirect()->route('admin.users.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk mengubah data pengguna.');
+        }
+
         try {
             $this->userService->updateUserById($id, $request->validated(), Auth::user());
             return redirect()->route('admin.users.index')->with('success', 'Data pengguna berhasil diperbarui.');
@@ -73,6 +81,10 @@ class AdminUserController extends Controller
 
     public function destroy(int|string $id)
     {
+        if (!Auth::user()->canDelete()) {
+            return redirect()->route('admin.users.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menghapus pengguna.');
+        }
+
         try {
             $this->userService->deleteUserById($id, Auth::user());
             return redirect()->route('admin.users.index')->with('success', 'Pengguna berhasil dihapus.');
@@ -83,6 +95,10 @@ class AdminUserController extends Controller
 
     public function mass_destroy(MassDestroyUserRequest $request)
     {
+        if (!Auth::user()->canDelete()) {
+            return redirect()->route('admin.users.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menghapus pengguna.');
+        }
+
         $count = $this->userService->massDeleteUsers($request->validated('selected_users'), Auth::user());
         return redirect()->route('admin.users.index')->with('success', "{$count} pengguna berhasil dihapus.");
     }
@@ -107,8 +123,9 @@ class AdminUserController extends Controller
 
     public function updatePermissions(UpdateUserPermissionsRequest $request, User $user)
     {
-        $this->userService->updateUserPermissions($user, $request->boolean('can_add_user'), Auth::user());
-        return back()->with('success', 'Hak akses berhasil diperbarui.');
+        $useCustom = $request->input('use_custom_modules') === '1' || $request->boolean('use_custom_modules');
+        $this->userService->updateUserPermissions($user, $request->validated(), $useCustom, Auth::user());
+        return back()->with('success', 'Hak akses dan izin CRUD pengguna berhasil diperbarui.');
     }
 
     public function downloadTemplate()

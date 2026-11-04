@@ -14,7 +14,15 @@ class UpdateUserPermissionsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'can_add_user' => 'nullable|boolean',
+            'use_custom_modules' => 'nullable|string',
+            'custom_modules' => 'nullable|array',
+            'custom_modules.*' => 'string',
+            'custom_permissions' => 'nullable|array',
+            'custom_permissions.can_create' => 'nullable',
+            'custom_permissions.can_read' => 'nullable',
+            'custom_permissions.can_update' => 'nullable',
+            'custom_permissions.can_delete' => 'nullable',
+            'custom_permissions.can_add_user' => 'nullable',
         ];
     }
 }

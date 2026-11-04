@@ -16,7 +16,13 @@ class UpdateDivisiPermissionsRequest extends FormRequest
         return [
             'use_custom_modules' => 'nullable|string',
             'active_modules' => 'nullable|array',
+            'active_modules.*' => 'string',
             'permissions' => 'nullable|array',
+            'permissions.can_create' => 'nullable',
+            'permissions.can_read' => 'nullable',
+            'permissions.can_update' => 'nullable',
+            'permissions.can_delete' => 'nullable',
+            'permissions.can_add_user' => 'nullable',
             'description' => 'nullable|string|max:255',
         ];
     }

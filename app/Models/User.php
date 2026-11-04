@@ -371,4 +371,85 @@ class User extends Authenticatable
 
         return false;
     }
+
+    /**
+     * Memeriksa hak akses CRUD (Create, Read, Update, Delete) operasional.
+     * Mengikuti hirarki: SuperAdmin/AdminInstansi -> Custom User -> Divisi -> Instansi -> Role Default.
+     *
+     * @param string $action 'create' | 'read' | 'update' | 'delete'
+     * @return bool
+     */
+    public function hasCrudPermission(string $action): bool
+    {
+        $action = strtolower($action);
+        $key = 'can_' . $action;
+
+        // 1. Superadmin & Admin Instansi selalu memiliki hak akses CRUD penuh
+        if ($this->isSuperAdmin() || $this->isAdminInstansi()) {
+            return true;
+        }
+
+        // 2. Custom Permissions override khusus pada akun user bersangkutan
+        if (is_array($this->custom_permissions) && array_key_exists($key, $this->custom_permissions)) {
+            return (bool) $this->custom_permissions[$key];
+        }
+
+        // 3. Permission konfigurasi pada divisi pengguna
+        if ($this->divisi && is_array($this->divisi->module_permissions) && array_key_exists($key, $this->divisi->module_permissions)) {
+            return (bool) $this->divisi->module_permissions[$key];
+        }
+
+        // 4. Permission global pada instansi
+        $instansi = $this->instansi ?: ($this->sekolah ?: Instansi::find($this->instansi_id));
+        if ($instansi && is_array($instansi->module_permissions) && array_key_exists($key, $instansi->module_permissions)) {
+            return (bool) $instansi->module_permissions[$key];
+        }
+
+        // 5. Default bawaan sistem berdasarkan role pengguna
+        return match ($this->level) {
+            UserRole::ADMIN->value => true, // Admin PMR / Koordinator Unit memiliki full CRUD secara default
+            UserRole::HEALTH_MONITOR->value, UserRole::HEALTH_CONSULTANT->value => match ($action) {
+                'create', 'read', 'update' => true,
+                'delete' => false, // Pencegahan insidental: Hapus data klinis memerlukan izin eksplisit
+                default => false,
+            },
+            UserRole::MEMBER->value => match ($action) {
+                'create', 'read' => true, // Member dapat mengentri dan meninjau data mandiri
+                'update', 'delete' => false,
+                default => false,
+            },
+            default => false,
+        };
+    }
+
+    public function canCreate(): bool
+    {
+        return $this->hasCrudPermission('create');
+    }
+
+    public function canRead(): bool
+    {
+        return $this->hasCrudPermission('read');
+    }
+
+    public function canUpdate(): bool
+    {
+        return $this->hasCrudPermission('update');
+    }
+
+    public function canDelete(): bool
+    {
+        return $this->hasCrudPermission('delete');
+    }
+
+    public function getCrudPermissions(): array
+    {
+        return [
+            'can_create' => $this->canCreate(),
+            'can_read' => $this->canRead(),
+            'can_update' => $this->canUpdate(),
+            'can_delete' => $this->canDelete(),
+            'can_add_user' => $this->canAddUser(),
+        ];
+    }
 }

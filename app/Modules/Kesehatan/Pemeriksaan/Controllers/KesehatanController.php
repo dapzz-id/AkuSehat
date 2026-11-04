@@ -30,6 +30,11 @@ class KesehatanController extends Controller
                 ->with('error', 'Akses ditolak: Admin Instansi hanya memiliki hak akses pelaporan dan monitoring. Input dan pemeriksaan fisik dilakukan oleh Petugas Kesehatan.');
         }
 
+        if (!Auth::user()->canCreate()) {
+            return redirect()->route('admin.kesehatan.index')
+                ->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menambah data pemeriksaan fisik.');
+        }
+
         $data = $this->kesehatanService->getFormData(Auth::user());
         return view('admin.kesehatan.create', $data);
     }
@@ -39,6 +44,11 @@ class KesehatanController extends Controller
         if (Auth::user()->isAdminInstansi()) {
             return redirect()->route('admin.kesehatan.index')
                 ->with('error', 'Akses ditolak: Admin Instansi hanya memiliki hak akses pelaporan dan monitoring. Input dan pemeriksaan fisik dilakukan oleh Petugas Kesehatan.');
+        }
+
+        if (!Auth::user()->canCreate()) {
+            return redirect()->route('admin.kesehatan.index')
+                ->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menambah data pemeriksaan fisik.');
         }
 
         $this->kesehatanService->recordExamination($request->validated(), Auth::user());
@@ -54,6 +64,11 @@ class KesehatanController extends Controller
                 ->with('error', 'Akses ditolak: Admin Instansi hanya memiliki hak akses pelaporan dan monitoring. Perubahan data pemeriksaan fisik dilakukan oleh Petugas Kesehatan.');
         }
 
+        if (!Auth::user()->canUpdate()) {
+            return redirect()->route('admin.kesehatan.index')
+                ->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk mengubah data pemeriksaan fisik.');
+        }
+
         $data = $this->kesehatanService->getEditFormData($id, Auth::user());
         return view('admin.kesehatan.edit', $data);
     }
@@ -63,6 +78,11 @@ class KesehatanController extends Controller
         if (Auth::user()->isAdminInstansi()) {
             return redirect()->route('admin.kesehatan.index')
                 ->with('error', 'Akses ditolak: Admin Instansi hanya memiliki hak akses pelaporan dan monitoring. Perubahan data pemeriksaan fisik dilakukan oleh Petugas Kesehatan.');
+        }
+
+        if (!Auth::user()->canUpdate()) {
+            return redirect()->route('admin.kesehatan.index')
+                ->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk mengubah data pemeriksaan fisik.');
         }
 
         $this->kesehatanService->updateExaminationById($id, $request->validated(), Auth::user());
@@ -78,6 +98,11 @@ class KesehatanController extends Controller
                 ->with('error', 'Akses ditolak: Admin Instansi hanya memiliki hak akses pelaporan dan monitoring. Penghapusan data pemeriksaan fisik dilakukan oleh Petugas Kesehatan.');
         }
 
+        if (!Auth::user()->canDelete()) {
+            return redirect()->route('admin.kesehatan.index')
+                ->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menghapus data pemeriksaan fisik.');
+        }
+
         $this->kesehatanService->deleteExamination($id, Auth::user());
 
         return redirect()->route('admin.kesehatan.index')
@@ -89,6 +114,11 @@ class KesehatanController extends Controller
         if (Auth::user()->isAdminInstansi()) {
             return redirect()->route('admin.kesehatan.index')
                 ->with('error', 'Akses ditolak: Admin Instansi hanya memiliki hak akses pelaporan dan monitoring. Penghapusan data pemeriksaan fisik dilakukan oleh Petugas Kesehatan.');
+        }
+
+        if (!Auth::user()->canDelete()) {
+            return redirect()->route('admin.kesehatan.index')
+                ->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menghapus data pemeriksaan fisik.');
         }
 
         $deletedCount = $this->kesehatanService->massDeleteExaminations($request->validated('ids'), Auth::user());

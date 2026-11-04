@@ -109,10 +109,19 @@ class DivisiService
 
     public function updateDivisiPermissions(Divisi $divisi, array $validated, bool $useCustom, User $actor): bool
     {
+        $permissionsInput = $validated['permissions'] ?? [];
+        $normalizedPermissions = [
+            'can_create' => !empty($permissionsInput['can_create']),
+            'can_read' => !empty($permissionsInput['can_read']),
+            'can_update' => !empty($permissionsInput['can_update']),
+            'can_delete' => !empty($permissionsInput['can_delete']),
+            'can_add_user' => !empty($permissionsInput['can_add_user']),
+        ];
+
         $payload = [
             'description' => $validated['description'] ?? null,
             'active_modules' => $useCustom ? ($validated['active_modules'] ?? []) : null,
-            'module_permissions' => $validated['permissions'] ?? [],
+            'module_permissions' => $normalizedPermissions,
         ];
 
         $updated = $this->divisiRepository->update($divisi, $payload);
@@ -120,8 +129,8 @@ class DivisiService
         AuditLogger::log(
             'update_divisi_permissions',
             'instansi',
-            "Admin memperbarui izin modul divisi: {$divisi->divisi_name}",
-            ['divisi_id' => $divisi->id]
+            "Admin memperbarui izin modul dan hak CRUD divisi: {$divisi->divisi_name}",
+            ['divisi_id' => $divisi->id, 'module_permissions' => $normalizedPermissions]
         );
 
         return $updated;
