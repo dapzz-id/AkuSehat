@@ -35,6 +35,7 @@ import MaintenanceModal from "../../components/MaintenanceModal";
 import useRealtimeSystemSync from "../../hooks/useRealtimeSystemSync";
 import { checkAppUpdate, type SoftwareReleaseData } from "../../api/appUpdateService";
 import CounselingConsultantView from "./CounselingConsultantView";
+import FemHealthConsultantView from "./FemHealthConsultantView";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window")
 const guidelineBaseWidth = 375
@@ -181,6 +182,7 @@ const HomeScreenHealthConsultant = () => {
 
   const [notifications, setNotifications] = useState<Notif[]>([])
   const [pendingCounselingCount, setPendingCounselingCount] = useState<number>(0)
+  const [latePitaCount, setLatePitaCount] = useState<number>(0)
   const [loading, setLoading] = useState(false)
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [loadingNotif, setLoadingNotif] = useState(false)
@@ -191,18 +193,18 @@ const HomeScreenHealthConsultant = () => {
     { key: "divisi", label: "Divisi", icon: <Icon name="users" size={20} /> },
     {
       key: "konseling",
-      label: "Konseling",
+      label: "SafeSpace",
       icon: <Icon name="message-square" size={20} />,
       badgeCount: pendingCounselingCount > 0 ? pendingCounselingCount : undefined,
     },
     {
-      key: "notifikasi",
-      label: "Notifikasi",
-      icon: <Icon name="bell" size={20} />,
-      badgeCount: notifications.length > 0 ? notifications.length : undefined,
+      key: "pita",
+      label: "Pita UKS",
+      icon: <Icon name="clipboard" size={20} />,
+      badgeCount: latePitaCount > 0 ? latePitaCount : undefined,
     },
     { key: "profil", label: "Profil", icon: <Icon name="user" size={20} /> },
-  ], [pendingCounselingCount, notifications.length])
+  ], [pendingCounselingCount, latePitaCount])
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [detailModalVisible, setDetailModalVisible] = useState(false)
   const [filterYear, setFilterYear] = useState<string>("")
@@ -942,6 +944,13 @@ const HomeScreenHealthConsultant = () => {
             <CounselingConsultantView
               themeColor={tertiaryColor}
               onPendingCountChange={setPendingCounselingCount}
+            />
+          )}
+
+          {active === "pita" && (
+            <FemHealthConsultantView
+              themeColor={tertiaryColor}
+              onLateCountChange={setLatePitaCount}
             />
           )}
 

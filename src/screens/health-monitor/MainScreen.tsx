@@ -24,6 +24,8 @@ import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'reac
 import { logout, checkAuthStatus } from "../../utils/authHelper"
 import api from "../../api/axiosConfig"
 import AnimatedBottomTabs, { type TabItem } from "../../components/AnimatedBottomTabs"
+import RunTrackerMonitorView from "./RunTrackerMonitorView"
+import CounselingConsultantView from "../health-consultant/CounselingConsultantView"
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import EditProfileModal from "../../components/EditProfileModal";
 import ChangelogModal from "../../components/ChangelogModal";
@@ -211,17 +213,19 @@ const HomeScreenHealthMonitor = () => {
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [warningList, setWarningList] = useState<Peminjaman[]>([])
   const [loadingWarning, setLoadingWarning] = useState(false)
+  const [pendingCounselingCount, setPendingCounselingCount] = useState<number>(0)
   const tabs: TabItem[] = useMemo(() => [
     { key: "dashboard", label: "Dasbor", icon: <Icon name="home" size={20} /> },
-    { key: "peminjaman", label: "Pita UKS", icon: <Icon name="clipboard" size={20} /> },
+    { key: "olahraga", label: "Run Tracker", icon: <Icon name="activity" size={20} /> },
     {
-      key: "warning",
-      label: "Peringatan",
-      icon: <Icon name="alert-triangle" size={20} />,
-      badgeCount: warningList.length > 0 ? warningList.length : undefined,
+      key: "konseling",
+      label: "SafeSpace",
+      icon: <Icon name="message-square" size={20} />,
+      badgeCount: pendingCounselingCount > 0 ? pendingCounselingCount : undefined,
     },
+    { key: "peminjaman", label: "Pita UKS", icon: <Icon name="clipboard" size={20} /> },
     { key: "profil", label: "Profil", icon: <Icon name="user" size={20} /> },
-  ], [warningList.length]);
+  ], [pendingCounselingCount]);
   const [modalVisible, setModalVisible] = useState(false)
   const [modalType, setModalType] = useState<'return' | 'delete' | 'verify'>('return')
   const [selectedItem, setSelectedItem] = useState<Peminjaman | null>(null)
@@ -725,6 +729,17 @@ const HomeScreenHealthMonitor = () => {
           </View>
         </Animated.View>
         <Animated.View style={{ opacity: fadeTab }}>
+          {active === "olahraga" && (
+            <RunTrackerMonitorView themeColor={tertiaryColor} />
+          )}
+
+          {active === "konseling" && (
+            <CounselingConsultantView
+              themeColor={tertiaryColor}
+              onPendingCountChange={setPendingCounselingCount}
+            />
+          )}
+
           {active === "dashboard" && (
             <View style={{ gap: verticalScale(12) }}>
               <Card>

@@ -105,10 +105,29 @@ export default function CounselingMemberView({ themeColor, profile }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [cancelingId, setCancelingId] = useState<string | number | null>(null)
 
+  // Consultant Picker State
+  const [consultants, setConsultants] = useState<any[]>([])
+  const [loadingConsultants, setLoadingConsultants] = useState(false)
+  const [selectedConsultantId, setSelectedConsultantId] = useState<string | number | null>(null)
+
   // Calendar Datepicker Modal State
   const [calendarModalVisible, setCalendarModalVisible] = useState(false)
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear())
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth())
+
+  const fetchConsultants = useCallback(async () => {
+    try {
+      setLoadingConsultants(true)
+      const res = await api.get("/member/counseling/consultants")
+      if (res?.data?.status || res?.data?.success) {
+        setConsultants(res.data.data || [])
+      }
+    } catch (e) {
+      console.warn("Gagal memuat daftar konselor:", e)
+    } finally {
+      setLoadingConsultants(false)
+    }
+  }, [])
 
   const fetchSessions = useCallback(async () => {
     try {
@@ -125,7 +144,8 @@ export default function CounselingMemberView({ themeColor, profile }: Props) {
 
   useEffect(() => {
     fetchSessions()
-  }, [fetchSessions])
+    fetchConsultants()
+  }, [fetchSessions, fetchConsultants])
 
   const onRefresh = () => {
     setRefreshing(true)
@@ -228,11 +248,14 @@ export default function CounselingMemberView({ themeColor, profile }: Props) {
 
     try {
       setSubmitting(true)
-      const payload = {
+      const payload: any = {
         topic: topic.trim(),
         session_date: sessionDate.trim(),
         notes: notes.trim() || undefined,
         is_confidential: isConfidential,
+      }
+      if (selectedConsultantId) {
+        payload.consultant_id = selectedConsultantId
       }
 
       const res = await api.post("/member/counseling/book", payload)
@@ -243,6 +266,7 @@ export default function CounselingMemberView({ themeColor, profile }: Props) {
       setBookModalVisible(false)
       setNotes("")
       setSessionDate("")
+      setSelectedConsultantId(null)
       await fetchSessions()
     } catch (e: any) {
       Alert.alert("Gagal", e?.response?.data?.message || "Gagal mengajukan jadwal konseling.")
@@ -641,6 +665,51 @@ export default function CounselingMemberView({ themeColor, profile }: Props) {
                 <Icon name="calendar" size={18} color="#64748B" />
               </Pressable>
 
+              {/* Pilih Konselor / Petugas Spesifik */}
+              <Text style={styles.inputLabel}>Ditujukan Khusus Kepada Petugas / Konselor (Opsional)</Text>
+              {loadingConsultants ? (
+                <ActivityIndicator size="small" color={primaryColor} style={{ marginVertical: 8 }} />
+              ) : consultants.length > 0 ? (
+                <View style={{ gap: 6, marginBottom: verticalScale(14) }}>
+                  <Pressable
+                    onPress={() => setSelectedConsultantId(null)}
+                    style={[
+                      styles.consultantPickerItem,
+                      selectedConsultantId === null && { borderColor: primaryColor, backgroundColor: '#F0FDF4' }
+                    ]}
+                  >
+                    <Icon name={selectedConsultantId === null ? "check-circle" : "circle"} size={16} color={selectedConsultantId === null ? primaryColor : "#94A3B8"} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.consultantPickerName, selectedConsultantId === null && { color: primaryColor, fontWeight: '700' }]}>
+                        Semua Konselor / Guru BK Tersedia
+                      </Text>
+                      <Text style={styles.consultantPickerRole}>Petugas yang sedang bertugas akan meninjau request Anda</Text>
+                    </View>
+                  </Pressable>
+                  {consultants.map((c) => {
+                    const isPicked = selectedConsultantId === c.id
+                    return (
+                      <Pressable
+                        key={c.id}
+                        onPress={() => setSelectedConsultantId(c.id)}
+                        style={[
+                          styles.consultantPickerItem,
+                          isPicked && { borderColor: primaryColor, backgroundColor: '#F0FDF4' }
+                        ]}
+                      >
+                        <Icon name={isPicked ? "check-circle" : "circle"} size={16} color={isPicked ? primaryColor : "#94A3B8"} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.consultantPickerName, isPicked && { color: primaryColor, fontWeight: '700' }]}>
+                            {c.nama}
+                          </Text>
+                          <Text style={styles.consultantPickerRole}>{c.role_label || c.level}</Text>
+                        </View>
+                      </Pressable>
+                    )
+                  })}
+                </View>
+              ) : null}
+
               {/* Catatan Awal */}
               <Text style={styles.inputLabel}>Catatan / Keluhan Singkat (Opsional)</Text>
               <TextInput
@@ -999,6 +1068,27 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(12),
     fontWeight: "600",
     color: "#166534",
+  },
+  consultantPickerItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: horizontalScale(12),
+    paddingVertical: verticalScale(10),
+    borderRadius: moderateScale(12),
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#F8FAFC",
+  },
+  consultantPickerName: {
+    fontSize: moderateScale(13),
+    fontWeight: "600",
+    color: "#334155",
+  },
+  consultantPickerRole: {
+    fontSize: moderateScale(11),
+    color: "#64748B",
+    marginTop: 1,
   },
   consultantRow: {
     flexDirection: "row",
