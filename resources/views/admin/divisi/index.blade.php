@@ -17,14 +17,14 @@
                 </div>
                 <div class="flex flex-col gap-2 w-full lg:w-auto">
                     <div class="flex flex-wrap gap-2">
-                        @if(Auth::user()->canCreate())
+                        @if(Auth::user()->canCreate() && (Auth::user()->isAdminInstansi() || Auth::user()->isAdmin()))
                         <button onclick="openModal()"
                             class="w-52 flex-1 sm:flex-none bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center">
                             <i class="fas fa-plus text-xs md:text-sm mr-1.5 md:mr-2"></i>
                             <span>Tambah</span>
                         </button>
                         @endif
-                        @if(Auth::user()->canDelete())
+                        @if(Auth::user()->canDelete() && (Auth::user()->isAdminInstansi() || Auth::user()->isAdmin()))
                         <button type="submit" form="bulkDeleteForm" id="bulkDeleteBtn"
                             class="w-52 flex-1 sm:flex-none bg-[#d32f2f] hover:bg-[#b71c1c] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled>
@@ -201,6 +201,7 @@
                                     </td>
                                     <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4">
                                         <div class="flex items-center justify-center text-xs sm:text-sm gap-1 sm:gap-1.5">
+                                            @if(Auth::user()->isAdminInstansi() || Auth::user()->isAdmin())
                                             <!-- Tombol Atur Modul & Hak Akses -->
                                             <button type="button" onclick="openPermissionsModal({{ json_encode($item) }})"
                                                 class="text-indigo-600 hover:text-indigo-800 p-1.5 rounded-full hover:bg-indigo-50 transition-colors"
@@ -222,12 +223,13 @@
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                             @endif
+                                            @endif
                                             <a href="{{ route('admin.users.index') }}?divisi={{ $item->id }}"
                                                 class="text-[#0288d1] hover:text-[#01579b] p-1.5 rounded-full hover:bg-blue-50 transition-colors"
                                                 title="Lihat Members">
                                                 <i class="fas fa-users"></i>
                                             </a>
-                                            @if(Auth::user()->canDelete())
+                                            @if((Auth::user()->isAdminInstansi() || Auth::user()->isAdmin()) && Auth::user()->canDelete())
                                             <form action="{{ route('admin.divisi.destroy', $item->id) }}" method="POST"
                                                 onsubmit="return confirm('Apakah Anda yakin ingin menghapus divisi {{ $item->divisi_name }}? Tindakan ini tidak dapat dibatalkan.')">
                                                 @csrf
@@ -623,9 +625,9 @@
                                 <div>
                                     <span class="font-semibold text-gray-800 flex items-center gap-1.5">
                                         <i class="fas fa-plus-circle text-emerald-500"></i>
-                                        <span>Create (Tambah Data)</span>
+                                        <span>Create (Entri Pemeriksaan Klinis)</span>
                                     </span>
-                                    <span class="text-[11px] text-gray-500 block mt-0.5">Membuat rekam kesehatan, aktivitas, dan entri data baru.</span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Mencatat data pemeriksaan fisik, skrining HB, dan entri kesehatan.</span>
                                 </div>
                             </label>
 
@@ -672,9 +674,9 @@
                                 <div>
                                     <span class="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
                                         <i class="fas fa-user-plus text-indigo-600"></i>
-                                        <span>Wewenang Tambah / Import Pengguna</span>
+                                        <span>Wewenang Tambah / Import Pengguna (Add User)</span>
                                     </span>
-                                    <span class="text-[11px] text-gray-500 block mt-0.5">Staf yang bertugas pada divisi ini dapat mendaftarkan akun baru.</span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Staf yang bertugas pada divisi ini dapat mendaftarkan akun baru atau mengimpor Excel.</span>
                                 </div>
                                 <input type="checkbox" name="permissions[can_add_user]" value="1" id="permCanAddUser" class="rounded text-indigo-600 focus:ring-indigo-500">
                             </label>

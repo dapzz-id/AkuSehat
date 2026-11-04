@@ -31,8 +31,16 @@ class VitalLogApiController extends Controller
 
     public function addWater(AddWaterRequest $request): JsonResponse
     {
+        $user = $request->user();
+        if ($user && $user->isMember() && !$user->canInputVitals()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Penginputan tanda vital mandiri untuk member belum diaktifkan oleh institusi Anda.',
+            ], 403);
+        }
+
         $amount = (int) $request->validated('amount', 250);
-        $log = $this->vitalLogService->addWater($request->user(), $amount);
+        $log = $this->vitalLogService->addWater($user, $amount);
 
         return response()->json([
             'success' => true,
@@ -43,7 +51,15 @@ class VitalLogApiController extends Controller
 
     public function updateLog(UpdateVitalLogRequest $request): JsonResponse
     {
-        $log = $this->vitalLogService->updateLog($request->user(), $request->validated());
+        $user = $request->user();
+        if ($user && $user->isMember() && !$user->canInputVitals()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Penginputan tanda vital mandiri untuk member belum diaktifkan oleh institusi Anda.',
+            ], 403);
+        }
+
+        $log = $this->vitalLogService->updateLog($user, $request->validated());
 
         return response()->json([
             'success' => true,

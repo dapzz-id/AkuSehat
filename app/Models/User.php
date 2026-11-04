@@ -338,6 +338,11 @@ class User extends Authenticatable
             return true;
         }
 
+        // Jika izin Create operasional dicabut secara eksplisit, wewenang tambah user otomatis gugur
+        if (!$this->canCreate()) {
+            return false;
+        }
+
         // 2. Cek Custom Permission individual user jika ada override
         if (is_array($this->custom_permissions) && array_key_exists('can_add_user', $this->custom_permissions)) {
             return (bool) $this->custom_permissions['can_add_user'];
@@ -367,6 +372,50 @@ class User extends Authenticatable
             if ($this->level === UserRole::HEALTH_CONSULTANT->value) {
                 return !empty($instansiPerms['health_consultant_can_add_user']);
             }
+        }
+
+        return false;
+    }
+
+    /**
+     * Memeriksa apakah member diizinkan menginput tanda vital mandiri (tensi, jam tidur, mood, air).
+     */
+    public function canInputVitals(): bool
+    {
+        // Non-member (Admin, Health Monitor, Consultant) selalu berhak
+        if ($this->isAdminInstansi() || $this->isSuperAdmin() || $this->isAdmin() || $this->isHealthMonitor() || $this->isHealthConsultant()) {
+            return true;
+        }
+
+        // Akun member wajib memiliki hak akses operasional create
+        if (!$this->canCreate()) {
+            return false;
+        }
+
+        // Cek Kebijakan Hak Akses Instansi
+        $instansi = $this->instansi ?: ($this->sekolah ?: Instansi::find($this->instansi_id));
+        if ($instansi) {
+            $perms = $instansi->module_permissions ?? [];
+            return !empty($perms['member_can_input_vitals']);
+        }
+
+        return false;
+    }
+
+    /**
+     * Memeriksa apakah member diizinkan melihat papan peringkat (leaderboard) lari.
+     */
+    public function canViewLeaderboard(): bool
+    {
+        // Non-member (Admin, Health Monitor, Consultant) selalu berhak
+        if ($this->isAdminInstansi() || $this->isSuperAdmin() || $this->isAdmin() || $this->isHealthMonitor() || $this->isHealthConsultant()) {
+            return true;
+        }
+
+        $instansi = $this->instansi ?: ($this->sekolah ?: Instansi::find($this->instansi_id));
+        if ($instansi) {
+            $perms = $instansi->module_permissions ?? [];
+            return !empty($perms['member_can_view_leaderboard']);
         }
 
         return false;

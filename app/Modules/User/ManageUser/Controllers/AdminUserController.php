@@ -148,6 +148,10 @@ class AdminUserController extends Controller
 
     public function importUsers(ImportUserExcelRequest $request)
     {
+        if (!Auth::user()->canAddUser()) {
+            abort(404);
+        }
+
         try {
             $result = $this->userImportExportService->importFromExcel($request->file('file'), Auth::user());
             return redirect()->route('admin.users.index')->with('success', "{$result['imported']} data pengguna berhasil diimpor.");
@@ -163,7 +167,17 @@ class AdminUserController extends Controller
 
     public function exportUsers()
     {
-        return $this->userImportExportService->exportToExcel(Auth::user());
+        $actor = Auth::user();
+        if ($actor && $actor->isHealthMonitor()) {
+            $instansi = $actor->instansi ?: ($actor->sekolah ?: \App\Models\Instansi::find($actor->instansi_id));
+            $perms = $instansi?->module_permissions ?? [];
+            if (empty($perms['health_monitor_can_export'])) {
+                return redirect()->route('admin.users.index')
+                    ->with('error', 'Akses ditolak: Wewenang ekspor laporan untuk Health Monitor belum diaktifkan oleh Admin Instansi.');
+            }
+        }
+
+        return $this->userImportExportService->exportToExcel($actor);
     }
 
     public function exportExcel()

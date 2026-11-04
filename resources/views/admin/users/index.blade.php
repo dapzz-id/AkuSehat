@@ -581,7 +581,7 @@
                                                 </button>
                                             @endif
 
-                                            <button type="button" onclick="openUserPermModal({{ json_encode($item) }})"
+                                            <button type="button" onclick="openUserPermModal({{ json_encode(array_merge($item->toArray(), ['effective_crud' => $item->getCrudPermissions()])) }})"
                                                 class="text-indigo-600 hover:text-indigo-800 p-1 transition-colors duration-200"
                                                 title="Atur Hak Akses Modul Khusus Pengguna">
                                                 <i class="fas fa-sliders-h text-xs sm:text-sm md:text-base"></i>
@@ -1177,9 +1177,9 @@
                                 <div>
                                     <span class="font-semibold text-gray-800 flex items-center gap-1.5">
                                         <i class="fas fa-plus-circle text-emerald-500"></i>
-                                        <span>Create (Tambah Data)</span>
+                                        <span>Create (Entri Pemeriksaan Klinis)</span>
                                     </span>
-                                    <span class="text-[11px] text-gray-500 block mt-0.5">Membuat rekam kesehatan, aktivitas, dan entri baru.</span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Mencatat data pemeriksaan fisik, skrining HB, dan entri kesehatan.</span>
                                 </div>
                             </label>
 
@@ -1215,7 +1215,7 @@
                                         <i class="fas fa-trash-can text-rose-500"></i>
                                         <span>Delete (Hapus Data)</span>
                                     </span>
-                                    <span class="text-[11px] text-gray-500 block mt-0.5">Menghapus baris data atau pembatalan entri.</span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Menghapus baris data pemeriksaan atau pembatalan entri.</span>
                                 </div>
                             </label>
                         </div>
@@ -1226,9 +1226,9 @@
                                 <div>
                                     <span class="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
                                         <i class="fas fa-user-plus text-indigo-600"></i>
-                                        <span>Wewenang Tambah / Import Pengguna</span>
+                                        <span>Wewenang Tambah / Import Pengguna (Add User)</span>
                                     </span>
-                                    <span class="text-[11px] text-gray-500 block mt-0.5">Memberikan wewenang pendaftaran akun baru khusus akun ini.</span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Memberikan hak administratif untuk mendaftarkan akun siswa/anggota baru atau mengimpor Excel.</span>
                                 </div>
                                 <input type="checkbox" name="custom_permissions[can_add_user]" value="1" id="userPermCanAddUser" class="rounded text-indigo-600 focus:ring-indigo-500">
                             </label>
@@ -1504,11 +1504,12 @@
             }
 
             const customPerms = user.custom_permissions || {};
-            document.getElementById('userPermCanCreate').checked = customPerms.can_create !== undefined ? !!customPerms.can_create : true;
-            document.getElementById('userPermCanRead').checked = customPerms.can_read !== undefined ? !!customPerms.can_read : true;
-            document.getElementById('userPermCanUpdate').checked = customPerms.can_update !== undefined ? !!customPerms.can_update : true;
-            document.getElementById('userPermCanDelete').checked = !!customPerms.can_delete;
-            document.getElementById('userPermCanAddUser').checked = !!customPerms.can_add_user;
+            const effectiveCrud = user.effective_crud || {};
+            document.getElementById('userPermCanCreate').checked = customPerms.can_create !== undefined ? !!customPerms.can_create : (effectiveCrud.can_create !== undefined ? !!effectiveCrud.can_create : true);
+            document.getElementById('userPermCanRead').checked = customPerms.can_read !== undefined ? !!customPerms.can_read : (effectiveCrud.can_read !== undefined ? !!effectiveCrud.can_read : true);
+            document.getElementById('userPermCanUpdate').checked = customPerms.can_update !== undefined ? !!customPerms.can_update : (effectiveCrud.can_update !== undefined ? !!effectiveCrud.can_update : true);
+            document.getElementById('userPermCanDelete').checked = customPerms.can_delete !== undefined ? !!customPerms.can_delete : (effectiveCrud.can_delete !== undefined ? !!effectiveCrud.can_delete : false);
+            document.getElementById('userPermCanAddUser').checked = customPerms.can_add_user !== undefined ? !!customPerms.can_add_user : (effectiveCrud.can_add_user !== undefined ? !!effectiveCrud.can_add_user : false);
         }
 
         function setAllUserCrud(check) {

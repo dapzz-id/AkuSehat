@@ -170,6 +170,45 @@ class CrudPermissionsTest extends TestCase
             });
         }
 
+        if (!Schema::hasTable('user_activities')) {
+            Schema::create('user_activities', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->uuid('user_id')->nullable();
+                $table->uuid('instansi_id')->nullable();
+                $table->string('activity_type', 30)->default('run');
+                $table->string('title')->nullable();
+                $table->decimal('distance_meters', 10, 2)->default(0);
+                $table->unsignedInteger('duration_seconds')->default(0);
+                $table->decimal('calories', 8, 2)->default(0);
+                $table->string('avg_pace', 10)->nullable();
+                $table->decimal('max_speed', 6, 2)->nullable();
+                $table->unsignedInteger('steps')->default(0);
+                $table->json('route_coordinates')->nullable();
+                $table->text('notes')->nullable();
+                $table->timestamp('started_at')->nullable();
+                $table->timestamp('finished_at')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        if (!Schema::hasTable('user_vital_logs')) {
+            Schema::create('user_vital_logs', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->uuid('user_id')->nullable();
+                $table->uuid('instansi_id')->nullable();
+                $table->date('log_date')->nullable();
+                $table->unsignedInteger('water_intake_ml')->default(0);
+                $table->decimal('sleep_hours', 4, 1)->nullable();
+                $table->tinyInteger('mood_score')->nullable();
+                $table->unsignedSmallInteger('systolic')->nullable();
+                $table->unsignedSmallInteger('diastolic')->nullable();
+                $table->decimal('blood_sugar', 6, 2)->nullable();
+                $table->decimal('weight_kg', 5, 2)->nullable();
+                $table->text('notes')->nullable();
+                $table->timestamps();
+            });
+        }
+
         $this->instansi = Instansi::create([
             'id' => (string) Str::uuid(),
             'nama_instansi' => 'SMK Telekomunikasi Telesandi',
@@ -483,5 +522,94 @@ class CrudPermissionsTest extends TestCase
 
         $this->actingAs($consultant)->get(route('admin.users.index'))->assertStatus(404);
         $this->actingAs($consultant)->get(route('admin.divisi.index'))->assertStatus(404);
+    }
+
+    public function test_member_cannot_submit_vitals_if_not_enabled_in_instansi(): void
+    {
+        $member = User::create([
+            'instansi_id' => $this->instansi->id,
+            'id_divisi' => $this->divisi->id,
+            'nama' => 'Siswa Member',
+            'username' => 'siswa_member_' . Str::random(5),
+            'password' => bcrypt('password123'),
+            'level' => UserRole::MEMBER->value,
+            'status' => UserStatus::AKTIF->value,
+            'jk' => UserGender::LAKI_LAKI->value,
+        ]);
+
+        // 1. Instansi has not enabled member_can_input_vitals
+        $this->assertFalse($member->canInputVitals());
+
+        // Calling vital-logs endpoint returns 403 Forbidden
+        $responseAddWater = $this->actingAs($member, 'sanctum')->postJson('/api/vital-logs/water/add', [
+            'amount' => 250,
+        ]);
+        $responseAddWater->assertStatus(403);
+        $responseAddWater->assertJson([
+            'success' => false,
+            'message' => 'Penginputan tanda vital mandiri untuk member belum diaktifkan oleh institusi Anda.',
+        ]);
+
+        $responseUpdate = $this->actingAs($member, 'sanctum')->postJson('/api/vital-logs', [
+            'log_date' => now()->format('Y-m-d'),
+            'water_intake_ml' => 500,
+        ]);
+        $responseUpdate->assertStatus(403);
+
+        // 2. Now Admin Instansi enables member_can_input_vitals
+        $this->instansi->update([
+            'module_permissions' => [
+                'member_can_input_vitals' => true,
+            ],
+        ]);
+        $member->refresh();
+        $this->assertTrue($member->canInputVitals());
+
+        $responseSuccess = $this->actingAs($member, 'sanctum')->postJson('/api/vital-logs/water/add', [
+            'amount' => 250,
+        ]);
+        $responseSuccess->assertStatus(200);
+        $responseSuccess->assertJson(['success' => true]);
+    }
+
+    public function test_health_monitor_cannot_add_or_import_users_when_not_checked_in_instansi(): void
+    {
+        $monitor = User::create([
+            'instansi_id' => $this->instansi->id,
+            'id_divisi' => $this->divisi->id,
+            'nama' => 'Guru Penjas',
+            'username' => 'guru_penjas_' . Str::random(5),
+            'password' => bcrypt('password123'),
+            'level' => UserRole::HEALTH_MONITOR->value,
+            'status' => UserStatus::AKTIF->value,
+            'jk' => UserGender::LAKI_LAKI->value,
+        ]);
+
+        // In default instansi (not checked)
+        $this->assertFalse($monitor->canAddUser());
+
+        // GET create form returns 404
+        $resCreate = $this->actingAs($monitor)->get(route('admin.users.create'));
+        $resCreate->assertStatus(404);
+
+        // POST store user returns 404
+        $resStore = $this->actingAs($monitor)->post(route('admin.users.store'), [
+            'nama' => 'User Baru',
+            'username' => 'newuser_' . Str::random(4),
+            'password' => 'secret123',
+            'nomor_induk' => '99999',
+            'jk' => 'L',
+            'level' => 'Member',
+            'id_divisi' => $this->divisi->id,
+        ]);
+        $resStore->assertStatus(404);
+
+        // Cannot create/clone or delete divisi
+        $resStoreDivisi = $this->actingAs($monitor)->post(route('admin.divisi.store'), [
+            'divisi' => 'Kelas Baru',
+            'cover_color' => 'blue',
+        ]);
+        $resStoreDivisi->assertRedirect(route('admin.divisi.index'));
+        $resStoreDivisi->assertSessionHas('error');
     }
 }

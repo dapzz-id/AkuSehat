@@ -41,8 +41,8 @@ class DivisiController extends Controller
 
     public function store(StoreDivisiRequest $request)
     {
-        if (!Auth::user()->canCreate()) {
-            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menambah divisi.');
+        if (!Auth::user()->canCreate() || (!Auth::user()->isAdminInstansi() && !Auth::user()->isAdmin())) {
+            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Hanya Admin Instansi dan Admin yang dapat menambah divisi.');
         }
 
         try {
@@ -55,8 +55,8 @@ class DivisiController extends Controller
 
     public function update(UpdateDivisiRequest $request, Divisi $divisi)
     {
-        if (!Auth::user()->canUpdate()) {
-            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk memperbarui divisi.');
+        if (!Auth::user()->canUpdate() || (!Auth::user()->isAdminInstansi() && !Auth::user()->isAdmin())) {
+            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Hanya Admin Instansi dan Admin yang dapat memperbarui divisi.');
         }
 
         try {
@@ -73,8 +73,8 @@ class DivisiController extends Controller
             return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak atau divisi tidak ditemukan.');
         }
 
-        if (!Auth::user()->canCreate()) {
-            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk mengkloning/menambah divisi.');
+        if (!Auth::user()->canCreate() || (!Auth::user()->isAdminInstansi() && !Auth::user()->isAdmin())) {
+            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Hanya Admin Instansi dan Admin yang dapat mengkloning divisi.');
         }
 
         $cloned = $this->divisiService->cloneDivisi($divisi, $request->validated(), Auth::user());
@@ -102,8 +102,8 @@ class DivisiController extends Controller
             return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak.');
         }
 
-        if (!Auth::user()->canDelete()) {
-            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menghapus divisi.');
+        if (!Auth::user()->canDelete() || (!Auth::user()->isAdminInstansi() && !Auth::user()->isAdmin())) {
+            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Hanya Admin Instansi dan Admin yang dapat menghapus divisi.');
         }
 
         $name = $divisi->divisi_name;
@@ -119,8 +119,8 @@ class DivisiController extends Controller
 
     public function mass_destroy(MassDestroyDivisiRequest $request)
     {
-        if (!Auth::user()->canDelete()) {
-            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk menghapus divisi.');
+        if (!Auth::user()->canDelete() || (!Auth::user()->isAdminInstansi() && !Auth::user()->isAdmin())) {
+            return redirect()->route('admin.divisi.index')->with('error', 'Akses ditolak: Hanya Admin Instansi dan Admin yang dapat menghapus divisi.');
         }
 
         $result = $this->divisiRepository->massDeleteWithUserCleanups($request->validated('ids'), Auth::user()->instansi_id);

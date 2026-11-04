@@ -82,6 +82,13 @@ class ActivityApiController extends Controller
     public function leaderboard(LeaderboardActivityRequest $request): JsonResponse
     {
         $user = $request->user();
+        if ($user && $user->isMember() && !$user->canViewLeaderboard()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Papan peringkat (leaderboard) aktivitas fisik belum diaktifkan untuk member oleh institusi Anda.',
+            ], 403);
+        }
+
         $period = $request->validated('period', 'month');
         $scope = $request->validated('scope', 'local');
 
@@ -109,6 +116,13 @@ class ActivityApiController extends Controller
     public function podium(LeaderboardActivityRequest $request): JsonResponse
     {
         $user = $request->user();
+        if ($user && $user->isMember() && !$user->canViewLeaderboard()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Papan peringkat (leaderboard) aktivitas fisik belum diaktifkan untuk member oleh institusi Anda.',
+            ], 403);
+        }
+
         $period = $request->validated('period', 'month');
         $scope = $request->validated('scope', 'local');
 
@@ -136,6 +150,13 @@ class ActivityApiController extends Controller
     public function runners(LeaderboardActivityRequest $request): JsonResponse
     {
         $user = $request->user();
+        if ($user && $user->isMember() && !$user->canViewLeaderboard()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Papan peringkat (leaderboard) aktivitas fisik belum diaktifkan untuk member oleh institusi Anda.',
+            ], 403);
+        }
+
         $period = $request->validated('period', 'month');
         $scope = $request->validated('scope', 'local');
 
