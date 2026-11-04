@@ -507,7 +507,7 @@
 
         @if($trx->tambah_kuota > 0)
         <tr>
-            <td colspan="2" class="item-title">TAMBAH KUOTA ANGGOTA {{ strtoupper($labelMember ?? 'SISWA') }}</td>
+            <td colspan="2" class="item-title">TAMBAH KUOTA {{ strtoupper($labelMember ?? 'PENGGUNA') }}</td>
         </tr>
         <tr>
             <td class="item-calc">&nbsp;&nbsp;{{ $trx->tambah_kuota }} Usr &times; 5.000</td>

@@ -555,12 +555,12 @@ class Instansi extends Model
             };
         } else {
             return match ($qty) {
-                50 => 'Paket Kelas',
-                100 => 'Paket Angkatan',
-                250 => 'Sekolah Menengah',
-                500 => 'Standar Sekolah',
-                1000 => 'Sekolah Besar / Yayasan',
-                default => 'Paket Siswa',
+                50 => 'Paket Kelas / Tim',
+                100 => 'Paket Angkatan / Unit',
+                250 => 'Skala Menengah',
+                500 => 'Standar Institusi / Instansi',
+                1000 => 'Institusi Besar / Yayasan',
+                default => 'Paket Pengguna',
             };
         }
     }

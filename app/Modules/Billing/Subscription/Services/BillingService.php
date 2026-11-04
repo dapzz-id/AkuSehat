@@ -120,8 +120,8 @@ class BillingService
             'hargaPerUser' => self::HARGA_PER_USER_BULAN,
             'tipeSebutan' => $instansi->tipe_sebutan,
             'sebutanSpesifik' => $instansi->sebutan_spesifik,
-            'labelMember' => $instansi->label_member_singular,
-            'labelMemberPlural' => $instansi->label_member_plural,
+            'labelMember' => 'Pengguna',
+            'labelMemberPlural' => 'Pengguna',
             'labelAdmin' => $instansi->label_admin,
             'kuotaPerpanjangDefault' => $kuotaPerpanjangDefault,
             'tanggalBerakhirBaruPerpanjang' => $tanggalBerakhirBaruPerpanjang,
@@ -200,7 +200,7 @@ class BillingService
             $tambahKuota = 0;
             $subtotal = $kuotaTarget * self::HARGA_PER_USER_BULAN * $durasiBulan;
             $tipeTransaksi = BillingTransactionType::PERPANJANG_LISENSI->value;
-            $deskripsiItem = "Perpanjangan Paket Lisensi ({$targetLicense->key} - {$kuotaTarget} " . ($instansi->label_member_singular ?? 'User') . " / +{$durasiLabel})";
+            $deskripsiItem = "Perpanjangan Paket Lisensi ({$targetLicense->key} - {$kuotaTarget} Pengguna / +{$durasiLabel})";
         } else {
             // Mode TAMBAH KUOTA BARU (Paket Baru Mandiri Sesuai Durasi Pilihan - Model Provider Internet / Bima Tri)
             $tambahKuota = (int) ($validated['tambah_kuota'] ?? 0);
@@ -217,7 +217,7 @@ class BillingService
             $targetLicense = null;
             $subtotal = $tambahKuota * self::HARGA_PER_USER_BULAN * $durasiBulan;
             $tipeTransaksi = BillingTransactionType::TAMBAH_KUOTA->value;
-            $deskripsiItem = "Paket Kuota Baru (+{$tambahKuota} " . ($instansi->label_member_singular ?? 'User') . " / {$durasiLabel} Mandiri)";
+            $deskripsiItem = "Paket Kuota Baru (+{$tambahKuota} Pengguna / {$durasiLabel} Mandiri)";
         }
 
         $pajak11 = BillingRate::calculatePpn($subtotal);
@@ -407,7 +407,7 @@ class BillingService
             $tambahKuota = 0;
             $subtotal = $kuotaTarget * self::HARGA_PER_USER_BULAN * $durasiBulan;
             $tipeTransaksi = BillingTransactionType::PERPANJANG_LISENSI->value;
-            $deskripsiItem = "Perpanjangan Paket Lisensi ({$targetLicense->key} - {$kuotaTarget} " . ($instansi->label_member_singular ?? 'User') . " / +{$durasiLabel})";
+            $deskripsiItem = "Perpanjangan Paket Lisensi ({$targetLicense->key} - {$kuotaTarget} Pengguna / +{$durasiLabel})";
         } else {
             // Mode TAMBAH KUOTA BARU
             $tambahKuota = (int) ($validated['tambah_kuota'] ?? 0);
@@ -424,7 +424,7 @@ class BillingService
             $targetLicense = null;
             $subtotal = $tambahKuota * self::HARGA_PER_USER_BULAN * $durasiBulan;
             $tipeTransaksi = BillingTransactionType::TAMBAH_KUOTA->value;
-            $deskripsiItem = "Paket Kuota Baru (+{$tambahKuota} " . ($instansi->label_member_singular ?? 'User') . " / {$durasiLabel} Mandiri)";
+            $deskripsiItem = "Paket Kuota Baru (+{$tambahKuota} Pengguna / {$durasiLabel} Mandiri)";
         }
 
         $pajak11 = BillingRate::calculatePpn($subtotal);
@@ -1225,7 +1225,7 @@ class BillingService
             'user' => $trxUser,
             'logoBase64' => $logoBase64,
             'tipeSebutan' => $instansi->tipe_sebutan,
-            'labelMember' => $instansi->label_member_singular,
+            'labelMember' => 'Pengguna',
             'labelAdmin' => $instansi->label_admin,
         ]);
 

@@ -233,7 +233,7 @@
                             </p>
                         </button>
 
-                        {{-- Mode 2: Tambah Slot Kuota Siswa Baru --}}
+                        {{-- Mode 2: Tambah Slot Kuota Pengguna Baru --}}
                         <button type="button" onclick="switchBillingMode('tambah_kuota')" id="tabBtnTambahKuota"
                             class="p-4 rounded-2xl border-2 text-left transition-all duration-200 border-gray-200 bg-white hover:border-gray-300 relative cursor-pointer">
                             <div class="flex items-center justify-between mb-1.5">
@@ -359,7 +359,7 @@
                     </div>
                 </div>
 
-                {{-- CONTAINER MODE 2: TAMBAH SLOT KUOTA SISWA BARU --}}
+                {{-- CONTAINER MODE 2: TAMBAH SLOT KUOTA PENGGUNA BARU --}}
                 <div id="paneTambahKuota" class="space-y-6 hidden">
                     {{-- Notice Model Provider --}}
                     <div class="bg-blue-50/70 p-3.5 rounded-xl border border-blue-200 text-xs text-blue-900 flex items-start gap-2.5">
@@ -369,7 +369,7 @@
                         </div>
                     </div>
 
-                    {{-- Opsi: Paket Jumlah Pengguna/Siswa --}}
+                    {{-- Opsi: Paket Jumlah Pengguna --}}
                     <div>
                         <label class="block text-sm font-bold text-gray-800 mb-2">
                             Pilih Paket Kuota Tambahan <span class="text-xs font-normal text-emerald-700" id="topupPresetRateLabel">(Rp 5.000 / {{ strtolower($labelMember) }} / bulan)</span>
@@ -407,7 +407,7 @@
                         </div>
                     </div>
 
-                    {{-- Opsi 2: Kustom Jumlah Pengguna/Siswa --}}
+                    {{-- Opsi 2: Kustom Jumlah Pengguna --}}
                     <div>
                         <label class="block text-sm font-bold text-gray-800 mb-2">
                             Atau Masukkan Jumlah {{ $labelMemberPlural }} Tambahan Kustom
