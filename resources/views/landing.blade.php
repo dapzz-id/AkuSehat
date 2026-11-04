@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aku Sehat — Ekosistem Platform Manajemen Kesehatan Sekolah & Institusi Terpadu</title>
-    <meta name="description" content="Platform kesehatan digital terpadu untuk UKS, sekolah, dan institusi modern. Menghubungkan Web Dashboard Manajemen dengan Aplikasi Mobile Siswa untuk skrining antropometri, IMT otomatis, pemantauan kadar Hb anemia, siklus menstruasi, dan pelacak vitalitas harian.">
-    <meta name="keywords" content="Aku Sehat, UKS digital, kesehatan sekolah, rekam medis siswa, antropometri, skrining IMT, cek Hb anemia, siklus haid, Neura Cakrawira Asia">
+    <title>Aku Sehat — Ekosistem Platform Manajemen Kesehatan Terpadu untuk Instansi & Institusi</title>
+    <meta name="description" content="Platform kesehatan digital terpadu untuk instansi, institusi, sekolah, universitas, perusahaan, dan unit kesehatan modern. Menghubungkan Web Dashboard Manajemen dengan Aplikasi Mobile Anggota untuk skrining antropometri, IMT otomatis, pemantauan kadar Hb anemia, siklus menstruasi, dan pelacak vitalitas harian.">
+    <meta name="keywords" content="Aku Sehat, kesehatan digital, rekam medis instansi, kesehatan institusi, UKS, poliklinik, antropometri, skrining IMT, cek Hb anemia, siklus haid, Neura Cakrawira Asia">
     
     <!-- Open Graph / Meta Sosial -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url('/') }}">
-    <meta property="og:title" content="Aku Sehat — Ekosistem Manajemen Kesehatan Sekolah Terpadu">
-    <meta property="og:description" content="Integrasi cerdas Web Dashboard Sekolah & Aplikasi Mobile Siswa untuk monitoring kesehatan, IMT, dan deteksi anemia secara akurat.">
+    <meta property="og:title" content="Aku Sehat — Ekosistem Manajemen Kesehatan Instansi & Institusi Terpadu">
+    <meta property="og:description" content="Integrasi cerdas Web Dashboard Instansi & Aplikasi Mobile Anggota untuk monitoring kesehatan, IMT, dan deteksi dini anemia secara akurat.">
     <meta property="og:image" content="{{ asset('images/landing/feature_graphic.png') }}">
 
     <!-- Favicon & Brand Icons -->
@@ -136,16 +136,16 @@
             <div class="text-center max-w-4xl mx-auto">
                 <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-100/80 text-emerald-800 border border-emerald-200 mb-6 shadow-xs animate-float">
                     <i class="fas fa-heart-pulse text-emerald-800"></i>
-                    <span>Ekosistem Digitalisasi UKS & Kesehatan Sekolah Terpadu</span>
+                    <span>Ekosistem Platform Kesehatan Digital Terpadu untuk Instansi & Institusi</span>
                 </div>
 
                 <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.15] mb-6">
                     Satu Platform Terintegrasi untuk <br class="hidden sm:inline">
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-800 via-teal-700 to-sky-700">Kesehatan Siswa & Sekolah</span> yang Lebih Terukur
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-800 via-teal-700 to-sky-700">Kesehatan Institusi, Instansi & Anggota</span> yang Lebih Terukur
                 </h1>
 
                 <p class="text-base sm:text-lg text-slate-600 max-w-3xl mx-auto mb-9 leading-relaxed font-normal">
-                    <strong>Aku Sehat</strong> menjembatani <strong>Web Dashboard Manajemen UKS</strong> dengan <strong>Aplikasi Mobile Siswa</strong>. Dari skrining antropometri IMT otomatis, pemantauan kadar Hemoglobin (Hb) bebas anemia, konseling kesehatan mental SafeSpace, hingga pelacakan vitalitas harian dalam satu ekosistem yang aman dan terenkripsi.
+                    <strong>Aku Sehat</strong> menjembatani <strong>Web Dashboard Manajemen Kesehatan Instansi</strong> dengan <strong>Aplikasi Mobile Anggota</strong>. Dari skrining antropometri IMT otomatis, pemantauan kadar Hemoglobin (Hb) bebas anemia, konseling kesehatan mental SafeSpace, hingga pelacakan vitalitas harian dalam satu ekosistem yang fleksibel untuk berbagai organisasi, aman, dan terenkripsi.
                 </p>
 
                 <div class="flex flex-wrap items-center justify-center gap-3.5 mb-12">
@@ -168,7 +168,7 @@
 
                     <a href="#unduh" class="inline-flex items-center gap-2 px-5 py-3.5 rounded-2xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
                         <i class="fas fa-mobile-screen-button text-emerald-700"></i>
-                        <span>Unduh Aplikasi Siswa</span>
+                        <span>Unduh Aplikasi Mobile</span>
                     </a>
                 </div>
 
@@ -208,19 +208,19 @@
                 <div class="lg:col-span-6 space-y-6">
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
                         <i class="fas fa-circle-question"></i>
-                        <span>Transformasi Kesehatan Sekolah</span>
+                        <span>Transformasi Kesehatan Instansi & Institusi</span>
                     </div>
 
                     <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-snug">
-                        Bukan Sekadar Catatan UKS Biasa, Ini Adalah <span class="text-emerald-800">Sistem Deteksi Dini</span> untuk Generasi Sehat
+                        Bukan Sekadar Catatan Medis Manual, Ini Adalah <span class="text-emerald-800">Sistem Deteksi Dini</span> untuk Seluruh Instansi & Anggota
                     </h2>
 
                     <p class="text-sm sm:text-base text-slate-600 leading-relaxed">
-                        Di banyak sekolah, pencatatan kesehatan siswa masih mengandalkan buku catatan manual yang rentan hilang, data anemia siswi tidak terdeteksi, dan pihak sekolah kesulitan menghasilkan laporan resmi untuk Dinas Pendidikan maupun Puskesmas.
+                        Di banyak instansi, kampus, maupun sekolah, pencatatan kesehatan anggota masih mengandalkan buku catatan manual yang rentan tercecer, gejala anemia tidak terpantau, dan manajemen kesulitan menghasilkan laporan rekapitulasi resmi terstandarisasi.
                     </p>
 
                     <p class="text-sm sm:text-base text-slate-600 leading-relaxed">
-                        <strong>Aku Sehat</strong> hadir merombak paradigma tersebut dengan sistem terpusat berbasis instansi. Setiap sekolah mendapatkan <strong>lingkungan privat (multi-tenancy)</strong> lengkap dengan modul skrining klinis, pemantauan berkala, dan akses mobile ramah siswa.
+                        <strong>Aku Sehat</strong> hadir merombak paradigma tersebut dengan sistem terpusat berbasis instansi. Setiap organisasi mendapatkan <strong>lingkungan privat (multi-tenancy)</strong> lengkap dengan modul skrining klinis, pemantauan berkala, dan aplikasi mobile ramah pengguna.
                     </p>
 
                     <div class="space-y-3.5 pt-2">
@@ -230,7 +230,7 @@
                             </div>
                             <div>
                                 <h4 class="text-sm font-bold text-slate-900">Digitalisasi Skrining Antropometri & Klinis</h4>
-                                <p class="text-xs text-slate-500">Pencatatan Tinggi Badan, Berat Badan, Mata, Gigi, dan Telinga dengan kalkulasi status gizi otomatis.</p>
+                                <p class="text-xs text-slate-500">Pencatatan Tinggi Badan, Berat Badan, Mata, Gigi, dan Telinga dengan kalkulasi status gizi otomatis standar Kemenkes.</p>
                             </div>
                         </div>
 
@@ -240,7 +240,7 @@
                             </div>
                             <div>
                                 <h4 class="text-sm font-bold text-slate-900">Program Pencegahan Anemia & Monitoring Hb</h4>
-                                <p class="text-xs text-slate-500">Deteksi dini kadar Hemoglobin siswi putri untuk mencegah penurunan konsentrasi dan risiko stunting di masa depan.</p>
+                                <p class="text-xs text-slate-500">Deteksi dini kadar Hemoglobin untuk mencegah kelelahan kronis, penurunan produktivitas kerja/belajar, dan risiko komplikasi jangka panjang.</p>
                             </div>
                         </div>
 
@@ -250,7 +250,7 @@
                             </div>
                             <div>
                                 <h4 class="text-sm font-bold text-slate-900">SafeSpace Konseling & Privasi Terjaga</h4>
-                                <p class="text-xs text-slate-500">Layanan konseling mental siswa dan pencatatan siklus haid dilakukan secara aman di smartphone masing-masing siswa.</p>
+                                <p class="text-xs text-slate-500">Layanan konseling privat dan pencatatan siklus kesehatan dilakukan secara aman di smartphone masing-masing anggota.</p>
                             </div>
                         </div>
                     </div>
@@ -281,9 +281,9 @@
                                     <i class="fas fa-desktop"></i>
                                     <span>Web Dashboard</span>
                                 </div>
-                                <h4 class="text-sm font-extrabold text-white mb-2">Untuk Admin Sekolah, Konselor & UKS</h4>
+                                <h4 class="text-sm font-extrabold text-white mb-2">Untuk Manajemen, Konselor & Medis</h4>
                                 <ul class="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
-                                    <li>Rekap Divisi/Kelas Terpadu</li>
+                                    <li>Rekap Divisi / Departemen / Kelas</li>
                                     <li>Skrining Klinis Massal</li>
                                     <li>Konseling SafeSpace & Burnout</li>
                                     <li>Penerbitan Laporan PDF Resmi</li>
@@ -295,12 +295,12 @@
                                     <i class="fas fa-mobile-screen"></i>
                                     <span>Mobile Android</span>
                                 </div>
-                                <h4 class="text-sm font-extrabold text-white mb-2">Untuk Siswa & Anggota</h4>
+                                <h4 class="text-sm font-extrabold text-white mb-2">Untuk Seluruh Anggota / Pengguna</h4>
                                 <ul class="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
                                     <li>Pencatatan Mandiri IMT & Hb</li>
                                     <li>Log Siklus Haid & Keluhan</li>
                                     <li>Run Tracker & Vitalitas Tubuh</li>
-                                    <li>Pinjam Perlengkapan UKS</li>
+                                    <li>Pinjam Perlengkapan Medis/UKS</li>
                                 </ul>
                             </div>
                         </div>
@@ -327,10 +327,10 @@
                     <span>MODULAR & LENGKAP</span>
                 </div>
                 <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight mb-4">
-                    Dirancang Khusus Sesuai Kebutuhan <span class="text-emerald-800">Sekolah & Siswa</span>
+                    Dirancang Khusus Sesuai Kebutuhan <span class="text-emerald-800">Seluruh Instansi & Anggota</span>
                 </h2>
                 <p class="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
-                    Seluruh modul telah dibangun dan aktif beroperasi dalam sistem Aku Sehat untuk mendukung kelancaran operasional UKS dan gaya hidup sehat siswa.
+                    Seluruh modul telah dibangun dan siap beroperasi untuk mendukung kelancaran layanan kesehatan instansi, institusi, maupun organisasi dan gaya hidup sehat seluruh anggota.
                 </p>
             </div>
 
@@ -341,7 +341,7 @@
                     </div>
                     <h3 class="text-lg font-extrabold text-slate-900 mb-2">Skrining Antropometri & IMT</h3>
                     <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                        Pemeriksaan berkala tinggi badan, berat badan, serta status gizi (Kurus, Normal, Gemuk, Obesitas) dengan algoritma otomatis standar Kemenkes.
+                        Pemeriksaan berkala tinggi badan, berat badan, serta status gizi (Kurus, Normal, Gemuk, Obesitas) dengan algoritma otomatis standar klinis Kemenkes.
                     </p>
                 </div>
 
@@ -351,7 +351,7 @@
                     </div>
                     <h3 class="text-lg font-extrabold text-slate-900 mb-2">Pemantauan Hb & Bebas Anemia</h3>
                     <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                        Pencatatan kadar Hemoglobin (Hb) rutin, grafik tren anemia, dan peringatan dini bagi siswi yang memerlukan intervensi gizi atau suplemen darah.
+                        Pencatatan kadar Hemoglobin (Hb) rutin, grafik tren anemia, dan peringatan dini bagi anggota yang memerlukan intervensi gizi atau suplemen penambah darah.
                     </p>
                 </div>
 
@@ -361,7 +361,7 @@
                     </div>
                     <h3 class="text-lg font-extrabold text-slate-900 mb-2">SafeSpace Konseling & Burnout</h3>
                     <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                        Fitur konseling privat antara siswa dan Health Consultant/Guru BK serta skrining berkala tingkat kejenuhan belajar dan stres akademik.
+                        Fitur konseling privat antara anggota dan Health Consultant/Konselor serta skrining berkala tingkat kejenuhan, kelelahan, dan stres harian.
                     </p>
                 </div>
 
@@ -371,7 +371,7 @@
                     </div>
                     <h3 class="text-lg font-extrabold text-slate-900 mb-2">Run Tracker & Log Vitalitas</h3>
                     <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                        Pelacak olahraga lari berbasis GPS di aplikasi mobile, log konsumsi air minum, pemantauan kualitas tidur, dan evaluasi postur ergonomi siswa.
+                        Pelacak olahraga lari berbasis GPS di aplikasi mobile, log konsumsi air minum, pemantauan kualitas tidur, dan evaluasi postur ergonomi anggota.
                     </p>
                 </div>
 
@@ -379,9 +379,9 @@
                     <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl font-bold mb-5 group-hover:scale-110 transition-transform">
                         <i class="fas fa-ribbon"></i>
                     </div>
-                    <h3 class="text-lg font-extrabold text-slate-900 mb-2">Peminjaman Pita & Fasilitas UKS</h3>
+                    <h3 class="text-lg font-extrabold text-slate-900 mb-2">Peminjaman Fasilitas & Perlengkapan Medis</h3>
                     <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                        Sistem sirkulasi peminjaman pita kesehatan UKS terdigitalisasi dengan verifikasi kode cepat, notifikasi batas waktu, dan deteksi denda otomatis.
+                        Sistem sirkulasi peminjaman fasilitas kesehatan instansi terdigitalisasi dengan verifikasi kode cepat, notifikasi batas waktu, dan deteksi denda otomatis.
                     </p>
                 </div>
 
@@ -391,7 +391,7 @@
                     </div>
                     <h3 class="text-lg font-extrabold text-slate-900 mb-2">Keamanan Medis & Multi-Tenant</h3>
                     <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                        Data antar-sekolah terisolasi secara aman. Field kesehatan sensitif dienkripsi tingkat perbankan (AES-256) serta kepatuhan standar Google Play Store.
+                        Data antar-instansi terisolasi secara aman. Seluruh field kesehatan sensitif dienkripsi per-tenant tingkat perbankan (AES-256) serta mematuhi privasi data.
                     </p>
                 </div>
             </div>
@@ -421,27 +421,27 @@
                 <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
                     <div>
                         <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm mb-3">
-                            <i class="fas fa-school"></i>
+                            <i class="fas fa-building-columns"></i>
                         </div>
                         <h4 class="text-base font-extrabold text-slate-900 mb-0.5">Admin Instansi</h4>
-                        <p class="text-xs text-emerald-700 font-semibold mb-2">Kepala Sekolah / Yayasan</p>
+                        <p class="text-xs text-emerald-700 font-semibold mb-2">Pimpinan & Manajemen Instansi</p>
                         <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                            Pengambil kebijakan utama. Mengatur struktur kelas/divisi, lisensi kuota siswa, pembayaran billing Midtrans, serta mengunduh rekapitulasi laporan resmi (PDF).
+                            Pengambil kebijakan utama institusi/instansi. Mengatur struktur departemen/divisi/kelas, alokasi lisensi kuota anggota, pembayaran billing Midtrans, serta mengunduh rekapitulasi laporan resmi (PDF).
                         </p>
                     </div>
                     <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200 text-center">Akses: Web Portal</span>
                 </div>
 
-                <!-- Role 2: Admin PMR / Pengurus UKS -->
+                <!-- Role 2: Admin Unit Medis / UKS / Poliklinik -->
                 <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
                     <div>
                         <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center font-bold text-sm mb-3">
                             <i class="fas fa-hand-holding-medical"></i>
                         </div>
-                        <h4 class="text-base font-extrabold text-slate-900 mb-0.5">Admin PMR / UKS</h4>
-                        <p class="text-xs text-rose-700 font-semibold mb-2">Pengurus Lapangan UKS / PMI</p>
+                        <h4 class="text-base font-extrabold text-slate-900 mb-0.5">Admin Unit Medis</h4>
+                        <p class="text-xs text-rose-700 font-semibold mb-2">Koordinator UKS / Poliklinik / PMR / Satgas</p>
                         <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                            Mengelola operasional harian ruang UKS: sirkulasi peminjaman pita haid & cuti menstruasi siswi, sistem deteksi keterlambatan > 7 hari, dan registrasi anggota.
+                            Mengelola operasional harian pos/klinik kesehatan: sirkulasi fasilitas & peminjaman perlengkapan medis, pemantauan cuti/keluhan menstruasi, inventaris obat, serta registrasi anggota.
                         </p>
                     </div>
                     <span class="text-[11px] font-bold text-rose-800 bg-rose-50 px-2 py-1 rounded-lg border border-rose-200 text-center">Akses: Web Portal</span>
@@ -454,9 +454,9 @@
                             <i class="fas fa-heart-pulse"></i>
                         </div>
                         <h4 class="text-base font-extrabold text-slate-900 mb-0.5">Health Monitor</h4>
-                        <p class="text-xs text-sky-700 font-semibold mb-2">Guru Penjas / Tim Skrining</p>
+                        <p class="text-xs text-sky-700 font-semibold mb-2">Tim Skrining Lapangan / Pembina Kesehatan</p>
                         <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                            Fokus pada skrining fisik klinis: input cepat timbangan antropometri (TB/BB dengan kalkulasi otomatis IMT Kemenkes) dan tes rapid Hemoglobin (Hb anemia siswi).
+                            Fokus pada skrining fisik klinis berkala: input cepat antropometri (TB/BB dengan kalkulasi otomatis status gizi IMT standar Kemenkes) dan input skrining rapid Hemoglobin (Hb anemia).
                         </p>
                     </div>
                     <span class="text-[11px] font-bold text-sky-800 bg-sky-50 px-2 py-1 rounded-lg border border-sky-200 text-center">Akses: Web Portal</span>
@@ -469,24 +469,24 @@
                             <i class="fas fa-user-doctor"></i>
                         </div>
                         <h4 class="text-base font-extrabold text-slate-900 mb-0.5">Health Consultant</h4>
-                        <p class="text-xs text-teal-700 font-semibold mb-2">Guru BK / Konselor / Dokter</p>
+                        <p class="text-xs text-teal-700 font-semibold mb-2">Konselor / Psikolog / Dokter / Tenaga Medis</p>
                         <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                            Menangani konsultasi privat SafeSpace, evaluasi skrining burnout dan stres akademik, serta memberikan rekomendasi klinis dan rujukan lanjutan ke Puskesmas.
+                            Menangani konsultasi privat SafeSpace, evaluasi skrining burnout dan stres harian, serta memberikan rekomendasi klinis dan rujukan medis lanjutan ke fasilitas kesehatan/RS.
                         </p>
                     </div>
                     <span class="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-1 rounded-lg border border-teal-200 text-center">Akses: Web Portal</span>
                 </div>
 
-                <!-- Role 5: Member (Siswa) -->
+                <!-- Role 5: Member (Anggota / Siswa / Karyawan) -->
                 <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
                     <div>
                         <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold text-sm mb-3">
-                            <i class="fas fa-user-graduate"></i>
+                            <i class="fas fa-users"></i>
                         </div>
-                        <h4 class="text-base font-extrabold text-slate-900 mb-0.5">Siswa / Siswi</h4>
-                        <p class="text-xs text-indigo-700 font-semibold mb-2">Peserta Didik / Anggota</p>
+                        <h4 class="text-base font-extrabold text-slate-900 mb-0.5">Member / Anggota</h4>
+                        <p class="text-xs text-indigo-700 font-semibold mb-2">Seluruh Anggota / Siswa / Karyawan</p>
                         <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                            Pengguna aplikasi mobile Android untuk melihat rekam medis mandiri, log siklus haid, pengajuan pinjam pita UKS, pelacak lari GPS, dan chat SafeSpace dengan BK.
+                            Pengguna aplikasi mobile Android untuk melihat rekam medis mandiri, pemantauan IMT & Hb, log siklus kesehatan haid, peminjaman fasilitas medis, pelacak vitalitas & lari GPS, serta chat SafeSpace.
                         </p>
                     </div>
                     <span class="text-[11px] font-bold text-indigo-800 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-200 text-center">Akses: Mobile Android</span>
@@ -506,23 +506,23 @@
                     <span>TARIF RESMI & TRANSPARAN</span>
                 </div>
                 <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight mb-4">
-                    Paket Kuota Lisensi Sesuai Kapasitas Sekolah
+                    Paket Kuota Lisensi Sesuai Kapasitas Instansi & Institusi
                 </h2>
                 <p class="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
-                    Biaya resmi terstandarisasi <strong class="text-emerald-700 font-extrabold">Rp 5.000 / siswa / tahun (5k/siswa)</strong> (All-In Seluruh Modul). Didukung pembayaran instan otomatis via <strong>Midtrans Snap</strong> (QRIS, VA Bank, GoPay, ShopeePay) serta Transfer BCA resmi.
+                    Biaya resmi terstandarisasi <strong class="text-emerald-700 font-extrabold">Rp 5.000 / pengguna / tahun (5k/user/tahun)</strong> (All-In Seluruh Modul). Didukung pembayaran instan otomatis via <strong>Midtrans Snap</strong> (QRIS, Virtual Account Bank, GoPay, ShopeePay) serta Transfer Bank resmi.
                 </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
                 <div class="p-6 rounded-3xl bg-slate-50 border border-slate-200 flex flex-col justify-between hover:shadow-lg transition-all">
                     <div>
-                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Paket Angkatan</div>
-                        <h3 class="text-xl font-extrabold text-slate-900 mb-1">+100 Siswa</h3>
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Paket Starter</div>
+                        <h3 class="text-xl font-extrabold text-slate-900 mb-1">+100 Pengguna</h3>
                         <div class="text-2xl font-black text-slate-900 mt-4 mb-0.5">Rp 500.000 <span class="text-xs font-normal text-slate-500">/ tahun</span></div>
-                        <div class="text-xs font-bold text-emerald-700 mb-4">Rp 5.000 / siswa / tahun (5k/siswa)</div>
-                        <p class="text-xs text-slate-600 mb-6">Cocok untuk 1 tingkatan angkatan atau sekolah rintisan.</p>
+                        <div class="text-xs font-bold text-emerald-700 mb-4">Rp 5.000 / pengguna / tahun (5k/user/tahun)</div>
+                        <p class="text-xs text-slate-600 mb-6">Cocok untuk instansi rintisan, komunitas, atau 1 divisi/angkatan.</p>
                         <ul class="text-xs text-slate-600 space-y-2.5 mb-6">
-                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-800"></i> Kuota 100 Akun Siswa</li>
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-800"></i> Kuota 100 Akun Anggota/Pengguna</li>
                             <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-800"></i> Akses Seluruh Modul Klinis</li>
                             <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-800"></i> Laporan Rekapitulasi PDF</li>
                             <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-800"></i> Integrasi Aplikasi Mobile</li>
@@ -538,13 +538,13 @@
                         PALING POPULER
                     </div>
                     <div>
-                        <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Sekolah Menengah</div>
-                        <h3 class="text-xl font-extrabold text-white mb-1">+250 Siswa</h3>
+                        <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Instansi Menengah</div>
+                        <h3 class="text-xl font-extrabold text-white mb-1">+250 Pengguna</h3>
                         <div class="text-3xl font-black text-white mt-4 mb-0.5">Rp 1.250.000 <span class="text-xs font-normal text-slate-400">/ tahun</span></div>
-                        <div class="text-xs font-bold text-emerald-400 mb-4">Rp 5.000 / siswa / tahun (5k/siswa)</div>
-                        <p class="text-xs text-slate-300 mb-6">Pilihan ideal untuk SMP / SMA / SMK skala menengah.</p>
+                        <div class="text-xs font-bold text-emerald-400 mb-4">Rp 5.000 / pengguna / tahun (5k/user/tahun)</div>
+                        <p class="text-xs text-slate-300 mb-6">Pilihan ideal untuk sekolah, akademi, divisi kampus, atau instansi menengah.</p>
                         <ul class="text-xs text-slate-200 space-y-2.5 mb-6">
-                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-400"></i> Kuota 250 Akun Siswa</li>
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-400"></i> Kuota 250 Akun Anggota/Pengguna</li>
                             <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-400"></i> Modul Hb & Antropometri Lengkap</li>
                             <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-400"></i> Multi-Divisi Tanpa Batas</li>
                             <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-400"></i> Dukungan Teknis Prioritas</li>
@@ -558,13 +558,13 @@
 
                 <div class="p-6 rounded-3xl bg-slate-50 border border-slate-200 flex flex-col justify-between hover:shadow-lg transition-all">
                     <div>
-                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Yayasan / Besar</div>
-                        <h3 class="text-xl font-extrabold text-slate-900 mb-1">+1.000 Siswa</h3>
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Institusi Besar & Korporasi</div>
+                        <h3 class="text-xl font-extrabold text-slate-900 mb-1">+1.000 Pengguna</h3>
                         <div class="text-2xl font-black text-slate-900 mt-4 mb-0.5">Rp 5.000.000 <span class="text-xs font-normal text-slate-500">/ tahun</span></div>
-                        <div class="text-xs font-bold text-emerald-700 mb-4">Rp 5.000 / siswa / tahun (5k/siswa)</div>
-                        <p class="text-xs text-slate-600 mb-6">Untuk sekolah besar, yayasan pendidikan, atau pesantren.</p>
+                        <div class="text-xs font-bold text-emerald-700 mb-4">Rp 5.000 / pengguna / tahun (5k/user/tahun)</div>
+                        <p class="text-xs text-slate-600 mb-6">Untuk universitas, institut, korporasi, yayasan, atau instansi berskala besar.</p>
                         <ul class="text-xs text-slate-600 space-y-2.5 mb-6">
-                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-800"></i> Kuota 1.000+ Akun Siswa</li>
+                            <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-800"></i> Kuota 1.000+ Akun Anggota/Pengguna</li>
                             <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-800"></i> Audit Logging Append-Only</li>
                             <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-800"></i> Konsultasi Implementasi Khusus</li>
                             <li class="flex items-center gap-2"><i class="fas fa-check text-emerald-800"></i> Layanan Onboarding Khusus</li>
@@ -577,7 +577,7 @@
             </div>
 
             <div class="mt-8 text-center text-xs text-slate-500">
-                <i class="fas fa-circle-info text-emerald-800 mr-1"></i> Biaya resmi terstandarisasi Rp 5.000 / siswa / tahun (All-In). Admin Instansi dapat membeli tambahan kuota satuan secara fleksibel kapan saja langsung dari menu Billing.
+                <i class="fas fa-circle-info text-emerald-800 mr-1"></i> Biaya resmi terstandarisasi Rp 5.000 / pengguna / tahun (All-In). Admin Instansi dapat membeli tambahan kuota satuan secara fleksibel kapan saja langsung dari menu Billing.
             </div>
         </div>
     </section>
@@ -596,16 +596,16 @@
                             <span>APK ANDROID & WEB BROWSER</span>
                         </div>
                         <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
-                            Mulai Gunakan Aku Sehat di Sekolah Anda Hari Ini
+                            Mulai Gunakan Aku Sehat di Instansi Anda Hari Ini
                         </h2>
                         <p class="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-                            Unduh aplikasi Android untuk siswa atau login via peramban web tanpa memerlukan instalasi tambahan untuk komputer UKS sekolah.
+                            Unduh aplikasi Android untuk seluruh anggota atau akses web portal instansi langsung tanpa memerlukan instalasi perangkat yang rumit.
                         </p>
 
                         <div class="flex flex-wrap items-center gap-3 pt-4">
                             <a href="{{ route('login') }}" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 shadow-md transition-all">
                                 <i class="fas fa-desktop"></i>
-                                <span>Buka Web Portal UKS</span>
+                                <span>Buka Web Portal Instansi</span>
                             </a>
                             <a href="#fitur" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all">
                                 <i class="fas fa-cubes-stacked text-emerald-400"></i>
@@ -640,36 +640,36 @@
                     Pertanyaan yang Sering Diajukan (FAQ)
                 </h2>
                 <p class="text-xs sm:text-sm text-slate-500 mt-2">
-                    Informasi penting seputar keamanan, kompatibilitas, dan penggunaan Aku Sehat.
+                    Informasi penting seputar keamanan, fleksibilitas institusi, dan penggunaan Aku Sehat.
                 </p>
             </div>
 
             <div class="space-y-3.5">
                 <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                    <h4 class="text-sm font-bold text-slate-900 mb-1">Apakah aplikasi ini memberatkan smartphone siswa?</h4>
+                    <h4 class="text-sm font-bold text-slate-900 mb-1">Apakah aplikasi ini memberatkan smartphone anggota?</h4>
                     <p class="text-xs text-slate-600 leading-relaxed">
-                        Sama sekali tidak. Aplikasi mobile Aku Sehat dikembangkan menggunakan React Native dan TypeScript yang dioptimasi secara mendalam. Tampilan grafik dan animasi menggunakan akselerasi GPU murni sehingga sangat ringan dan hemat baterai, bahkan pada ponsel spesifikasi standar.
+                        Sama sekali tidak. Aplikasi mobile Aku Sehat dikembangkan menggunakan React Native dan TypeScript yang dioptimasi secara mendalam. Tampilan grafik dan animasi menggunakan akselerasi GPU murni sehingga sangat ringan dan hemat baterai pada seluruh spesifikasi ponsel anggota.
                     </p>
                 </div>
 
                 <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                    <h4 class="text-sm font-bold text-slate-900 mb-1">Bagaimana keamanan data medis siswa dijamin?</h4>
+                    <h4 class="text-sm font-bold text-slate-900 mb-1">Bagaimana keamanan data medis anggota dijamin?</h4>
                     <p class="text-xs text-slate-600 leading-relaxed">
-                        Data klinis sensitif seperti catatan Hb, pemeriksaan fisik, dan riwayat kesehatan haid dienkripsi menggunakan enkripsi tingkat perbankan (AES-256) per-tenant. Setiap sekolah memiliki ruang data terisolasi yang tidak dapat diintip oleh sekolah lain.
+                        Data klinis sensitif seperti catatan Hb, pemeriksaan fisik, dan riwayat kesehatan dienkripsi menggunakan enkripsi tingkat perbankan (AES-256) per-tenant. Setiap instansi memiliki ruang data terisolasi yang tidak dapat diakses atau diintip oleh instansi lain.
                     </p>
                 </div>
 
                 <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                    <h4 class="text-sm font-bold text-slate-900 mb-1">Bagaimana cara sekolah mendaftar dan mengundang siswa?</h4>
+                    <h4 class="text-sm font-bold text-slate-900 mb-1">Bagaimana cara instansi mendaftar dan mengundang anggota?</h4>
                     <p class="text-xs text-slate-600 leading-relaxed">
-                        Admin Sekolah dapat mendaftar, memilih lisensi yang diinginkan, dan membuat kelas/divisi. Setiap sekolah mendapatkan <strong>Kode Undangan Instansi</strong> unik yang dapat dibagikan kepada siswa untuk registrasi mandiri di aplikasi mobile.
+                        Admin Instansi dapat mendaftar, memilih lisensi yang diinginkan, dan membuat struktur divisi/departemen/kelas. Setiap instansi mendapatkan <strong>Kode Undangan Instansi</strong> unik yang dapat dibagikan kepada anggota untuk registrasi mandiri di aplikasi mobile.
                     </p>
                 </div>
 
                 <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                    <h4 class="text-sm font-bold text-slate-900 mb-1">Apakah data bisa diekspor dalam bentuk PDF untuk dinas?</h4>
+                    <h4 class="text-sm font-bold text-slate-900 mb-1">Apakah data bisa diekspor dalam bentuk laporan resmi PDF?</h4>
                     <p class="text-xs text-slate-600 leading-relaxed">
-                        Ya. Web Dashboard dilengkapi fitur pencetakan PDF resmi berstandar format laporan dinas/sekolah untuk rekap antropometri, pemeriksaan Hb anemia massal, dan inventaris fasilitas UKS.
+                        Ya. Web Dashboard dilengkapi fitur pencetakan PDF resmi berstandar format laporan instansi/dinas untuk rekap antropometri, pemeriksaan Hb anemia massal, log konseling, dan inventaris fasilitas kesehatan.
                     </p>
                 </div>
             </div>
@@ -688,7 +688,7 @@
                         <span class="font-extrabold text-white text-base">Aku Sehat</span>
                     </div>
                     <p class="text-slate-400 text-xs leading-relaxed max-w-sm">
-                        Platform ekosistem pemantauan dan tata kelola kesehatan sekolah, UKS, dan institusi terpadu. Dikembangkan dengan standar medis dan keamanan industri.
+                        Platform ekosistem pemantauan dan tata kelola kesehatan terpadu untuk instansi, institusi, universitas, sekolah, korporasi, dan unit kesehatan. Dikembangkan dengan standar medis dan keamanan industri.
                     </p>
                     <div class="text-[11px] text-slate-500">
                         &copy; 2026 <strong>Neura Cakrawira Asia</strong> / Neura Cakrawira Solusi. Hak Cipta Dilindungi.
