@@ -265,6 +265,7 @@
                 </div>
 
                 <div id="cat-instansi-content" class="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
+                    @if(auth()->user()->canRead())
                     <a href="{{ route('admin.users.index') }}" 
                        class="cpanel-tool-card atlas-tool-card group flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200/70 hover:border-emerald-500/50 hover:bg-emerald-50/40 hover:shadow-sm transition-all duration-200"
                        data-keywords="users data pengguna anggota siswa member kelola akun import excel">
@@ -286,6 +287,7 @@
                             <h3 class="text-sm font-bold text-slate-800 group-hover:text-emerald-700 transition-colors truncate">Data Divisi / Kelas</h3>
                         </div>
                     </a>
+                    @endif
 
                     <a href="{{ route('admin.modules.index') }}" 
                        class="cpanel-tool-card atlas-tool-card group flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200/70 hover:border-amber-500/50 hover:bg-amber-50/40 hover:shadow-sm transition-all duration-200"

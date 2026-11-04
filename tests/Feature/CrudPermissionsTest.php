@@ -97,6 +97,20 @@ class CrudPermissionsTest extends TestCase
             });
         }
 
+        if (!Schema::hasTable('hb')) {
+            Schema::create('hb', function (Blueprint $table) {
+                $table->uuid('id_hb')->primary();
+                $table->uuid('instansi_id')->nullable();
+                $table->uuid('id_user');
+                $table->uuid('id_divisi')->nullable();
+                $table->date('tgl');
+                $table->decimal('hb', 4, 1)->nullable();
+                $table->string('status', 50)->nullable();
+                $table->text('pesan')->nullable();
+                $table->timestamps();
+            });
+        }
+
         if (!Schema::hasTable('audit_logs')) {
             Schema::create('audit_logs', function (Blueprint $table) {
                 $table->id();
@@ -108,6 +122,50 @@ class CrudPermissionsTest extends TestCase
                 $table->json('context')->nullable();
                 $table->string('ip_address', 45)->nullable();
                 $table->text('user_agent')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        if (!Schema::hasTable('global_module_configs')) {
+            Schema::create('global_module_configs', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->string('module_key')->unique();
+                $table->string('name')->nullable();
+                $table->string('status', 30)->default('active');
+                $table->text('maintenance_message')->nullable();
+                $table->json('tester_user_ids')->nullable();
+                $table->uuid('updated_by')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        if (!Schema::hasTable('counseling_sessions')) {
+            Schema::create('counseling_sessions', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->uuid('instansi_id')->nullable();
+                $table->uuid('user_id')->nullable();
+                $table->uuid('consultant_id')->nullable();
+                $table->dateTime('session_date')->nullable();
+                $table->string('topic', 150)->nullable();
+                $table->text('notes')->nullable();
+                $table->string('status')->default('menunggu');
+                $table->boolean('is_confidential')->default(true);
+                $table->timestamps();
+            });
+        }
+
+        if (!Schema::hasTable('peminjaman_pita')) {
+            Schema::create('peminjaman_pita', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->uuid('id_user')->nullable();
+                $table->uuid('instansi_id')->nullable();
+                $table->date('tanggal_pinjam')->nullable();
+                $table->date('tanggal_kembali')->nullable();
+                $table->integer('jumlah_pita')->default(1);
+                $table->tinyInteger('verified')->default(0);
+                $table->string('status')->default('dipinjam');
+                $table->date('estimasi_selesai_haid')->nullable();
+                $table->text('keterangan')->nullable();
                 $table->timestamps();
             });
         }
@@ -385,5 +443,45 @@ class CrudPermissionsTest extends TestCase
 
         // Record now deleted
         $this->assertDatabaseMissing('kesehatan', ['id_kesehatan' => $kesehatan->id_kesehatan]);
+    }
+
+    public function test_health_consultant_can_access_divisi_and_users_with_can_read(): void
+    {
+        $consultant = User::create([
+            'instansi_id' => $this->instansi->id,
+            'id_divisi' => $this->divisi->id,
+            'nama' => 'Guru BK Konselor',
+            'username' => 'guru_bk_' . Str::random(5),
+            'password' => bcrypt('password123'),
+            'level' => UserRole::HEALTH_CONSULTANT->value,
+            'status' => UserStatus::AKTIF->value,
+            'jk' => UserGender::PEREMPUAN->value,
+        ]);
+
+        $this->assertTrue($consultant->canRead());
+
+        // Can access /admin/users and /admin/divisi index
+        $resUsers = $this->actingAs($consultant)->get(route('admin.users.index'));
+        $resUsers->assertStatus(200);
+
+        $resDivisi = $this->actingAs($consultant)->get(route('admin.divisi.index'));
+        $resDivisi->assertStatus(200);
+
+        // However, cannot modify permissions (restricted to Admin Instansi / Admin)
+        $resPerm = $this->actingAs($consultant)->post(route('admin.divisi.permissions', $this->divisi->id), [
+            'permissions' => ['can_delete' => '1'],
+        ]);
+        $resPerm->assertStatus(404);
+
+        // If can_read is explicitly revoked, accessing returns 404
+        $consultant->update([
+            'custom_permissions' => [
+                'can_read' => false,
+            ],
+        ]);
+        $this->assertFalse($consultant->canRead());
+
+        $this->actingAs($consultant)->get(route('admin.users.index'))->assertStatus(404);
+        $this->actingAs($consultant)->get(route('admin.divisi.index'))->assertStatus(404);
     }
 }

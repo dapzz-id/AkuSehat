@@ -181,6 +181,7 @@
     @endif
 
     <!-- Group: DATA ANGGOTA & KELAS -->
+    @if(auth()->user()->canRead())
     @php
         $isUsersActive = request()->routeIs('admin.users.*') || request()->routeIs('admin.divisi.*');
     @endphp
@@ -212,6 +213,7 @@
             </a>
         </div>
     </div>
+    @endif
 
     <!-- Group: SISTEM & PEMBARUAN -->
     <div class="sidebar-group space-y-1" data-group-id="hc-sistem" data-has-active="{{ request()->routeIs('patch_notes.*') ? '1' : '0' }}">

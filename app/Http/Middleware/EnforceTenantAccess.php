@@ -41,18 +41,23 @@ class EnforceTenantAccess
             return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
         }
 
-        // 3b. Blokir akses ke rute manajemen sensitif instansi jika bukan Admin Instansi / Admin atau tidak memiliki izin
-        if ($request->is('admin/modules*') || $request->is('admin/billing*') || $request->is('admin/divisi*')) {
+        // 3b. Blokir akses ke rute manajemen konfigurasi sensitif instansi (modules & billing) untuk non-Admin
+        if ($request->is('admin/modules*') || $request->is('admin/billing*')) {
             if (!$currentUser->isAdminInstansi() && !$currentUser->isAdmin()) {
                 return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
             }
         }
 
-        if ($request->is('admin/users*')) {
-            if (!$currentUser->canAddUser() && !$currentUser->isAdminInstansi() && !$currentUser->isAdmin()) {
+        // Pengaturan Hak Akses Modul & Izin CRUD (Divisi & Pengguna) hanya untuk Admin Instansi / Admin
+        if ($request->is('admin/divisi/*/permissions') || $request->is('admin/users/*/permissions')) {
+            if (!$currentUser->isAdminInstansi() && !$currentUser->isAdmin()) {
                 return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
             }
-            if (($request->isMethod('DELETE') || $request->is('admin/users/*/permissions')) && !$currentUser->isAdminInstansi() && !$currentUser->isAdmin()) {
+        }
+
+        // Akses Melihat Data Divisi & Pengguna memerlukan hak akses Read (aktif bawaan untuk petugas/konselor/admin)
+        if ($request->is('admin/divisi*') || $request->is('admin/users*')) {
+            if (!$currentUser->canRead()) {
                 return $this->forbiddenResponse($request, 'Data tidak ditemukan.');
             }
         }

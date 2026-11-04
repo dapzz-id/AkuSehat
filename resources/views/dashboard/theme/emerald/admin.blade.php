@@ -186,6 +186,7 @@
             </a>
 
             <!-- HC Action 4: Data Siswa -->
+            @if(auth()->user()->canRead())
             <a href="{{ route('admin.users.index') }}" 
                class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-sky-50/80 border border-slate-200/70 hover:border-sky-300 transition-all duration-200">
                 <div class="w-11 h-11 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-md shadow-sky-600/20 group-hover:scale-105 transition-transform">
@@ -197,6 +198,7 @@
                 </div>
                 <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-sky-600 group-hover:translate-x-1 transition-all"></i>
             </a>
+            @endif
         @elseif(auth()->user()->isHealthMonitor())
             <!-- HM Action 1: Run Tracker & Aktivitas -->
             <a href="{{ route('admin.activities.index') }}" 
@@ -238,6 +240,7 @@
             </a>
 
             <!-- HM Action 4: Data Siswa -->
+            @if(auth()->user()->canRead())
             <a href="{{ route('admin.users.index') }}" 
                class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-sky-50/80 border border-slate-200/70 hover:border-sky-300 transition-all duration-200">
                 <div class="w-11 h-11 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-md shadow-sky-600/20 group-hover:scale-105 transition-transform">
@@ -249,6 +252,7 @@
                 </div>
                 <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-sky-600 group-hover:translate-x-1 transition-all"></i>
             </a>
+            @endif
         @else
             <!-- Action 1 -->
             <a href="{{ route('admin.kesehatan.create') }}" 
@@ -276,6 +280,7 @@
                 <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-rose-600 group-hover:translate-x-1 transition-all"></i>
             </a>
 
+            @if(auth()->user()->canRead())
             <!-- Action 3 -->
             <a href="{{ route('admin.users.index') }}" 
                class="btn-press group flex items-center gap-4 p-4 rounded-2xl bg-slate-50/80 hover:bg-sky-50/80 border border-slate-200/70 hover:border-sky-300 transition-all duration-200">
@@ -301,6 +306,7 @@
                 </div>
                 <i class="fas fa-chevron-right text-xs text-slate-400 group-hover:text-teal-600 group-hover:translate-x-1 transition-all"></i>
             </a>
+            @endif
         @endif
     </div>
 </div>
@@ -312,10 +318,12 @@
             <h2 class="text-lg font-bold text-slate-900 tracking-tight">Ringkasan Kesehatan Berdasarkan Divisi</h2>
             <p class="text-xs text-slate-500">Status kelengkapan pemeriksaan kesehatan per kelas/divisi</p>
         </div>
+        @if(auth()->user()->canRead())
         <a href="{{ route('admin.divisi.index') }}" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5 self-start sm:self-auto">
             <span>Semua Divisi</span>
             <i class="fas fa-arrow-right text-[10px]"></i>
         </a>
+        @endif
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
