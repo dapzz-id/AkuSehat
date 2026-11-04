@@ -203,7 +203,7 @@
                                         <div class="flex items-center justify-center text-xs sm:text-sm gap-1 sm:gap-1.5">
                                             @if(Auth::user()->isAdminInstansi() || Auth::user()->isAdmin())
                                             <!-- Tombol Atur Modul & Hak Akses -->
-                                            <button type="button" onclick="openPermissionsModal({{ json_encode($item) }})"
+                                            <button type="button" onclick="openPermissionsModal({{ json_encode(array_merge($item->toArray(), ['effective_crud' => $item->getCrudPermissions()])) }})"
                                                 class="text-indigo-600 hover:text-indigo-800 p-1.5 rounded-full hover:bg-indigo-50 transition-colors"
                                                 title="Atur Modul & Hak Akses Divisi">
                                                 <i class="fas fa-sliders-h"></i>
@@ -564,121 +564,79 @@
                         </div>
                     </div>
 
-                    <!-- Checklist Container -->
-                    <div id="customModulesContainer" class="space-y-3 pt-2 border-t border-gray-100 hidden">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold uppercase tracking-wider text-gray-700">Pilih Modul Aktif:</span>
-                            <div class="space-x-2 text-[11px]">
-                                <button type="button" onclick="checkAllModules(true)" class="text-indigo-600 hover:underline font-semibold">Pilih Semua</button>
-                                <span class="text-gray-300">|</span>
-                                <button type="button" onclick="checkAllModules(false)" class="text-gray-500 hover:underline">Hapus Semua</button>
+                    <!-- Checklist Container: Matriks Hak Akses CRUD per Modul -->
+                    <div id="customModulesContainer" class="space-y-4 pt-3 border-t border-gray-100 hidden">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-indigo-50/70 p-3 rounded-xl border border-indigo-100">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
+                                    <i class="fas fa-sliders text-indigo-600"></i>
+                                    <span>Matriks Hak Akses CRUD per Modul</span>
+                                </span>
+                                <p class="text-[11px] text-indigo-800/80 mt-0.5">Tentukan perizinan Create, Read, Update, Delete untuk setiap modul secara spesifik pada divisi ini.</p>
+                            </div>
+                            <div class="flex items-center gap-1.5 flex-wrap text-[11px] font-semibold">
+                                <button type="button" onclick="setAllDivisiModuleCrud('read')" class="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200 transition">Semua Read Saja</button>
+                                <button type="button" onclick="setAllDivisiModuleCrud('all')" class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition">Semua CRUD Lengkap</button>
+                                <button type="button" onclick="setAllDivisiModuleCrud('off')" class="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Kosongkan</button>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <!-- Daftar 10 Modul dengan CRUD masing-masing -->
+                        <div class="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
                             @php
-                                $all10 = [
-                                    'haid_pita' => ['Siklus & Cuti Haid (FemHealth)', 'fas fa-venus text-pink-500'],
-                                    'olahraga' => ['Aktivitas Olahraga & Tracker', 'fas fa-running text-emerald-500'],
-                                    'vitalitas' => ['Vitalitas, Tidur & Hidrasi', 'fas fa-heart-pulse text-sky-500'],
-                                    'kesehatan' => ['Rekam Medis Fisik Klinis', 'fas fa-notes-medical text-teal-500'],
-                                    'hemoglobin' => ['Skrining HB & Anemia', 'fas fa-droplet text-rose-500'],
-                                    'konsultasi' => ['Konseling SafeSpace', 'fas fa-comments text-indigo-500'],
-                                    'nutrisi' => ['Nutrisi & Pola Makan Sehat', 'fas fa-apple-whole text-amber-500'],
-                                    'burnout' => ['Skrining Burnout & Stres', 'fas fa-brain text-purple-500'],
-                                    'ergonomi' => ['Ergonomi & Peringatan Duduk', 'fas fa-chair text-cyan-500'],
-                                    'vaksinasi' => ['Paspor Vaksinasi & Imunisasi', 'fas fa-syringe text-blue-500'],
-                                ];
+                                $catalogModules = \App\Models\GlobalModuleConfig::getModuleCatalog();
                             @endphp
-
-                            @foreach($all10 as $modKey => $modInfo)
-                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
-                                <input type="checkbox" name="active_modules[]" value="{{ $modKey }}" id="mod_{{ $modKey }}" class="divisiModuleCheckbox rounded text-indigo-600 focus:ring-indigo-500">
-                                <i class="{{ $modInfo[1] }} text-sm"></i>
-                                <span class="font-medium text-gray-800">{{ $modInfo[0] }}</span>
-                            </label>
+                            @foreach($catalogModules as $mKey => $mInfo)
+                            <div class="p-3 rounded-xl border border-gray-200 hover:border-indigo-300 bg-white transition-all shadow-xs">
+                                <div class="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-gray-100">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs shrink-0">
+                                            <i class="{{ $mInfo['icon'] }}"></i>
+                                        </div>
+                                        <div class="truncate">
+                                            <span class="text-xs font-bold text-gray-800 block truncate">{{ $mInfo['name'] }}</span>
+                                            <span class="text-[10px] text-gray-400 font-medium">{{ $mInfo['badge'] }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-1 shrink-0 text-[10px] font-semibold">
+                                        <button type="button" onclick="setSingleDivisiModuleCrud('{{ $mKey }}', 'all')" class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100">Lengkap</button>
+                                        <button type="button" onclick="setSingleDivisiModuleCrud('{{ $mKey }}', 'read')" class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100">Read</button>
+                                        <button type="button" onclick="setSingleDivisiModuleCrud('{{ $mKey }}', 'off')" class="px-2 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200">Off</button>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    <label class="flex items-center gap-1.5 p-1.5 rounded-lg border border-gray-200 hover:bg-emerald-50/50 cursor-pointer text-xs transition-colors">
+                                        <input type="checkbox" name="permissions[modules][{{ $mKey }}][c]" value="1" id="divisi_mod_{{ $mKey }}_c" class="divisiModuleCrudCb rounded text-emerald-600 focus:ring-emerald-500">
+                                        <span class="text-[11px] font-semibold text-gray-700">Create</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 p-1.5 rounded-lg border border-gray-200 hover:bg-blue-50/50 cursor-pointer text-xs transition-colors">
+                                        <input type="checkbox" name="permissions[modules][{{ $mKey }}][r]" value="1" id="divisi_mod_{{ $mKey }}_r" class="divisiModuleCrudCb rounded text-blue-600 focus:ring-blue-500">
+                                        <span class="text-[11px] font-semibold text-gray-700">Read</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 p-1.5 rounded-lg border border-gray-200 hover:bg-amber-50/50 cursor-pointer text-xs transition-colors">
+                                        <input type="checkbox" name="permissions[modules][{{ $mKey }}][u]" value="1" id="divisi_mod_{{ $mKey }}_u" class="divisiModuleCrudCb rounded text-amber-600 focus:ring-amber-500">
+                                        <span class="text-[11px] font-semibold text-gray-700">Update</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 p-1.5 rounded-lg border border-gray-200 hover:bg-rose-50/50 cursor-pointer text-xs transition-colors">
+                                        <input type="checkbox" name="permissions[modules][{{ $mKey }}][d]" value="1" id="divisi_mod_{{ $mKey }}_d" class="divisiModuleCrudCb rounded text-rose-600 focus:ring-rose-500">
+                                        <span class="text-[11px] font-semibold text-gray-700">Delete</span>
+                                    </label>
+                                </div>
+                            </div>
                             @endforeach
                         </div>
-                    </div>
 
-                    <!-- Hak Akses Operasional & CRUD Divisi -->
-                    <div class="pt-4 border-t border-gray-100 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <span class="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center gap-1.5">
-                                    <i class="fas fa-shield-halved text-indigo-600"></i>
-                                    <span>Hak Akses Operasional (CRUD Divisi)</span>
-                                </span>
-                                <p class="text-[11px] text-gray-500 mt-0.5">Tentukan izin Create, Read, Update, Delete untuk operasional data divisi ini.</p>
-                            </div>
-                            <div class="space-x-2 text-[11px] shrink-0">
-                                <button type="button" onclick="setAllDivisiCrud(true)" class="text-indigo-600 hover:underline font-semibold">Pilih Semua</button>
-                                <span class="text-gray-300">|</span>
-                                <button type="button" onclick="setAllDivisiCrud(false)" class="text-gray-500 hover:underline">Kosongkan</button>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            <!-- Create -->
-                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
-                                <input type="checkbox" name="permissions[can_create]" value="1" id="permCanCreate" class="divisiCrudCheckbox mt-0.5 rounded text-emerald-600 focus:ring-emerald-500">
+                        <!-- Wewenang Add User Divisi Terpisah -->
+                        <div class="pt-3 border-t border-gray-200">
+                            <label class="flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-slate-50/60 hover:bg-slate-100/60 cursor-pointer transition-colors">
                                 <div>
-                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
-                                        <i class="fas fa-plus-circle text-emerald-500"></i>
-                                        <span>Create (Entri Pemeriksaan Klinis)</span>
-                                    </span>
-                                    <span class="text-[11px] text-gray-500 block mt-0.5">Mencatat data pemeriksaan fisik, skrining HB, dan entri kesehatan.</span>
-                                </div>
-                            </label>
-
-                            <!-- Read -->
-                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
-                                <input type="checkbox" name="permissions[can_read]" value="1" id="permCanRead" class="divisiCrudCheckbox mt-0.5 rounded text-blue-600 focus:ring-blue-500">
-                                <div>
-                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
-                                        <i class="fas fa-eye text-blue-500"></i>
-                                        <span>Read (Lihat Data)</span>
-                                    </span>
-                                    <span class="text-[11px] text-gray-500 block mt-0.5">Melihat tabel data, analitik, dan riwayat rekam.</span>
-                                </div>
-                            </label>
-
-                            <!-- Update -->
-                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
-                                <input type="checkbox" name="permissions[can_update]" value="1" id="permCanUpdate" class="divisiCrudCheckbox mt-0.5 rounded text-amber-600 focus:ring-amber-500">
-                                <div>
-                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
-                                        <i class="fas fa-pen-to-square text-amber-500"></i>
-                                        <span>Update (Ubah Data)</span>
-                                    </span>
-                                    <span class="text-[11px] text-gray-500 block mt-0.5">Mengubah dan mengoreksi data yang sudah ada.</span>
-                                </div>
-                            </label>
-
-                            <!-- Delete -->
-                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
-                                <input type="checkbox" name="permissions[can_delete]" value="1" id="permCanDelete" class="divisiCrudCheckbox mt-0.5 rounded text-rose-600 focus:ring-rose-500">
-                                <div>
-                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
-                                        <i class="fas fa-trash-can text-rose-500"></i>
-                                        <span>Delete (Hapus Data)</span>
-                                    </span>
-                                    <span class="text-[11px] text-gray-500 block mt-0.5">Menghapus baris data atau pembatalan entri.</span>
-                                </div>
-                            </label>
-                        </div>
-
-                        <!-- Wewenang Add User Divisi -->
-                        <div class="pt-2">
-                            <label class="flex items-center justify-between p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer">
-                                <div>
-                                    <span class="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
+                                    <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
                                         <i class="fas fa-user-plus text-indigo-600"></i>
-                                        <span>Wewenang Tambah / Import Pengguna (Add User)</span>
+                                        <span>Wewenang Tambah / Import Pengguna (Add User Divisi)</span>
                                     </span>
                                     <span class="text-[11px] text-gray-500 block mt-0.5">Staf yang bertugas pada divisi ini dapat mendaftarkan akun baru atau mengimpor Excel.</span>
                                 </div>
-                                <input type="checkbox" name="permissions[can_add_user]" value="1" id="permCanAddUser" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                <input type="checkbox" name="permissions[can_add_user]" value="1" id="permCanAddUser" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
                             </label>
                         </div>
                     </div>
@@ -875,6 +833,36 @@
             document.getElementById('cloneModal').classList.add('hidden');
         }
 
+        function setSingleDivisiModuleCrud(modKey, mode) {
+            const cbC = document.getElementById('divisi_mod_' + modKey + '_c');
+            const cbR = document.getElementById('divisi_mod_' + modKey + '_r');
+            const cbU = document.getElementById('divisi_mod_' + modKey + '_u');
+            const cbD = document.getElementById('divisi_mod_' + modKey + '_d');
+            if (!cbC || !cbR || !cbU || !cbD) return;
+
+            if (mode === 'all') {
+                cbC.checked = true;
+                cbR.checked = true;
+                cbU.checked = true;
+                cbD.checked = true;
+            } else if (mode === 'read') {
+                cbC.checked = false;
+                cbR.checked = true;
+                cbU.checked = false;
+                cbD.checked = false;
+            } else if (mode === 'off') {
+                cbC.checked = false;
+                cbR.checked = false;
+                cbU.checked = false;
+                cbD.checked = false;
+            }
+        }
+
+        function setAllDivisiModuleCrud(mode) {
+            const modules = @json(array_keys(\App\Models\GlobalModuleConfig::getModuleCatalog()));
+            modules.forEach(key => setSingleDivisiModuleCrud(key, mode));
+        }
+
         // Permissions Modal Logic
         function openPermissionsModal(divisi) {
             document.getElementById('permissionsModal').classList.remove('hidden');
@@ -886,30 +874,31 @@
             if (isCustom) {
                 document.getElementById('customRadio').checked = true;
                 document.getElementById('customModulesContainer').classList.remove('hidden');
-                
-                // Set checked states based on divisi.active_modules
-                const checkboxes = document.querySelectorAll('.divisiModuleCheckbox');
-                checkboxes.forEach(cb => {
-                    cb.checked = divisi.active_modules.includes(cb.value);
-                });
             } else {
                 document.getElementById('inheritRadio').checked = true;
                 document.getElementById('customModulesContainer').classList.add('hidden');
-                // Check all as visual default
-                const checkboxes = document.querySelectorAll('.divisiModuleCheckbox');
-                checkboxes.forEach(cb => cb.checked = true);
             }
 
-            const perms = divisi.module_permissions || {};
-            document.getElementById('permCanCreate').checked = perms.can_create !== undefined ? !!perms.can_create : true;
-            document.getElementById('permCanRead').checked = perms.can_read !== undefined ? !!perms.can_read : true;
-            document.getElementById('permCanUpdate').checked = perms.can_update !== undefined ? !!perms.can_update : true;
-            document.getElementById('permCanDelete').checked = !!perms.can_delete;
-            document.getElementById('permCanAddUser').checked = !!perms.can_add_user;
-        }
+            const effectiveCrud = divisi.effective_crud || {};
+            const effModules = effectiveCrud.modules || {};
+            const modulePerms = divisi.module_permissions || {};
+            const divModules = modulePerms.modules || {};
 
-        function setAllDivisiCrud(check) {
-            document.querySelectorAll('.divisiCrudCheckbox').forEach(cb => cb.checked = check);
+            const catalogKeys = @json(array_keys(\App\Models\GlobalModuleConfig::getModuleCatalog()));
+            catalogKeys.forEach(key => {
+                const targetMod = divModules[key] !== undefined ? divModules[key] : (effModules[key] || {});
+                const cbC = document.getElementById('divisi_mod_' + key + '_c');
+                const cbR = document.getElementById('divisi_mod_' + key + '_r');
+                const cbU = document.getElementById('divisi_mod_' + key + '_u');
+                const cbD = document.getElementById('divisi_mod_' + key + '_d');
+
+                if (cbC) cbC.checked = !!targetMod.c;
+                if (cbR) cbR.checked = targetMod.r !== undefined ? !!targetMod.r : true;
+                if (cbU) cbU.checked = !!targetMod.u;
+                if (cbD) cbD.checked = !!targetMod.d;
+            });
+
+            document.getElementById('permCanAddUser').checked = !!modulePerms.can_add_user;
         }
 
         function closePermissionsModal() {
@@ -924,11 +913,6 @@
             } else {
                 container.classList.add('hidden');
             }
-        }
-
-        function checkAllModules(check) {
-            const checkboxes = document.querySelectorAll('.divisiModuleCheckbox');
-            checkboxes.forEach(cb => cb.checked = check);
         }
     </script>
 @endpush

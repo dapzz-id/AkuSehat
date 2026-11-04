@@ -110,17 +110,54 @@ class DivisiService
     public function updateDivisiPermissions(Divisi $divisi, array $validated, bool $useCustom, User $actor): bool
     {
         $permissionsInput = $validated['permissions'] ?? [];
+        $rawModules = $permissionsInput['modules'] ?? [];
+        $catalog = \App\Models\GlobalModuleConfig::getModuleCatalog();
+        $normalizedModules = [];
+
+        $anyCreate = false;
+        $anyRead = false;
+        $anyUpdate = false;
+        $anyDelete = false;
+        $activeModulesFromCrud = [];
+
+        foreach ($catalog as $modKey => $modInfo) {
+            $m = $rawModules[$modKey] ?? [];
+            $c = !empty($m['c']) || !empty($m['create']);
+            $r = !empty($m['r']) || !empty($m['read']);
+            $u = !empty($m['u']) || !empty($m['update']);
+            $d = !empty($m['d']) || !empty($m['delete']);
+
+            if ($c) $anyCreate = true;
+            if ($r) $anyRead = true;
+            if ($u) $anyUpdate = true;
+            if ($d) $anyDelete = true;
+
+            if ($c || $r || $u || $d) {
+                $activeModulesFromCrud[] = $modKey;
+            }
+
+            $normalizedModules[$modKey] = [
+                'c' => $c,
+                'r' => $r,
+                'u' => $u,
+                'd' => $d,
+            ];
+        }
+
         $normalizedPermissions = [
-            'can_create' => !empty($permissionsInput['can_create']),
-            'can_read' => !empty($permissionsInput['can_read']),
-            'can_update' => !empty($permissionsInput['can_update']),
-            'can_delete' => !empty($permissionsInput['can_delete']),
+            'can_create' => !empty($permissionsInput['can_create']) || $anyCreate,
+            'can_read' => !empty($permissionsInput['can_read']) || $anyRead,
+            'can_update' => !empty($permissionsInput['can_update']) || $anyUpdate,
+            'can_delete' => !empty($permissionsInput['can_delete']) || $anyDelete,
             'can_add_user' => !empty($permissionsInput['can_add_user']),
+            'modules' => $normalizedModules,
         ];
+
+        $activeModules = $validated['active_modules'] ?? $activeModulesFromCrud;
 
         $payload = [
             'description' => $validated['description'] ?? null,
-            'active_modules' => $useCustom ? ($validated['active_modules'] ?? []) : null,
+            'active_modules' => $useCustom ? $activeModules : null,
             'module_permissions' => $normalizedPermissions,
         ];
 

@@ -1117,120 +1117,78 @@
                         </div>
                     </div>
 
-                    <div id="userCustomModulesContainer" class="space-y-3 pt-2 border-t border-gray-100 hidden">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold uppercase tracking-wider text-gray-700">Modul Diizinkan:</span>
-                            <div class="space-x-2 text-[11px]">
-                                <button type="button" onclick="checkAllUserModules(true)" class="text-indigo-600 hover:underline font-semibold">Pilih Semua</button>
-                                <span class="text-gray-300">|</span>
-                                <button type="button" onclick="checkAllUserModules(false)" class="text-gray-500 hover:underline">Hapus Semua</button>
+                    <div id="userCustomModulesContainer" class="space-y-4 pt-3 border-t border-gray-100 hidden">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-indigo-50/70 p-3 rounded-xl border border-indigo-100">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
+                                    <i class="fas fa-sliders text-indigo-600"></i>
+                                    <span>Matriks Hak Akses CRUD per Modul</span>
+                                </span>
+                                <p class="text-[11px] text-indigo-800/80 mt-0.5">Tentukan perizinan Create, Read, Update, Delete untuk setiap modul secara spesifik.</p>
+                            </div>
+                            <div class="flex items-center gap-1.5 flex-wrap text-[11px] font-semibold">
+                                <button type="button" onclick="setAllUserModuleCrud('read')" class="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200 transition">Semua Read Saja</button>
+                                <button type="button" onclick="setAllUserModuleCrud('all')" class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition">Semua CRUD Lengkap</button>
+                                <button type="button" onclick="setAllUserModuleCrud('off')" class="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Kosongkan</button>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <!-- Daftar 10 Modul dengan CRUD masing-masing -->
+                        <div class="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
                             @php
-                                $all10 = [
-                                    'haid_pita' => ['Siklus & Cuti Haid (FemHealth)', 'fas fa-venus text-pink-500'],
-                                    'olahraga' => ['Aktivitas Olahraga & Tracker', 'fas fa-running text-emerald-500'],
-                                    'vitalitas' => ['Vitalitas, Tidur & Hidrasi', 'fas fa-heart-pulse text-sky-500'],
-                                    'kesehatan' => ['Rekam Medis Fisik Klinis', 'fas fa-notes-medical text-teal-500'],
-                                    'hemoglobin' => ['Skrining HB & Anemia', 'fas fa-droplet text-rose-500'],
-                                    'konsultasi' => ['Konseling SafeSpace', 'fas fa-comments text-indigo-500'],
-                                    'nutrisi' => ['Nutrisi & Pola Makan Sehat', 'fas fa-apple-whole text-amber-500'],
-                                    'burnout' => ['Skrining Burnout & Stres', 'fas fa-brain text-purple-500'],
-                                    'ergonomi' => ['Ergonomi & Peringatan Duduk', 'fas fa-chair text-cyan-500'],
-                                    'vaksinasi' => ['Paspor Vaksinasi & Imunisasi', 'fas fa-syringe text-blue-500'],
-                                ];
+                                $catalogModules = \App\Models\GlobalModuleConfig::getModuleCatalog();
                             @endphp
-
-                            @foreach($all10 as $mKey => $mInfo)
-                            <label class="flex items-center gap-2 p-2 rounded-lg border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs">
-                                <input type="checkbox" name="custom_modules[]" value="{{ $mKey }}" class="userModuleCheckbox rounded text-indigo-600 focus:ring-indigo-500">
-                                <i class="{{ $mInfo[1] }}"></i>
-                                <span class="text-gray-800 text-[11px] font-medium">{{ $mInfo[0] }}</span>
-                            </label>
+                            @foreach($catalogModules as $mKey => $mInfo)
+                            <div class="p-3 rounded-xl border border-gray-200 hover:border-indigo-300 bg-white transition-all shadow-xs">
+                                <div class="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-gray-100">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs shrink-0">
+                                            <i class="{{ $mInfo['icon'] }}"></i>
+                                        </div>
+                                        <div class="truncate">
+                                            <span class="text-xs font-bold text-gray-800 block truncate">{{ $mInfo['name'] }}</span>
+                                            <span class="text-[10px] text-gray-400 font-medium">{{ $mInfo['badge'] }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-1 shrink-0 text-[10px] font-semibold">
+                                        <button type="button" onclick="setSingleUserModuleCrud('{{ $mKey }}', 'all')" class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100">Lengkap</button>
+                                        <button type="button" onclick="setSingleUserModuleCrud('{{ $mKey }}', 'read')" class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100">Read</button>
+                                        <button type="button" onclick="setSingleUserModuleCrud('{{ $mKey }}', 'off')" class="px-2 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200">Off</button>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    <label class="flex items-center gap-1.5 p-1.5 rounded-lg border border-gray-200 hover:bg-emerald-50/50 cursor-pointer text-xs transition-colors">
+                                        <input type="checkbox" name="custom_permissions[modules][{{ $mKey }}][c]" value="1" id="user_mod_{{ $mKey }}_c" class="userModuleCrudCb rounded text-emerald-600 focus:ring-emerald-500">
+                                        <span class="text-[11px] font-semibold text-gray-700">Create</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 p-1.5 rounded-lg border border-gray-200 hover:bg-blue-50/50 cursor-pointer text-xs transition-colors">
+                                        <input type="checkbox" name="custom_permissions[modules][{{ $mKey }}][r]" value="1" id="user_mod_{{ $mKey }}_r" class="userModuleCrudCb rounded text-blue-600 focus:ring-blue-500">
+                                        <span class="text-[11px] font-semibold text-gray-700">Read</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 p-1.5 rounded-lg border border-gray-200 hover:bg-amber-50/50 cursor-pointer text-xs transition-colors">
+                                        <input type="checkbox" name="custom_permissions[modules][{{ $mKey }}][u]" value="1" id="user_mod_{{ $mKey }}_u" class="userModuleCrudCb rounded text-amber-600 focus:ring-amber-500">
+                                        <span class="text-[11px] font-semibold text-gray-700">Update</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 p-1.5 rounded-lg border border-gray-200 hover:bg-rose-50/50 cursor-pointer text-xs transition-colors">
+                                        <input type="checkbox" name="custom_permissions[modules][{{ $mKey }}][d]" value="1" id="user_mod_{{ $mKey }}_d" class="userModuleCrudCb rounded text-rose-600 focus:ring-rose-500">
+                                        <span class="text-[11px] font-semibold text-gray-700">Delete</span>
+                                    </label>
+                                </div>
+                            </div>
                             @endforeach
                         </div>
-                    </div>
 
-                    <!-- Hak Akses Operasional & CRUD Khusus Akun Pengguna -->
-                    <div class="pt-4 border-t border-gray-100 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <span class="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center gap-1.5">
-                                    <i class="fas fa-shield-halved text-indigo-600"></i>
-                                    <span>Hak Akses Operasional (CRUD Pengguna)</span>
-                                </span>
-                                <p class="text-[11px] text-gray-500 mt-0.5">Tentukan izin Create, Read, Update, Delete operasional khusus akun ini.</p>
-                            </div>
-                            <div class="space-x-2 text-[11px] shrink-0">
-                                <button type="button" onclick="setAllUserCrud(true)" class="text-indigo-600 hover:underline font-semibold">Pilih Semua</button>
-                                <span class="text-gray-300">|</span>
-                                <button type="button" onclick="setAllUserCrud(false)" class="text-gray-500 hover:underline">Kosongkan</button>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            <!-- Create -->
-                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
-                                <input type="checkbox" name="custom_permissions[can_create]" value="1" id="userPermCanCreate" class="userCrudCheckbox mt-0.5 rounded text-emerald-600 focus:ring-emerald-500">
+                        <!-- Wewenang Tambah User Terpisah -->
+                        <div class="pt-3 border-t border-gray-200">
+                            <label class="flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-slate-50/60 hover:bg-slate-100/60 cursor-pointer transition-colors">
                                 <div>
-                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
-                                        <i class="fas fa-plus-circle text-emerald-500"></i>
-                                        <span>Create (Entri Pemeriksaan Klinis)</span>
-                                    </span>
-                                    <span class="text-[11px] text-gray-500 block mt-0.5">Mencatat data pemeriksaan fisik, skrining HB, dan entri kesehatan.</span>
-                                </div>
-                            </label>
-
-                            <!-- Read -->
-                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
-                                <input type="checkbox" name="custom_permissions[can_read]" value="1" id="userPermCanRead" class="userCrudCheckbox mt-0.5 rounded text-blue-600 focus:ring-blue-500">
-                                <div>
-                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
-                                        <i class="fas fa-eye text-blue-500"></i>
-                                        <span>Read (Lihat Data)</span>
-                                    </span>
-                                    <span class="text-[11px] text-gray-500 block mt-0.5">Melihat tabel data, analitik, dan riwayat rekam.</span>
-                                </div>
-                            </label>
-
-                            <!-- Update -->
-                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
-                                <input type="checkbox" name="custom_permissions[can_update]" value="1" id="userPermCanUpdate" class="userCrudCheckbox mt-0.5 rounded text-amber-600 focus:ring-amber-500">
-                                <div>
-                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
-                                        <i class="fas fa-pen-to-square text-amber-500"></i>
-                                        <span>Update (Ubah Data)</span>
-                                    </span>
-                                    <span class="text-[11px] text-gray-500 block mt-0.5">Mengubah dan mengoreksi data yang sudah ada.</span>
-                                </div>
-                            </label>
-
-                            <!-- Delete -->
-                            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer text-xs transition-colors">
-                                <input type="checkbox" name="custom_permissions[can_delete]" value="1" id="userPermCanDelete" class="userCrudCheckbox mt-0.5 rounded text-rose-600 focus:ring-rose-500">
-                                <div>
-                                    <span class="font-semibold text-gray-800 flex items-center gap-1.5">
-                                        <i class="fas fa-trash-can text-rose-500"></i>
-                                        <span>Delete (Hapus Data)</span>
-                                    </span>
-                                    <span class="text-[11px] text-gray-500 block mt-0.5">Menghapus baris data pemeriksaan atau pembatalan entri.</span>
-                                </div>
-                            </label>
-                        </div>
-
-                        <!-- Wewenang Add User Khusus Pengguna -->
-                        <div class="pt-2">
-                            <label class="flex items-center justify-between p-2.5 rounded-xl border border-gray-200 hover:bg-slate-50 cursor-pointer">
-                                <div>
-                                    <span class="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
+                                    <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
                                         <i class="fas fa-user-plus text-indigo-600"></i>
-                                        <span>Wewenang Tambah / Import Pengguna (Add User)</span>
+                                        <span>Wewenang Tambah / Import Pengguna (Add User Permission)</span>
                                     </span>
-                                    <span class="text-[11px] text-gray-500 block mt-0.5">Memberikan hak administratif untuk mendaftarkan akun siswa/anggota baru atau mengimpor Excel.</span>
+                                    <span class="text-[11px] text-gray-500 block mt-0.5">Izin administratif khusus untuk mendaftarkan akun siswa/anggota baru atau mengimpor Excel.</span>
                                 </div>
-                                <input type="checkbox" name="custom_permissions[can_add_user]" value="1" id="userPermCanAddUser" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                <input type="checkbox" name="custom_permissions[can_add_user]" value="1" id="userPermCanAddUser" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
                             </label>
                         </div>
                     </div>
@@ -1480,6 +1438,36 @@
             toggleClearIcon();
         });
 
+        function setSingleUserModuleCrud(modKey, mode) {
+            const cbC = document.getElementById('user_mod_' + modKey + '_c');
+            const cbR = document.getElementById('user_mod_' + modKey + '_r');
+            const cbU = document.getElementById('user_mod_' + modKey + '_u');
+            const cbD = document.getElementById('user_mod_' + modKey + '_d');
+            if (!cbC) return;
+
+            if (mode === 'all') {
+                cbC.checked = true;
+                cbR.checked = true;
+                cbU.checked = true;
+                cbD.checked = true;
+            } else if (mode === 'read') {
+                cbC.checked = false;
+                cbR.checked = true;
+                cbU.checked = false;
+                cbD.checked = false;
+            } else if (mode === 'off') {
+                cbC.checked = false;
+                cbR.checked = false;
+                cbU.checked = false;
+                cbD.checked = false;
+            }
+        }
+
+        function setAllUserModuleCrud(mode) {
+            const modules = @json(array_keys(\App\Models\GlobalModuleConfig::getModuleCatalog()));
+            modules.forEach(key => setSingleUserModuleCrud(key, mode));
+        }
+
         // User Custom Permissions Logic
         function openUserPermModal(user) {
             document.getElementById('userPermModal').classList.remove('hidden');
@@ -1490,30 +1478,31 @@
             if (isCustom) {
                 document.getElementById('userCustomRadio').checked = true;
                 document.getElementById('userCustomModulesContainer').classList.remove('hidden');
-
-                const checkboxes = document.querySelectorAll('.userModuleCheckbox');
-                checkboxes.forEach(cb => {
-                    cb.checked = user.custom_modules.includes(cb.value);
-                });
             } else {
                 document.getElementById('userInheritRadio').checked = true;
                 document.getElementById('userCustomModulesContainer').classList.add('hidden');
-
-                const checkboxes = document.querySelectorAll('.userModuleCheckbox');
-                checkboxes.forEach(cb => cb.checked = true);
             }
 
-            const customPerms = user.custom_permissions || {};
             const effectiveCrud = user.effective_crud || {};
-            document.getElementById('userPermCanCreate').checked = customPerms.can_create !== undefined ? !!customPerms.can_create : (effectiveCrud.can_create !== undefined ? !!effectiveCrud.can_create : true);
-            document.getElementById('userPermCanRead').checked = customPerms.can_read !== undefined ? !!customPerms.can_read : (effectiveCrud.can_read !== undefined ? !!effectiveCrud.can_read : true);
-            document.getElementById('userPermCanUpdate').checked = customPerms.can_update !== undefined ? !!customPerms.can_update : (effectiveCrud.can_update !== undefined ? !!effectiveCrud.can_update : true);
-            document.getElementById('userPermCanDelete').checked = customPerms.can_delete !== undefined ? !!customPerms.can_delete : (effectiveCrud.can_delete !== undefined ? !!effectiveCrud.can_delete : false);
-            document.getElementById('userPermCanAddUser').checked = customPerms.can_add_user !== undefined ? !!customPerms.can_add_user : (effectiveCrud.can_add_user !== undefined ? !!effectiveCrud.can_add_user : false);
-        }
+            const effModules = effectiveCrud.modules || {};
+            const customPerms = user.custom_permissions || {};
+            const customModules = customPerms.modules || {};
 
-        function setAllUserCrud(check) {
-            document.querySelectorAll('.userCrudCheckbox').forEach(cb => cb.checked = check);
+            const catalogKeys = @json(array_keys(\App\Models\GlobalModuleConfig::getModuleCatalog()));
+            catalogKeys.forEach(key => {
+                const targetMod = customModules[key] !== undefined ? customModules[key] : (effModules[key] || {});
+                const cbC = document.getElementById('user_mod_' + key + '_c');
+                const cbR = document.getElementById('user_mod_' + key + '_r');
+                const cbU = document.getElementById('user_mod_' + key + '_u');
+                const cbD = document.getElementById('user_mod_' + key + '_d');
+
+                if (cbC) cbC.checked = !!targetMod.c;
+                if (cbR) cbR.checked = targetMod.r !== undefined ? !!targetMod.r : true;
+                if (cbU) cbU.checked = !!targetMod.u;
+                if (cbD) cbD.checked = !!targetMod.d;
+            });
+
+            document.getElementById('userPermCanAddUser').checked = customPerms.can_add_user !== undefined ? !!customPerms.can_add_user : !!effectiveCrud.can_add_user;
         }
 
         function closeUserPermModal() {
@@ -1528,11 +1517,6 @@
             } else {
                 container.classList.add('hidden');
             }
-        }
-
-        function checkAllUserModules(check) {
-            const checkboxes = document.querySelectorAll('.userModuleCheckbox');
-            checkboxes.forEach(cb => cb.checked = check);
         }
     </script>
 @endsection

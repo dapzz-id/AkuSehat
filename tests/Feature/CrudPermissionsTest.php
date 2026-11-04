@@ -354,13 +354,12 @@ class CrudPermissionsTest extends TestCase
         $this->divisi->refresh();
         $this->assertEquals('Divisi Khusus Kelas Unggulan', $this->divisi->description);
         $this->assertEquals(['kesehatan', 'hemoglobin'], $this->divisi->active_modules);
-        $this->assertEquals([
-            'can_create' => true,
-            'can_read' => true,
-            'can_update' => true,
-            'can_delete' => false,
-            'can_add_user' => true,
-        ], $this->divisi->module_permissions);
+        $this->assertTrue($this->divisi->module_permissions['can_create']);
+        $this->assertTrue($this->divisi->module_permissions['can_read']);
+        $this->assertTrue($this->divisi->module_permissions['can_update']);
+        $this->assertFalse($this->divisi->module_permissions['can_delete']);
+        $this->assertTrue($this->divisi->module_permissions['can_add_user']);
+        $this->assertIsArray($this->divisi->module_permissions['modules']);
     }
 
     public function test_update_user_permissions_endpoint_persists_crud_checkboxes(): void
@@ -402,13 +401,12 @@ class CrudPermissionsTest extends TestCase
 
         $targetUser->refresh();
         $this->assertEquals(['kesehatan', 'vaksinasi'], $targetUser->custom_modules);
-        $this->assertEquals([
-            'can_create' => true,
-            'can_read' => true,
-            'can_update' => true,
-            'can_delete' => true,
-            'can_add_user' => true,
-        ], $targetUser->custom_permissions);
+        $this->assertTrue($targetUser->custom_permissions['can_create']);
+        $this->assertTrue($targetUser->custom_permissions['can_read']);
+        $this->assertTrue($targetUser->custom_permissions['can_update']);
+        $this->assertTrue($targetUser->custom_permissions['can_delete']);
+        $this->assertTrue($targetUser->custom_permissions['can_add_user']);
+        $this->assertIsArray($targetUser->custom_permissions['modules']);
 
         $this->assertTrue($targetUser->canDelete());
         $this->assertTrue($targetUser->canUpdate());
@@ -611,5 +609,104 @@ class CrudPermissionsTest extends TestCase
         ]);
         $resStoreDivisi->assertRedirect(route('admin.divisi.index'));
         $resStoreDivisi->assertSessionHas('error');
+    }
+
+    public function test_granular_per_module_crud_permissions_matrix(): void
+    {
+        // 1. Role defaults
+        $consultant = User::create([
+            'instansi_id' => $this->instansi->id,
+            'id_divisi' => $this->divisi->id,
+            'nama' => 'Guru BK Konselor',
+            'username' => 'konselor_' . Str::random(5),
+            'password' => bcrypt('password123'),
+            'level' => UserRole::HEALTH_CONSULTANT->value,
+            'status' => UserStatus::AKTIF->value,
+            'jk' => UserGender::PEREMPUAN->value,
+        ]);
+
+        $this->assertTrue($consultant->canCreate('konsultasi'));
+        $this->assertTrue($consultant->canRead('konsultasi'));
+        $this->assertTrue($consultant->canUpdate('konsultasi'));
+        $this->assertTrue($consultant->canRead('kesehatan'));
+        $this->assertFalse($consultant->canCreate('kesehatan'));
+        $this->assertFalse($consultant->canDelete('kesehatan'));
+
+        $monitor = User::create([
+            'instansi_id' => $this->instansi->id,
+            'id_divisi' => $this->divisi->id,
+            'nama' => 'Guru Penjaskes',
+            'username' => 'penjas_' . Str::random(5),
+            'password' => bcrypt('password123'),
+            'level' => UserRole::HEALTH_MONITOR->value,
+            'status' => UserStatus::AKTIF->value,
+            'jk' => UserGender::LAKI_LAKI->value,
+        ]);
+
+        $this->assertTrue($monitor->canCreate('kesehatan'));
+        $this->assertTrue($monitor->canCreate('hemoglobin'));
+        $this->assertTrue($monitor->canRead('konsultasi'));
+        $this->assertFalse($monitor->canCreate('konsultasi'));
+
+        // 2. Admin updates division with granular per-module CRUD
+        $adminInstansi = User::create([
+            'instansi_id' => $this->instansi->id,
+            'nama' => 'Admin Instansi Granular',
+            'username' => 'admin_gran_' . Str::random(5),
+            'password' => bcrypt('password123'),
+            'level' => UserRole::ADMIN_INSTANSI->value,
+            'status' => UserStatus::AKTIF->value,
+            'jk' => UserGender::LAKI_LAKI->value,
+        ]);
+
+        $responseDiv = $this->actingAs($adminInstansi)->post(route('admin.divisi.permissions', $this->divisi->id), [
+            'use_custom_modules' => '1',
+            'permissions' => [
+                'modules' => [
+                    'olahraga' => ['c' => '1', 'r' => '1', 'u' => '1', 'd' => '0'],
+                    'kesehatan' => ['c' => '0', 'r' => '1', 'u' => '0', 'd' => '0'],
+                ],
+                'can_add_user' => '0',
+            ],
+            'description' => 'Divisi Granular CRUD',
+        ]);
+        $responseDiv->assertRedirect(route('admin.divisi.index'));
+
+        $this->divisi->refresh();
+        $this->assertTrue($this->divisi->module_permissions['modules']['olahraga']['c']);
+        $this->assertTrue($this->divisi->module_permissions['modules']['kesehatan']['r']);
+        $this->assertFalse($this->divisi->module_permissions['modules']['kesehatan']['c']);
+
+        // Member in this division inherits division's per-module permissions
+        $member = User::create([
+            'instansi_id' => $this->instansi->id,
+            'id_divisi' => $this->divisi->id,
+            'nama' => 'Siswa Divisi Granular',
+            'username' => 'siswa_gran_' . Str::random(5),
+            'password' => bcrypt('password123'),
+            'level' => UserRole::MEMBER->value,
+            'status' => UserStatus::AKTIF->value,
+            'jk' => UserGender::LAKI_LAKI->value,
+        ]);
+
+        $this->assertTrue($member->canCreate('olahraga'));
+        $this->assertTrue($member->canRead('kesehatan'));
+        $this->assertFalse($member->canCreate('kesehatan'));
+
+        // 3. User override via user permissions endpoint
+        $responseUser = $this->actingAs($adminInstansi)->post(route('admin.users.permissions', $member->id), [
+            'use_custom_modules' => '1',
+            'custom_permissions' => [
+                'modules' => [
+                    'kesehatan' => ['c' => '1', 'r' => '1', 'u' => '1', 'd' => '0'],
+                ],
+                'can_add_user' => '1',
+            ],
+        ]);
+        $responseUser->assertRedirect();
+
+        $member->refresh();
+        $this->assertTrue($member->canCreate('kesehatan'));
+        $this->assertTrue($member->canAddUser());
     }
 }

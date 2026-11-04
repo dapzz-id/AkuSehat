@@ -211,4 +211,31 @@ class Divisi extends Model
             'id'         // local key User
         );
     }
+
+    public function getCrudPermissions(): array
+    {
+        $perms = $this->module_permissions ?? [];
+        $modules = $perms['modules'] ?? [];
+        $catalog = GlobalModuleConfig::getModuleCatalog();
+
+        $resultModules = [];
+        foreach ($catalog as $key => $info) {
+            $m = $modules[$key] ?? [];
+            $resultModules[$key] = [
+                'c' => !empty($m['c']) || !empty($m['create']),
+                'r' => !empty($m['r']) || !empty($m['read']) || !isset($modules[$key]), // default read true
+                'u' => !empty($m['u']) || !empty($m['update']),
+                'd' => !empty($m['d']) || !empty($m['delete']),
+            ];
+        }
+
+        return [
+            'can_create' => !empty($perms['can_create']),
+            'can_read' => !empty($perms['can_read']),
+            'can_update' => !empty($perms['can_update']),
+            'can_delete' => !empty($perms['can_delete']),
+            'can_add_user' => !empty($perms['can_add_user']),
+            'modules' => $resultModules,
+        ];
+    }
 }

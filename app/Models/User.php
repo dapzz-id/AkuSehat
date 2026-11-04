@@ -422,83 +422,191 @@ class User extends Authenticatable
     }
 
     /**
-     * Memeriksa hak akses CRUD (Create, Read, Update, Delete) operasional.
+     * Memeriksa hak akses CRUD (Create, Read, Update, Delete) operasional, baik global maupun spesifik per modul.
      * Mengikuti hirarki: SuperAdmin/AdminInstansi -> Custom User -> Divisi -> Instansi -> Role Default.
      *
      * @param string $action 'create' | 'read' | 'update' | 'delete'
+     * @param string|null $moduleKey (e.g. 'kesehatan', 'hemoglobin', 'konsultasi', dsb)
      * @return bool
      */
-    public function hasCrudPermission(string $action): bool
+    public function hasCrudPermission(string $action, ?string $moduleKey = null): bool
     {
         $action = strtolower($action);
-        $key = 'can_' . $action;
+        $actionShort = match ($action) {
+            'create', 'c' => 'c',
+            'read', 'r' => 'r',
+            'update', 'u' => 'u',
+            'delete', 'd' => 'd',
+            default => 'r',
+        };
+        $actionLong = match ($actionShort) {
+            'c' => 'create',
+            'r' => 'read',
+            'u' => 'update',
+            'd' => 'delete',
+        };
+        $key = 'can_' . $actionLong;
 
-        // 1. Superadmin & Admin Instansi selalu memiliki hak akses CRUD penuh
+        // 1. Superadmin & Admin Instansi selalu memiliki hak akses CRUD penuh ke semua modul
         if ($this->isSuperAdmin() || $this->isAdminInstansi()) {
             return true;
         }
 
         // 2. Custom Permissions override khusus pada akun user bersangkutan
-        if (is_array($this->custom_permissions) && array_key_exists($key, $this->custom_permissions)) {
-            return (bool) $this->custom_permissions[$key];
+        if (is_array($this->custom_permissions)) {
+            // A. Cek izin per modul spesifik
+            if ($moduleKey && isset($this->custom_permissions['modules'][$moduleKey])) {
+                $mod = $this->custom_permissions['modules'][$moduleKey];
+                if (isset($mod[$actionShort])) {
+                    return (bool) $mod[$actionShort];
+                }
+                if (isset($mod[$actionLong])) {
+                    return (bool) $mod[$actionLong];
+                }
+            }
+
+            // B. Cek izin fallback global user
+            if (array_key_exists($key, $this->custom_permissions)) {
+                return (bool) $this->custom_permissions[$key];
+            }
         }
 
         // 3. Permission konfigurasi pada divisi pengguna
-        if ($this->divisi && is_array($this->divisi->module_permissions) && array_key_exists($key, $this->divisi->module_permissions)) {
-            return (bool) $this->divisi->module_permissions[$key];
+        if ($this->divisi && is_array($this->divisi->module_permissions)) {
+            // A. Cek izin per modul pada divisi
+            if ($moduleKey && isset($this->divisi->module_permissions['modules'][$moduleKey])) {
+                $mod = $this->divisi->module_permissions['modules'][$moduleKey];
+                if (isset($mod[$actionShort])) {
+                    return (bool) $mod[$actionShort];
+                }
+                if (isset($mod[$actionLong])) {
+                    return (bool) $mod[$actionLong];
+                }
+            }
+
+            // B. Cek izin fallback global divisi
+            if (array_key_exists($key, $this->divisi->module_permissions)) {
+                return (bool) $this->divisi->module_permissions[$key];
+            }
         }
 
-        // 4. Permission global pada instansi
+        // 4. Permission global pada instansi jika diatur
         $instansi = $this->instansi ?: ($this->sekolah ?: Instansi::find($this->instansi_id));
-        if ($instansi && is_array($instansi->module_permissions) && array_key_exists($key, $instansi->module_permissions)) {
-            return (bool) $instansi->module_permissions[$key];
+        if ($instansi && is_array($instansi->module_permissions)) {
+            if ($moduleKey && isset($instansi->module_permissions['modules'][$moduleKey])) {
+                $mod = $instansi->module_permissions['modules'][$moduleKey];
+                if (isset($mod[$actionShort])) {
+                    return (bool) $mod[$actionShort];
+                }
+                if (isset($mod[$actionLong])) {
+                    return (bool) $mod[$actionLong];
+                }
+            }
+            if (array_key_exists($key, $instansi->module_permissions)) {
+                return (bool) $instansi->module_permissions[$key];
+            }
         }
 
-        // 5. Default bawaan sistem berdasarkan role pengguna
-        return match ($this->level) {
-            UserRole::ADMIN->value => true, // Admin PMR / Koordinator Unit memiliki full CRUD secara default
-            UserRole::HEALTH_MONITOR->value, UserRole::HEALTH_CONSULTANT->value => match ($action) {
-                'create', 'read', 'update' => true,
-                'delete' => false, // Pencegahan insidental: Hapus data klinis memerlukan izin eksplisit
-                default => false,
-            },
-            UserRole::MEMBER->value => match ($action) {
-                'create', 'read' => true, // Member dapat mengentri dan meninjau data mandiri
-                'update', 'delete' => false,
-                default => false,
-            },
-            default => false,
-        };
+        // 5. Default bawaan sistem berdasarkan role pengguna dan modul
+        return self::getDefaultModulePermission($this->level, $actionLong, $moduleKey);
     }
 
-    public function canCreate(): bool
+    /**
+     * Menghitung nilai default izin per modul sesuai peran (role) pengguna.
+     */
+    public static function getDefaultModulePermission(?string $role, string $action, ?string $moduleKey = null): bool
     {
-        return $this->hasCrudPermission('create');
+        $action = strtolower($action);
+
+        if (in_array($role, [UserRole::SUPERADMIN->value, 'Superadmin', UserRole::ADMIN_INSTANSI->value, UserRole::ADMIN->value])) {
+            return true;
+        }
+
+        if ($role === UserRole::HEALTH_MONITOR->value) {
+            // Health Monitor (Guru Penjas / Petugas UKS): fokus pada fisik, medis, olahraga & lifestyle
+            if ($moduleKey === null || in_array($moduleKey, ['kesehatan', 'hemoglobin', 'haid_pita', 'olahraga', 'vitalitas', 'nutrisi', 'ergonomi', 'vaksinasi'])) {
+                return match ($action) {
+                    'create', 'read', 'update' => true,
+                    'delete' => false, // Proteksi pencegahan penghapusan tidak sengaja
+                    default => false,
+                };
+            }
+            // Modul bimbingan mental/konseling (SafeSpace & Burnout): hanya Read saja bagi Health Monitor
+            if (in_array($moduleKey, ['konsultasi', 'burnout'])) {
+                return $action === 'read';
+            }
+            return false;
+        }
+
+        if ($role === UserRole::HEALTH_CONSULTANT->value) {
+            // Health Consultant (Guru BK / Konselor): fokus pada SafeSpace & evaluasi burnout mental
+            if ($moduleKey === null || in_array($moduleKey, ['konsultasi', 'burnout'])) {
+                return match ($action) {
+                    'create', 'read', 'update' => true,
+                    'delete' => false,
+                    default => false,
+                };
+            }
+            // Modul klinis fisik lainnya: Read-only (untuk meninjau kondisi kesehatan siswi yang dikonseling)
+            return $action === 'read';
+        }
+
+        if ($role === UserRole::MEMBER->value) {
+            // Member: entri mandiri (vitalitas, olahraga, hidrasi, booking)
+            if ($moduleKey === null || in_array($moduleKey, ['vitalitas', 'olahraga', 'nutrisi', 'burnout', 'ergonomi', 'haid_pita', 'konsultasi'])) {
+                return match ($action) {
+                    'create', 'read' => true,
+                    'update', 'delete' => false,
+                    default => false,
+                };
+            }
+            // Rekam medis fisik klinis resmi: hanya Read riwayat
+            return $action === 'read';
+        }
+
+        return false;
     }
 
-    public function canRead(): bool
+    public function canCreate(?string $module = null): bool
     {
-        return $this->hasCrudPermission('read');
+        return $this->hasCrudPermission('create', $module);
     }
 
-    public function canUpdate(): bool
+    public function canRead(?string $module = null): bool
     {
-        return $this->hasCrudPermission('update');
+        return $this->hasCrudPermission('read', $module);
     }
 
-    public function canDelete(): bool
+    public function canUpdate(?string $module = null): bool
     {
-        return $this->hasCrudPermission('delete');
+        return $this->hasCrudPermission('update', $module);
     }
 
-    public function getCrudPermissions(): array
+    public function canDelete(?string $module = null): bool
     {
+        return $this->hasCrudPermission('delete', $module);
+    }
+
+    public function getCrudPermissions(?string $module = null): array
+    {
+        $catalog = GlobalModuleConfig::getModuleCatalog();
+        $modulesCrud = [];
+        foreach ($catalog as $key => $info) {
+            $modulesCrud[$key] = [
+                'c' => $this->hasCrudPermission('create', $key),
+                'r' => $this->hasCrudPermission('read', $key),
+                'u' => $this->hasCrudPermission('update', $key),
+                'd' => $this->hasCrudPermission('delete', $key),
+            ];
+        }
+
         return [
-            'can_create' => $this->canCreate(),
-            'can_read' => $this->canRead(),
-            'can_update' => $this->canUpdate(),
-            'can_delete' => $this->canDelete(),
+            'can_create' => $this->canCreate($module),
+            'can_read' => $this->canRead($module),
+            'can_update' => $this->canUpdate($module),
+            'can_delete' => $this->canDelete($module),
             'can_add_user' => $this->canAddUser(),
+            'modules' => $modulesCrud,
         ];
     }
 }

@@ -112,16 +112,53 @@ class UserService
         }
 
         $perms = $validated['custom_permissions'] ?? [];
+        $rawModules = $perms['modules'] ?? [];
+        $catalog = \App\Models\GlobalModuleConfig::getModuleCatalog();
+        $normalizedModules = [];
+
+        $anyCreate = false;
+        $anyRead = false;
+        $anyUpdate = false;
+        $anyDelete = false;
+        $activeModulesFromCrud = [];
+
+        foreach ($catalog as $modKey => $modInfo) {
+            $m = $rawModules[$modKey] ?? [];
+            $c = !empty($m['c']) || !empty($m['create']);
+            $r = !empty($m['r']) || !empty($m['read']);
+            $u = !empty($m['u']) || !empty($m['update']);
+            $d = !empty($m['d']) || !empty($m['delete']);
+
+            if ($c) $anyCreate = true;
+            if ($r) $anyRead = true;
+            if ($u) $anyUpdate = true;
+            if ($d) $anyDelete = true;
+
+            if ($c || $r || $u || $d) {
+                $activeModulesFromCrud[] = $modKey;
+            }
+
+            $normalizedModules[$modKey] = [
+                'c' => $c,
+                'r' => $r,
+                'u' => $u,
+                'd' => $d,
+            ];
+        }
+
         $customPermissions = [
-            'can_create' => !empty($perms['can_create']),
-            'can_read' => !empty($perms['can_read']),
-            'can_update' => !empty($perms['can_update']),
-            'can_delete' => !empty($perms['can_delete']),
+            'can_create' => !empty($perms['can_create']) || $anyCreate,
+            'can_read' => !empty($perms['can_read']) || $anyRead,
+            'can_update' => !empty($perms['can_update']) || $anyUpdate,
+            'can_delete' => !empty($perms['can_delete']) || $anyDelete,
             'can_add_user' => !empty($perms['can_add_user']),
+            'modules' => $normalizedModules,
         ];
 
+        $customModules = $validated['custom_modules'] ?? $activeModulesFromCrud;
+
         $payload = [
-            'custom_modules' => $useCustom ? ($validated['custom_modules'] ?? []) : null,
+            'custom_modules' => $useCustom ? $customModules : null,
             'custom_permissions' => $customPermissions,
         ];
 
