@@ -24,7 +24,7 @@ use Exception;
 class BillingService
 {
     public const HARGA_PER_USER_BULAN = BillingRate::HARGA_PER_USER_BULAN->value;
-    public const HARGA_PER_USER_TAHUN = BillingRate::HARGA_PER_USER_BULAN->value;
+    public const HARGA_PER_USER_TAHUN = BillingRate::HARGA_PER_USER_TAHUN->value;
 
     public const BANK_BCA = 'BCA';
     public const NO_REK_BCA = '842-171-3359';

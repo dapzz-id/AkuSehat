@@ -435,7 +435,7 @@
     @endphp
     @if($trx->tipe_transaksi === 'perpanjang_lisensi')
         @php
-            $hargaSatuan = (int) ($trx->payload['harga_per_user'] ?? 5000);
+            $hargaSatuan = (int) ($trx->payload['harga_per_user'] ?? 10000);
             $kuotaTrx = $trx->payload['kuota_paket'] ?? ($trx->payload['kuota_saat_perpanjang'] ?? ($instansi->getActiveLicense()->kuota_pengguna ?? 0));
             if ($kuotaTrx <= 0 && $trx->nominal > 0) {
                 $kuotaTrx = (int) round($trx->nominal / ($hargaSatuan * $durasiBln));
@@ -452,7 +452,7 @@
         </tr>
     @elseif($trx->tipe_transaksi === 'tambah_kuota')
         @php
-            $hargaSatuan = (int) ($trx->payload['harga_per_user'] ?? 5000);
+            $hargaSatuan = (int) ($trx->payload['harga_per_user'] ?? 10000);
             $itemSubtotal = $trx->payload['subtotal'] ?? ($trx->tambah_kuota * $hargaSatuan * $durasiBln);
             $itemCount = 1;
         @endphp
@@ -465,7 +465,7 @@
         </tr>
     @elseif($trx->tipe_transaksi === 'lisensi_bulanan')
         @php
-            $hargaSatuan = (int) ($trx->payload['harga_per_user'] ?? 5000);
+            $hargaSatuan = (int) ($trx->payload['harga_per_user'] ?? 10000);
             $itemSubtotal = $trx->tambah_kuota * $hargaSatuan;
             $itemCount = 1;
         @endphp
@@ -478,7 +478,7 @@
         </tr>
     @elseif($trx->tipe_transaksi === 'lisensi_tahunan')
         @php
-            $hargaSatuan = (int) ($trx->payload['harga_per_user'] ?? 5000);
+            $hargaSatuan = (int) ($trx->payload['harga_per_user'] ?? 10000);
             $itemSubtotal = $trx->tambah_kuota * $hargaSatuan;
             $itemCount = 1;
         @endphp

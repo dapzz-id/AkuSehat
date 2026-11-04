@@ -4,11 +4,11 @@ namespace App\Modules\Billing\Subscription\Enums;
 
 enum BillingRate: int
 {
-    case HARGA_PER_USER_BULAN = 5000;
-    case HARGA_PER_USER_TAHUN = 60000;
+    case HARGA_PER_USER_BULAN = 10000;
+    case HARGA_PER_USER_TAHUN = 120000;
 
     /**
-     * Tarif per bulan per user (Rp 5.000 / siswa / bulan)
+     * Tarif per bulan per user (Rp 10.000 / pengguna / bulan)
      */
     public function perBulan(): float
     {
@@ -19,7 +19,7 @@ enum BillingRate: int
     }
 
     /**
-     * Hitung subtotal untuk kuota tertentu (default 1 bulan @ Rp 5.000/siswa/bulan)
+     * Hitung subtotal untuk kuota tertentu (default 1 bulan @ Rp 10.000/pengguna/bulan)
      */
     public function calculateSubtotal(int $quantity, int $months = 1): float
     {

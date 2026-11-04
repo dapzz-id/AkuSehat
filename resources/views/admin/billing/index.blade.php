@@ -99,7 +99,7 @@
                 <div class="space-y-1.5 text-xs text-slate-300">
                     <div class="flex items-center justify-between py-1 border-b border-white/10">
                         <span>Biaya Langganan:</span>
-                        <span class="font-bold text-emerald-300">Rp 5.000 / {{ strtolower($labelMember) }} / bln</span>
+                        <span class="font-bold text-emerald-300">Rp 10.000 / {{ strtolower($labelMember) }} / bln</span>
                     </div>
                     <div class="flex items-center justify-between py-1 border-b border-white/10">
                         <span>Model Kuota:</span>
@@ -201,7 +201,7 @@
                 Formulir Billing & Transaksi Lisensi {{ $tipeSebutan }}
             </h2>
             <p class="text-xs sm:text-sm text-gray-500 mt-1">
-                Biaya langganan {{ strtolower($tipeSebutan) }} resmi <strong>Rp 5.000 / {{ strtolower($labelMember) }} / bulan</strong> (All-In). Akun {{ strtolower($labelMemberPlural) }} didaftarkan langsung oleh <strong>{{ $labelAdmin }}</strong>.
+                Biaya langganan {{ strtolower($tipeSebutan) }} resmi <strong>Rp 10.000 / {{ strtolower($labelMember) }} / bulan</strong> (All-In). Akun {{ strtolower($labelMemberPlural) }} didaftarkan langsung oleh <strong>{{ $labelAdmin }}</strong>.
             </p>
         </div>
 
@@ -261,12 +261,12 @@
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                         @php
                             $durationOptions = [
-                                ['months' => 1,  'label' => '1 Bulan',  'sub' => 'Rp 5.000 / ' . strtolower($labelMember)],
-                                ['months' => 3,  'label' => '3 Bulan',  'sub' => 'Rp 15.000 / ' . strtolower($labelMember)],
-                                ['months' => 6,  'label' => '6 Bulan',  'sub' => 'Rp 30.000 / ' . strtolower($labelMember)],
-                                ['months' => 12, 'label' => '1 Tahun',  'sub' => 'Rp 60.000 / ' . strtolower($labelMember)],
-                                ['months' => 24, 'label' => '2 Tahun',  'sub' => 'Rp 120.000 / ' . strtolower($labelMember)],
-                                ['months' => 36, 'label' => '3 Tahun',  'sub' => 'Rp 180.000 / ' . strtolower($labelMember)],
+                                ['months' => 1,  'label' => '1 Bulan',  'sub' => 'Rp 10.000 / ' . strtolower($labelMember)],
+                                ['months' => 3,  'label' => '3 Bulan',  'sub' => 'Rp 30.000 / ' . strtolower($labelMember)],
+                                ['months' => 6,  'label' => '6 Bulan',  'sub' => 'Rp 60.000 / ' . strtolower($labelMember)],
+                                ['months' => 12, 'label' => '1 Tahun',  'sub' => 'Rp 120.000 / ' . strtolower($labelMember)],
+                                ['months' => 24, 'label' => '2 Tahun',  'sub' => 'Rp 240.000 / ' . strtolower($labelMember)],
+                                ['months' => 36, 'label' => '3 Tahun',  'sub' => 'Rp 360.000 / ' . strtolower($labelMember)],
                             ];
                         @endphp
                         @foreach($durationOptions as $opt)
@@ -311,7 +311,7 @@
                             <div class="text-right">
                                 <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Tarif Resmi</span>
                                 <div class="text-sm font-bold text-emerald-700 mt-0.5">
-                                    Rp 5.000 / {{ strtolower($labelMember) }} / bln
+                                    Rp 10.000 / {{ strtolower($labelMember) }} / bln
                                 </div>
                                 <span class="text-[11px] text-emerald-700 font-semibold">Paket Bulanan All-In</span>
                             </div>
@@ -372,36 +372,36 @@
                     {{-- Opsi: Paket Jumlah Pengguna --}}
                     <div>
                         <label class="block text-sm font-bold text-gray-800 mb-2">
-                            Pilih Paket Kuota Tambahan <span class="text-xs font-normal text-emerald-700" id="topupPresetRateLabel">(Rp 5.000 / {{ strtolower($labelMember) }} / bulan)</span>
+                            Pilih Paket Kuota Tambahan <span class="text-xs font-normal text-emerald-700" id="topupPresetRateLabel">(Rp 10.000 / {{ strtolower($labelMember) }} / bulan)</span>
                         </label>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <button type="button" onclick="setQuota(50)" data-quota="50" class="quota-preset-btn border-2 border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20 rounded-xl p-3.5 flex flex-col items-center justify-center text-center transition-all duration-150 hover:border-emerald-500">
                                 <span class="text-xs font-bold text-gray-500 uppercase">+50 {{ $labelMember }}</span>
-                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice50">Rp 250.000</span>
+                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice50">Rp 500.000</span>
                                 <span class="text-[10px] text-emerald-700 font-semibold mt-0.5">{{ $instansi->getPresetPaketName(50) }}</span>
                             </button>
 
                             <button type="button" onclick="setQuota(100)" data-quota="100" class="quota-preset-btn border-2 border-gray-200 bg-white rounded-xl p-3.5 flex flex-col items-center justify-center text-center transition-all duration-150 hover:border-emerald-500">
                                 <span class="text-xs font-bold text-gray-500 uppercase">+100 {{ $labelMember }}</span>
-                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice100">Rp 500.000</span>
+                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice100">Rp 1.000.000</span>
                                 <span class="text-[10px] text-gray-500 mt-0.5">{{ $instansi->getPresetPaketName(100) }}</span>
                             </button>
 
                             <button type="button" onclick="setQuota(250)" data-quota="250" class="quota-preset-btn border-2 border-gray-200 bg-white rounded-xl p-3.5 flex flex-col items-center justify-center text-center transition-all duration-150 hover:border-emerald-500">
                                 <span class="text-xs font-bold text-gray-500 uppercase">+250 {{ $labelMember }}</span>
-                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice250">Rp 1.250.000</span>
+                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice250">Rp 2.500.000</span>
                                 <span class="text-[10px] text-gray-500 mt-0.5">{{ $instansi->getPresetPaketName(250) }}</span>
                             </button>
 
                             <button type="button" onclick="setQuota(500)" data-quota="500" class="quota-preset-btn border-2 border-gray-200 bg-white rounded-xl p-3.5 flex flex-col items-center justify-center text-center transition-all duration-150 hover:border-emerald-500">
                                 <span class="text-xs font-bold text-gray-500 uppercase">+500 {{ $labelMember }}</span>
-                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice500">Rp 2.500.000</span>
+                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice500">Rp 5.000.000</span>
                                 <span class="text-[10px] text-emerald-700 font-semibold mt-0.5">{{ $instansi->getPresetPaketName(500) }}</span>
                             </button>
 
                             <button type="button" onclick="setQuota(1000)" data-quota="1000" class="quota-preset-btn border-2 border-gray-200 bg-white rounded-xl p-3.5 flex flex-col items-center justify-center text-center transition-all duration-150 hover:border-emerald-500 col-span-2 sm:col-span-2">
                                 <span class="text-xs font-bold text-gray-500 uppercase">+1.000 {{ $labelMember }}</span>
-                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice1000">Rp 5.000.000</span>
+                                <span class="text-base font-black text-gray-800 mt-1" id="presetPrice1000">Rp 10.000.000</span>
                                 <span class="text-[10px] text-purple-700 font-semibold mt-0.5">{{ $instansi->getPresetPaketName(1000) }}</span>
                             </button>
                         </div>
@@ -1068,7 +1068,7 @@
 @endif
 
 <script>
-    const HARGA_USER = {{ $hargaPerUser }}; // 5000 per bulan
+    const HARGA_USER = {{ $hargaPerUser }}; // 10000 per bulan
     const LABEL_MEMBER = '{{ $labelMember }}';
     const ALL_PACKAGES = @json($packagesPayload ?? []);
 
