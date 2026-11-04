@@ -58,6 +58,56 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
   const [confirmModalType, setConfirmModalType] = useState<"verify" | "reject" | "return" | null>(null)
   const [rejectReason, setRejectReason] = useState("")
 
+  // Catat Peminjaman Modal State
+  const [isCatatModalOpen, setIsCatatModalOpen] = useState(false)
+  const [haidMembers, setHaidMembers] = useState<any[]>([])
+  const [loadingHaidMembers, setLoadingHaidMembers] = useState(false)
+  const [selectedHaidUserId, setSelectedHaidUserId] = useState<string | number>("")
+  const [catatTanggalPinjam, setCatatTanggalPinjam] = useState(new Date().toISOString().split("T")[0])
+  const [catatKeterangan, setCatatKeterangan] = useState("")
+  const [catatSubmitting, setCatatSubmitting] = useState(false)
+
+  const handleOpenCatatPita = async () => {
+    setIsCatatModalOpen(true)
+    setSelectedHaidUserId("")
+    setCatatKeterangan("")
+    try {
+      setLoadingHaidMembers(true)
+      const res = await api.get("/health-monitor/haid-members-for-pita")
+      const list = res?.data?.data || []
+      setHaidMembers(list)
+    } catch (e: any) {
+      console.warn("Gagal memuat siswi sedang haid:", e)
+      Alert.alert("Perhatian", "Gagal memuat daftar siswi sedang haid.")
+    } finally {
+      setLoadingHaidMembers(false)
+    }
+  }
+
+  const handleSimpanPeminjaman = async () => {
+    if (!selectedHaidUserId) {
+      Alert.alert("Validasi", "Pilih siswi yang sedang haid terlebih dahulu.")
+      return
+    }
+    try {
+      setCatatSubmitting(true)
+      await api.post("/health-monitor", {
+        id_user: selectedHaidUserId,
+        tanggal_pinjam: catatTanggalPinjam,
+        keterangan: catatKeterangan.trim() || "Peminjaman langsung via Aplikasi Petugas",
+      })
+      Alert.alert("Sukses", "Peminjaman pita berhasil dicatat.")
+      setIsCatatModalOpen(false)
+      setSelectedHaidUserId("")
+      setCatatKeterangan("")
+      await fetchData()
+    } catch (e: any) {
+      Alert.alert("Gagal", e?.response?.data?.message || "Gagal mencatat peminjaman pita.")
+    } finally {
+      setCatatSubmitting(false)
+    }
+  }
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true)
@@ -374,6 +424,119 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
         )}
       </View>
 
+      {/* Modal: Catat Peminjaman Pita UKS */}
+      <Modal visible={isCatatModalOpen} transparent animationType="fade">
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalHeaderRow}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Icon name="bookmark" size={18} color="#DB2777" />
+                <Text style={styles.modalTitle}>Catat Pinjam Pita UKS</Text>
+              </View>
+              <Pressable onPress={() => setIsCatatModalOpen(false)}>
+                <Icon name="x" size={18} color="#94A3B8" />
+              </Pressable>
+            </View>
+
+            {loadingHaidMembers ? (
+              <View style={{ padding: 20, alignItems: "center" }}>
+                <ActivityIndicator size="small" color={primaryColor} />
+                <Text style={{ fontSize: 11, color: "#64748B", marginTop: 8 }}>
+                  Memuat data siswi yang sedang haid...
+                </Text>
+              </View>
+            ) : haidMembers.length === 0 ? (
+              <View style={styles.haidEmptyAlert}>
+                <Icon name="alert-circle" size={20} color="#D97706" />
+                <Text style={styles.haidEmptyAlertTitle}>Belum Ada Siswi Sedang Haid</Text>
+                <Text style={styles.haidEmptyAlertDesc}>
+                  Peminjaman pita hanya dapat dicatat jika siswi telah berstatus Mulai Haid dan belum memiliki pita yang sedang dipinjam.
+                </Text>
+              </View>
+            ) : (
+              <View style={{ gap: 10, marginTop: 10 }}>
+                <Text style={styles.inputLabel}>
+                  Pilih Siswi (Sedang Haid Aktif) <Text style={{ color: "#EF4444" }}>*</Text>
+                </Text>
+                <ScrollView style={{ maxHeight: 180 }} nestedScrollEnabled>
+                  {haidMembers.map((m: any) => {
+                    const isSelected = selectedHaidUserId === m.id
+                    return (
+                      <Pressable
+                        key={m.id}
+                        onPress={() => setSelectedHaidUserId(m.id)}
+                        style={[
+                          styles.memberOptionCard,
+                          isSelected && { borderColor: primaryColor, backgroundColor: "#FCE7F3" },
+                        ]}
+                      >
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.memberName, isSelected && { color: primaryColor, fontWeight: "700" }]}>
+                            {m.nama}
+                          </Text>
+                          <Text style={styles.memberSub}>
+                            {m.divisi?.divisi_name || "Tanpa Kelas"} {m.nomor_induk ? `• NIS: ${m.nomor_induk}` : ""}
+                          </Text>
+                        </View>
+                        {isSelected && <Icon name="check-circle" size={16} color={primaryColor} />}
+                      </Pressable>
+                    )
+                  })}
+                </ScrollView>
+
+                <View>
+                  <Text style={styles.inputLabel}>Tanggal Pinjam</Text>
+                  <TextInput
+                    value={catatTanggalPinjam}
+                    onChangeText={setCatatTanggalPinjam}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor="#94A3B8"
+                    style={styles.modalInput}
+                  />
+                </View>
+
+                <View>
+                  <Text style={styles.inputLabel}>Keterangan Tambahan</Text>
+                  <TextInput
+                    value={catatKeterangan}
+                    onChangeText={setCatatKeterangan}
+                    placeholder="Contoh: Dipinjam saat jam olahraga / UKS"
+                    placeholderTextColor="#94A3B8"
+                    style={styles.modalInput}
+                  />
+                </View>
+              </View>
+            )}
+
+            <View style={[styles.modalBtnRow, { marginTop: 16 }]}>
+              <Pressable
+                onPress={() => setIsCatatModalOpen(false)}
+                style={styles.modalCancelBtn}
+              >
+                <Text style={styles.modalCancelText}>Batal</Text>
+              </Pressable>
+              {haidMembers.length > 0 && (
+                <Pressable
+                  disabled={catatSubmitting || !selectedHaidUserId}
+                  onPress={handleSimpanPeminjaman}
+                  style={[
+                    styles.modalConfirmBtn,
+                    { backgroundColor: primaryColor },
+                    (!selectedHaidUserId || catatSubmitting) && { opacity: 0.5 },
+                  ]}
+                >
+                  {catatSubmitting ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <Text style={styles.modalConfirmText}>Simpan Peminjaman</Text>
+                  )}
+                </Pressable>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Confirmation Modal */}
       <Modal visible={confirmModalType !== null} transparent animationType="fade">
         <View style={styles.modalBackdrop}>
@@ -442,6 +605,73 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
 }
 
 const styles = StyleSheet.create({
+  catatActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: verticalScale(11),
+    borderRadius: moderateScale(14),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  catatActionText: {
+    color: "#FFF",
+    fontSize: moderateScale(12.5),
+    fontWeight: "700",
+  },
+  inputLabel: {
+    fontSize: moderateScale(11),
+    fontWeight: "700",
+    color: "#334155",
+    marginBottom: 4,
+  },
+  haidEmptyAlert: {
+    backgroundColor: "#FEF3C7",
+    borderColor: "#FDE68A",
+    borderWidth: 1,
+    borderRadius: moderateScale(12),
+    padding: moderateScale(12),
+    alignItems: "center",
+    marginTop: 10,
+  },
+  haidEmptyAlertTitle: {
+    fontSize: moderateScale(12),
+    fontWeight: "700",
+    color: "#92400E",
+    marginTop: 4,
+  },
+  haidEmptyAlertDesc: {
+    fontSize: moderateScale(10.5),
+    color: "#B45309",
+    textAlign: "center",
+    marginTop: 2,
+    lineHeight: 15,
+  },
+  memberOptionCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: moderateScale(10),
+    borderRadius: moderateScale(10),
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginBottom: 6,
+    backgroundColor: "#FAFAFA",
+  },
+  memberName: {
+    fontSize: moderateScale(12),
+    fontWeight: "600",
+    color: "#0F172A",
+  },
+  memberSub: {
+    fontSize: moderateScale(10),
+    color: "#64748B",
+    marginTop: 1,
+  },
   headerBox: {
     flexDirection: "row",
     alignItems: "center",
@@ -660,6 +890,11 @@ const styles = StyleSheet.create({
     padding: moderateScale(20),
     gap: verticalScale(12),
   },
+  modalHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   modalTitle: {
     fontSize: moderateScale(15),
     fontWeight: "800",
@@ -711,3 +946,4 @@ const styles = StyleSheet.create({
     color: "#FFF",
   },
 })
+
