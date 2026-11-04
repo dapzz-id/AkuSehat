@@ -51,7 +51,7 @@ class HealthMonitorApiController extends Controller
 
     public function verifikasi(string|int $id): JsonResponse
     {
-        $this->femHealthService->verifyPita($id);
+        $this->femHealthService->verifyPita($id, Auth::user()->instansi_id);
 
         return response()->json([
             'status' => true,
@@ -61,7 +61,7 @@ class HealthMonitorApiController extends Controller
 
     public function tolak(RejectPitaRequest $request, string|int $id): JsonResponse
     {
-        $this->femHealthService->rejectPita($id, $request->validated('alasan'));
+        $this->femHealthService->rejectPita($id, $request->validated('alasan'), Auth::user()->instansi_id);
 
         return response()->json([
             'status' => true,
@@ -80,6 +80,17 @@ class HealthMonitorApiController extends Controller
         ]);
     }
 
+    public function getHaidMembersForPita(): JsonResponse
+    {
+        $members = $this->dataHaidRepository->getHaidMembersForPita(Auth::user()->instansi_id);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Data siswi yang sedang haid aktif dan siap pinjam pita berhasil dimuat.',
+            'data' => $members,
+        ]);
+    }
+
     public function getOverdueWarnings(GetOverdueWarningsRequest $request): JsonResponse
     {
         $warnings = $this->dataHaidRepository->getOverdueWarnings(Auth::user()->instansi_id);
@@ -93,7 +104,7 @@ class HealthMonitorApiController extends Controller
 
     public function show(string|int $id): JsonResponse
     {
-        $pita = $this->dataHaidRepository->findPeminjamanOrFail($id);
+        $pita = $this->dataHaidRepository->findPeminjamanOrFail($id, Auth::user()->instansi_id);
 
         return response()->json([
             'status' => true,
@@ -114,7 +125,7 @@ class HealthMonitorApiController extends Controller
 
     public function update(UpdatePitaPeminjamanRequest $request, string|int $id): JsonResponse
     {
-        $pita = $this->femHealthService->updatePeminjamanFromApi($id, $request->validated());
+        $pita = $this->femHealthService->updatePeminjamanFromApi($id, $request->validated(), Auth::user()->instansi_id);
 
         return response()->json([
             'status' => true,
@@ -125,7 +136,7 @@ class HealthMonitorApiController extends Controller
 
     public function destroy(string|int $id): JsonResponse
     {
-        $this->femHealthService->deletePeminjamanFromApi($id);
+        $this->femHealthService->deletePeminjamanFromApi($id, Auth::user()->instansi_id);
 
         return response()->json([
             'status' => true,

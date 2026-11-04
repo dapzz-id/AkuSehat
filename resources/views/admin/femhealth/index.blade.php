@@ -672,13 +672,43 @@
         <form action="{{ route('admin.femhealth.store_pita') }}" method="POST" class="space-y-4">
             @csrf
             <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Siswi <span class="text-rose-500">*</span></label>
-                <select name="id_user" required class="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:ring-2 focus:ring-pink-500">
-                    <option value="">-- Pilih Siswi --</option>
-                    @foreach($femaleMembers as $fm)
-                        <option value="{{ $fm->id }}">{{ $fm->nama }} ({{ $fm->divisi->divisi_name ?? 'Tanpa Kelas' }})</option>
-                    @endforeach
-                </select>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Siswi (Sedang Haid Aktif) <span class="text-rose-500">*</span></label>
+                @if(isset($haidMembersForPita) && $haidMembersForPita->isEmpty())
+                    <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2 mb-2">
+                        <div class="flex items-center gap-2 font-bold text-amber-800">
+                            <i class="fas fa-circle-exclamation text-amber-600"></i>
+                            <span>Belum Ada Siswi yang Sedang Haid Aktif</span>
+                        </div>
+                        <p class="text-amber-700 leading-relaxed text-[11px]">
+                            Peminjaman pita UKS hanya dapat dicatat untuk siswi yang telah berstatus <strong>Mulai Haid</strong> dan belum memiliki pita yang sedang dipinjam.
+                        </p>
+                        <button type="button" 
+                                onclick="closeCatatPitaModal(); openCatatHaidModal();" 
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition-colors shadow-sm">
+                            <i class="fas fa-calendar-plus text-[10px]"></i>
+                            <span>+ Catat Mulai Haid Siswi Terlebih Dahulu</span>
+                        </button>
+                    </div>
+                    <select name="id_user" required disabled class="w-full text-xs rounded-xl border border-slate-200 p-2.5 bg-slate-100 text-slate-400 cursor-not-allowed">
+                        <option value="">-- Tidak ada siswi yang sedang haid --</option>
+                    </select>
+                @else
+                    <select name="id_user" required class="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:ring-2 focus:ring-pink-500">
+                        <option value="">-- Pilih Siswi Sedang Haid --</option>
+                        @foreach($haidMembersForPita ?? [] as $hm)
+                            @php
+                                $activeHaid = $hm->dataHaid->first();
+                                $startDate = $activeHaid && $activeHaid->tanggal_mulai 
+                                    ? \Carbon\Carbon::parse($activeHaid->tanggal_mulai)->translatedFormat('d M Y') 
+                                    : '-';
+                            @endphp
+                            <option value="{{ $hm->id }}">
+                                {{ $hm->nama }} ({{ $hm->divisi->divisi_name ?? 'Tanpa Kelas' }}) &bull; Mulai Haid: {{ $startDate }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="text-[11px] text-slate-400 mt-1">Nama siswi otomatis muncul setelah status siklus haidnya dimulai.</p>
+                @endif
             </div>
 
             <div>
@@ -695,7 +725,11 @@
 
             <div class="flex justify-end gap-2 pt-2 border-t">
                 <button type="button" onclick="closeCatatPitaModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">Batal</button>
-                <button type="submit" class="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-xl text-xs font-bold">Simpan Peminjaman</button>
+                @if(isset($haidMembersForPita) && $haidMembersForPita->isNotEmpty())
+                    <button type="submit" class="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-xl text-xs font-bold transition-colors">Simpan Peminjaman</button>
+                @else
+                    <button type="button" onclick="closeCatatPitaModal(); openCatatHaidModal();" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-colors">Mulai Haid Siswi Dulu</button>
+                @endif
             </div>
         </form>
     </div>
@@ -721,9 +755,15 @@
                 <select name="id_user" required class="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:ring-2 focus:ring-purple-500">
                     <option value="">-- Pilih Siswi --</option>
                     @foreach($femaleMembers as $fm)
-                        <option value="{{ $fm->id }}">{{ $fm->nama }} ({{ $fm->divisi->divisi_name ?? 'Tanpa Kelas' }})</option>
+                        @php
+                            $isAlreadyHaid = isset($currentlyHaid) && $currentlyHaid->contains('id_user', $fm->id);
+                        @endphp
+                        <option value="{{ $fm->id }}" {{ $isAlreadyHaid ? 'disabled' : '' }}>
+                            {{ $fm->nama }} ({{ $fm->divisi->divisi_name ?? 'Tanpa Kelas' }}) {{ $isAlreadyHaid ? '[Sedang Haid Aktif]' : '' }}
+                        </option>
                     @endforeach
                 </select>
+                <p class="text-[11px] text-slate-400 mt-1">Hanya siswi perempuan yang terdaftar di instansi Anda.</p>
             </div>
 
             <div>

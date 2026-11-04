@@ -73,6 +73,39 @@ class DataHaidRepository
             ->get();
     }
 
+    /**
+     * Dapatkan siswi yang saat ini sedang aktif dalam siklus haid
+     * dan belum meminjam pita yang belum dikembalikan (anti-IDOR & siap catat pita).
+     */
+    public function getHaidMembersForPita(string|int $instansiId): Collection
+    {
+        return User::with(['divisi', 'dataHaid' => function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('status', HaidStatus::BERLANGSUNG->value)
+                        ->orWhereNull('tanggal_selesai');
+                })->orderBy('tanggal_mulai', 'desc');
+            }])
+            ->where('instansi_id', $instansiId)
+            ->where('jk', UserGender::PEREMPUAN->value)
+            ->where('level', UserRole::MEMBER->value)
+            ->whereHas('dataHaid', function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('status', HaidStatus::BERLANGSUNG->value)
+                        ->orWhereNull('tanggal_selesai');
+                });
+            })
+            ->whereDoesntHave('peminjamanPita', function ($q) {
+                $q->whereIn('status', [
+                    PitaStatus::DIPINJAM->value,
+                    PitaStatus::TERLAMBAT->value,
+                    PitaStatus::MENUNGGU->value,
+                    PitaStatus::MENUNGGU_VERIFIKASI->value,
+                ])->whereNull('tanggal_kembali');
+            })
+            ->orderBy('nama')
+            ->get();
+    }
+
     public function getPitaHistoryPaginated(string|int $instansiId, int $perPage = 10): LengthAwarePaginator
     {
         return PeminjamanPita::whereHas('user', function ($q) use ($instansiId) {
@@ -187,9 +220,22 @@ class DataHaidRepository
             ->count();
     }
 
-    public function findPeminjamanOrFail(int|string $id): PeminjamanPita
+    public function findPeminjamanOrFail(int|string $id, ?string $instansiId = null): PeminjamanPita
     {
-        return PeminjamanPita::findOrFail($id);
+        $query = PeminjamanPita::query();
+        if ($instansiId) {
+            $query->where('instansi_id', $instansiId);
+        }
+        return $query->findOrFail($id);
+    }
+
+    public function findHaidOrFail(int|string $id, ?string $instansiId = null): DataHaid
+    {
+        $query = DataHaid::query();
+        if ($instansiId) {
+            $query->where('instansi_id', $instansiId);
+        }
+        return $query->findOrFail($id);
     }
 
     public function createPeminjaman(array $data): PeminjamanPita
@@ -253,15 +299,25 @@ class DataHaidRepository
     public function getActiveUserHaid(int|string $userId): ?DataHaid
     {
         return DataHaid::where('id_user', $userId)
-            ->where('status', HaidStatus::BERLANGSUNG->value)
+            ->where(function ($q) {
+                $q->where('status', HaidStatus::BERLANGSUNG->value)
+                  ->orWhereNull('tanggal_selesai');
+            })
+            ->latest('tanggal_mulai')
             ->first();
     }
 
     public function getActiveUserPita(int|string $userId): ?PeminjamanPita
     {
         return PeminjamanPita::where('id_user', $userId)
-            ->whereIn('status', [PitaStatus::MENUNGGU->value, PitaStatus::DIPINJAM->value, PitaStatus::TERLAMBAT->value])
+            ->whereIn('status', [
+                PitaStatus::MENUNGGU->value,
+                PitaStatus::MENUNGGU_VERIFIKASI->value,
+                PitaStatus::DIPINJAM->value,
+                PitaStatus::TERLAMBAT->value
+            ])
             ->whereNull('tanggal_kembali')
+            ->latest('tanggal_pinjam')
             ->first();
     }
 

@@ -20,6 +20,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Health Monitor & Health Consultant - Operasional UKS & Monitoring Haid/Pita
     Route::prefix('health-monitor')->middleware('role:Health Monitor,Health Consultant,Admin,Admin Instansi,SuperAdmin')->group(function () {
         Route::get('/member-haid', [HealthMonitorApiController::class, 'getMemberSedangHaid']);
+        Route::get('/haid-members-for-pita', [HealthMonitorApiController::class, 'getHaidMembersForPita']);
         Route::get('/', [HealthMonitorApiController::class, 'index']);
         Route::put('/{id}/accept-verifikasi', [HealthMonitorApiController::class, 'acceptVerifikasi']);
         Route::put('/{id}/reject-verifikasi', [HealthMonitorApiController::class, 'rejectVerifikasi']);

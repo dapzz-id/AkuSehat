@@ -22,3 +22,4 @@ class MonitoringActivityRequest extends FormRequest
         ];
     }
 }
+

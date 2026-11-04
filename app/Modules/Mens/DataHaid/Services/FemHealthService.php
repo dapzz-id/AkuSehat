@@ -54,6 +54,7 @@ class FemHealthService
 
         $femaleStudents = $this->dataHaidRepository->getFemaleMembers($instansiId);
         $femaleMembers = $femaleStudents;
+        $haidMembersForPita = $this->dataHaidRepository->getHaidMembersForPita($instansiId);
 
         $historyPita = $this->dataHaidRepository->getPitaHistoryPaginated($instansiId, 10);
         $pitaLogs = $historyPita;
@@ -94,15 +95,16 @@ class FemHealthService
         return compact(
             'warnings', 'currentlyHaid', 'calendarData', 'calendarEvents',
             'daysInMonth', 'firstDayOfWeek', 'selectedMonth', 'selectedYear', 'monthName',
-            'femaleStudents', 'femaleMembers', 'historyPita', 'pitaLogs', 'haidLogs',
+            'femaleStudents', 'femaleMembers', 'haidMembersForPita', 'historyPita', 'pitaLogs', 'haidLogs',
             'totalHaidLogs', 'totalPitaAktif', 'totalPitaSelesai', 'totalPitaTerlambat',
             'totalMenungguVerif', 'avgDurasi', 'pitaStatusChartData', 'haidDurationChartData'
         );
     }
 
-    public function verifyPita(int|string $id): bool
+    public function verifyPita(int|string $id, ?string $instansiId = null): bool
     {
-        $pita = $this->dataHaidRepository->findPeminjamanOrFail($id);
+        $instansiId = $instansiId ?? (auth()->check() ? (string) auth()->user()->instansi_id : null);
+        $pita = $this->dataHaidRepository->findPeminjamanOrFail($id, $instansiId);
         $updated = $this->dataHaidRepository->updatePeminjaman($pita, [
             'verified' => 1,
             'status' => PitaStatus::DIPINJAM->value,
@@ -118,9 +120,10 @@ class FemHealthService
         return $updated;
     }
 
-    public function rejectPita(int|string $id, ?string $alasan): bool
+    public function rejectPita(int|string $id, ?string $alasan, ?string $instansiId = null): bool
     {
-        $pita = $this->dataHaidRepository->findPeminjamanOrFail($id);
+        $instansiId = $instansiId ?? (auth()->check() ? (string) auth()->user()->instansi_id : null);
+        $pita = $this->dataHaidRepository->findPeminjamanOrFail($id, $instansiId);
         $updated = $this->dataHaidRepository->updatePeminjaman($pita, [
             'verified' => 2,
             'status' => 'ditolak',
@@ -137,14 +140,29 @@ class FemHealthService
         return $updated;
     }
 
-    public function recordHaidManual(array $validated): DataHaid
+    public function recordHaidManual(array $validated, ?User $actor = null): DataHaid
     {
-        $existing = DataHaid::where('id_user', $validated['id_user'])
-            ->where('tanggal_mulai', $validated['tanggal_mulai'])
+        $actor = $actor ?? auth()->user();
+        $instansiId = $actor ? (string) $actor->instansi_id : null;
+
+        // Anti-IDOR: pastikan siswi berada pada instansi yang sama dan berjenis kelamin perempuan
+        $user = User::where('id', $validated['id_user'])
+            ->when($instansiId, fn($q) => $q->where('instansi_id', $instansiId))
+            ->firstOrFail();
+
+        if ($user->jk !== \App\Modules\User\Enums\UserGender::PEREMPUAN->value) {
+            throw new Exception('Pencatatan siklus menstruasi hanya untuk siswi perempuan.');
+        }
+
+        $existing = DataHaid::where('id_user', $user->id)
+            ->where(function ($q) {
+                $q->where('status', HaidStatus::BERLANGSUNG->value)
+                  ->orWhereNull('tanggal_selesai');
+            })
             ->first();
 
         if ($existing) {
-            throw new Exception('Data haid untuk tanggal tersebut sudah tercatat.');
+            throw new Exception('Siswi ini sudah memiliki siklus haid yang sedang aktif berlangsung.');
         }
 
         $estimasiSelesai = $validated['estimasi_selesai'] 
@@ -153,7 +171,8 @@ class FemHealthService
         $status = $validated['status'] ?? HaidStatus::BERLANGSUNG->value;
 
         $haid = $this->dataHaidRepository->create([
-            'id_user' => $validated['id_user'],
+            'id_user' => $user->id,
+            'instansi_id' => $instansiId ?? $user->instansi_id,
             'tanggal_mulai' => $validated['tanggal_mulai'],
             'estimasi_selesai' => $estimasiSelesai,
             'keluhan' => $validated['keluhan'] ?? ($validated['catatan'] ?? null),
@@ -163,21 +182,46 @@ class FemHealthService
         AuditLogger::log(
             'record_haid',
             'health',
-            "Pencatatan siklus menstruasi manual untuk user ID: {$validated['id_user']}",
+            "Pencatatan siklus menstruasi manual untuk user ID: {$user->id}",
             ['haid_id' => $haid->id]
         );
 
         return $haid;
     }
 
-    public function recordDirectPeminjaman(array $validated): PeminjamanPita
+    public function recordDirectPeminjaman(array $validated, ?User $actor = null): PeminjamanPita
     {
+        $actor = $actor ?? auth()->user();
+        $instansiId = $actor ? (string) $actor->instansi_id : null;
+
+        // Anti-IDOR: pastikan siswi valid, dalam instansi yang sama, dan perempuan
+        $user = User::where('id', $validated['id_user'])
+            ->when($instansiId, fn($q) => $q->where('instansi_id', $instansiId))
+            ->firstOrFail();
+
+        if ($user->jk !== \App\Modules\User\Enums\UserGender::PEREMPUAN->value) {
+            throw new Exception('Peminjaman pita hanya untuk siswi perempuan.');
+        }
+
+        // Syarat Mutlak: Siswi harus sudah mulai haid aktif terlebih dahulu!
+        $activeHaid = $this->dataHaidRepository->getActiveUserHaid($user->id);
+        if (!$activeHaid) {
+            throw new Exception('Siswi belum memulai siklus haid aktif. Harap catat "Mulai Haid Siswi" terlebih dahulu sebelum meminjam pita.');
+        }
+
+        // Syarat: Siswi tidak boleh memiliki pita yang belum dikembalikan
+        $activePita = $this->dataHaidRepository->getActiveUserPita($user->id);
+        if ($activePita) {
+            throw new Exception('Siswi ini masih memiliki peminjaman pita yang belum dikembalikan.');
+        }
+
         $estimasi = isset($validated['estimasi_selesai_haid']) 
             ? $validated['estimasi_selesai_haid'] 
             : Carbon::parse($validated['tanggal_pinjam'])->addDays(7)->toDateString();
 
         return $this->dataHaidRepository->createPeminjaman([
-            'id_user' => $validated['id_user'],
+            'id_user' => $user->id,
+            'instansi_id' => $instansiId ?? $user->instansi_id,
             'jumlah_pita' => 1,
             'tanggal_pinjam' => $validated['tanggal_pinjam'],
             'estimasi_selesai_haid' => $estimasi,
@@ -189,52 +233,46 @@ class FemHealthService
 
     public function createPeminjamanFromApi(array $validated, User $actor): PeminjamanPita
     {
-        return $this->dataHaidRepository->createPeminjaman([
-            'id_user' => $validated['id_user'],
-            'instansi_id' => $actor->instansi_id,
-            'jumlah_pita' => 1,
-            'tanggal_pinjam' => $validated['tanggal_pinjam'],
-            'estimasi_selesai_haid' => $validated['estimasi_selesai_haid'],
-            'status' => PitaStatus::DIPINJAM->value,
-            'verified' => 1,
-            'keterangan' => $validated['keterangan'] ?? 'Peminjaman via Mobile App',
-        ]);
+        return $this->recordDirectPeminjaman($validated, $actor);
     }
 
-    public function updatePeminjamanFromApi(int|string $id, array $validated): PeminjamanPita
+    public function updatePeminjamanFromApi(int|string $id, array $validated, ?string $instansiId = null): PeminjamanPita
     {
-        $pita = $this->dataHaidRepository->findPeminjamanOrFail($id);
+        $pita = $this->dataHaidRepository->findPeminjamanOrFail($id, $instansiId);
         $this->dataHaidRepository->updatePeminjaman($pita, $validated);
         return $pita;
     }
 
-    public function deletePeminjamanFromApi(int|string $id): bool
+    public function deletePeminjamanFromApi(int|string $id, ?string $instansiId = null): bool
     {
-        $pita = $this->dataHaidRepository->findPeminjamanOrFail($id);
+        $pita = $this->dataHaidRepository->findPeminjamanOrFail($id, $instansiId);
         return $this->dataHaidRepository->deletePeminjaman($pita);
     }
 
-    public function returnPita(int|string $id): bool
+    public function returnPita(int|string $id, ?string $instansiId = null): bool
     {
-        $pita = $this->dataHaidRepository->findPeminjamanOrFail($id);
+        $instansiId = $instansiId ?? (auth()->check() ? (string) auth()->user()->instansi_id : null);
+        $pita = $this->dataHaidRepository->findPeminjamanOrFail($id, $instansiId);
         return $this->dataHaidRepository->updatePeminjaman($pita, [
             'status' => PitaStatus::DIKEMBALIKAN->value,
             'tanggal_kembali' => now()->toDateString(),
         ]);
     }
 
-    public function updateSanksiDenda(int|string $id, string $statusDenda, ?string $catatanSanksi): bool
+    public function updateSanksiDenda(int|string $id, string $statusDenda, ?string $catatanSanksi, ?string $instansiId = null): bool
     {
-        $pita = $this->dataHaidRepository->findPeminjamanOrFail($id);
+        $instansiId = $instansiId ?? (auth()->check() ? (string) auth()->user()->instansi_id : null);
+        $pita = $this->dataHaidRepository->findPeminjamanOrFail($id, $instansiId);
         return $this->dataHaidRepository->updatePeminjaman($pita, [
             'status_denda' => $statusDenda,
             'catatan_sanksi' => $catatanSanksi,
         ]);
     }
 
-    public function stopHaid(int|string $id): bool
+    public function stopHaid(int|string $id, ?string $instansiId = null): bool
     {
-        $haid = DataHaid::findOrFail($id);
+        $instansiId = $instansiId ?? (auth()->check() ? (string) auth()->user()->instansi_id : null);
+        $haid = $this->dataHaidRepository->findHaidOrFail($id, $instansiId);
         $tglMulai = Carbon::parse($haid->tanggal_mulai);
         $tglSelesai = now();
         $durasi = max(1, $tglMulai->diffInDays($tglSelesai) + 1);

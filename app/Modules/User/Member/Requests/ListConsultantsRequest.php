@@ -16,3 +16,4 @@ class ListConsultantsRequest extends FormRequest
         return [];
     }
 }
+

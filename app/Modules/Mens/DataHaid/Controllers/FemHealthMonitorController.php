@@ -27,55 +27,84 @@ class FemHealthMonitorController extends Controller
 
     public function verifyPita(int|string $id)
     {
-        $this->femHealthService->verifyPita($id);
-        return back()->with('success', 'Peminjaman pita berhasil disetujui.');
+        try {
+            $this->femHealthService->verifyPita($id, Auth::user()->instansi_id);
+            return back()->with('success', 'Peminjaman pita berhasil disetujui.');
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function rejectVerifikasi(RejectPitaRequest $request, int|string $id)
     {
-        $this->femHealthService->rejectPita($id, $request->validated('alasan'));
-        return back()->with('success', 'Peminjaman pita telah ditolak.');
+        try {
+            $this->femHealthService->rejectPita($id, $request->validated('alasan'), Auth::user()->instansi_id);
+            return back()->with('success', 'Peminjaman pita telah ditolak.');
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function storePeminjaman(StorePitaPeminjamanRequest $request)
     {
-        $this->femHealthService->recordDirectPeminjaman($request->validated());
-        return back()->with('success', 'Data peminjaman pita berhasil dicatat.');
+        try {
+            $this->femHealthService->recordDirectPeminjaman($request->validated(), Auth::user());
+            return back()->with('success', 'Data peminjaman pita berhasil dicatat.');
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function returnPita(int|string $id)
     {
-        $this->femHealthService->returnPita($id);
-        return back()->with('success', 'Pita telah berhasil dikembalikan ke UKS.');
+        try {
+            $this->femHealthService->returnPita($id, Auth::user()->instansi_id);
+            return back()->with('success', 'Pita telah berhasil dikembalikan ke UKS.');
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function storeCounselingDirect(StoreDirectCounselingRequest $request)
     {
-        $this->femHealthService->recordDirectCounseling($request->validated(), Auth::user());
-        return back()->with('success', 'Sesi konseling telah berhasil dicatat.');
+        try {
+            $this->femHealthService->recordDirectCounseling($request->validated(), Auth::user());
+            return back()->with('success', 'Sesi konseling telah berhasil dicatat.');
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function storePita(StoreDirectPitaRequest $request)
     {
-        $this->femHealthService->recordDirectPeminjaman($request->validated());
-        return back()->with('success', 'Data peminjaman pita berhasil dicatat.');
+        try {
+            $this->femHealthService->recordDirectPeminjaman($request->validated(), Auth::user());
+            return back()->with('success', 'Data peminjaman pita berhasil dicatat.');
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function updateSanksiDenda(UpdateSanksiDendaRequest $request, int|string $id)
     {
-        $this->femHealthService->updateSanksiDenda(
-            $id,
-            $request->input('status_denda', 'lunas'),
-            $request->input('catatan_sanksi')
-        );
+        try {
+            $this->femHealthService->updateSanksiDenda(
+                $id,
+                $request->input('status_denda', 'lunas'),
+                $request->input('catatan_sanksi'),
+                Auth::user()->instansi_id
+            );
 
-        return back()->with('success', 'Status sanksi / denda pita berhasil diperbarui.');
+            return back()->with('success', 'Status sanksi / denda pita berhasil diperbarui.');
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function storeHaid(StoreDataHaidRequest $request)
     {
         try {
-            $this->femHealthService->recordHaidManual($request->validated());
+            $this->femHealthService->recordHaidManual($request->validated(), Auth::user());
             return back()->with('success', 'Siklus haid siswi berhasil dicatat.');
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
@@ -84,7 +113,11 @@ class FemHealthMonitorController extends Controller
 
     public function stopHaid(int|string $id)
     {
-        $this->femHealthService->stopHaid($id);
-        return back()->with('success', 'Status haid berhasil diakhiri.');
+        try {
+            $this->femHealthService->stopHaid($id, Auth::user()->instansi_id);
+            return back()->with('success', 'Status haid berhasil diakhiri.');
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 }
