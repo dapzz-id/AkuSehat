@@ -3,6 +3,7 @@
 namespace App\Modules\Divisi\UnitManagement\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateDivisiRequest extends FormRequest
 {
@@ -13,10 +14,19 @@ class UpdateDivisiRequest extends FormRequest
 
     public function rules(): array
     {
-        $divisiId = $this->route('divisi')?->id ?? $this->route('divisi');
+        $instansiId = auth()->user()?->instansi_id;
+        $divisiParam = $this->route('divisi') ?? $this->route('id');
+        $divisiId = $divisiParam instanceof \App\Models\Divisi ? $divisiParam->id : ($divisiParam ?? $this->input('id'));
 
         return [
-            'divisi' => 'required|string|max:50|unique:divisi,divisi_name,' . $divisiId,
+            'divisi' => [
+                'required',
+                'string',
+                'max:50',
+                $instansiId
+                    ? Rule::unique('divisi', 'divisi_name')->where('instansi_id', $instansiId)->ignore($divisiId)
+                    : Rule::unique('divisi', 'divisi_name')->ignore($divisiId),
+            ],
             'kategori' => 'nullable|string|in:member,staf,pimpinan',
             'cover_color' => 'required|string|max:20',
         ];

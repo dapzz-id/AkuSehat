@@ -20,20 +20,31 @@ class UpdateInstansiRequest extends FormRequest
 
     public function rules(): array
     {
-        $id = $this->route('id') ?? $this->route('instansi');
+        $instansiParam = $this->route('instansi') ?? $this->route('id');
+        $id = $instansiParam instanceof \App\Models\Instansi ? $instansiParam->id : ($instansiParam ?? $this->input('id'));
         $jenisInstansi = $this->input('jenis_instansi', 'Sekolah');
 
         return [
             'nama_instansi' => 'required|string|max:255',
             'jenis_instansi' => 'required|in:Sekolah,Universitas,Perusahaan,Pemerintah,Klinik,Lainnya',
-            'npsn' => $jenisInstansi === 'Sekolah' ? 'required|string|max:20|unique:instansi,npsn,' . $id : 'nullable|string|max:30|unique:instansi,npsn,' . $id,
+            'npsn' => [
+                $jenisInstansi === 'Sekolah' ? 'required' : 'nullable',
+                'string',
+                $jenisInstansi === 'Sekolah' ? 'max:20' : 'max:30',
+                Rule::unique('instansi', 'npsn')->ignore($id),
+            ],
             'jenjang' => $jenisInstansi === 'Sekolah' ? 'required|in:SD,SMP,SMA,SMK,MA,SLB,MTS' : 'nullable|string|max:50',
             'alamat' => 'required|string',
             'kota' => 'required|string|max:100',
             'provinsi' => 'required|string|max:100',
             'kode_pos' => 'nullable|string|max:10',
             'telepon' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:100|unique:instansi,email,' . $id,
+            'email' => [
+                'nullable',
+                'email',
+                'max:100',
+                Rule::unique('instansi', 'email')->ignore($id),
+            ],
             'website' => 'nullable|url|max:255',
             'status' => 'nullable|in:active,inactive',
             'tipe_sebutan' => 'nullable|string|max:50',

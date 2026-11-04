@@ -23,12 +23,18 @@ class UpdateSuperAdminUserRequest extends FormRequest
 
     public function rules(): array
     {
-        $userId = $this->route('id') ?? $this->route('user')?->id ?? $this->user;
+        $userParam = $this->route('user') ?? $this->route('id');
+        $userId = $userParam instanceof \App\Models\User ? $userParam->id : ($userParam ?? $this->input('id') ?? $this->user);
         $instansiId = $this->input('instansi_id');
 
         return [
             'nama' => 'required|string|max:75',
-            'username' => 'required|string|max:20|unique:users,username,' . $userId,
+            'username' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('users', 'username')->ignore($userId),
+            ],
             'email' => 'nullable|email|max:100',
             'level' => 'required|in:' . implode(',', UserRole::values()),
             'jk' => 'required|in:' . implode(',', UserGender::values()),

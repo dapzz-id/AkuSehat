@@ -15,7 +15,8 @@ class UpdateUserRequest extends FormRequest
 
     public function rules(): array
     {
-        $id = $this->route('id') ?? $this->route('user')?->id ?? $this->id;
+        $userParam = $this->route('user') ?? $this->route('id');
+        $id = $userParam instanceof \App\Models\User ? $userParam->id : ($userParam ?? $this->input('id'));
         $instansiId = auth()->user()?->instansi_id;
 
         return [
@@ -28,7 +29,12 @@ class UpdateUserRequest extends FormRequest
                     : Rule::unique('users', 'nomor_induk')->ignore($id),
             ],
             'nama' => 'required|string|max:75',
-            'username' => 'required|string|max:20|unique:users,username,' . $id,
+            'username' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('users', 'username')->ignore($id),
+            ],
             'password' => 'nullable|string|min:6',
             'level' => 'nullable|in:Admin,Admin Instansi,Health Consultant,Health Monitor,Member,Siswa,Guru BK,Guru Olahraga,Admin PMR',
             'jk' => 'required|in:L,P',
