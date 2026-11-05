@@ -282,4 +282,129 @@ class HealthMonitorApiController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Menghentikan siklus haid member oleh Health Consultant (kondisi khusus/medis)
+     */
+    public function stopMemberHaid(Request $request, string|int $id): JsonResponse
+    {
+        $consultant = Auth::user();
+        $instansiId = $consultant?->instansi_id;
+
+        $haid = \App\Models\DataHaid::with('user')->find($id);
+        if (!$haid) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Data siklus haid tidak ditemukan.',
+            ], 404);
+        }
+
+        if ($haid->user?->instansi_id !== $instansiId && !$consultant->isSuperAdmin()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Akses ditolak. Pengguna bukan dari institusi Anda.',
+            ], 403);
+        }
+
+        if ($haid->status === HaidStatus::SELESAI->value) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Siklus haid ini sudah berstatus selesai.',
+            ], 400);
+        }
+
+        $tanggalSelesai = $request->input('tanggal_selesai', date('Y-m-d'));
+        $tanggalMulai = date('Y-m-d', strtotime($haid->tanggal_mulai));
+        $durasiHari = max(1, (strtotime($tanggalSelesai) - strtotime($tanggalMulai)) / 86400 + 1);
+        $alasan = trim((string) $request->input('alasan', 'Dihentikan oleh Petugas UKS / Health Consultant atas pertimbangan medis.'));
+
+        $catatanExisting = $haid->catatan ? $haid->catatan . " | " : "";
+        $catatanUpdated = $catatanExisting . "[Health Consultant Note: {$alasan}]";
+
+        $haid->update([
+            'tanggal_selesai' => $tanggalSelesai,
+            'durasi_hari' => $durasiHari,
+            'status' => HaidStatus::SELESAI->value,
+            'catatan' => $catatanUpdated,
+        ]);
+
+        // Kirim notifikasi push ke perangkat siswi via FCM
+        if ($haid->user) {
+            try {
+                app(\App\Services\FcmPushNotificationService::class)->sendToUser(
+                    $haid->user,
+                    'Siklus Haid Diselesaikan Petugas UKS',
+                    "Siklus menstruasi Anda telah ditandai selesai oleh {$consultant->nama}. Catatan: {$alasan}",
+                    [
+                        'type' => 'haid_completed_by_consultant',
+                        'id_haid' => (string) $haid->id,
+                    ]
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('FCM send failed on stopMemberHaid: ' . $e->getMessage());
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Siklus haid berhasil diselesaikan atas rekomendasi Health Consultant.',
+            'data' => $haid,
+        ]);
+    }
+
+    /**
+     * Memanggil siswi/member untuk konsultasi UKS dan/atau pengembalian pita via FCM
+     */
+    public function notifyMemberCall(Request $request, string|int $id): JsonResponse
+    {
+        $consultant = Auth::user();
+        $instansiId = $consultant?->instansi_id;
+        $targetType = $request->input('target_type', 'peminjaman'); // 'peminjaman' | 'haid'
+        $customPesan = trim((string) $request->input('pesan'));
+
+        $targetUser = null;
+        $defaultBody = "";
+
+        if ($targetType === 'haid') {
+            $haid = \App\Models\DataHaid::with('user')->find($id);
+            if (!$haid || !$haid->user) {
+                return response()->json(['status' => false, 'message' => 'Data siklus haid tidak ditemukan.'], 404);
+            }
+            if ($haid->user->instansi_id !== $instansiId && !$consultant->isSuperAdmin()) {
+                return response()->json(['status' => false, 'message' => 'Akses ditolak.'], 403);
+            }
+            $targetUser = $haid->user;
+            $defaultBody = "Halo {$targetUser->nama}, Anda dipanggil oleh Petugas UKS / Konselor ({$consultant->nama}) untuk konsultasi pemantauan kesehatan siklus menstruasi Anda.";
+        } else {
+            $pita = \App\Models\PeminjamanPita::with('user')->find($id);
+            if (!$pita || !$pita->user) {
+                return response()->json(['status' => false, 'message' => 'Data peminjaman pita tidak ditemukan.'], 404);
+            }
+            if ($pita->user->instansi_id !== $instansiId && !$consultant->isSuperAdmin()) {
+                return response()->json(['status' => false, 'message' => 'Akses ditolak.'], 403);
+            }
+            $targetUser = $pita->user;
+            $defaultBody = "Halo {$targetUser->nama}, Anda dipanggil oleh Petugas UKS ({$consultant->nama}) untuk pengembalian pita UKS dan konsultasi kesehatan.";
+        }
+
+        $title = "Panggilan UKS & Konseling Kesehatan";
+        $body = !empty($customPesan) ? $customPesan : $defaultBody;
+
+        $fcmResult = app(\App\Services\FcmPushNotificationService::class)->sendToUser(
+            $targetUser,
+            $title,
+            $body,
+            [
+                'type' => 'call_to_uks',
+                'consultant_id' => (string) $consultant->id,
+                'consultant_name' => (string) $consultant->nama,
+            ]
+        );
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Panggilan via notifikasi FCM berhasil dikirim ke perangkat pengguna.',
+            'fcm_result' => $fcmResult,
+        ]);
+    }
 }

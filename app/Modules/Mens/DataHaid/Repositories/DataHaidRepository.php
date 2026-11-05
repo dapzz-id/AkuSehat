@@ -194,14 +194,43 @@ class DataHaidRepository
             return collect();
         }
 
-        return PeminjamanPita::with(['user.divisi'])
+        $today = now()->toDateString();
+
+        $records = PeminjamanPita::with(['user.divisi'])
             ->whereHas('user', function ($q) use ($instansiId) {
                 $q->where('instansi_id', $instansiId);
             })
             ->whereIn('status', [PitaStatus::TERLAMBAT->value, PitaStatus::DIPINJAM->value])
-            ->whereDate('estimasi_selesai_haid', '<', now()->toDateString())
+            ->whereNull('tanggal_kembali')
+            ->where(function ($query) use ($today) {
+                $query->whereDate('estimasi_selesai_haid', '<=', $today)
+                    ->orWhereHas('user.dataHaid', function ($hq) {
+                        $hq->where('status', HaidStatus::SELESAI->value)
+                            ->whereNotNull('tanggal_selesai');
+                    });
+            })
             ->orderBy('estimasi_selesai_haid', 'asc')
             ->get();
+
+        return $records->map(function ($pita) use ($today) {
+            $isHaidFinished = DataHaid::where('id_user', $pita->id_user)
+                ->where('status', HaidStatus::SELESAI->value)
+                ->where(function ($q) use ($pita) {
+                    $q->where('tanggal_selesai', '>=', $pita->tanggal_pinjam)
+                      ->orWhere('updated_at', '>=', $pita->created_at);
+                })
+                ->exists();
+
+            if ($isHaidFinished) {
+                $pita->warning_type = 'haid_selesai';
+                $pita->warning_reason = 'Haid telah selesai dicatat, namun pita UKS belum dikembalikan ke petugas.';
+            } else {
+                $pita->warning_type = 'terlambat';
+                $pita->warning_reason = 'Peminjaman pita telah melewati batas waktu (> 7 hari).';
+            }
+
+            return $pita;
+        });
     }
 
     public function getAllPeminjaman(string|int|null $instansiId): Collection

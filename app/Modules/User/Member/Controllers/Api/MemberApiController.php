@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use App\Modules\User\Member\Services\MemberService;
 use App\Modules\User\Member\Repositories\MemberRepository;
 use App\Modules\User\Member\Requests\GetMemberProfileRequest;
@@ -429,6 +430,14 @@ class MemberApiController extends Controller
 
         $validated = $req->validated();
 
+        // Verifikasi konfirmasi password akun
+        if (!Hash::check($validated['password'], $u->password)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Password akun yang Anda masukkan tidak sesuai. Konfirmasi mulai haid gagal.'
+            ], 422);
+        }
+
         if ($this->dataHaidRepository->getActiveUserHaid($u->id)) {
             return response()->json([
                 'status' => false,
@@ -466,6 +475,14 @@ class MemberApiController extends Controller
         $tanggalSelesai = $req->validated('tanggal_selesai') ?? date('Y-m-d');
         $tanggalMulai = date('Y-m-d', strtotime($haid->tanggal_mulai));
         $durasiHari = max(1, (strtotime($tanggalSelesai) - strtotime($tanggalMulai)) / 86400 + 1);
+
+        // Aturan ketat: Siklus haid tidak dapat dihentikan mandiri sebelum minimal 7 hari
+        if ($durasiHari < 7 && !$u->isHealthConsultant() && !$u->isHealthMonitor() && !$u->isAdmin() && !$u->isSuperAdmin()) {
+            return response()->json([
+                'status' => false,
+                'message' => "Siklus haid tidak dapat dihentikan mandiri sebelum minimal 7 hari (saat ini baru berjalan hari ke-{$durasiHari}). Jika Anda mengalami keluhan kesehatan atau kondisi darurat, silakan hubungi Health Consultant / Petugas UKS instansi Anda untuk melakukan penghentian khusus."
+            ], 422);
+        }
 
         $this->dataHaidRepository->completeUserHaidRecord($id, $u->id, $tanggalSelesai, $durasiHari);
         $this->dataHaidRepository->updateUserPitaEstimasi($u->id, date('Y-m-d', strtotime($tanggalSelesai . ' +1 day')));
@@ -581,6 +598,15 @@ class MemberApiController extends Controller
         }
 
         $validated = $req->validated();
+
+        // Verifikasi konfirmasi password akun
+        if (!Hash::check($validated['password'], $u->password)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Password akun yang Anda masukkan tidak sesuai. Konfirmasi pengajuan pinjam pita gagal.'
+            ], 422);
+        }
+
         $estimasiSelesai = Carbon::parse($activeHaid->tanggal_mulai)->addDays(7)->format('Y-m-d');
 
         $this->dataHaidRepository->createPeminjaman([

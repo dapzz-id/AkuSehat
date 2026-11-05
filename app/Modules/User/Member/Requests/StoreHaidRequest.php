@@ -16,6 +16,15 @@ class StoreHaidRequest extends FormRequest
         return [
             'tanggal_mulai' => ['required', 'date'],
             'catatan' => ['nullable', 'string', 'max:500'],
+            'password' => ['required', 'string'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'password.required' => 'Password akun wajib dimasukkan untuk konfirmasi mulai haid.',
+            'tanggal_mulai.required' => 'Tanggal mulai haid wajib diisi.',
         ];
     }
 }
