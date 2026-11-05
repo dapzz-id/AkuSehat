@@ -80,3 +80,14 @@ yarn-error.log
 .env.*
 !.env.example
 src/config/secrets.local.ts
+
+# Google Services & Firebase Credentials (NEVER publish to GitHub)
+google-services.json
+*/google-services.json
+**/google-services.json
+!google-services.json.example
+!*/google-services.json.example
+!**/google-services.json.example
+*service-account*.json
+*firebase*.json
+GoogleService-Info.plist
