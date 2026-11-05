@@ -16,8 +16,12 @@ use App\Modules\User\Enums\UserGender;
 
 class DataHaidRepository
 {
-    public function getActiveHaidForInstansi(string|int $instansiId): Collection
+    public function getActiveHaidForInstansi(string|int|null $instansiId): Collection
     {
+        if (empty($instansiId)) {
+            return collect();
+        }
+
         return DataHaid::with(['user.divisi'])
             ->whereHas('user', function ($q) use ($instansiId) {
                 $q->where('instansi_id', $instansiId);
@@ -77,8 +81,12 @@ class DataHaidRepository
      * Dapatkan siswi yang saat ini sedang aktif dalam siklus haid
      * dan belum meminjam pita yang belum dikembalikan (anti-IDOR & siap catat pita).
      */
-    public function getHaidMembersForPita(string|int $instansiId): Collection
+    public function getHaidMembersForPita(string|int|null $instansiId): Collection
     {
+        if (empty($instansiId)) {
+            return collect();
+        }
+
         return User::with(['divisi', 'dataHaid' => function ($q) {
                 $q->where(function ($sub) {
                     $sub->where('status', HaidStatus::BERLANGSUNG->value)
@@ -180,8 +188,12 @@ class DataHaidRepository
         return $data;
     }
 
-    public function getOverdueWarnings(string|int $instansiId): Collection
+    public function getOverdueWarnings(string|int|null $instansiId): Collection
     {
+        if (empty($instansiId)) {
+            return collect();
+        }
+
         return PeminjamanPita::with(['user.divisi'])
             ->whereHas('user', function ($q) use ($instansiId) {
                 $q->where('instansi_id', $instansiId);
@@ -192,8 +204,12 @@ class DataHaidRepository
             ->get();
     }
 
-    public function getAllPeminjaman(string|int $instansiId): Collection
+    public function getAllPeminjaman(string|int|null $instansiId): Collection
     {
+        if (empty($instansiId)) {
+            return collect();
+        }
+
         return PeminjamanPita::with('user')
             ->whereHas('user', function ($query) use ($instansiId) {
                 $query->where('jk', UserGender::PEREMPUAN->value)
@@ -203,8 +219,12 @@ class DataHaidRepository
             ->get();
     }
 
-    public function countPendingVerification(string|int $instansiId): int
+    public function countPendingVerification(string|int|null $instansiId): int
     {
+        if (empty($instansiId)) {
+            return 0;
+        }
+
         return PeminjamanPita::where('verified', 0)
             ->whereHas('user', function ($query) use ($instansiId) {
                 $query->where('instansi_id', $instansiId);
@@ -212,8 +232,12 @@ class DataHaidRepository
             ->count();
     }
 
-    public function countFemaleMembers(string|int $instansiId): int
+    public function countFemaleMembers(string|int|null $instansiId): int
     {
+        if (empty($instansiId)) {
+            return 0;
+        }
+
         return User::where('level', UserRole::MEMBER->value)
             ->where('jk', UserGender::PEREMPUAN->value)
             ->where('instansi_id', $instansiId)

@@ -232,27 +232,35 @@ class MemberApiController extends Controller
         $platform = $req->input('platform', 'android');
         $deviceModel = $req->input('device_model');
 
-        // Update token utama di users table
-        $u->fcm_token = $token;
-        $u->fcm_platform = $platform;
-        $u->fcm_updated_at = now();
-        $u->save();
-
-        // Daftarkan ke user_device_tokens untuk multi-device push
         try {
-            \Illuminate\Support\Facades\DB::table('user_device_tokens')->updateOrInsert(
-                ['user_id' => $u->id, 'token' => $token],
-                [
-                    'id' => (string) \Illuminate\Support\Str::uuid(),
-                    'platform' => $platform,
-                    'device_model' => $deviceModel,
-                    'last_active_at' => now(),
-                    'updated_at' => now(),
-                    'created_at' => now(),
-                ]
-            );
+            // Update token utama di users table jika kolom tersedia
+            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'fcm_token')) {
+                $u->fcm_token = $token;
+                if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'fcm_platform')) {
+                    $u->fcm_platform = $platform;
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'fcm_updated_at')) {
+                    $u->fcm_updated_at = now();
+                }
+                $u->save();
+            }
+
+            // Daftarkan ke user_device_tokens untuk multi-device push jika tabel tersedia
+            if (\Illuminate\Support\Facades\Schema::hasTable('user_device_tokens')) {
+                \Illuminate\Support\Facades\DB::table('user_device_tokens')->updateOrInsert(
+                    ['user_id' => $u->id, 'token' => $token],
+                    [
+                        'id' => (string) \Illuminate\Support\Str::uuid(),
+                        'platform' => $platform,
+                        'device_model' => $deviceModel,
+                        'last_active_at' => now(),
+                        'updated_at' => now(),
+                        'created_at' => now(),
+                    ]
+                );
+            }
         } catch (\Throwable $e) {
-            // Ignore index or uuid collision
+            \Illuminate\Support\Facades\Log::warning('FCM token registration fallback: ' . $e->getMessage());
         }
 
         return response()->json([
@@ -266,25 +274,39 @@ class MemberApiController extends Controller
         $u = $req->user();
         $token = $req->input('fcm_token');
 
-        if ($token) {
-            \Illuminate\Support\Facades\DB::table('user_device_tokens')
-                ->where('user_id', $u->id)
-                ->where('token', $token)
-                ->delete();
-
-            if ($u->fcm_token === $token) {
-                $u->fcm_token = null;
-                $u->fcm_platform = null;
-                $u->save();
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('user_device_tokens')) {
+                if ($token) {
+                    \Illuminate\Support\Facades\DB::table('user_device_tokens')
+                        ->where('user_id', $u->id)
+                        ->where('token', $token)
+                        ->delete();
+                } else {
+                    \Illuminate\Support\Facades\DB::table('user_device_tokens')
+                        ->where('user_id', $u->id)
+                        ->delete();
+                }
             }
-        } else {
-            \Illuminate\Support\Facades\DB::table('user_device_tokens')
-                ->where('user_id', $u->id)
-                ->delete();
 
-            $u->fcm_token = null;
-            $u->fcm_platform = null;
-            $u->save();
+            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'fcm_token')) {
+                if ($token) {
+                    if ($u->fcm_token === $token) {
+                        $u->fcm_token = null;
+                        if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'fcm_platform')) {
+                            $u->fcm_platform = null;
+                        }
+                        $u->save();
+                    }
+                } else {
+                    $u->fcm_token = null;
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'fcm_platform')) {
+                        $u->fcm_platform = null;
+                    }
+                    $u->save();
+                }
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('FCM token deletion fallback: ' . $e->getMessage());
         }
 
         return response()->json([

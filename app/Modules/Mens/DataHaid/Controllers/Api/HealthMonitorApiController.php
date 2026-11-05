@@ -23,11 +23,18 @@ class HealthMonitorApiController extends Controller
     public function index(): JsonResponse
     {
         $user = Auth::user();
-        $this->femHealthService->refreshOverduePita($user->instansi_id);
+        $instansiId = $user?->instansi_id;
 
-        $peminjaman = $this->dataHaidRepository->getAllPeminjaman($user->instansi_id);
-        $menungguVerifikasi = $this->dataHaidRepository->countPendingVerification($user->instansi_id);
-        $totalMember = $this->dataHaidRepository->countFemaleMembers($user->instansi_id);
+        if ($instansiId) {
+            $this->femHealthService->refreshOverduePita($instansiId);
+            $peminjaman = $this->dataHaidRepository->getAllPeminjaman($instansiId);
+            $menungguVerifikasi = $this->dataHaidRepository->countPendingVerification($instansiId);
+            $totalMember = $this->dataHaidRepository->countFemaleMembers($instansiId);
+        } else {
+            $peminjaman = collect();
+            $menungguVerifikasi = 0;
+            $totalMember = 0;
+        }
 
         return response()->json([
             'status' => true,
@@ -40,7 +47,8 @@ class HealthMonitorApiController extends Controller
 
     public function getActiveHaid(): JsonResponse
     {
-        $activeHaid = $this->dataHaidRepository->getActiveHaidForInstansi(Auth::user()->instansi_id);
+        $instansiId = Auth::user()?->instansi_id;
+        $activeHaid = $instansiId ? $this->dataHaidRepository->getActiveHaidForInstansi($instansiId) : collect();
 
         return response()->json([
             'status' => true,
@@ -51,7 +59,10 @@ class HealthMonitorApiController extends Controller
 
     public function verifikasi(string|int $id): JsonResponse
     {
-        $this->femHealthService->verifyPita($id, Auth::user()->instansi_id);
+        $instansiId = Auth::user()?->instansi_id;
+        if ($instansiId) {
+            $this->femHealthService->verifyPita($id, $instansiId);
+        }
 
         return response()->json([
             'status' => true,
@@ -61,8 +72,11 @@ class HealthMonitorApiController extends Controller
 
     public function tolak(RejectPitaRequest $request, string|int $id): JsonResponse
     {
+        $instansiId = Auth::user()?->instansi_id;
         $alasan = $request->validated('alasan') ?? $request->validated('alasan_penolakan');
-        $this->femHealthService->rejectPita($id, $alasan, Auth::user()->instansi_id);
+        if ($instansiId) {
+            $this->femHealthService->rejectPita($id, $alasan, $instansiId);
+        }
 
         return response()->json([
             'status' => true,
@@ -72,7 +86,8 @@ class HealthMonitorApiController extends Controller
 
     public function getMemberSedangHaid(GetMemberSedangHaidRequest $request): JsonResponse
     {
-        $activeHaid = $this->dataHaidRepository->getActiveHaidForInstansi(Auth::user()->instansi_id);
+        $instansiId = Auth::user()?->instansi_id;
+        $activeHaid = $instansiId ? $this->dataHaidRepository->getActiveHaidForInstansi($instansiId) : collect();
 
         return response()->json([
             'status' => true,
@@ -83,7 +98,8 @@ class HealthMonitorApiController extends Controller
 
     public function getHaidMembersForPita(): JsonResponse
     {
-        $members = $this->dataHaidRepository->getHaidMembersForPita(Auth::user()->instansi_id);
+        $instansiId = Auth::user()?->instansi_id;
+        $members = $instansiId ? $this->dataHaidRepository->getHaidMembersForPita($instansiId) : collect();
 
         return response()->json([
             'status' => true,
@@ -94,7 +110,8 @@ class HealthMonitorApiController extends Controller
 
     public function getOverdueWarnings(GetOverdueWarningsRequest $request): JsonResponse
     {
-        $warnings = $this->dataHaidRepository->getOverdueWarnings(Auth::user()->instansi_id);
+        $instansiId = Auth::user()?->instansi_id;
+        $warnings = $instansiId ? $this->dataHaidRepository->getOverdueWarnings($instansiId) : collect();
 
         return response()->json([
             'status' => true,

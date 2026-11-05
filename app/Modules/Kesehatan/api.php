@@ -25,7 +25,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // 3. Health Consultant Portal
-    Route::prefix('health-consultant')->middleware('role:Health Consultant,Admin,Admin Instansi,SuperAdmin')->group(function () {
+    Route::prefix('health-consultant')->middleware('role:Health Consultant,Health Monitor,Admin,Admin Instansi,SuperAdmin')->group(function () {
         Route::get('/health-summary', [HealthConsultantApiController::class, 'healthSummary']);
         Route::get('/health-by-division', [HealthConsultantApiController::class, 'healthByDivision']);
         Route::get('/health-notification', [HealthConsultantApiController::class, 'healthNotification']);

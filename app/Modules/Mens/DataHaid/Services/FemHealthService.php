@@ -298,8 +298,12 @@ class FemHealthService
         ]);
     }
 
-    public function refreshOverduePita(string $instansiId): void
+    public function refreshOverduePita(?string $instansiId): void
     {
+        if (empty($instansiId)) {
+            return;
+        }
+
         PeminjamanPita::whereHas('user', function ($q) use ($instansiId) {
             $q->where('instansi_id', $instansiId);
         })->where('status', PitaStatus::DIPINJAM->value)
