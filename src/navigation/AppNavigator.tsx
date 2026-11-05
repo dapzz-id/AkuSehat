@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, StatusBar } from 'react-native';
 import { checkAuthStatus } from '../utils/authHelper';
 import { navigationRef } from '../navigation/rootNavigation';
 import { fcmService } from '../services/fcmService';
@@ -101,6 +101,7 @@ const AppNavigatorContent = () => {
   }, []);
   return (
     <View style={styles.root}>
+      <StatusBar barStyle="dark-content" />
       {!showSplash && isAuthChecked && (
         <NavigationContainer ref={navigationRef}>
           <Stack.Navigator

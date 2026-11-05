@@ -1,5 +1,7 @@
 package neuracakrawira.asia.akusehat
 
+import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import androidx.core.view.WindowCompat
 import com.facebook.react.ReactActivity
@@ -11,8 +13,19 @@ class MainActivity : ReactActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(null)
-    // Migrasi Edge-to-Edge modern Android 15 untuk tata letak layar penuh
+    // Edge-to-Edge modern Android 12-15 untuk status bar & navigation bar transparan
     WindowCompat.setDecorFitsSystemWindows(window, false)
+    window.statusBarColor = Color.TRANSPARENT
+    window.navigationBarColor = Color.TRANSPARENT
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      window.isStatusBarContrastEnforced = false
+      window.isNavigationBarContrastEnforced = false
+    }
+
+    val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+    insetsController.isAppearanceLightStatusBars = true
+    insetsController.isAppearanceLightNavigationBars = true
   }
 
   /**
