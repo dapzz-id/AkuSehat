@@ -447,6 +447,7 @@ const HomeScreenHealthMonitor = () => {
     try {
       setRejectLoading(true)
       await api.put(`/health-monitor/${selectedItem.id}/reject-verifikasi`, {
+        alasan: rejectReason,
         alasan_penolakan: rejectReason
       })
       await fetchAllData()
