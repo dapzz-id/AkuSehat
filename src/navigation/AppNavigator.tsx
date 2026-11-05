@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, StyleSheet } from 'react-native';
 import { checkAuthStatus } from '../utils/authHelper';
 import { navigationRef } from '../navigation/rootNavigation';
+import { fcmService } from '../services/fcmService';
 import SplashScreen from '../screens/SplashScreen';
 
 // Screens untuk Member
@@ -45,6 +46,9 @@ const AppNavigatorContent = () => {
           } else {
             setInitialRoute('Login');
           }
+
+          // Inisialisasi token FCM dan listener saat user terotentikasi
+          fcmService.registerDeviceToken();
         } else if (isMounted) {
           setInitialRoute('Login');
         }
@@ -62,8 +66,13 @@ const AppNavigatorContent = () => {
 
     checkLogin();
 
+    const unsubscribeFcm = fcmService.setupNotificationListeners((data) => {
+      console.log('[AppNavigator] Notifikasi FCM diklik:', data);
+    });
+
     return () => {
       isMounted = false;
+      unsubscribeFcm();
     };
   }, []);
   return (

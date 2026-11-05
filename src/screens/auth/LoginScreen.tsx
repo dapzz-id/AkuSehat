@@ -18,6 +18,7 @@ import {
 } from "react-native"
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { login, loginWithGoogle } from "../../utils/authHelper"
+import { fcmService } from '../../services/fcmService';
 import { promptGoogleSignIn } from "../../utils/googleAuth"
 import { Colors } from "../../settings/Colors"
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -153,6 +154,9 @@ const LoginScreen = ({ navigation }: any) => {
             const dataLogin = await login(username, password)
 
             if (dataLogin.status === true) {
+                // Register FCM device token
+                fcmService.registerDeviceToken();
+
                 const userLevel = (dataLogin.user?.level || '').trim().toLowerCase();
                 if (userLevel === "member") {
                     navigation.reset({ index: 0, routes: [{ name: "HomeMember" }] })
@@ -197,6 +201,9 @@ const LoginScreen = ({ navigation }: any) => {
             })
 
             if (res.status && res.user) {
+                // Register FCM device token
+                fcmService.registerDeviceToken();
+
                 const level = (res.user.level || '').trim().toLowerCase();
                 if (level === 'health consultant') {
                     navigation.reset({ index: 0, routes: [{ name: "HomeHealthConsultant" }] })

@@ -2,13 +2,17 @@ import React from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   Platform,
   StyleProp,
   ViewStyle,
   TextStyle,
+  TouchableOpacity,
+  Linking,
 } from 'react-native';
-import { moderateScale, scale, verticalScale } from '../utils/responsive';
+import Feather from 'react-native-vector-icons/Feather';
+import { moderateScale, scale, verticalScale, wp } from '../utils/responsive';
 
 interface MarkdownRendererProps {
   content: string;
@@ -25,16 +29,39 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 }) => {
   if (!content) return null;
 
-  // Helper to parse inline styles: **bold**, `code`, *italic*
+  const handleOpenLink = (url: string) => {
+    if (!url) return;
+    Linking.openURL(url).catch((err) =>
+      console.warn('Gagal membuka URL:', err)
+    );
+  };
+
+  // Helper to parse inline styles: **bold**, `code`, *italic*, [link](url)
   const renderInlineFormattedText = (
     rawText: string,
     overrideTextStyle?: StyleProp<TextStyle>
   ): React.ReactNode => {
-    // Regex splits by **bold**, `code`, or *italic*
-    const parts = rawText.split(/(\*\*.*?\*\*|`.*?`|\*.*?\*)/g);
+    // Regex splits by **bold**, `code`, *italic*, or [link](url)
+    const parts = rawText.split(/(\*\*.*?\*\*|`.*?`|\*.*?\*|\[.*?\]\(https?:\/\/.*?\))/g);
 
     return parts.map((part, index) => {
       if (!part) return null;
+
+      // Link: [text](url)
+      const linkMatch = part.match(/^\[(.*?)\]\((https?:\/\/.*?)\)$/);
+      if (linkMatch) {
+        const linkLabel = linkMatch[1];
+        const linkUrl = linkMatch[2];
+        return (
+          <Text
+            key={index}
+            style={[styles.linkText, baseTextStyle, overrideTextStyle]}
+            onPress={() => handleOpenLink(linkUrl)}
+          >
+            {linkLabel}
+          </Text>
+        );
+      }
 
       // Bold: **text**
       if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
@@ -114,6 +141,63 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         // Empty line spacer
         if (!trimmed) {
           return <View key={lineIndex} style={styles.spacer} />;
+        }
+
+        // Markdown Image: ![alt](url)
+        const imageMatch = trimmed.match(/^!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)$/);
+        // HTML Image: <img ... src="url" ... />
+        const htmlImgMatch = trimmed.match(/<img[^>]+src=["'](https?:\/\/[^"']+)["'][^>]*>/i);
+
+        if (imageMatch || htmlImgMatch) {
+          const imgUrl = imageMatch ? imageMatch[2] : (htmlImgMatch ? htmlImgMatch[1] : '');
+          const imgAlt = imageMatch ? imageMatch[1] : '';
+
+          return (
+            <View key={lineIndex} style={styles.imageCard}>
+              <Image
+                source={{ uri: imgUrl }}
+                style={styles.responsiveImage}
+                resizeMode="cover"
+              />
+              {imgAlt ? (
+                <Text style={styles.imageCaption}>{imgAlt}</Text>
+              ) : null}
+            </View>
+          );
+        }
+
+        // Video Detection: [video](url) or HTML <video ... src="url" ...> or YouTube
+        const videoMatch = trimmed.match(/^\[(?:video|tonton|youtube|nonton)\]\((https?:\/\/[^\s)]+)\)$/i);
+        const htmlVideoMatch = trimmed.match(/<video[^>]+src=["'](https?:\/\/[^"']+)["'][^>]*>/i);
+        const isDirectVideoLink = trimmed.match(/^(?:https?:\/\/[^\s)]+\.(?:mp4|webm|ogg))$/i);
+        const isYoutubeUrl = trimmed.match(/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/[^\s]+$/i);
+
+        if (videoMatch || htmlVideoMatch || isDirectVideoLink || isYoutubeUrl) {
+          const videoUrl = videoMatch
+            ? videoMatch[1]
+            : (htmlVideoMatch ? htmlVideoMatch[1] : trimmed);
+
+          return (
+            <TouchableOpacity
+              key={lineIndex}
+              style={styles.videoCard}
+              onPress={() => handleOpenLink(videoUrl)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.videoPlayCircle}>
+                <Feather name="play" size={moderateScale(15)} color="#FFFFFF" />
+              </View>
+              <View style={styles.videoTextCol}>
+                <Text style={styles.videoTitle} numberOfLines={1}>
+                  Putar Video Pembaruan
+                </Text>
+                <Text style={styles.videoSubtitle} numberOfLines={1}>
+                  {videoUrl}
+                </Text>
+              </View>
+              <Feather name="external-link" size={moderateScale(14)} color="#047857" />
+            </TouchableOpacity>
+          );
         }
 
         // H1: # Heading
@@ -276,6 +360,64 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(4),
     borderWidth: 1,
     borderColor: '#CBD5E1',
+  },
+  linkText: {
+    fontSize: moderateScale(11.5),
+    color: '#047857',
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
+  imageCard: {
+    width: '100%',
+    marginVertical: verticalScale(6),
+    borderRadius: moderateScale(10),
+    overflow: 'hidden',
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  responsiveImage: {
+    width: '100%',
+    height: verticalScale(140),
+  },
+  imageCaption: {
+    paddingHorizontal: scale(8),
+    paddingVertical: verticalScale(4),
+    fontSize: moderateScale(10),
+    color: '#64748B',
+    fontStyle: 'italic',
+  },
+  videoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: moderateScale(10),
+    padding: scale(10),
+    marginVertical: verticalScale(6),
+    gap: scale(10),
+  },
+  videoPlayCircle: {
+    width: moderateScale(34),
+    height: moderateScale(34),
+    borderRadius: moderateScale(17),
+    backgroundColor: '#047857',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoTextCol: {
+    flex: 1,
+  },
+  videoTitle: {
+    fontSize: moderateScale(12),
+    fontWeight: '700',
+    color: '#065F46',
+  },
+  videoSubtitle: {
+    fontSize: moderateScale(10),
+    color: '#047857',
+    marginTop: verticalScale(1),
   },
   h1Wrapper: {
     marginTop: verticalScale(8),

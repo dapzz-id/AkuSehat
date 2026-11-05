@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "123456789000",
+    "project_id": "akusehat-firebase-app",
+    "storage_bucket": "akusehat-firebase-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:123456789000:android:abcdef0123456789",
+        "android_client_info": {
+          "package_name": "neuracakrawira.asia.akusehat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDummyKeyReplaceWithYourOwnFirebaseKey"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

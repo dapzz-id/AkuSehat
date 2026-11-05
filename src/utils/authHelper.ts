@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api/axiosConfig';
+import { fcmService } from '../services/fcmService';
 
 const TOKEN_KEY = 'sanctum_token';
 const USER_KEY = 'user';
@@ -176,6 +177,10 @@ export const register = async (registerData: {
 };
 
 export const logout = async () => {
+  try {
+    await fcmService.unregisterDeviceToken();
+  } catch {}
+
   try {
     await AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY, 'userData', 'userToken']);
     delete api.defaults.headers.common['Authorization'];

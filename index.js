@@ -3,10 +3,19 @@
  */
 
 import 'react-native-reanimated';
-import { AppRegistry } from 'react-native';
+import { AppRegistry, LogBox } from 'react-native';
+import { getMessaging, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
 import App from './App';
 import { name as appName } from './app.json';
-import { LogBox } from 'react-native';
+
+// Register background message handler for when app is completely closed (killed state)
+try {
+  setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
+    console.log('[FCM] Background message received when app is closed:', remoteMessage);
+  });
+} catch (e) {
+  // Graceful fallback if firebase app is not initialized
+}
 
 LogBox.ignoreAllLogs(true);
 AppRegistry.registerComponent(appName, () => App);
