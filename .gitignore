@@ -19,6 +19,9 @@
 /public/storage
 /storage/*.key
 /storage/pail
+*service-account*.json
+*firebase*.json
+!*.example
 /vendor
 /scripts
 /database/seeders/ProductionSeeder.php

@@ -62,27 +62,40 @@ class FcmPushNotificationService
         }
 
         $projectId = trim((string) config('services.fcm.project_id'));
+        $serviceAccountPath = trim((string) config('services.fcm.service_account_json', 'firebase-service-account.json'));
         $serverKey = trim((string) config('services.fcm.server_key'));
-        $serviceAccountPath = trim((string) config('services.fcm.service_account_json'));
 
-        // Prioritas 1: Gunakan FCM v1 HTTP API jika Service Account JSON tersedia
-        if (!empty($projectId) && !empty($serviceAccountPath)) {
-            return $this->sendViaFcmV1($projectId, $serviceAccountPath, $tokens, $title, $body, $data);
+        // Cek path file service account (bisa relative dari storage/app atau absolute)
+        $realServiceAccountPath = file_exists($serviceAccountPath) 
+            ? $serviceAccountPath 
+            : storage_path('app/' . $serviceAccountPath);
+
+        // Prioritas 1 (STANDAR UTAMA): FCM HTTP v1 API dengan Service Account JSON
+        if (file_exists($realServiceAccountPath)) {
+            // Otomatis ekstrak project_id dari file jika tidak diisi di .env
+            if (empty($projectId)) {
+                $rawKey = @json_decode(file_get_contents($realServiceAccountPath), true);
+                $projectId = $rawKey['project_id'] ?? '';
+            }
+
+            if (!empty($projectId)) {
+                return $this->sendViaFcmV1($projectId, $realServiceAccountPath, $tokens, $title, $body, $data);
+            }
         }
 
-        // Prioritas 2: Gunakan FCM Legacy API jika Server Key tersedia
+        // Prioritas 2 (Fallback): FCM Legacy API jika Server Key tersedia
         if (!empty($serverKey)) {
             return $this->sendViaFcmLegacy($serverKey, $tokens, $title, $body, $data);
         }
 
-        Log::warning('FCM Push Notification: Kredensial FCM belum dikonfigurasi di .env (FCM_PROJECT_ID atau FCM_SERVER_KEY).', [
+        Log::warning('FCM Push Notification: File Service Account JSON FCM v1 belum ditemukan di storage/app/' . $serviceAccountPath, [
             'tokens_count' => count($tokens),
             'title' => $title,
         ]);
 
         return [
             'status' => false,
-            'message' => 'Kredensial FCM belum dikonfigurasi di server (.env). Tambahkan FCM_SERVER_KEY atau FCM_SERVICE_ACCOUNT_JSON.',
+            'message' => 'Kredensial FCM v1 belum dikonfigurasi. Letakkan file Service Account JSON di storage/app/firebase-service-account.json.',
             'sent_count' => 0,
         ];
     }
@@ -242,6 +255,12 @@ class FcmPushNotificationService
             return null;
         }
 
+        $cacheKey = 'fcm_v1_bearer_' . md5($realPath);
+        $cachedToken = \Illuminate\Support\Facades\Cache::get($cacheKey);
+        if (!empty($cachedToken)) {
+            return $cachedToken;
+        }
+
         try {
             $keyData = json_decode(file_get_contents($realPath), true);
             if (!$keyData || empty($keyData['private_key']) || empty($keyData['client_email'])) {
@@ -273,7 +292,11 @@ class FcmPushNotificationService
             ]);
 
             if ($tokenResponse->successful()) {
-                return $tokenResponse->json()['access_token'] ?? null;
+                $token = $tokenResponse->json()['access_token'] ?? null;
+                if ($token) {
+                    \Illuminate\Support\Facades\Cache::put($cacheKey, $token, 3300); // 55 menit
+                }
+                return $token;
             }
 
             return null;
@@ -313,3 +336,4 @@ class FcmPushNotificationService
         }
     }
 }
+
