@@ -16,6 +16,7 @@ class MainApplication : Application(), ReactApplication {
         PackageList(this).packages.apply {
           // Custom Native Modules
           add(PlayIntegrityPackage())
+          add(GoogleSignInPackage())
         },
     )
   }

@@ -18,6 +18,7 @@ import {
 } from "react-native"
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { login, loginWithGoogle } from "../../utils/authHelper"
+import { promptGoogleSignIn } from "../../utils/googleAuth"
 import { Colors } from "../../settings/Colors"
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { PrivacyPolicyModal } from "../../components/PrivacyPolicyModal";
@@ -180,47 +181,46 @@ const LoginScreen = ({ navigation }: any) => {
             return
         }
 
-        Alert.alert(
-            "Masuk dengan Google",
-            "Login Google hanya dapat digunakan untuk akun yang sudah didaftarkan sebelumnya oleh Superadmin atau Admin Instansi/Institusi. Akun baru tidak dibuat otomatis.",
-            [
-                { text: "Batal", style: "cancel" },
-                {
-                    text: "Lanjutkan Masuk",
-                    onPress: async () => {
-                        setLoading(true)
-                        setError(null)
-                        try {
-                            const res = await loginWithGoogle({
-                                email: "user.google@gmail.com",
-                                name: "Pengguna Google",
-                                google_id: "google_mobile_" + Date.now(),
-                            })
-                            if (res.status && res.user) {
-                                const level = (res.user.level || '').trim().toLowerCase();
-                                if (level === 'health consultant') {
-                                    navigation.reset({ index: 0, routes: [{ name: "HomeHealthConsultant" }] })
-                                } else if (level === 'health monitor') {
-                                    navigation.reset({ index: 0, routes: [{ name: "HomeHealthMonitor" }] })
-                                } else {
-                                    navigation.reset({ index: 0, routes: [{ name: "HomeMember" }] })
-                                }
-                            } else {
-                                const failMsg = res.message || "Login Google gagal: Akun belum terdaftar."
-                                setError(failMsg)
-                                Alert.alert("Login Gagal", failMsg)
-                            }
-                        } catch (err: any) {
-                            const msg = err?.response?.data?.message || err?.message || "Login Google gagal: Akun belum terdaftar di sistem."
-                            setError(msg)
-                            Alert.alert("Login Gagal", msg)
-                        } finally {
-                            setLoading(false)
-                        }
-                    },
-                },
-            ]
-        )
+        setLoading(true)
+        setError(null)
+        try {
+            // 1. Munculkan dialog akun Google resmi Android
+            const googleAccount = await promptGoogleSignIn()
+
+            // 2. Kirim data akun beserta id_token asli ke server
+            const res = await loginWithGoogle({
+                email: googleAccount.email,
+                name: googleAccount.name,
+                google_id: googleAccount.id,
+                avatar: googleAccount.photoUrl,
+                id_token: googleAccount.idToken,
+            })
+
+            if (res.status && res.user) {
+                const level = (res.user.level || '').trim().toLowerCase();
+                if (level === 'health consultant') {
+                    navigation.reset({ index: 0, routes: [{ name: "HomeHealthConsultant" }] })
+                } else if (level === 'health monitor') {
+                    navigation.reset({ index: 0, routes: [{ name: "HomeHealthMonitor" }] })
+                } else {
+                    navigation.reset({ index: 0, routes: [{ name: "HomeMember" }] })
+                }
+            } else {
+                const failMsg = res.message || "Login Google gagal: Akun belum terdaftar di sistem sekolah/institusi."
+                setError(failMsg)
+                Alert.alert("Login Gagal", failMsg)
+            }
+        } catch (err: any) {
+            const rawMsg = err?.message || err?.response?.data?.message || "Terjadi kesalahan saat login Google."
+            if (rawMsg.toLowerCase().includes("batal") || rawMsg.toLowerCase().includes("cancel")) {
+                setError("Login Google dibatalkan.")
+            } else {
+                setError(rawMsg)
+                Alert.alert("Informasi Login Google", rawMsg)
+            }
+        } finally {
+            setLoading(false)
+        }
     }
 
     const isDisabled = useMemo(() => loading || !username || !password, [loading, username, password])

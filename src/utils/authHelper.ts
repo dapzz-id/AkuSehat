@@ -95,7 +95,7 @@ export const login = async (username: string, password: string) => {
   }
 };
 
-export const loginWithGoogle = async (googleData: { email: string; name: string; google_id: string; avatar?: string }) => {
+export const loginWithGoogle = async (googleData: { email: string; name: string; google_id: string; avatar?: string; id_token?: string }) => {
   try {
     const { data } = await api.post('/auth/google', googleData);
 

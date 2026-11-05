@@ -83,8 +83,8 @@ android {
         applicationId "neuracakrawira.asia.akusehat"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 4
-        versionName "1.0.3"
+        versionCode 5
+        versionName "1.0.4"
     }
     signingConfigs {
         release {
@@ -115,6 +115,8 @@ dependencies {
 
     // Google Play Integrity API
     implementation("com.google.android.play:integrity:1.4.0")
+    // Google Play Services Auth (Native Google Sign-In)
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
