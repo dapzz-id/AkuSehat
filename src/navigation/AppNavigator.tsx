@@ -33,6 +33,9 @@ const AppNavigatorContent = () => {
   const [isDebugVisible, setIsDebugVisible] = useState(false);
 
   useEffect(() => {
+    // Di mode production / release, mode debug dimatikan total seolah-olah tidak ada
+    if (!__DEV__) return;
+
     // Dengarkan auto-open trigger ketika terjadi error 500 atau unhandled exception
     const unsubscribeAutoOpen = debugLogger.onAutoOpenTrigger(() => {
       setIsDebugVisible(true);
@@ -137,11 +140,13 @@ const AppNavigatorContent = () => {
         />
       )}
 
-      {/* Floating Debug Button (Dapat diakses kapan saja untuk memeriksa status jaringan dan error) */}
-      <FloatingDebugButton onPress={() => setIsDebugVisible(true)} />
-
-      {/* Debug Activity Modal (Muncul otomatis saat terjadi status 500 atau unhandled exception) */}
-      <DebugModal visible={isDebugVisible} onClose={() => setIsDebugVisible(false)} />
+      {/* Floating Debug Button & Activity Modal - Khusus Mode Development (__DEV__) */}
+      {__DEV__ && (
+        <>
+          <FloatingDebugButton onPress={() => setIsDebugVisible(true)} />
+          <DebugModal visible={isDebugVisible} onClose={() => setIsDebugVisible(false)} />
+        </>
+      )}
     </View>
   );
 };

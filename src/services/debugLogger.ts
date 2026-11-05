@@ -4,6 +4,8 @@
  * untuk ditampilkan pada Debug Activity / Modal agar tidak force close.
  */
 
+import crashReporter from './crashReporter';
+
 export interface NetworkLogItem {
   id: string;
   timestamp: string;
@@ -103,6 +105,11 @@ class DebugLoggerService {
   }
 
   private triggerAutoOpen(item: ErrorLogItem | NetworkLogItem) {
+    // Mode release / production: Mode debug dilarang auto-open dan disembunyikan sepenuhnya
+    if (typeof __DEV__ !== 'undefined' && !__DEV__) {
+      return;
+    }
+
     this.autoOpenListeners.forEach((listener) => {
       try {
         listener(item);
@@ -195,6 +202,14 @@ class DebugLoggerService {
 
     this.notify();
     this.triggerAutoOpen(item);
+
+    // Di mode Production (!__DEV__), jika unhandled exception / fatal, laporkan ke backend Crash Analytics
+    if (typeof __DEV__ !== 'undefined' && !__DEV__ && meta.isFatal) {
+      crashReporter.sendCrashReport(
+        err instanceof Error ? err : new Error(message),
+        meta.componentStack
+      ).catch(() => {});
+    }
 
     return item;
   }
