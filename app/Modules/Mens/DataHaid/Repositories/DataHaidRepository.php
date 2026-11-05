@@ -435,4 +435,50 @@ class DataHaidRepository
                 'updated_at' => now()
             ]);
     }
+
+    public function getHaidRecordsWithFilters(string|int|null $instansiId, array $filters = []): Collection
+    {
+        if (empty($instansiId)) {
+            return collect();
+        }
+
+        $query = DataHaid::with(['user.divisi'])
+            ->whereHas('user', function ($q) use ($instansiId, $filters) {
+                $q->where('instansi_id', $instansiId);
+
+                if (!empty($filters['divisi_id'])) {
+                    $q->where('id_divisi', $filters['divisi_id']);
+                }
+
+                if (!empty($filters['search'])) {
+                    $search = $filters['search'];
+                    $q->where(function ($sq) use ($search) {
+                        $sq->where('nama', 'like', "%{$search}%")
+                          ->orWhere('nomor_induk', 'like', "%{$search}%")
+                          ->orWhere('username', 'like', "%{$search}%");
+                    });
+                }
+            });
+
+        if (!empty($filters['status']) && $filters['status'] !== 'semua') {
+            if ($filters['status'] === 'warning') {
+                $query->where(function ($q) {
+                    $q->where('durasi_hari', '>', 7)
+                      ->orWhere(function ($sub) {
+                          $sub->where('status', HaidStatus::BERLANGSUNG->value)
+                              ->where('tanggal_mulai', '<=', now()->subDays(7)->toDateString());
+                      });
+                });
+            } else {
+                $query->where('status', $filters['status']);
+            }
+        }
+
+        if (!empty($filters['month']) && !empty($filters['year'])) {
+            $query->whereYear('tanggal_mulai', $filters['year'])
+                  ->whereMonth('tanggal_mulai', $filters['month']);
+        }
+
+        return $query->orderBy('tanggal_mulai', 'desc')->get();
+    }
 }

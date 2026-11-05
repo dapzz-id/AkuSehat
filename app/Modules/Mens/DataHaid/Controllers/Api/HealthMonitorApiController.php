@@ -11,7 +11,9 @@ use App\Modules\Mens\DataHaid\Requests\GetOverdueWarningsRequest;
 use App\Modules\Mens\DataHaid\Requests\StorePitaPeminjamanRequest;
 use App\Modules\Mens\DataHaid\Requests\UpdatePitaPeminjamanRequest;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Modules\Mens\DataHaid\Enums\HaidStatus;
 
 class HealthMonitorApiController extends Controller
 {
@@ -175,5 +177,109 @@ class HealthMonitorApiController extends Controller
     public function warningTerlambat(GetOverdueWarningsRequest $request): JsonResponse
     {
         return $this->getOverdueWarnings($request);
+    }
+
+    public function getHaidRecords(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        $instansiId = $user?->instansi_id;
+
+        if (empty($instansiId)) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Data siklus menstruasi berhasil dimuat.',
+                'data' => [],
+                'divisions' => [],
+                'summary' => [
+                    'total_wanita' => 0,
+                    'sedang_haid' => 0,
+                    'selesai' => 0,
+                    'warning' => 0,
+                ],
+            ]);
+        }
+
+        $filters = [
+            'divisi_id' => $request->query('divisi_id'),
+            'status' => $request->query('status'),
+            'search' => $request->query('search'),
+            'month' => $request->query('month'),
+            'year' => $request->query('year'),
+        ];
+
+        $records = $this->dataHaidRepository->getHaidRecordsWithFilters($instansiId, $filters);
+
+        $formatted = $records->map(function ($h) {
+            $startDate = $h->tanggal_mulai ? (is_string($h->tanggal_mulai) ? $h->tanggal_mulai : $h->tanggal_mulai->format('Y-m-d')) : null;
+            $endDate = $h->tanggal_selesai ? (is_string($h->tanggal_selesai) ? $h->tanggal_selesai : $h->tanggal_selesai->format('Y-m-d')) : null;
+
+            $activeDays = 0;
+            if ($startDate) {
+                $startCarbon = \Carbon\Carbon::parse($startDate)->startOfDay();
+                $endCarbon = $endDate ? \Carbon\Carbon::parse($endDate)->startOfDay() : now()->startOfDay();
+                $activeDays = max(1, (int) $startCarbon->diffInDays($endCarbon) + 1);
+            }
+
+            $effectiveDurasi = $h->durasi_hari ?: $activeDays;
+            $isOverdue = $effectiveDurasi > 7;
+
+            return [
+                'id' => $h->id,
+                'id_user' => $h->id_user,
+                'user' => [
+                    'id' => $h->user?->id,
+                    'nama' => $h->user?->nama ?? 'Pengguna',
+                    'nomor_induk' => $h->user?->nomor_induk ?? '-',
+                    'avatar_url' => $h->user?->avatar_url,
+                    'level' => $h->user?->role_label ?? ($h->user?->level ?? 'Member'),
+                    'jk' => $h->user?->jk ?? 'P',
+                    'divisi' => $h->user?->divisi ? [
+                        'id' => $h->user->divisi->id,
+                        'divisi_name' => $h->user->divisi->divisi_name,
+                        'kategori' => $h->user->divisi->kategori,
+                        'color_cover' => $h->user->divisi->color_cover,
+                    ] : null,
+                ],
+                'tanggal_mulai' => $startDate,
+                'tanggal_selesai' => $endDate,
+                'durasi_hari' => $effectiveDurasi,
+                'status' => $h->status,
+                'catatan' => $h->catatan,
+                'is_overdue' => $isOverdue,
+                'hari_ke' => $h->status === HaidStatus::BERLANGSUNG->value ? $activeDays : null,
+                'created_at' => $h->created_at?->toISOString(),
+            ];
+        });
+
+        // Divisions list in institution with total female count
+        $divisions = \App\Models\Divisi::where('instansi_id', $instansiId)
+            ->withCount(['users as total_female' => function ($q) {
+                $q->where('jk', 'P');
+            }])
+            ->orderBy('divisi_name')
+            ->get(['id', 'divisi_name', 'kategori', 'color_cover']);
+
+        // Summary counts
+        $totalWanita = \App\Models\User::where('instansi_id', $instansiId)->where('jk', 'P')->count();
+        $sedangHaid = \App\Models\DataHaid::whereHas('user', fn($q) => $q->where('instansi_id', $instansiId))
+            ->where('status', HaidStatus::BERLANGSUNG->value)
+            ->count();
+        $selesai = \App\Models\DataHaid::whereHas('user', fn($q) => $q->where('instansi_id', $instansiId))
+            ->where('status', HaidStatus::SELESAI->value)
+            ->count();
+        $warnings = $formatted->filter(fn($x) => $x['is_overdue'])->count();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Data siklus menstruasi berhasil dimuat.',
+            'data' => $formatted,
+            'divisions' => $divisions,
+            'summary' => [
+                'total_wanita' => $totalWanita,
+                'sedang_haid' => $sedangHaid,
+                'selesai' => $selesai,
+                'warning' => $warnings,
+            ],
+        ]);
     }
 }
