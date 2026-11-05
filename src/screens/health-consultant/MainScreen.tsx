@@ -328,12 +328,17 @@ const HomeScreenHealthConsultant = () => {
         setLoadingProfile(true)
         setLoadingNotif(true)
         setError(null)
-        const [sumRes, divisiRes, meRes, notifRes] = await Promise.all([
+        const results = await Promise.allSettled([
           api.get("/health-consultant/health-summary"),
           api.get("/health-consultant/health-by-division"),
           api.get("/me"),
           api.get("/health-consultant/health-notification"),
         ])
+        const sumRes = results[0].status === 'fulfilled' ? results[0].value : null
+        const divisiRes = results[1].status === 'fulfilled' ? results[1].value : null
+        const meRes = results[2].status === 'fulfilled' ? results[2].value : null
+        const notifRes = results[3].status === 'fulfilled' ? results[3].value : null
+
         setSummary(sumRes?.data?.data || sumRes?.data || null)
         const rawDivisi = divisiRes?.data?.data ?? divisiRes?.data
         setDivisi(Array.isArray(rawDivisi) ? rawDivisi : [])

@@ -287,11 +287,14 @@ const HomeScreenHealthMonitor = () => {
       setLoadingPeminjaman(true);
       setLoadingProfile(true);
       setLoadingWarning(true);
-      const [peminjamanRes, meRes, warningRes] = await Promise.all([
+      const results = await Promise.allSettled([
         api.get("/health-monitor"),
         api.get("/me"),
         api.get("/health-monitor/warning"),
       ]);
+      const peminjamanRes = results[0].status === 'fulfilled' ? results[0].value : null;
+      const meRes = results[1].status === 'fulfilled' ? results[1].value : null;
+      const warningRes = results[2].status === 'fulfilled' ? results[2].value : null;
       const rawPeminjaman = peminjamanRes?.data?.data ?? peminjamanRes?.data;
       const peminjamanData = Array.isArray(rawPeminjaman) ? rawPeminjaman : [];
       setPeminjaman(peminjamanData);
