@@ -199,8 +199,8 @@ const HomeScreenHealthConsultant = () => {
     },
     {
       key: "pita",
-      label: "Pita UKS",
-      icon: <Icon name="clipboard" size={20} />,
+      label: "Siklus Mens",
+      icon: <Icon name="heart" size={20} />,
       badgeCount: latePitaCount > 0 ? latePitaCount : undefined,
     },
     { key: "profil", label: "Profil", icon: <Icon name="user" size={20} /> },

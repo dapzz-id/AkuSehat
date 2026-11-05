@@ -16,3 +16,4 @@ class StatusBarColorPackage : ReactPackage {
         return emptyList()
     }
 }
+

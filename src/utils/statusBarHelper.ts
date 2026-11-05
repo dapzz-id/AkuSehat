@@ -18,3 +18,4 @@ export const setAppStatusBarTheme = (backgroundColor: string, isDark: boolean) =
 };
 
 export default setAppStatusBarTheme;
+
