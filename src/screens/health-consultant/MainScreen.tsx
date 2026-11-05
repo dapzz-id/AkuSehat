@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useMemo, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import {
   ActivityIndicator,
   Animated,
@@ -36,6 +36,7 @@ import useRealtimeSystemSync from "../../hooks/useRealtimeSystemSync";
 import { checkAppUpdate, type SoftwareReleaseData } from "../../api/appUpdateService";
 import CounselingConsultantView from "./CounselingConsultantView";
 import FemHealthConsultantView from "./FemHealthConsultantView";
+import RunTrackerView from "../member/RunTrackerView";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window")
 const guidelineBaseWidth = 375
@@ -79,7 +80,29 @@ type DivisiItem = {
   normal?: number
   data_member?: Member[]
 }
-type Profile = { id: string | number; nama: string; username: string; email?: string; avatar?: string | null; level?: string; nomor_induk?: string; id_divisi?: string | number; divisi?: string; color_cover?: string; tertiary_color?: string; jk?: "L" | "P"; instansi?: { id: string | number; nama_instansi?: string; jenis_instansi?: string } }
+type Profile = {
+  id: string | number;
+  nama: string;
+  username: string;
+  email?: string;
+  avatar?: string | null;
+  level?: string;
+  role_label?: string;
+  nomor_induk?: string;
+  id_divisi?: string | number;
+  divisi?: string;
+  color_cover?: string;
+  tertiary_color?: string;
+  jk?: "L" | "P";
+  active_modules?: string[];
+  module_permissions?: any;
+  instansi?: {
+    id: string | number;
+    nama_instansi?: string;
+    jenis_instansi?: string;
+    active_modules?: string[];
+  };
+}
 type Notif = {
   id_kesehatan: string | number
   id_user: string | number
@@ -188,23 +211,78 @@ const HomeScreenHealthConsultant = () => {
   const [loadingNotif, setLoadingNotif] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const tabs: TabItem[] = useMemo(() => [
-    { key: "ringkasan", label: "Ringkasan", icon: <Icon name="home" size={20} /> },
-    { key: "divisi", label: "Divisi", icon: <Icon name="users" size={20} /> },
-    {
-      key: "konseling",
-      label: "SafeSpace",
-      icon: <Icon name="message-square" size={20} />,
-      badgeCount: pendingCounselingCount > 0 ? pendingCounselingCount : undefined,
-    },
-    {
-      key: "pita",
-      label: "Siklus Mens",
-      icon: <Icon name="heart" size={20} />,
-      badgeCount: latePitaCount > 0 ? latePitaCount : undefined,
-    },
-    { key: "profil", label: "Profil", icon: <Icon name="user" size={20} /> },
-  ], [pendingCounselingCount, latePitaCount])
+  const userMods: string[] = useMemo(() => {
+    if (Array.isArray(profile?.active_modules)) {
+      return profile.active_modules;
+    }
+    if (Array.isArray(profile?.instansi?.active_modules)) {
+      return profile.instansi.active_modules;
+    }
+    return [];
+  }, [profile]);
+
+  const isModActive = useCallback((modKey: string, action: 'create' | 'read' | 'update' | 'delete' = 'read'): boolean => {
+    if (!profile) return true; // tetap tampil saat initial load
+
+    // 1. Cek User Custom Permissions Matrix jika akun memiliki override khusus
+    const userMatrix = profile.module_permissions?.modules?.[modKey];
+    if (userMatrix) {
+      const actShort = action[0]; // 'c', 'r', 'u', 'd'
+      if (userMatrix[actShort] !== undefined) return Boolean(userMatrix[actShort]);
+      if (userMatrix[action] !== undefined) return Boolean(userMatrix[action]);
+    }
+
+    // 2. Cek active_modules array
+    return userMods.includes(modKey);
+  }, [profile, userMods]);
+
+  const tabs: TabItem[] = useMemo(() => {
+    const list: TabItem[] = [
+      { key: "ringkasan", label: "Ringkasan", icon: <Icon name="home" size={20} /> },
+      { key: "divisi", label: "Divisi", icon: <Icon name="users" size={20} /> },
+    ];
+
+    if (isModActive('konsultasi')) {
+      list.push({
+        key: "konseling",
+        label: "SafeSpace",
+        icon: <Icon name="message-square" size={20} />,
+        badgeCount: pendingCounselingCount > 0 ? pendingCounselingCount : undefined,
+      });
+    }
+
+    if (isModActive('haid_pita')) {
+      list.push({
+        key: "pita",
+        label: "Siklus Mens",
+        icon: <Icon name="heart" size={20} />,
+        badgeCount: latePitaCount > 0 ? latePitaCount : undefined,
+      });
+    }
+
+    if (isModActive('olahraga')) {
+      list.push({
+        key: "olahraga",
+        label: "Run Tracker",
+        icon: <Icon name="activity" size={20} />,
+      });
+    }
+
+    list.push({ key: "profil", label: "Profil", icon: <Icon name="user" size={20} /> });
+
+    return list;
+  }, [isModActive, pendingCounselingCount, latePitaCount]);
+
+  // Fallback jika tab aktif dinonaktifkan oleh Admin
+  useEffect(() => {
+    if (active === "pita" && !isModActive('haid_pita')) {
+      setActive("ringkasan");
+    } else if (active === "konseling" && !isModActive('konsultasi')) {
+      setActive("ringkasan");
+    } else if (active === "olahraga" && !isModActive('olahraga')) {
+      setActive("ringkasan");
+    }
+  }, [active, isModActive]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [detailModalVisible, setDetailModalVisible] = useState(false)
   const [filterYear, setFilterYear] = useState<string>("")
@@ -964,19 +1042,25 @@ const HomeScreenHealthConsultant = () => {
             </View>
           )}
 
-          {active === "konseling" && (
+          {active === "konseling" && isModActive('konsultasi') && (
             <CounselingConsultantView
               themeColor={tertiaryColor}
               onPendingCountChange={setPendingCounselingCount}
             />
           )}
 
-          {active === "pita" && (
+          {active === "pita" && isModActive('haid_pita') && (
             <FemHealthConsultantView
               themeColor={tertiaryColor}
               jenisInstansi={profile?.instansi?.jenis_instansi}
               onLateCountChange={setLatePitaCount}
             />
+          )}
+
+          {active === "olahraga" && isModActive('olahraga') && (
+            <View style={{ gap: verticalScale(12) }}>
+              <RunTrackerView />
+            </View>
           )}
 
           {active === "notifikasi" && (
@@ -1236,7 +1320,11 @@ const HomeScreenHealthConsultant = () => {
                       </View>
                       <View style={styles.rowBetween}>
                         <Text style={styles.mutedText}>Divisi</Text>
-                        <Text style={styles.listTitle}>{selectedMember.divisi}</Text>
+                        <Text style={styles.listTitle}>
+                          {typeof selectedMember.divisi === "object"
+                            ? ((selectedMember.divisi as any)?.divisi_name || (selectedMember.divisi as any)?.nama_divisi || "-")
+                            : (selectedMember.divisi || "-")}
+                        </Text>
                       </View>
                       <View style={styles.rowBetween}>
                         <Text style={styles.mutedText}>Jenis Kelamin</Text>

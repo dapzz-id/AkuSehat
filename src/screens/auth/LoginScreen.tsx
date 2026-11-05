@@ -158,11 +158,18 @@ const LoginScreen = ({ navigation }: any) => {
                 fcmService.registerDeviceToken();
 
                 const userLevel = (dataLogin.user?.level || '').trim().toLowerCase();
+                const isMonitorOrAdmin =
+                    userLevel === "health monitor" ||
+                    userLevel === "admin" ||
+                    userLevel === "admin pmr" ||
+                    userLevel === "admin instansi" ||
+                    userLevel === "superadmin";
+
                 if (userLevel === "member") {
                     navigation.reset({ index: 0, routes: [{ name: "HomeMember" }] })
                 } else if (userLevel === "health consultant") {
                     navigation.reset({ index: 0, routes: [{ name: "HomeHealthConsultant" }] })
-                } else if (userLevel === "health monitor") {
+                } else if (isMonitorOrAdmin) {
                     navigation.reset({ index: 0, routes: [{ name: "HomeHealthMonitor" }] })
                 } else {
                     navigation.reset({ index: 0, routes: [{ name: "HomeMember" }] })
@@ -205,9 +212,16 @@ const LoginScreen = ({ navigation }: any) => {
                 fcmService.registerDeviceToken();
 
                 const level = (res.user.level || '').trim().toLowerCase();
+                const isMonitorOrAdmin =
+                    level === "health monitor" ||
+                    level === "admin" ||
+                    level === "admin pmr" ||
+                    level === "admin instansi" ||
+                    level === "superadmin";
+
                 if (level === 'health consultant') {
                     navigation.reset({ index: 0, routes: [{ name: "HomeHealthConsultant" }] })
-                } else if (level === 'health monitor') {
+                } else if (isMonitorOrAdmin) {
                     navigation.reset({ index: 0, routes: [{ name: "HomeHealthMonitor" }] })
                 } else {
                     navigation.reset({ index: 0, routes: [{ name: "HomeMember" }] })

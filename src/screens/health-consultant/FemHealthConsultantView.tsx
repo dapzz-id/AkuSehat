@@ -760,9 +760,11 @@ export default function FemHealthConsultantView({
               haidRecords.map((item) => {
                 const isOverdue = item.is_overdue
                 const isBerlangsung = item.status === "berlangsung"
-                const isGuru = item.user?.level?.toLowerCase() === "guru"
+                const userLevelLower = (item.user?.level || '').toLowerCase()
+                const isGuru = userLevelLower === "guru" || userLevelLower.includes("guru") || (item.user?.divisi?.divisi_name || '').toLowerCase().includes("guru")
                 const divisiObj = item.user?.divisi
-                const divisiTitle = getDivisiTitle(divisiObj?.divisi_name) || "Tanpa Divisi"
+                const rawDivisiName = typeof divisiObj === 'object' ? (divisiObj?.divisi_name || (divisiObj as any)?.nama_divisi) : divisiObj
+                const divisiTitle = getDivisiTitle(rawDivisiName) || "Tanpa Divisi"
 
                 return (
                   <View

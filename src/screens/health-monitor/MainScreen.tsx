@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from "react"
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react"
 import {
   Animated,
   StatusBar,
@@ -26,6 +26,9 @@ import api from "../../api/axiosConfig"
 import AnimatedBottomTabs, { type TabItem } from "../../components/AnimatedBottomTabs"
 import RunTrackerMonitorView from "./RunTrackerMonitorView"
 import CounselingConsultantView from "../health-consultant/CounselingConsultantView"
+import FemHealthConsultantView from "../health-consultant/FemHealthConsultantView"
+import RunTrackerView from "../member/RunTrackerView"
+import { useTheme } from "../../theme/ThemeContext"
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import EditProfileModal from "../../components/EditProfileModal";
 import ChangelogModal from "../../components/ChangelogModal";
@@ -69,10 +72,15 @@ type Profile = {
   email?: string
   avatar?: string | null
   level?: string
+  role_label?: string
   jk?: "L" | "P"
+  active_modules?: string[]
+  module_permissions?: any
   instansi?: {
     id: string | number
     nama_instansi?: string
+    jenis_instansi?: string
+    active_modules?: string[]
   }
 }
 type Member = {
@@ -94,6 +102,7 @@ const horizontalScale = (size: number) => (SCREEN_WIDTH / guidelineBaseWidth) * 
 const verticalScale = (size: number) => (SCREEN_HEIGHT / guidelineBaseHeight) * size
 const moderateScale = (size: number, factor = 0.5) => size + (horizontalScale(size) - size) * factor
 const HomeScreenHealthMonitor = () => {
+  const { theme, isDark } = useTheme()
   const [active, setActive] = useState("dashboard")
   const fadeMount = useRef(new Animated.Value(0)).current
   const slideMount = useRef(new Animated.Value(16)).current
@@ -212,18 +221,76 @@ const HomeScreenHealthMonitor = () => {
   const [warningList, setWarningList] = useState<Peminjaman[]>([])
   const [loadingWarning, setLoadingWarning] = useState(false)
   const [pendingCounselingCount, setPendingCounselingCount] = useState<number>(0)
-  const tabs: TabItem[] = useMemo(() => [
-    { key: "dashboard", label: "Dasbor", icon: <Icon name="home" size={20} /> },
-    { key: "olahraga", label: "Run Tracker", icon: <Icon name="activity" size={20} /> },
-    {
-      key: "konseling",
-      label: "SafeSpace",
-      icon: <Icon name="message-square" size={20} />,
-      badgeCount: pendingCounselingCount > 0 ? pendingCounselingCount : undefined,
-    },
-    { key: "peminjaman", label: "Pita UKS", icon: <Icon name="clipboard" size={20} /> },
-    { key: "profil", label: "Profil", icon: <Icon name="user" size={20} /> },
-  ], [pendingCounselingCount]);
+  const [latePitaCount, setLatePitaCount] = useState<number>(0)
+  const [olahragaMode, setOlahragaMode] = useState<"monitor" | "tracker">("monitor")
+
+  const userMods: string[] = useMemo(() => {
+    if (Array.isArray(profile?.active_modules)) {
+      return profile.active_modules;
+    }
+    if (Array.isArray(profile?.instansi?.active_modules)) {
+      return profile.instansi.active_modules;
+    }
+    return [];
+  }, [profile]);
+
+  const isModActive = useCallback((modKey: string, action: 'create' | 'read' | 'update' | 'delete' = 'read'): boolean => {
+    if (!profile) return true; // tetap tampil saat initial load
+
+    // 1. Cek User Custom Permissions Matrix jika akun memiliki override khusus
+    const userMatrix = profile.module_permissions?.modules?.[modKey];
+    if (userMatrix) {
+      const actShort = action[0]; // 'c', 'r', 'u', 'd'
+      if (userMatrix[actShort] !== undefined) return Boolean(userMatrix[actShort]);
+      if (userMatrix[action] !== undefined) return Boolean(userMatrix[action]);
+    }
+
+    // 2. Cek active_modules array
+    return userMods.includes(modKey);
+  }, [profile, userMods]);
+
+  const tabs: TabItem[] = useMemo(() => {
+    const list: TabItem[] = [
+      { key: "dashboard", label: "Dasbor", icon: <Icon name="home" size={20} /> },
+    ];
+
+    if (isModActive('olahraga')) {
+      list.push({ key: "olahraga", label: "Run Tracker", icon: <Icon name="activity" size={20} /> });
+    }
+
+    if (isModActive('konsultasi')) {
+      list.push({
+        key: "konseling",
+        label: "SafeSpace",
+        icon: <Icon name="message-square" size={20} />,
+        badgeCount: pendingCounselingCount > 0 ? pendingCounselingCount : undefined,
+      });
+    }
+
+    if (isModActive('haid_pita')) {
+      list.push({
+        key: "peminjaman",
+        label: "Siklus Mens",
+        icon: <Icon name="heart" size={20} />,
+        badgeCount: latePitaCount > 0 ? latePitaCount : undefined,
+      });
+    }
+
+    list.push({ key: "profil", label: "Profil", icon: <Icon name="user" size={20} /> });
+
+    return list;
+  }, [isModActive, pendingCounselingCount, latePitaCount]);
+
+  // Fallback jika tab aktif dinonaktifkan oleh Admin
+  useEffect(() => {
+    if (active === "peminjaman" && !isModActive('haid_pita')) {
+      setActive("dashboard");
+    } else if (active === "olahraga" && !isModActive('olahraga')) {
+      setActive("dashboard");
+    } else if (active === "konseling" && !isModActive('konsultasi')) {
+      setActive("dashboard");
+    }
+  }, [active, isModActive]);
   const [modalVisible, setModalVisible] = useState(false)
   const [modalType, setModalType] = useState<'return' | 'delete' | 'verify'>('return')
   const [selectedItem, setSelectedItem] = useState<Peminjaman | null>(null)
@@ -354,7 +421,9 @@ const HomeScreenHealthMonitor = () => {
       id: item?.user?.id || 0,
       nama: item?.user?.nama || '-',
       nomor_induk: item?.user?.nomor_induk || '-',
-      divisi_name: item?.user?.divisi || '-',
+      divisi_name: typeof item?.user?.divisi === 'object'
+        ? ((item?.user?.divisi as any)?.divisi_name || (item?.user?.divisi as any)?.nama_divisi || '-')
+        : (item?.user?.divisi || '-'),
       jk: 'P',
     })
     setFormData({
@@ -740,11 +809,74 @@ const HomeScreenHealthMonitor = () => {
           </View>
         </Animated.View>
         <Animated.View style={{ opacity: fadeTab }}>
-          {active === "olahraga" && (
-            <RunTrackerMonitorView themeColor={tertiaryColor} />
+          {active === "olahraga" && isModActive('olahraga') && (
+            <View style={{ gap: verticalScale(12) }}>
+              {/* Segmented Switcher: Monitoring vs Tracker Pribadi */}
+              <View style={{
+                flexDirection: 'row',
+                backgroundColor: isDark ? 'rgba(30, 41, 59, 0.7)' : '#F1F5F9',
+                borderRadius: moderateScale(14),
+                padding: 4,
+                marginBottom: verticalScale(4),
+              }}>
+                <Pressable
+                  onPress={() => setOlahragaMode("monitor")}
+                  style={{
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    paddingVertical: verticalScale(8),
+                    borderRadius: moderateScale(10),
+                    backgroundColor: olahragaMode === "monitor" ? (isDark ? '#334155' : Colors.white) : 'transparent',
+                    elevation: olahragaMode === "monitor" ? 2 : 0,
+                  }}
+                >
+                  <Icon name="bar-chart-2" size={15} color={olahragaMode === "monitor" ? tertiaryColor : Colors.muted} />
+                  <Text style={{
+                    fontSize: moderateScale(12),
+                    fontWeight: '700',
+                    color: olahragaMode === "monitor" ? tertiaryColor : Colors.muted,
+                  }}>
+                    Monitoring Siswa
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => setOlahragaMode("tracker")}
+                  style={{
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    paddingVertical: verticalScale(8),
+                    borderRadius: moderateScale(10),
+                    backgroundColor: olahragaMode === "tracker" ? (isDark ? '#334155' : Colors.white) : 'transparent',
+                    elevation: olahragaMode === "tracker" ? 2 : 0,
+                  }}
+                >
+                  <Icon name="navigation" size={15} color={olahragaMode === "tracker" ? tertiaryColor : Colors.muted} />
+                  <Text style={{
+                    fontSize: moderateScale(12),
+                    fontWeight: '700',
+                    color: olahragaMode === "tracker" ? tertiaryColor : Colors.muted,
+                  }}>
+                    Tracker Saya (GPS)
+                  </Text>
+                </Pressable>
+              </View>
+
+              {olahragaMode === "monitor" ? (
+                <RunTrackerMonitorView themeColor={tertiaryColor} />
+              ) : (
+                <RunTrackerView />
+              )}
+            </View>
           )}
 
-          {active === "konseling" && (
+          {active === "konseling" && isModActive('konsultasi') && (
             <CounselingConsultantView
               themeColor={tertiaryColor}
               onPendingCountChange={setPendingCounselingCount}
@@ -874,159 +1006,12 @@ const HomeScreenHealthMonitor = () => {
               )}
             </View>
           )}
-          {active === "peminjaman" && (
-            <View style={{ gap: verticalScale(12) }}>
-              <Card>
-                <View style={styles.cardHeader}>
-                  <View style={styles.cardIconBg}>
-                    <Icon name="clipboard" size={20} color="#ec4899" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.cardTitle}>
-                      {showNonActive ? 'Verifikasi Peminjaman' : 'Peminjaman Pita'}
-                    </Text>
-                    <Text style={styles.cardSubtitle}>
-                      {showNonActive
-                        ? 'Manajemen permintaan peminjaman yang menunggu verifikasi'
-                        : 'Manajemen peminjaman pita member yang sudah diverifikasi'
-                      }
-                    </Text>
-                  </View>
-                  <Pressable
-                    style={styles.addButton}
-                    onPress={openCreateForm}
-                  >
-                    <Icon name="plus" size={16} color={Colors.white} />
-                  </Pressable>
-                </View>
-              </Card>
-              {/* Search Box dan Filter Non-Active */}
-              <Card style={{ padding: moderateScale(12) }}>
-                <View style={styles.searchContainer}>
-                  <View style={styles.searchInputContainer}>
-                    <Icon name="search" size={16} color={Colors.muted} />
-                    <TextInput
-                      value={searchQuery}
-                      onChangeText={setSearchQuery}
-                      placeholder="Cari berdasarkan Nama atau Nomor Induk..."
-                      placeholderTextColor={Colors.muted}
-                      style={styles.searchInput}
-                    />
-                    {searchQuery !== '' && (
-                      <Pressable onPress={() => setSearchQuery('')}>
-                        <Icon name="x" size={16} color={Colors.muted} />
-                      </Pressable>
-                    )}
-                  </View>
-
-                  <Pressable
-                    style={[styles.nonActiveToggle, showNonActive && styles.nonActiveToggleActive]}
-                    onPress={() => setShowNonActive(!showNonActive)}
-                  >
-                    <Icon
-                      name={showNonActive ? "check-square" : "square"}
-                      size={16}
-                      color={showNonActive ? Colors.white : Colors.muted}
-                    />
-                    <Text style={[styles.nonActiveText, showNonActive && styles.nonActiveTextActive]}>
-                      Belum Diverifikasi
-                      {!showNonActive && dashboardData.menunggu_verifikasi > 0 && (
-                        <Text style={{ color: '#ef4444' }}> ({dashboardData.menunggu_verifikasi})</Text>
-                      )}
-                    </Text>
-                  </Pressable>
-                </View>
-              </Card>
-              {/* Filter Status - hanya tampil untuk yang sudah diverifikasi */}
-              {!showNonActive && (
-                <Card style={{ padding: moderateScale(12) }}>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <View style={styles.filterContainer}>
-                      {/* Filter Buttons - Semua */}
-                      <FilterButton
-                        label="Semua"
-                        active={filterStatus === "all"}
-                        onPress={() => setFilterStatus("all")}
-                      />
-                      {/* Filter Buttons - Status Dipinjam */}
-                      <FilterButton
-                        label="Dipinjam"
-                        active={filterStatus === "dipinjam"}
-                        onPress={() => setFilterStatus("dipinjam")}
-                      />
-                      {/* Filter Buttons - Status Dikembalikan */}
-                      <FilterButton
-                        label="Dikembalikan"
-                        active={filterStatus === "dikembalikan"}
-                        onPress={() => setFilterStatus("dikembalikan")}
-                      />
-                      {/* Filter Buttons - Status Terlambat */}
-                      <FilterButton
-                        label="Terlambat"
-                        active={filterStatus === "terlambat"}
-                        onPress={() => setFilterStatus("terlambat")}
-                      />
-                      {/* Filter Buttons - Status Ditolak */}
-                      <FilterButton
-                        label="Ditolak"
-                        active={filterStatus === "ditolak"}
-                        onPress={() => setFilterStatus("ditolak")}
-                      />
-                    </View>
-                  </ScrollView>
-                </Card>
-              )}
-              {loadingPeminjaman ? (
-                <Card>
-                  <View style={styles.centerRow}>
-                    <ActivityIndicator color={Colors.primary} />
-                    <Text style={styles.mutedText}>Memuat...</Text>
-                  </View>
-                </Card>
-              ) : filteredPeminjaman.length === 0 ? (
-                <Card>
-                  <View style={styles.emptyState}>
-                    <Icon name="clipboard" size={40} color={Colors.muted} />
-                    <Text style={[styles.mutedText, { textAlign: 'center', marginTop: 8 }]}>
-                      {showNonActive ?
-                        "Tidak ada peminjaman yang belum diverifikasi" :
-                        "Tidak ada data peminjaman"
-                      }
-                    </Text>
-                  </View>
-                </Card>
-              ) : (
-                filteredPeminjaman.map((item) => (
-                  <PeminjamanCard
-                    key={item.id}
-                    item={item}
-                    formatDate={formatDate}
-                    calculateLatedays={calculateLatedays}
-                    onEdit={() => openEditForm(item)}
-                    onReturn={() => {
-                      setSelectedItem(item)
-                      setModalType('return')
-                      setModalVisible(true)
-                    }}
-                    onDelete={() => {
-                      setSelectedItem(item)
-                      setModalType('delete')
-                      setModalVisible(true)
-                    }}
-                    onVerify={() => {
-                      setSelectedItem(item)
-                      setModalType('verify')
-                      setModalVisible(true)
-                    }}
-                    onReject={() => {
-                      setSelectedItem(item)
-                      setRejectModalVisible(true)
-                    }}
-                    showNonActive={showNonActive}
-                  />
-                ))
-              )}
-            </View>
+          {active === "peminjaman" && isModActive('haid_pita') && (
+            <FemHealthConsultantView
+              themeColor={tertiaryColor}
+              jenisInstansi={profile?.instansi?.jenis_instansi}
+              onLateCountChange={setLatePitaCount}
+            />
           )}
           {active === "warning" && (
             <View style={{ gap: verticalScale(12) }}>
@@ -1881,7 +1866,13 @@ const FormModal = ({ visible, mode, memberList, selectedMember, formData, loadin
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.userName, { fontSize: moderateScale(13) }]}>{selectedMember.nama}</Text>
-                    <Text style={[styles.userNoInduk, { fontSize: moderateScale(11) }]}>Nomor Induk: {selectedMember.nomor_induk} • {selectedMember.divisi || '-'}</Text>
+                    <Text style={[styles.userNoInduk, { fontSize: moderateScale(11) }]}>
+                      Nomor Induk: {selectedMember.nomor_induk} • {
+                        typeof selectedMember.divisi === "object"
+                          ? ((selectedMember.divisi as any)?.divisi_name || (selectedMember.divisi as any)?.nama_divisi || '-')
+                          : (selectedMember.divisi || '-')
+                      }
+                    </Text>
                   </View>
                   <View style={[styles.lockedBadge, { padding: moderateScale(6), borderRadius: moderateScale(6) }]}>
                     <Icon name="lock" size={moderateScale(12)} color={Colors.muted} />

@@ -56,10 +56,16 @@ const AppNavigatorContent = () => {
             setInitialRoute('HomeMember');
           } else if (level === 'health consultant') {
             setInitialRoute('HomeHealthConsultant');
-          } else if (level === 'health monitor') {
+          } else if (
+            level === 'health monitor' ||
+            level === 'admin' ||
+            level === 'admin pmr' ||
+            level === 'admin instansi' ||
+            level === 'superadmin'
+          ) {
             setInitialRoute('HomeHealthMonitor');
           } else {
-            setInitialRoute('Login');
+            setInitialRoute('HomeMember');
           }
 
           // Inisialisasi token FCM dan listener saat user terotentikasi
