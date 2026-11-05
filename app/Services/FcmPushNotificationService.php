@@ -62,16 +62,14 @@ class FcmPushNotificationService
         }
 
         $projectId = trim((string) config('services.fcm.project_id'));
-        $serviceAccountPath = trim((string) config('services.fcm.service_account_json', 'firebase-service-account.json'));
+        $serviceAccountConfig = trim((string) config('services.fcm.service_account_json', 'google/firebase-service-account.json'));
         $serverKey = trim((string) config('services.fcm.server_key'));
 
-        // Cek path file service account (bisa relative dari storage/app atau absolute)
-        $realServiceAccountPath = file_exists($serviceAccountPath) 
-            ? $serviceAccountPath 
-            : storage_path('app/' . $serviceAccountPath);
+        // Cek path file service account secara fleksibel
+        $realServiceAccountPath = $this->resolveServiceAccountPath($serviceAccountConfig);
 
         // Prioritas 1 (STANDAR UTAMA): FCM HTTP v1 API dengan Service Account JSON
-        if (file_exists($realServiceAccountPath)) {
+        if ($realServiceAccountPath && file_exists($realServiceAccountPath)) {
             // Otomatis ekstrak project_id dari file jika tidak diisi di .env
             if (empty($projectId)) {
                 $rawKey = @json_decode(file_get_contents($realServiceAccountPath), true);
@@ -245,11 +243,50 @@ class FcmPushNotificationService
     }
 
     /**
+     * Resolusi path file service account secara fleksibel
+     */
+    public function resolveServiceAccountPath(string $inputPath): ?string
+    {
+        $inputPath = trim($inputPath);
+        $candidates = [
+            $inputPath,
+            base_path($inputPath),
+            storage_path('app/' . ltrim($inputPath, '/\\')),
+            storage_path('app/google/' . ltrim($inputPath, '/\\')),
+            base_path('storage/app/' . ltrim($inputPath, '/\\')),
+            storage_path('app/' . preg_replace('#^storage/app/#', '', ltrim($inputPath, '/\\'))),
+        ];
+
+        // Jika user memasukkan nama folder (misal: storage/app/google/ atau google/)
+        foreach ([$inputPath, base_path($inputPath), storage_path('app/' . ltrim($inputPath, '/\\'))] as $dirCandidate) {
+            if (!empty($dirCandidate) && is_dir($dirCandidate)) {
+                $candidates[] = rtrim($dirCandidate, '/\\') . '/firebase-service-account.json';
+                $foundJsons = glob(rtrim($dirCandidate, '/\\') . '/*.json');
+                if ($foundJsons) {
+                    $candidates = array_merge($candidates, $foundJsons);
+                }
+            }
+        }
+
+        // Cek juga default fallback: storage/app/google/firebase-service-account.json dan storage/app/firebase-service-account.json
+        $candidates[] = storage_path('app/google/firebase-service-account.json');
+        $candidates[] = storage_path('app/firebase-service-account.json');
+
+        foreach ($candidates as $cand) {
+            if (!empty($cand) && is_file($cand)) {
+                return realpath($cand) ?: $cand;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Dapatkan OAuth2 Access Token dari Service Account JSON
      */
     protected function getGoogleAccessToken(string $path): ?string
     {
-        $realPath = file_exists($path) ? $path : storage_path('app/' . $path);
+        $realPath = $this->resolveServiceAccountPath($path) ?: $path;
         if (!file_exists($realPath)) {
             Log::error("FCM Service Account file tidak ditemukan di: {$realPath}");
             return null;
