@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -20,13 +21,16 @@
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       android:usesCleartextTraffic="${usesCleartextTraffic}"
-      android:supportsRtl="true">
+      android:supportsRtl="true"
+      android:hardwareAccelerated="true">
       <meta-data
         android:name="com.google.firebase.messaging.default_notification_channel_id"
-        android:value="akusehat_high_importance_channel" />
+        android:value="akusehat_high_importance_channel"
+        tools:replace="android:value" />
       <meta-data
         android:name="com.google.firebase.messaging.default_notification_icon"
-        android:resource="@mipmap/ic_launcher" />
+        android:resource="@mipmap/ic_launcher"
+        tools:replace="android:resource" />
 
       <activity
         android:name=".MainActivity"
