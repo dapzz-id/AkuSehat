@@ -76,4 +76,10 @@ return [
         'secret_key' => env('DATA_SECRET_KEY'),
     ],
 
+    'fcm' => [
+        'project_id' => env('FCM_PROJECT_ID', ''),
+        'server_key' => env('FCM_SERVER_KEY', ''),
+        'service_account_json' => env('FCM_SERVICE_ACCOUNT_JSON', ''),
+    ],
+
 ];

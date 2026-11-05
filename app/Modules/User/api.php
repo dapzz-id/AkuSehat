@@ -25,6 +25,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/profile', [MemberApiController::class, 'updateProfile']);
     Route::put('/profile', [MemberApiController::class, 'updateProfile']);
     Route::post('/change-password', [MemberApiController::class, 'changePassword']);
+    Route::post('/me/fcm-token', [MemberApiController::class, 'updateFcmToken']);
+    Route::delete('/me/fcm-token', [MemberApiController::class, 'deleteFcmToken']);
     Route::post('/logout', [AuthApiController::class, 'logout']);
 
     Route::prefix('member')->group(function () {

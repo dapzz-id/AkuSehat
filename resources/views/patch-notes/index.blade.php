@@ -136,7 +136,7 @@
                                 <span>Rincian Perubahan & Peningkatan:</span>
                             </p>
                             <div class="github-markdown-body text-xs text-slate-800 leading-relaxed pt-1">
-                                {!! \Illuminate\Support\Str::markdown($update->changelog) !!}
+                                {!! \Illuminate\Support\Str::markdown($update->changelog, ['html_input' => 'allow', 'allow_unsafe_links' => false]) !!}
                             </div>
                         </div>
                     @endif

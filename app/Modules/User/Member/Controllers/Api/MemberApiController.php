@@ -219,6 +219,80 @@ class MemberApiController extends Controller
         ]);
     }
 
+    public function updateFcmToken(Request $req): JsonResponse
+    {
+        $req->validate([
+            'fcm_token' => 'required|string',
+            'platform' => 'nullable|string|max:20',
+            'device_model' => 'nullable|string|max:100',
+        ]);
+
+        $u = $req->user();
+        $token = $req->input('fcm_token');
+        $platform = $req->input('platform', 'android');
+        $deviceModel = $req->input('device_model');
+
+        // Update token utama di users table
+        $u->fcm_token = $token;
+        $u->fcm_platform = $platform;
+        $u->fcm_updated_at = now();
+        $u->save();
+
+        // Daftarkan ke user_device_tokens untuk multi-device push
+        try {
+            \Illuminate\Support\Facades\DB::table('user_device_tokens')->updateOrInsert(
+                ['user_id' => $u->id, 'token' => $token],
+                [
+                    'id' => (string) \Illuminate\Support\Str::uuid(),
+                    'platform' => $platform,
+                    'device_model' => $deviceModel,
+                    'last_active_at' => now(),
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
+        } catch (\Throwable $e) {
+            // Ignore index or uuid collision
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'FCM Device Token berhasil didaftarkan.',
+        ]);
+    }
+
+    public function deleteFcmToken(Request $req): JsonResponse
+    {
+        $u = $req->user();
+        $token = $req->input('fcm_token');
+
+        if ($token) {
+            \Illuminate\Support\Facades\DB::table('user_device_tokens')
+                ->where('user_id', $u->id)
+                ->where('token', $token)
+                ->delete();
+
+            if ($u->fcm_token === $token) {
+                $u->fcm_token = null;
+                $u->fcm_platform = null;
+                $u->save();
+            }
+        } else {
+            \Illuminate\Support\Facades\DB::table('user_device_tokens')
+                ->where('user_id', $u->id)
+                ->delete();
+
+            $u->fcm_token = null;
+            $u->fcm_platform = null;
+            $u->save();
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'FCM Device Token berhasil dihapus.',
+        ]);
+    }
+
     public function notifications(GetNotificationRequest $req): JsonResponse
     {
         return response()->json([

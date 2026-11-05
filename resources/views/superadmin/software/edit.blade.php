@@ -201,7 +201,7 @@
                         Catatan Perubahan Lengkap (Patch Notes / Changelog)
                     </label>
 
-                    <!-- Tabs: Tulis & Pratinjau GitHub -->
+                    <!-- Tabs: Tulis & Pratinjau Markdown -->
                     <div class="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs self-start sm:self-auto">
                         <button type="button" id="tab-changelog-write" onclick="switchChangelogTab('write')"
                                 class="px-3 py-1 font-semibold rounded-lg transition-all bg-white text-emerald-800 shadow-xs flex items-center gap-1.5">
@@ -211,7 +211,7 @@
                         <button type="button" id="tab-changelog-preview" onclick="switchChangelogTab('preview')"
                                 class="px-3 py-1 font-semibold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
                             <i class="fab fa-markdown text-slate-700 text-sm"></i>
-                            <span>Pratinjau GitHub</span>
+                            <span>Pratinjau Markdown</span>
                         </button>
                     </div>
                 </div>
@@ -222,7 +222,7 @@
                               placeholder="### Apa yang Baru di Versi ini:&#10;* **Fitur Utama**:&#10;  - Penambahan visual metrik status kesehatan&#10;* **Perbaikan Bug**:&#10;  - Perbaikan crash saat klik tombol Detail"
                               class="w-full text-sm rounded-xl border border-slate-300 p-3 font-mono text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 leading-relaxed">{{ old('changelog', $update->changelog) }}</textarea>
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-400 mt-1">
-                        <span>Format teks mendukung Markdown standar (<code>### Judul</code>, <code>**tebal**</code>, <code>- List</code>, <code>`kode`</code>).</span>
+                        <span>Format teks mendukung Markdown standar & HTML (<code>### Judul</code>, <code>**tebal**</code>, <code>- List</code>, <code>![gambar](url)</code>, <code>&lt;video&gt;</code>, <code>`kode`</code>).</span>
                         <button type="button" onclick="insertMarkdownSample()" class="text-emerald-700 hover:text-emerald-800 font-semibold inline-flex items-center gap-1 self-start sm:self-auto">
                             <i class="fas fa-wand-magic-sparkles text-[10px]"></i>
                             <span>Isi Contoh Format</span>
@@ -230,19 +230,19 @@
                     </div>
                 </div>
 
-                <!-- GitHub Preview Area -->
+                <!-- Markdown Preview Area -->
                 <div id="changelog-preview-pane" class="hidden">
                     <div class="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-inner">
                         <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
                             <span class="font-semibold flex items-center gap-1.5">
-                                <i class="fab fa-github text-slate-800 text-sm"></i>
-                                Tampilan Pratinjau GitHub Flavored Markdown
+                                <i class="fab fa-markdown text-slate-800 text-sm"></i>
+                                Tampilan Pratinjau Markdown
                             </span>
                             <span class="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-medium">
                                 Render Otomatis
                             </span>
                         </div>
-                        <div id="changelog-preview-body" class="p-4 min-h-[160px] max-h-[380px] overflow-y-auto github-markdown-body text-xs text-slate-800 leading-relaxed bg-white">
+                        <div id="changelog-preview-body" class="p-4 min-h-[160px] max-h-[420px] overflow-y-auto github-markdown-body text-xs text-slate-800 leading-relaxed bg-white">
                             <!-- Live Parsed Markdown rendered here -->
                         </div>
                     </div>
@@ -374,33 +374,63 @@
             return '<p class="text-slate-400 italic">Belum ada catatan yang ditulis. Kembali ke tab Tulis Markdown untuk menambahkan catatan.</p>';
         }
 
-        // Escape HTML to prevent XSS
-        let text = raw
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
+        let text = raw;
 
-        // Fenced code blocks ```code```
-        text = text.replace(/```([\s\S]*?)```/g, function(match, code) {
-            return '<pre><code>' + code.trim() + '</code></pre>';
+        // 1. Process Fenced code blocks ```lang ... ``` first before escaping
+        const codeBlocks = [];
+        text = text.replace(/```([a-z0-9_-]*)\n([\s\S]*?)```/g, function(match, lang, code) {
+            const placeholder = '___CODEBLOCK_' + codeBlocks.length + '___';
+            const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            codeBlocks.push('<pre class="bg-slate-900 text-slate-100 p-3 rounded-xl overflow-x-auto text-xs my-2 font-mono"><code>' + escapedCode.trim() + '</code></pre>');
+            return placeholder;
         });
 
-        // Headers
-        text = text.replace(/^#### (.*?)$/gm, '<h4>$1</h4>');
-        text = text.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
-        text = text.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
-        text = text.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+        // 2. Allow safe HTML tags (img, video, source, a, table, etc.) while escaping dangerous scripts
+        text = text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+        text = text.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, function(match) {
+            if (match.includes('youtube.com') || match.includes('youtu.be') || match.includes('vimeo.com')) {
+                return match;
+            }
+            return '';
+        });
 
-        // Blockquotes
-        text = text.replace(/^> (.*?)$/gm, '<blockquote>$1</blockquote>');
+        // 3. Markdown Images: ![alt](url)
+        text = text.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, function(match, alt, url) {
+            return '<div class="my-2"><img src="' + url + '" alt="' + alt + '" loading="lazy" class="rounded-xl max-w-full h-auto border border-slate-200 shadow-sm" /><p class="text-[10px] text-slate-400 mt-0.5 italic">' + (alt || 'Gambar') + '</p></div>';
+        });
 
-        // Inline formatting
+        // 4. YouTube links auto-embed: [video](https://www.youtube.com/watch?v=xyz) or direct youtube url
+        text = text.replace(/\[(?:video|tonton|youtube)\]\((?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)\)/gi, function(match, id) {
+            return '<div class="my-3 w-full aspect-video rounded-xl overflow-hidden shadow-sm border border-slate-200"><iframe class="w-full h-full" src="https://www.youtube.com/embed/' + id + '" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
+        });
+
+        // 5. Direct video files: [video](url.mp4) or direct mp4/webm markdown links
+        text = text.replace(/\[([^\]]*)\]\((https?:\/\/[^\s)]+\.(?:mp4|webm|ogg))\)/gi, function(match, title, url) {
+            return '<div class="my-3"><video controls class="w-full max-h-72 rounded-xl bg-slate-900 border border-slate-200 shadow-sm"><source src="' + url + '" type="video/mp4">Browser Anda tidak mendukung tag video.</video><p class="text-[10px] text-slate-400 mt-0.5">' + (title || 'Video Pembaruan') + '</p></div>';
+        });
+
+        // 6. Markdown standard links: [text](url)
+        text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-emerald-700 underline font-semibold hover:text-emerald-800">$1</a>');
+
+        // 7. Headers
+        text = text.replace(/^#### (.*?)$/gm, '<h4 class="font-bold text-slate-900 mt-2 mb-1 text-xs">$1</h4>');
+        text = text.replace(/^### (.*?)$/gm, '<h3 class="font-bold text-slate-900 mt-3 mb-1 text-sm">$1</h3>');
+        text = text.replace(/^## (.*?)$/gm, '<h2 class="font-bold text-slate-900 mt-4 mb-2 text-base pb-1 border-b border-slate-200">$1</h2>');
+        text = text.replace(/^# (.*?)$/gm, '<h1 class="font-extrabold text-slate-900 mt-4 mb-2 text-lg pb-1.5 border-b border-slate-200">$1</h1>');
+
+        // 8. Blockquotes
+        text = text.replace(/^> (.*?)$/gm, '<blockquote class="border-l-4 border-emerald-500 bg-emerald-50/70 text-slate-700 px-3 py-1.5 rounded-r-lg my-2 italic text-xs">$1</blockquote>');
+
+        // 9. Horizontal Rule
+        text = text.replace(/^---$/gm, '<hr class="my-3 border-t border-slate-200">');
+
+        // 10. Inline formatting (bold, italic, inline code)
         text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         text = text.replace(/__(.*?)__/g, '<strong>$1</strong>');
-        text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+        text = text.replace(/`([^`]+)`/g, '<code class="bg-slate-100 text-emerald-800 px-1.5 py-0.5 rounded font-mono text-[11px] border border-slate-200">$1</code>');
         text = text.replace(/(^|[^*])\*(?!\*)(.*?)\*(?!\*)/g, '$1<em>$2</em>');
 
-        // Lists and Paragraphs
+        // 11. Lists & Paragraphs
         const lines = text.split('\n');
         let html = '';
         let inList = false;
@@ -416,7 +446,7 @@
             if (bulletMatch) {
                 if (!inList || listType !== 'ul') {
                     if (inList) html += '</' + listType + '>';
-                    html += '<ul>';
+                    html += '<ul class="list-disc pl-5 my-1.5 space-y-0.5 text-slate-700">';
                     inList = true;
                     listType = 'ul';
                 }
@@ -424,7 +454,7 @@
             } else if (numMatch) {
                 if (!inList || listType !== 'ol') {
                     if (inList) html += '</' + listType + '>';
-                    html += '<ol>';
+                    html += '<ol class="list-decimal pl-5 my-1.5 space-y-0.5 text-slate-700">';
                     inList = true;
                     listType = 'ol';
                 }
@@ -438,10 +468,12 @@
 
                 if (!trimmed) continue;
 
-                if (trimmed.startsWith('<h') || trimmed.startsWith('<blockquote') || trimmed.startsWith('<pre') || trimmed.startsWith('<hr')) {
+                if (trimmed.startsWith('<h') || trimmed.startsWith('<blockquote') || trimmed.startsWith('<pre') || trimmed.startsWith('<hr') || trimmed.startsWith('<div') || trimmed.startsWith('<img') || trimmed.startsWith('<video') || trimmed.startsWith('<table')) {
+                    html += trimmed;
+                } else if (trimmed.startsWith('___CODEBLOCK_')) {
                     html += trimmed;
                 } else {
-                    html += '<p>' + trimmed + '</p>';
+                    html += '<p class="my-1 text-slate-700 leading-relaxed">' + trimmed + '</p>';
                 }
             }
         }
@@ -449,6 +481,11 @@
         if (inList) {
             html += '</' + listType + '>';
         }
+
+        // 12. Restore code blocks
+        codeBlocks.forEach(function(blockHtml, idx) {
+            html = html.replace('___CODEBLOCK_' + idx + '___', blockHtml);
+        });
 
         return html;
     }

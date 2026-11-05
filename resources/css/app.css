@@ -230,4 +230,63 @@
         border-top: 1px solid #e2e8f0;
         margin: 0.75rem 0;
     }
+
+    /* Responsive Media: Images, Videos, Embeds, Links & Tables */
+    .github-markdown-body img {
+        max-width: 100% !important;
+        height: auto !important;
+        border-radius: 0.75rem;
+        margin: 0.75rem 0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        display: block;
+        object-fit: cover;
+    }
+    .github-markdown-body video {
+        max-width: 100% !important;
+        width: 100%;
+        height: auto !important;
+        border-radius: 0.75rem;
+        margin: 0.75rem 0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+        border: 1px solid #e2e8f0;
+        display: block;
+        background-color: #0f172a;
+    }
+    .github-markdown-body iframe {
+        max-width: 100% !important;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border-radius: 0.75rem;
+        margin: 0.75rem 0;
+        border: 1px solid #e2e8f0;
+    }
+    .github-markdown-body a {
+        color: #047857;
+        text-decoration: underline;
+        font-weight: 600;
+        word-break: break-all;
+    }
+    .github-markdown-body a:hover {
+        color: #065f46;
+    }
+    .github-markdown-body table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0.75rem 0;
+        font-size: 0.8rem;
+        display: block;
+        overflow-x: auto;
+    }
+    .github-markdown-body th,
+    .github-markdown-body td {
+        border: 1px solid #e2e8f0;
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+    }
+    .github-markdown-body th {
+        background-color: #f8fafc;
+        font-weight: 700;
+        color: #0f172a;
+    }
 }

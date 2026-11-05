@@ -199,7 +199,7 @@
                             @if($update->changelog)
                                 <template id="changelog-html-{{ $update->id }}">
                                     <div class="github-markdown-body text-xs text-slate-800 leading-relaxed">
-                                        {!! \Illuminate\Support\Str::markdown($update->changelog) !!}
+                                        {!! \Illuminate\Support\Str::markdown($update->changelog, ['html_input' => 'allow', 'allow_unsafe_links' => false]) !!}
                                     </div>
                                 </template>
                                 <button type="button" onclick="showChangelogModal('{{ addslashes($update->name) }}', '{{ $update->version }}', '{{ $update->id }}')"
