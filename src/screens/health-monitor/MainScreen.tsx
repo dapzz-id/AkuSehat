@@ -234,18 +234,28 @@ const HomeScreenHealthMonitor = () => {
     return [];
   }, [profile]);
 
-  const isModActive = useCallback((modKey: string, action: 'create' | 'read' | 'update' | 'delete' = 'read'): boolean => {
+  const isModActive = useCallback((modKey: string, action: 'create' | 'read' | 'update' | 'delete' = 'read', scope: 'duty' | 'personal' | 'any' = 'any'): boolean => {
     if (!profile) return true; // tetap tampil saat initial load
 
-    // 1. Cek User Custom Permissions Matrix jika akun memiliki override khusus
+    const actShort = action[0]; // 'c', 'r', 'u', 'd'
+
+    // 1. Cek User Scope Matrix jika diminta spesifik ('duty' atau 'personal')
+    if (scope === 'duty' && profile.module_permissions?.duty_modules?.[modKey]) {
+      const dVal = profile.module_permissions.duty_modules[modKey][actShort] ?? profile.module_permissions.duty_modules[modKey][action];
+      if (dVal !== undefined) return Boolean(dVal);
+    } else if (scope === 'personal' && profile.module_permissions?.personal_modules?.[modKey]) {
+      const pVal = profile.module_permissions.personal_modules[modKey][actShort] ?? profile.module_permissions.personal_modules[modKey][action];
+      if (pVal !== undefined) return Boolean(pVal);
+    }
+
+    // 2. Cek User Custom Permissions Matrix umum
     const userMatrix = profile.module_permissions?.modules?.[modKey];
     if (userMatrix) {
-      const actShort = action[0]; // 'c', 'r', 'u', 'd'
       if (userMatrix[actShort] !== undefined) return Boolean(userMatrix[actShort]);
       if (userMatrix[action] !== undefined) return Boolean(userMatrix[action]);
     }
 
-    // 2. Cek active_modules array
+    // 3. Cek active_modules array
     return userMods.includes(modKey);
   }, [profile, userMods]);
 
@@ -254,11 +264,11 @@ const HomeScreenHealthMonitor = () => {
       { key: "dashboard", label: "Dasbor", icon: <Icon name="home" size={20} /> },
     ];
 
-    if (isModActive('olahraga')) {
+    if (isModActive('olahraga', 'read', 'duty') || isModActive('olahraga', 'create', 'personal')) {
       list.push({ key: "olahraga", label: "Run Tracker", icon: <Icon name="activity" size={20} /> });
     }
 
-    if (isModActive('konsultasi')) {
+    if (isModActive('konsultasi', 'read', 'duty')) {
       list.push({
         key: "konseling",
         label: "SafeSpace",
@@ -267,7 +277,7 @@ const HomeScreenHealthMonitor = () => {
       });
     }
 
-    if (isModActive('haid_pita')) {
+    if (isModActive('haid_pita', 'read', 'duty')) {
       list.push({
         key: "peminjaman",
         label: "Siklus Mens",
@@ -283,11 +293,11 @@ const HomeScreenHealthMonitor = () => {
 
   // Fallback jika tab aktif dinonaktifkan oleh Admin
   useEffect(() => {
-    if (active === "peminjaman" && !isModActive('haid_pita')) {
+    if (active === "peminjaman" && !isModActive('haid_pita', 'read', 'duty')) {
       setActive("dashboard");
-    } else if (active === "olahraga" && !isModActive('olahraga')) {
+    } else if (active === "olahraga" && !isModActive('olahraga', 'read', 'duty') && !isModActive('olahraga', 'create', 'personal')) {
       setActive("dashboard");
-    } else if (active === "konseling" && !isModActive('konsultasi')) {
+    } else if (active === "konseling" && !isModActive('konsultasi', 'read', 'duty')) {
       setActive("dashboard");
     }
   }, [active, isModActive]);
@@ -809,66 +819,68 @@ const HomeScreenHealthMonitor = () => {
           </View>
         </Animated.View>
         <Animated.View style={{ opacity: fadeTab }}>
-          {active === "olahraga" && isModActive('olahraga') && (
+          {active === "olahraga" && (isModActive('olahraga', 'read', 'duty') || isModActive('olahraga', 'create', 'personal')) && (
             <View style={{ gap: verticalScale(12) }}>
-              {/* Segmented Switcher: Monitoring vs Tracker Pribadi */}
-              <View style={{
-                flexDirection: 'row',
-                backgroundColor: isDark ? 'rgba(30, 41, 59, 0.7)' : '#F1F5F9',
-                borderRadius: moderateScale(14),
-                padding: 4,
-                marginBottom: verticalScale(4),
-              }}>
-                <Pressable
-                  onPress={() => setOlahragaMode("monitor")}
-                  style={{
-                    flex: 1,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    paddingVertical: verticalScale(8),
-                    borderRadius: moderateScale(10),
-                    backgroundColor: olahragaMode === "monitor" ? (isDark ? '#334155' : Colors.white) : 'transparent',
-                    elevation: olahragaMode === "monitor" ? 2 : 0,
-                  }}
-                >
-                  <Icon name="bar-chart-2" size={15} color={olahragaMode === "monitor" ? tertiaryColor : Colors.muted} />
-                  <Text style={{
-                    fontSize: moderateScale(12),
-                    fontWeight: '700',
-                    color: olahragaMode === "monitor" ? tertiaryColor : Colors.muted,
-                  }}>
-                    Monitoring Siswa & Guru
-                  </Text>
-                </Pressable>
+              {/* Segmented Switcher: Jika kedua izin aktif */}
+              {isModActive('olahraga', 'read', 'duty') && isModActive('olahraga', 'create', 'personal') && (
+                <View style={{
+                  flexDirection: 'row',
+                  backgroundColor: isDark ? 'rgba(30, 41, 59, 0.7)' : '#F1F5F9',
+                  borderRadius: moderateScale(14),
+                  padding: 4,
+                  marginBottom: verticalScale(4),
+                }}>
+                  <Pressable
+                    onPress={() => setOlahragaMode("monitor")}
+                    style={{
+                      flex: 1,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      paddingVertical: verticalScale(8),
+                      borderRadius: moderateScale(10),
+                      backgroundColor: olahragaMode === "monitor" ? (isDark ? '#334155' : Colors.white) : 'transparent',
+                      elevation: olahragaMode === "monitor" ? 2 : 0,
+                    }}
+                  >
+                    <Icon name="bar-chart-2" size={15} color={olahragaMode === "monitor" ? tertiaryColor : Colors.muted} />
+                    <Text style={{
+                      fontSize: moderateScale(12),
+                      fontWeight: '700',
+                      color: olahragaMode === "monitor" ? tertiaryColor : Colors.muted,
+                    }}>
+                      Monitoring Siswa & Guru
+                    </Text>
+                  </Pressable>
 
-                <Pressable
-                  onPress={() => setOlahragaMode("tracker")}
-                  style={{
-                    flex: 1,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    paddingVertical: verticalScale(8),
-                    borderRadius: moderateScale(10),
-                    backgroundColor: olahragaMode === "tracker" ? (isDark ? '#334155' : Colors.white) : 'transparent',
-                    elevation: olahragaMode === "tracker" ? 2 : 0,
-                  }}
-                >
-                  <Icon name="navigation" size={15} color={olahragaMode === "tracker" ? tertiaryColor : Colors.muted} />
-                  <Text style={{
-                    fontSize: moderateScale(12),
-                    fontWeight: '700',
-                    color: olahragaMode === "tracker" ? tertiaryColor : Colors.muted,
-                  }}>
-                    Tracker Saya (GPS)
-                  </Text>
-                </Pressable>
-              </View>
+                  <Pressable
+                    onPress={() => setOlahragaMode("tracker")}
+                    style={{
+                      flex: 1,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      paddingVertical: verticalScale(8),
+                      borderRadius: moderateScale(10),
+                      backgroundColor: olahragaMode === "tracker" ? (isDark ? '#334155' : Colors.white) : 'transparent',
+                      elevation: olahragaMode === "tracker" ? 2 : 0,
+                    }}
+                  >
+                    <Icon name="navigation" size={15} color={olahragaMode === "tracker" ? tertiaryColor : Colors.muted} />
+                    <Text style={{
+                      fontSize: moderateScale(12),
+                      fontWeight: '700',
+                      color: olahragaMode === "tracker" ? tertiaryColor : Colors.muted,
+                    }}>
+                      Tracker Saya (GPS)
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
 
-              {olahragaMode === "monitor" ? (
+              {(olahragaMode === "monitor" && isModActive('olahraga', 'read', 'duty')) || !isModActive('olahraga', 'create', 'personal') ? (
                 <RunTrackerMonitorView themeColor={tertiaryColor} />
               ) : (
                 <RunTrackerView />
@@ -876,7 +888,7 @@ const HomeScreenHealthMonitor = () => {
             </View>
           )}
 
-          {active === "konseling" && isModActive('konsultasi') && (
+          {active === "konseling" && isModActive('konsultasi', 'read', 'duty') && (
             <CounselingConsultantView
               themeColor={tertiaryColor}
               onPendingCountChange={setPendingCounselingCount}
@@ -1006,7 +1018,7 @@ const HomeScreenHealthMonitor = () => {
               )}
             </View>
           )}
-          {active === "peminjaman" && isModActive('haid_pita') && (
+          {active === "peminjaman" && isModActive('haid_pita', 'read', 'duty') && (
             <FemHealthConsultantView
               themeColor={tertiaryColor}
               jenisInstansi={profile?.instansi?.jenis_instansi}

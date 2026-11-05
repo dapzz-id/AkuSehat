@@ -221,18 +221,28 @@ const HomeScreenHealthConsultant = () => {
     return [];
   }, [profile]);
 
-  const isModActive = useCallback((modKey: string, action: 'create' | 'read' | 'update' | 'delete' = 'read'): boolean => {
+  const isModActive = useCallback((modKey: string, action: 'create' | 'read' | 'update' | 'delete' = 'read', scope: 'duty' | 'personal' | 'any' = 'any'): boolean => {
     if (!profile) return true; // tetap tampil saat initial load
 
-    // 1. Cek User Custom Permissions Matrix jika akun memiliki override khusus
+    const actShort = action[0]; // 'c', 'r', 'u', 'd'
+
+    // 1. Cek User Scope Matrix jika diminta spesifik ('duty' atau 'personal')
+    if (scope === 'duty' && profile.module_permissions?.duty_modules?.[modKey]) {
+      const dVal = profile.module_permissions.duty_modules[modKey][actShort] ?? profile.module_permissions.duty_modules[modKey][action];
+      if (dVal !== undefined) return Boolean(dVal);
+    } else if (scope === 'personal' && profile.module_permissions?.personal_modules?.[modKey]) {
+      const pVal = profile.module_permissions.personal_modules[modKey][actShort] ?? profile.module_permissions.personal_modules[modKey][action];
+      if (pVal !== undefined) return Boolean(pVal);
+    }
+
+    // 2. Cek User Custom Permissions Matrix umum
     const userMatrix = profile.module_permissions?.modules?.[modKey];
     if (userMatrix) {
-      const actShort = action[0]; // 'c', 'r', 'u', 'd'
       if (userMatrix[actShort] !== undefined) return Boolean(userMatrix[actShort]);
       if (userMatrix[action] !== undefined) return Boolean(userMatrix[action]);
     }
 
-    // 2. Cek active_modules array
+    // 3. Cek active_modules array
     return userMods.includes(modKey);
   }, [profile, userMods]);
 
@@ -242,7 +252,7 @@ const HomeScreenHealthConsultant = () => {
       { key: "divisi", label: "Divisi", icon: <Icon name="users" size={20} /> },
     ];
 
-    if (isModActive('konsultasi')) {
+    if (isModActive('konsultasi', 'read', 'duty')) {
       list.push({
         key: "konseling",
         label: "SafeSpace",
@@ -251,7 +261,7 @@ const HomeScreenHealthConsultant = () => {
       });
     }
 
-    if (isModActive('haid_pita')) {
+    if (isModActive('haid_pita', 'read', 'duty')) {
       list.push({
         key: "pita",
         label: "Siklus Mens",
@@ -260,7 +270,7 @@ const HomeScreenHealthConsultant = () => {
       });
     }
 
-    if (isModActive('olahraga')) {
+    if (isModActive('olahraga', 'create', 'personal')) {
       list.push({
         key: "olahraga",
         label: "Run Tracker",
@@ -275,11 +285,11 @@ const HomeScreenHealthConsultant = () => {
 
   // Fallback jika tab aktif dinonaktifkan oleh Admin
   useEffect(() => {
-    if (active === "pita" && !isModActive('haid_pita')) {
+    if (active === "pita" && !isModActive('haid_pita', 'read', 'duty')) {
       setActive("ringkasan");
-    } else if (active === "konseling" && !isModActive('konsultasi')) {
+    } else if (active === "konseling" && !isModActive('konsultasi', 'read', 'duty')) {
       setActive("ringkasan");
-    } else if (active === "olahraga" && !isModActive('olahraga')) {
+    } else if (active === "olahraga" && !isModActive('olahraga', 'create', 'personal')) {
       setActive("ringkasan");
     }
   }, [active, isModActive]);
@@ -1046,14 +1056,14 @@ const HomeScreenHealthConsultant = () => {
             </View>
           )}
 
-          {active === "konseling" && isModActive('konsultasi') && (
+          {active === "konseling" && isModActive('konsultasi', 'read', 'duty') && (
             <CounselingConsultantView
               themeColor={tertiaryColor}
               onPendingCountChange={setPendingCounselingCount}
             />
           )}
 
-          {active === "pita" && isModActive('haid_pita') && (
+          {active === "pita" && isModActive('haid_pita', 'read', 'duty') && (
             <FemHealthConsultantView
               themeColor={tertiaryColor}
               jenisInstansi={profile?.instansi?.jenis_instansi}
@@ -1061,7 +1071,7 @@ const HomeScreenHealthConsultant = () => {
             />
           )}
 
-          {active === "olahraga" && isModActive('olahraga') && (
+          {active === "olahraga" && isModActive('olahraga', 'create', 'personal') && (
             <View style={{ gap: verticalScale(12) }}>
               <RunTrackerView />
             </View>
