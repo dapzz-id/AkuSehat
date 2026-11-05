@@ -58,6 +58,7 @@ class User extends Authenticatable
         'name',
         'active_modules',
         'color_cover',
+        'module_permissions',
     ];
 
     /**
@@ -98,6 +99,11 @@ class User extends Authenticatable
     public function getColorCoverAttribute(): ?string
     {
         return $this->divisi?->color_cover;
+    }
+
+    public function getModulePermissionsAttribute(): array
+    {
+        return $this->getCrudPermissions();
     }
 
     public function getNisAttribute()

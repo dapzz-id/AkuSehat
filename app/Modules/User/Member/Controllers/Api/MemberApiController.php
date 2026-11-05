@@ -65,6 +65,7 @@ class MemberApiController extends Controller
                 'level' => $u->level,
                 'role_label' => $u->role_label,
                 'active_modules' => $u->getActiveModules(),
+                'module_permissions' => $u->getCrudPermissions(),
                 'can_add_user' => $u->canAddUser(),
                 'instansi' => $instansi ? [
                     'id' => $instansi->id,
@@ -93,7 +94,7 @@ class MemberApiController extends Controller
         $globalSysVer = \Illuminate\Support\Facades\Cache::get('global_system_version', 'g_sys_1');
         $globalModVer = \Illuminate\Support\Facades\Cache::get('global_modules_version', 'g_mod_1');
         $instansiVer = $u ? \Illuminate\Support\Facades\Cache::get("instansi_modules_version_{$instansiId}", 'i1') : 'none';
-        $userCustomVer = $u && $u->custom_modules ? md5(json_encode($u->custom_modules)) : 'none';
+        $userCustomVer = $u ? md5(json_encode([$u->custom_modules, $u->custom_permissions])) : 'none';
         $userUpdatedVer = $u?->updated_at ? $u->updated_at->timestamp : 'u0';
 
         // 2. Generate composite version ETag
@@ -137,6 +138,7 @@ class MemberApiController extends Controller
         if ($u) {
             $instansi = $u->instansi;
             $payload['active_modules'] = $u->getActiveModules();
+            $payload['module_permissions'] = $u->getCrudPermissions();
             $payload['role_label'] = $u->role_label;
             $payload['can_add_user'] = $u->canAddUser();
             $payload['instansi'] = $instansi ? [
