@@ -66,13 +66,22 @@ const AppNavigatorContent = () => {
 
     checkLogin();
 
-    const unsubscribeFcm = fcmService.setupNotificationListeners((data) => {
-      console.log('[AppNavigator] Notifikasi FCM diklik:', data);
-    });
+    let unsubscribeFcm = () => {};
+    try {
+      unsubscribeFcm = fcmService.setupNotificationListeners((data) => {
+        console.log('[AppNavigator] Notifikasi FCM diklik:', data);
+      });
+    } catch (e) {
+      console.warn('[AppNavigator] Error setting up FCM:', e);
+    }
 
     return () => {
       isMounted = false;
-      unsubscribeFcm();
+      try {
+        unsubscribeFcm();
+      } catch (e) {
+        // Safe cleanup
+      }
     };
   }, []);
   return (

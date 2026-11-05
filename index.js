@@ -10,9 +10,12 @@ import { name as appName } from './app.json';
 
 // Register background message handler for when app is completely closed (killed state)
 try {
-  setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
-    console.log('[FCM] Background message received when app is closed:', remoteMessage);
-  });
+  const messaging = getMessaging();
+  if (messaging) {
+    setBackgroundMessageHandler(messaging, async remoteMessage => {
+      console.log('[FCM] Background message received when app is closed:', remoteMessage);
+    });
+  }
 } catch (e) {
   // Graceful fallback if firebase app is not initialized
 }

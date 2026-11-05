@@ -65,3 +65,13 @@
 -dontwarn okio.**
 -dontwarn androidx.**
 -dontwarn kotlin.**
+
+# ==========================================
+# 8. FIREBASE & CLOUD MESSAGING (FCM)
+# ==========================================
+-keep class io.invertase.firebase.** { *; }
+-dontwarn io.invertase.firebase.**
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+-keep class com.google.android.gms.tasks.** { *; }
+-dontwarn com.google.android.gms.tasks.**
