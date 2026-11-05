@@ -158,9 +158,7 @@ const HomeScreenHealthMonitor = () => {
     isMandatoryUpgrade,
     forceUpgradeData: syncForceUpgradeData,
     recheckSync,
-  } = useRealtimeSystemSync({
-    intervalMs: 5000,
-  });
+  } = useRealtimeSystemSync();
 
   const handleCheckUpdate = async () => {
     setCheckUpdateStatus('checking')

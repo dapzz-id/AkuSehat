@@ -26,7 +26,7 @@ export const useRealtimeSystemSync = (
   const {
     onActiveModulesChange,
     onRoleLabelsChange,
-    intervalMs = 6000,
+    intervalMs = 60000, // 60 seconds interval to protect server & battery
     isAuthenticated = true,
   } = options;
 
@@ -123,15 +123,25 @@ export const useRealtimeSystemSync = (
     let timer: ReturnType<typeof setInterval> | null = null;
     let isSubscribed = true;
 
+    const startTimer = () => {
+      if (timer) clearInterval(timer);
+      timer = setInterval(() => {
+        if (isSubscribed && AppState.currentState === 'active') {
+          syncCheck();
+        }
+      }, intervalMs);
+    };
+
+    const stopTimer = () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    };
+
     // Run initial sync check
     syncCheck();
-
-    // Setup periodic polling (Webhook-style conditional 304)
-    timer = setInterval(() => {
-      if (isSubscribed) {
-        syncCheck();
-      }
-    }, intervalMs);
+    startTimer();
 
     // Watch AppState: Pause completely in background, re-trigger immediately on foreground resume
     const appStateSubscription = AppState.addEventListener(
@@ -139,13 +149,16 @@ export const useRealtimeSystemSync = (
       (nextState: AppStateStatus) => {
         if (nextState === 'active') {
           syncCheck();
+          startTimer();
+        } else {
+          stopTimer();
         }
       }
     );
 
     return () => {
       isSubscribed = false;
-      if (timer) clearInterval(timer);
+      stopTimer();
       appStateSubscription.remove();
     };
   }, [syncCheck, intervalMs]);

@@ -571,7 +571,6 @@ const HomeScreenMember = () => {
     recheckSync,
   } = useRealtimeSystemSync({
     onActiveModulesChange: handleActiveModulesChange,
-    intervalMs: 4000,
   });
 
   // 3. useFocusEffect: Immediately refresh auth & profile when screen is focused
