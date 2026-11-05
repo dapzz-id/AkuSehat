@@ -107,6 +107,55 @@ class AuditLogger
     }
 
     /**
+     * Shortcut untuk log aktivitas sistem & update software.
+     */
+    public static function system(string $action, string $description, array $properties = [], ?User $user = null): ?AuditLog
+    {
+        return self::log($action, AuditCategory::SYSTEM, $description, $properties, $user);
+    }
+
+    /**
+     * Shortcut untuk log keamanan & proteksi.
+     */
+    public static function security(string $action, string $description, array $properties = [], ?User $user = null): ?AuditLog
+    {
+        return self::log($action, AuditCategory::SECURITY, $description, $properties, $user);
+    }
+
+    /**
+     * Shortcut untuk log institusi / instansi.
+     */
+    public static function instansi(string $action, string $description, array $properties = [], ?User $user = null): ?AuditLog
+    {
+        return self::log($action, AuditCategory::INSTANSI, $description, $properties, $user);
+    }
+
+    /**
+     * Shortcut untuk log pemeriksaan kesehatan.
+     */
+    public static function health(string $action, string $description, array $properties = [], ?User $user = null): ?AuditLog
+    {
+        return self::log($action, AuditCategory::HEALTH, $description, $properties, $user);
+    }
+
+    /**
+     * Fallback dinamis untuk helper method audit log jika ada pemanggilan method statis lainnya.
+     */
+    public static function __callStatic(string $method, array $arguments)
+    {
+        $action = $arguments[0] ?? 'unknown_action';
+        $description = $arguments[1] ?? '';
+        $properties = $arguments[2] ?? [];
+        $user = $arguments[3] ?? null;
+
+        $category = in_array(strtolower($method), self::ALLOWED_CATEGORIES, true)
+            ? strtolower($method)
+            : AuditCategory::SYSTEM->value;
+
+        return self::log($action, $category, $description, $properties, $user);
+    }
+
+    /**
      * Deteksi tipe perangkat dari User-Agent string secara ringkas.
      */
     private static function resolveDevice(?string $userAgent): string

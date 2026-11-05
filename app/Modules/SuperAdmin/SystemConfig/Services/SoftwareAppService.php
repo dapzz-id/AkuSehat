@@ -162,7 +162,15 @@ class SoftwareAppService
             Storage::disk('public')->delete($app->file_path);
         }
 
-        return $this->repository->delete($app);
+        $deleted = $this->repository->delete($app);
+
+        AuditLogger::system(
+            'software_release_deleted',
+            "SuperAdmin menghapus software: {$app->name} v{$app->version}",
+            ['software_id' => $app->id, 'name' => $app->name, 'version' => $app->version]
+        );
+
+        return $deleted;
     }
 
     public function getEditData(string|int $id): array
