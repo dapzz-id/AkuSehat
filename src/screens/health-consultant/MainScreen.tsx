@@ -70,12 +70,14 @@ type Member = {
 }
 type DivisiItem = {
   id: string | number
-  divisi: string
-  obesitas: number
-  total_member: number
-  kurus: number
-  normal: number
-  data_member: Member[]
+  divisi?: string
+  divisi_name?: string
+  nama_divisi?: string
+  obesitas?: number
+  total_member?: number
+  kurus?: number
+  normal?: number
+  data_member?: Member[]
 }
 type Profile = { id: string | number; nama: string; username: string; email?: string; avatar?: string | null; level?: string; nomor_induk?: string; id_divisi?: string | number; divisi?: string; color_cover?: string; tertiary_color?: string; jk?: "L" | "P"; instansi?: { id: string | number; nama_instansi?: string } }
 type Notif = {
@@ -296,10 +298,12 @@ const HomeScreenHealthConsultant = () => {
         const user = await checkAuthStatus();
         if (!user) {
           navigation.navigate('Login');
+        } else if (!profile) {
+          setProfile(user);
         }
       };
       check();
-    }, [navigation])
+    }, [navigation, profile])
   );
 
   useEffect(() => {
@@ -332,6 +336,7 @@ const HomeScreenHealthConsultant = () => {
         ])
         setSummary(sumRes?.data?.data || sumRes?.data || null)
         setDivisi(divisiRes?.data?.data || divisiRes?.data || [])
+        setProfile(meRes?.data?.data || meRes?.data || null)
         const rawNotif = notifRes?.data?.data || notifRes?.data
         setNotifications(Array.isArray(rawNotif) ? rawNotif : [])
         if (typeof notifRes?.data?.pending_counseling_count === 'number') {
@@ -361,10 +366,10 @@ const HomeScreenHealthConsultant = () => {
 
   const totals = useMemo(
     () => ({
-      obesitas: summary?.obesitas ?? 0,
-      kurus: summary?.kurus ?? 0,
+      obesitas: summary?.obesitas ?? (summary as any)?.obese ?? 0,
+      kurus: summary?.kurus ?? (summary as any)?.underweight ?? 0,
       normal: summary?.normal ?? 0,
-      total: summary?.total ?? 0,
+      total: summary?.total ?? (summary as any)?.total_students ?? 0,
     }),
     [summary],
   )
@@ -377,7 +382,11 @@ const HomeScreenHealthConsultant = () => {
   }
 
   const handleShowMemberList = (divisionData: DivisiItem) => {
-    setSelectedDivisionData(divisionData)
+    setSelectedDivisionData({
+      ...divisionData,
+      divisi: divisionData.divisi || (divisionData as any).nama_divisi || (divisionData as any).divisi_name || "Divisi",
+      data_member: Array.isArray(divisionData.data_member) ? divisionData.data_member : [],
+    })
     setShowMemberList(true)
     setSearchMember("")
     setFilterJenisKelamin("")
@@ -398,12 +407,13 @@ const HomeScreenHealthConsultant = () => {
   }
 
   const getAvailableYears = (records: HealthRecord[]) => {
+    if (!Array.isArray(records)) return []
     const years = records.map((r) => new Date(r.tgl).getFullYear())
     return Array.from(new Set(years)).sort((a, b) => b - a)
   }
 
   const getAvailableMonths = (records: HealthRecord[], year: string) => {
-    if (!year) return []
+    if (!Array.isArray(records) || !year) return []
     const months = records
       .filter((r) => new Date(r.tgl).getFullYear().toString() === year)
       .map((r) => new Date(r.tgl).getMonth() + 1)
@@ -411,7 +421,7 @@ const HomeScreenHealthConsultant = () => {
   }
 
   const filteredHealthRecords = useMemo(() => {
-    if (!selectedMember) return []
+    if (!selectedMember || !Array.isArray(selectedMember.riwayat_kesehatan)) return []
     let filtered = selectedMember.riwayat_kesehatan
     if (filterYear) {
       filtered = filtered.filter((r) => new Date(r.tgl).getFullYear().toString() === filterYear)
@@ -419,18 +429,20 @@ const HomeScreenHealthConsultant = () => {
     if (filterMonth) {
       filtered = filtered.filter((r) => (new Date(r.tgl).getMonth() + 1).toString() === filterMonth)
     }
-    return filtered.sort((a, b) => new Date(b.tgl).getTime() - new Date(a.tgl).getTime())
+    return [...filtered].sort((a, b) => new Date(b.tgl).getTime() - new Date(a.tgl).getTime())
   }, [selectedMember, filterYear, filterMonth])
 
   // Filter divisi berdasarkan search
   const filteredDivisi = useMemo(() => {
+    if (!Array.isArray(divisi)) return []
     if (!searchDivisi || searchDivisi.trim() === "") {
       return divisi
     }
     
     const searchLower = searchDivisi.toLowerCase()
     return divisi.filter((item) => {
-      return item.divisi.toLowerCase().includes(searchLower)
+      const name = item.divisi || (item as any).nama_divisi || (item as any).divisi_name || ""
+      return name.toLowerCase().includes(searchLower)
     })
   }, [divisi, searchDivisi])
 
@@ -438,13 +450,18 @@ const HomeScreenHealthConsultant = () => {
   const filteredMembers = useMemo(() => {
     if (!selectedDivisionData) return []
 
-    let filtered = selectedDivisionData.data_member
+    const members = Array.isArray(selectedDivisionData.data_member)
+      ? selectedDivisionData.data_member
+      : []
+
+    let filtered = members
 
     // Filter by search (nama atau nomor induk)
-    if (searchMember) {
+    if (searchMember && searchMember.trim() !== "") {
+      const searchLower = searchMember.toLowerCase()
       filtered = filtered.filter((m) =>
-        m.nama.toLowerCase().includes(searchMember.toLowerCase()) ||
-        m.nomor_induk.toLowerCase().includes(searchMember.toLowerCase())
+        (m.nama || "").toLowerCase().includes(searchLower) ||
+        (m.nomor_induk || "").toLowerCase().includes(searchLower)
       )
     }
 
@@ -761,11 +778,12 @@ const HomeScreenHealthConsultant = () => {
                     <>
                       {filteredDivisi.map((k) => {
                         const total = (k.obesitas || 0) + (k.kurus || 0) + (k.normal || 0)
+                        const divisionTitle = k.divisi || (k as any).nama_divisi || (k as any).divisi_name || "Divisi"
                         return (
                           <View key={k.id} style={[styles.listItem, styles.listLine]}>
                             <View style={{ flex: 1 }}>
                               <Text style={styles.listTitle}>
-                                {k.divisi}
+                                {divisionTitle}
                               </Text>
                               <View
                                 style={{
@@ -774,9 +792,9 @@ const HomeScreenHealthConsultant = () => {
                                   marginTop: verticalScale(6),
                                 }}
                               >
-                                <Badge color="#ef4444" label={`O | ${k.obesitas}`} />
-                                <Badge color="#f59e0b" label={`U | ${k.kurus}`} />
-                                <Badge color={Colors.primary} label={`N | ${k.normal}`} />
+                                <Badge color="#ef4444" label={`O | ${k.obesitas ?? 0}`} />
+                                <Badge color="#f59e0b" label={`U | ${k.kurus ?? 0}`} />
+                                <Badge color={Colors.primary} label={`N | ${k.normal ?? 0}`} />
                               </View>
                               <View style={{ marginTop: verticalScale(10) }}>
                                 <View style={styles.stackBg}>
@@ -791,8 +809,8 @@ const HomeScreenHealthConsultant = () => {
                                   />
                                 </View>
                                 <Text style={styles.mutedText}>
-                                  Total {k.total_member} member • O {percent(k.obesitas, total)}% • K {percent(k.kurus, total)}% • N{" "}
-                                  {percent(k.normal, total)}%
+                                  Total {k.total_member ?? 0} member • O {percent(k.obesitas ?? 0, total || k.total_member || 0)}% • K {percent(k.kurus ?? 0, total || k.total_member || 0)}% • N{" "}
+                                  {percent(k.normal ?? 0, total || k.total_member || 0)}%
                                 </Text>
                               </View>
                             </View>
@@ -818,7 +836,9 @@ const HomeScreenHealthConsultant = () => {
                     </Pressable>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.cardTitle}>Daftar Member</Text>
-                      <Text style={styles.mutedText}>{selectedDivisionData?.divisi}</Text>
+                      <Text style={styles.mutedText}>
+                        {selectedDivisionData?.divisi || (selectedDivisionData as any)?.nama_divisi || (selectedDivisionData as any)?.divisi_name || "Divisi"}
+                      </Text>
                     </View>
                   </View>
 
@@ -896,7 +916,7 @@ const HomeScreenHealthConsultant = () => {
                   ) : (
                     <>
                       <Text style={[styles.mutedText, { marginTop: verticalScale(8) }]}>
-                        Menampilkan {filteredMembers.length} dari {selectedDivisionData?.data_member.length || 0} member
+                        Menampilkan {filteredMembers.length} dari {Array.isArray(selectedDivisionData?.data_member) ? selectedDivisionData.data_member.length : 0} member
                       </Text>
                       {filteredMembers.map((member) => (
                         <Pressable
@@ -915,7 +935,7 @@ const HomeScreenHealthConsultant = () => {
                                 Pemeriksaan Terakhir: {formatDate(member.pemeriksaan_terakhir)}
                               </Text>
                             )}
-                            {member.avg_bmi > 0 && (
+                            {member.avg_bmi != null && Number(member.avg_bmi) > 0 && (
                               <View style={{ marginTop: verticalScale(4) }}>
                                 <Badge
                                   color={
@@ -925,7 +945,7 @@ const HomeScreenHealthConsultant = () => {
                                         ? "#ef4444"
                                         : Colors.primary
                                   }
-                                  label={`BMI Rata-rata: ${member.avg_bmi.toFixed(1)}`}
+                                  label={`BMI Rata-rata: ${Number(member.avg_bmi).toFixed(1)}`}
                                 />
                               </View>
                             )}
@@ -1399,7 +1419,7 @@ const HomeScreenHealthConsultant = () => {
                                     },
                                   ]}
                                 >
-                                  {record.score.toFixed(1)}
+                                  {record.score != null ? Number(record.score).toFixed(1) : "-"}
                                 </Text>
                               </View>
                               <View style={styles.rowBetween}>

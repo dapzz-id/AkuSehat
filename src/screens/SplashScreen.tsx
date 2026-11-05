@@ -327,7 +327,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             />
           </View>
 
-          <Text style={styles.ncsCompanyText}>PT Neura Cakrawira Solusi</Text>
+          <Text style={styles.ncsCompanyText}>Neura Cakrawira Solusi</Text>
         </Animated.View>
 
         {/* Blocking Offline Dialog when no internet connection */}
