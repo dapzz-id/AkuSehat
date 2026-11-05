@@ -14,6 +14,49 @@ export const getDivisiTitle = (divisi: any): string => {
   return String(divisi);
 };
 
+export const getMemberGenderTitle = (gender?: string, jenisInstansi?: string): string => {
+  const jenis = (jenisInstansi || 'Sekolah').toLowerCase();
+  const isP = gender === 'P' || gender === 'Perempuan';
+  const isL = gender === 'L' || gender === 'Laki-laki';
+
+  if (jenis.includes('universitas') || jenis.includes('kuliah') || jenis.includes('kampus') || jenis.includes('institut')) {
+    return isP ? 'Mahasiswi' : isL ? 'Mahasiswa' : 'Mahasiswa/i';
+  }
+  if (jenis.includes('perusahaan') || jenis.includes('industri') || jenis.includes('kantor') || jenis.includes('pt') || jenis.includes('corporate')) {
+    return isP ? 'Karyawati' : isL ? 'Karyawan' : 'Karyawan/ti';
+  }
+  if (jenis.includes('pemerintah') || jenis.includes('dinas') || jenis.includes('instansi')) {
+    return 'Pegawai';
+  }
+  if (jenis.includes('klinik') || jenis.includes('rumah sakit') || jenis.includes('faskes')) {
+    return 'Pasien';
+  }
+  // Default: Sekolah
+  return isP ? 'Siswi' : isL ? 'Siswa' : 'Siswa/i';
+};
+
+export const getDivisiCategoryLabel = (jenisInstansi?: string): string => {
+  const jenis = (jenisInstansi || 'Sekolah').toLowerCase();
+  if (jenis.includes('universitas') || jenis.includes('kuliah') || jenis.includes('kampus')) {
+    return 'Prodi / Jurusan';
+  }
+  if (jenis.includes('perusahaan') || jenis.includes('industri') || jenis.includes('kantor')) {
+    return 'Departemen / Divisi';
+  }
+  return 'Kelas / Divisi';
+};
+
+export const getUksRoomLabel = (jenisInstansi?: string): string => {
+  const jenis = (jenisInstansi || 'Sekolah').toLowerCase();
+  if (jenis.includes('universitas') || jenis.includes('kuliah') || jenis.includes('kampus')) {
+    return 'Klinik Kampus';
+  }
+  if (jenis.includes('perusahaan') || jenis.includes('industri') || jenis.includes('kantor')) {
+    return 'Klinik / Pos K3';
+  }
+  return 'Ruang UKS';
+};
+
 export const checkAuthStatus = async () => {
   try {
     const token = await AsyncStorage.getItem(TOKEN_KEY);

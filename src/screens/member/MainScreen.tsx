@@ -243,6 +243,20 @@ const HomeScreenMember = () => {
   const [startingHaid, setStartingHaid] = useState(false)
   const [endingHaid, setEndingHaid] = useState(false)
   const [submittingPita, setSubmittingPita] = useState(false)
+
+  // State untuk Konfirmasi Password Mulai Haid & Pinjam Pita
+  const [startHaidModalVisible, setStartHaidModalVisible] = useState(false)
+  const [haidPasswordInput, setHaidPasswordInput] = useState("")
+  const [haidPasswordError, setHaidPasswordError] = useState<string | null>(null)
+
+  const [submitPitaModalVisible, setSubmitPitaModalVisible] = useState(false)
+  const [pitaPasswordInput, setPitaPasswordInput] = useState("")
+  const [pitaPasswordError, setPitaPasswordError] = useState<string | null>(null)
+
+  // State Kalender Riwayat Haid
+  const [haidModalTab, setHaidModalTab] = useState<"calendar" | "list">("calendar")
+  const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth())
+  const [calendarYear, setCalendarYear] = useState(new Date().getFullYear())
   // State untuk password modal
   const [modalVisible, setModalVisible] = useState(false)
   const [currentPassword, setCurrentPassword] = useState("")
@@ -429,6 +443,57 @@ const HomeScreenMember = () => {
       setLoadingPita(false);
     }
   };
+  // Seluruh riwayat siklus haid diratakan untuk visualisasi kalender
+  const allHaidRecords: HaidItem[] = useMemo(() => {
+    const list: HaidItem[] = [];
+    haidData.forEach((y) => y.months.forEach((m) => list.push(...m.data)));
+    return list;
+  }, [haidData]);
+
+  const handlePressStartHaid = () => {
+    Alert.alert(
+      "Mulai Siklus Haid",
+      "Apakah Anda yakin ingin memulai pencatatan siklus menstruasi hari ini? Siklus yang telah dimulai tidak dapat dihentikan mandiri sebelum minimal 7 hari.",
+      [
+        { text: "Batal", style: "cancel" },
+        {
+          text: "Lanjutkan",
+          onPress: () => {
+            setHaidPasswordInput("");
+            setHaidPasswordError(null);
+            setStartHaidModalVisible(true);
+          },
+        },
+      ]
+    );
+  };
+
+  const handleConfirmStartHaid = async () => {
+    if (!haidPasswordInput.trim()) {
+      setHaidPasswordError("Silakan masukkan password akun Anda.");
+      return;
+    }
+    try {
+      setStartingHaid(true);
+      setHaidPasswordError(null);
+      const today = new Date().toISOString().slice(0, 10);
+      await api.post("/member/data-haid", {
+        tanggal_mulai: today,
+        catatan: "Data haid dari aplikasi",
+        password: haidPasswordInput,
+      });
+      setStartHaidModalVisible(false);
+      setHaidPasswordInput("");
+      Alert.alert("Sukses", "Siklus haid berhasil dimulai. Semoga sehat selalu!");
+      await fetchHaidData();
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || "Gagal memulai jadwal haid";
+      setHaidPasswordError(msg);
+    } finally {
+      setStartingHaid(false);
+    }
+  };
+
   const handleStartHaid = async () => {
     try {
       setStartingHaid(true);
@@ -447,6 +512,51 @@ const HomeScreenMember = () => {
   };
   const handleEndHaid = async () => {
     if (!currentHaidData) return;
+    const startDate = new Date(currentHaidData.tanggal_mulai);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - startDate.getTime());
+    const durasiHari = Math.max(1, Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1);
+
+    if (durasiHari < 7) {
+      Alert.alert(
+        "Siklus Belum Mencapai 7 Hari",
+        `Siklus haid Anda baru berjalan hari ke-${durasiHari}. Sesuai ketentuan medis standar, siklus haid tidak dapat diselesaikan mandiri sebelum minimal 7 hari.\n\nJika terdapat keluhan kesehatan khusus atau kondisi medis darurat, silakan hubungi Health Consultant / Petugas UKS instansi Anda untuk melakukan penghentian khusus.`,
+        [{ text: "Mengerti", style: "default" }]
+      );
+      return;
+    }
+
+    const pitaNotice = activePitaData
+      ? "\n\n⚠️ Peringatan: Anda masih memiliki pita UKS yang dipinjam. Harap segera serahkan pita ke Petugas UKS."
+      : "";
+
+    Alert.alert(
+      "Selesaikan Siklus Haid",
+      `Apakah Anda yakin siklus haid Anda telah selesai pada hari ke-${durasiHari}?${pitaNotice}`,
+      [
+        { text: "Batal", style: "cancel" },
+        {
+          text: "Ya, Selesaikan",
+          onPress: async () => {
+            try {
+              setEndingHaid(true);
+              await api.put(`/member/data-haid/${currentHaidData.id}`);
+              Alert.alert("Sukses", "Siklus haid berhasil diselesaikan.");
+              await fetchHaidData();
+              await fetchPitaData();
+            } catch (e: any) {
+              Alert.alert("Perhatian", e?.response?.data?.message || "Gagal menyelesaikan jadwal haid.");
+            } finally {
+              setEndingHaid(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const _oldHandleEndHaid = async () => {
+    if (!currentHaidData) return;
     try {
       setEndingHaid(true);
       await api.put(`/member/data-haid/${currentHaidData.id}`);
@@ -458,6 +568,112 @@ const HomeScreenMember = () => {
       setEndingHaid(false);
     }
   };
+  const handlePressSubmitPita = () => {
+    if (!currentHaidData) {
+      Alert.alert(
+        "Belum Mulai Haid",
+        "Anda harus mencatat status Mulai Haid terlebih dahulu sebelum dapat mengajukan peminjaman pita UKS.",
+        [{ text: "Mengerti" }]
+      );
+      return;
+    }
+    setPitaPasswordInput("");
+    setPitaPasswordError(null);
+    setSubmitPitaModalVisible(true);
+  };
+
+  const handleConfirmSubmitPita = async () => {
+    if (!pitaPasswordInput.trim()) {
+      setPitaPasswordError("Silakan masukkan password akun Anda.");
+      return;
+    }
+    try {
+      setSubmittingPita(true);
+      setPitaPasswordError(null);
+      const today = new Date().toISOString().slice(0, 10);
+      await api.post("/member/peminjaman-pita", {
+        jumlah_pita: 1,
+        tanggal_pinjam: today,
+        password: pitaPasswordInput,
+      });
+      setSubmitPitaModalVisible(false);
+      setPitaPasswordInput("");
+      Alert.alert(
+        "Pengajuan Terkirim",
+        "Pengajuan peminjaman pita UKS berhasil dikirim. Silakan temui Petugas UKS untuk verifikasi dan pengambilan pita."
+      );
+      await fetchPitaData();
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || "Gagal mengajukan peminjaman pita.";
+      setPitaPasswordError(msg);
+    } finally {
+      setSubmittingPita(false);
+    }
+  };
+
+  const isDateInHaidCycle = (dateStr: string) => {
+    if (!dateStr) return { inHaid: false, isStart: false, isEnd: false, isCurrent: false };
+    const targetDate = new Date(dateStr).getTime();
+
+    for (const item of allHaidRecords) {
+      const start = new Date(item.tanggal_mulai).getTime();
+      let end = item.tanggal_selesai ? new Date(item.tanggal_selesai).getTime() : 0;
+      if (!end && item.status === 'berlangsung') {
+        end = new Date().getTime();
+      }
+      if (targetDate >= start && targetDate <= end) {
+        return {
+          inHaid: true,
+          isStart: item.tanggal_mulai === dateStr,
+          isEnd: item.tanggal_selesai === dateStr,
+          isCurrent: item.status === 'berlangsung',
+        };
+      }
+    }
+    return { inHaid: false, isStart: false, isEnd: false, isCurrent: false };
+  };
+
+  const handlePrevCalendarMonth = () => {
+    if (calendarMonth === 0) {
+      setCalendarMonth(11);
+      setCalendarYear((prev) => prev - 1);
+    } else {
+      setCalendarMonth((prev) => prev - 1);
+    }
+  };
+
+  const handleNextCalendarMonth = () => {
+    if (calendarMonth === 11) {
+      setCalendarMonth(0);
+      setCalendarYear((prev) => prev + 1);
+    } else {
+      setCalendarMonth((prev) => prev + 1);
+    }
+  };
+
+  const calendarDaysGrid = useMemo(() => {
+    const firstDayIndex = new Date(calendarYear, calendarMonth, 1).getDay();
+    const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+    const cells: { key: string; day: number; dateStr: string; isCurrentMonth: boolean }[] = [];
+
+    for (let i = 0; i < firstDayIndex; i++) {
+      cells.push({ key: `blank-${i}`, day: 0, dateStr: '', isCurrentMonth: false });
+    }
+
+    const mm = String(calendarMonth + 1).padStart(2, '0');
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dd = String(d).padStart(2, '0');
+      cells.push({
+        key: `day-${d}`,
+        day: d,
+        dateStr: `${calendarYear}-${mm}-${dd}`,
+        isCurrentMonth: true,
+      });
+    }
+
+    return cells;
+  }, [calendarYear, calendarMonth]);
+
   const handleSubmitPita = async () => {
     if (!canSubmitPita) return;
     try {
@@ -1524,7 +1740,9 @@ const HomeScreenMember = () => {
                     <View style={styles.currentHaidBanner}>
                       <Icon name="calendar" size={20} color={Colors.white} />{/* */}
                       <View style={{ flex: 1, marginLeft: moderateScale(12) }}>
-                        <Text style={styles.currentHaidBannerTitle}>Sedang Haid</Text>{/* */}
+                        <Text style={styles.currentHaidBannerTitle}>
+                          Sedang Haid • Hari ke-{Math.max(1, Math.floor((new Date().getTime() - new Date(currentHaidData.tanggal_mulai).getTime()) / (1000 * 60 * 60 * 24)) + 1)}
+                        </Text>{/* */}
                         <Text style={styles.currentHaidBannerText}>
                           Mulai: {new Date(currentHaidData.tanggal_mulai).toLocaleDateString('id-ID')}
                         </Text>
@@ -1536,7 +1754,7 @@ const HomeScreenMember = () => {
                   <View style={styles.haidActionButtons}>
                     {canStartHaid ? (
                       <Pressable
-                        onPress={handleStartHaid}
+                        onPress={handlePressStartHaid}
                         disabled={startingHaid}
                         style={({ pressed }) => [
                           styles.haidActionButton,
@@ -1574,7 +1792,7 @@ const HomeScreenMember = () => {
                       </Pressable>
                     )}{/* */}
                     <Pressable
-                      onPress={handleSubmitPita}
+                      onPress={handlePressSubmitPita}
                       disabled={!canSubmitPita || submittingPita}
                       style={({ pressed }) => [
                         styles.haidActionButton,
@@ -2261,6 +2479,126 @@ const HomeScreenMember = () => {
         </View>
       </Modal>
 
+      {/* Modal Konfirmasi Password Mulai Haid */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={startHaidModalVisible}
+        onRequestClose={() => setStartHaidModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { width: horizontalScale(320) }]}>
+            <View style={{ alignItems: "center", marginBottom: verticalScale(10) }}>
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "#FCE7F3", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+                <Icon name="lock" size={22} color="#DB2777" />
+              </View>
+              <Text style={{ fontSize: moderateScale(15), fontWeight: "700", color: Colors.text, textAlign: "center" }}>
+                Konfirmasi Mulai Haid
+              </Text>
+              <Text style={{ fontSize: moderateScale(11.5), color: Colors.muted, textAlign: "center", marginTop: 4, lineHeight: 16 }}>
+                Masukkan password akun Anda untuk memulai pencatatan siklus menstruasi. Siklus ini tidak dapat dihentikan mandiri sebelum 7 hari.
+              </Text>
+            </View>
+
+            <TextInput
+              secureTextEntry
+              value={haidPasswordInput}
+              onChangeText={setHaidPasswordInput}
+              placeholder="Masukkan password akun Anda"
+              placeholderTextColor={Colors.muted}
+              style={[styles.input, haidPasswordError ? { borderColor: '#ef4444' } : null]}
+            />
+            {haidPasswordError ? (
+              <Text style={{ color: '#ef4444', fontSize: moderateScale(11), marginTop: 4 }}>
+                {haidPasswordError}
+              </Text>
+            ) : null}
+
+            <View style={{ flexDirection: "row", gap: 10, marginTop: verticalScale(14) }}>
+              <Pressable
+                onPress={() => setStartHaidModalVisible(false)}
+                style={[styles.ghostBtn, { flex: 1, alignItems: "center" }]}
+              >
+                <Text style={styles.ghostBtnText}>Batal</Text>
+              </Pressable>
+              <Pressable
+                disabled={startingHaid}
+                onPress={handleConfirmStartHaid}
+                style={[{ flex: 1, backgroundColor: "#DB2777", paddingVertical: verticalScale(10), borderRadius: moderateScale(10), alignItems: "center", justifyContent: "center" }]}
+              >
+                {startingHaid ? (
+                  <ActivityIndicator color={Colors.white} size="small" />
+                ) : (
+                  <Text style={{ color: Colors.white, fontWeight: "700", fontSize: moderateScale(12) }}>
+                    Mulai Haid
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal Konfirmasi Password Pinjam Pita UKS */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={submitPitaModalVisible}
+        onRequestClose={() => setSubmitPitaModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { width: horizontalScale(320) }]}>
+            <View style={{ alignItems: "center", marginBottom: verticalScale(10) }}>
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "#EDE9FE", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+                <Icon name="bookmark" size={22} color="#7C3AED" />
+              </View>
+              <Text style={{ fontSize: moderateScale(15), fontWeight: "700", color: Colors.text, textAlign: "center" }}>
+                Pengajuan Pinjam Pita UKS
+              </Text>
+              <Text style={{ fontSize: moderateScale(11.5), color: Colors.muted, textAlign: "center", marginTop: 4, lineHeight: 16 }}>
+                Pita UKS dipinjam selama masa haid dan wajib diserahkan kembali ke Petugas UKS setelah siklus berakhir. Masukkan password akun untuk otentikasi.
+              </Text>
+            </View>
+
+            <TextInput
+              secureTextEntry
+              value={pitaPasswordInput}
+              onChangeText={setPitaPasswordInput}
+              placeholder="Masukkan password akun Anda"
+              placeholderTextColor={Colors.muted}
+              style={[styles.input, pitaPasswordError ? { borderColor: '#ef4444' } : null]}
+            />
+            {pitaPasswordError ? (
+              <Text style={{ color: '#ef4444', fontSize: moderateScale(11), marginTop: 4 }}>
+                {pitaPasswordError}
+              </Text>
+            ) : null}
+
+            <View style={{ flexDirection: "row", gap: 10, marginTop: verticalScale(14) }}>
+              <Pressable
+                onPress={() => setSubmitPitaModalVisible(false)}
+                style={[styles.ghostBtn, { flex: 1, alignItems: "center" }]}
+              >
+                <Text style={styles.ghostBtnText}>Batal</Text>
+              </Pressable>
+              <Pressable
+                disabled={submittingPita}
+                onPress={handleConfirmSubmitPita}
+                style={[{ flex: 1, backgroundColor: "#7C3AED", paddingVertical: verticalScale(10), borderRadius: moderateScale(10), alignItems: "center", justifyContent: "center" }]}
+              >
+                {submittingPita ? (
+                  <ActivityIndicator color={Colors.white} size="small" />
+                ) : (
+                  <Text style={{ color: Colors.white, fontWeight: "700", fontSize: moderateScale(12) }}>
+                    Ajukan Pinjam
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Modal Riwayat Haid */}
       <Modal
         animationType="slide"
@@ -2277,9 +2615,56 @@ const HomeScreenMember = () => {
             }
           ]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.cardTitle}>Riwayat Haid</Text>{/* */}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Icon name="calendar" size={18} color="#DB2777" />
+                <Text style={styles.cardTitle}>Kalender & Riwayat Haid</Text>
+              </View>{/* */}
               <Pressable onPress={() => setRiwayatHaidModalVisible(false)}>
                 <Icon name="x" size={24} color={Colors.text} />
+              </Pressable>
+            </View>
+
+            {/* Segmented Switcher: Kalender vs Riwayat */}
+            <View style={{
+              flexDirection: "row",
+              backgroundColor: "#F1F5F9",
+              borderRadius: 10,
+              padding: 3,
+              marginBottom: 12
+            }}>
+              <Pressable
+                onPress={() => setHaidModalTab("calendar")}
+                style={[{
+                  flex: 1,
+                  paddingVertical: 7,
+                  alignItems: "center",
+                  borderRadius: 8
+                }, haidModalTab === "calendar" && { backgroundColor: "#FFF" }]}
+              >
+                <Text style={[{
+                  fontSize: moderateScale(11.5),
+                  fontWeight: "600",
+                  color: "#64748B"
+                }, haidModalTab === "calendar" && { color: "#DB2777", fontWeight: "700" }]}>
+                  📅 Kalender Siklus
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setHaidModalTab("list")}
+                style={[{
+                  flex: 1,
+                  paddingVertical: 7,
+                  alignItems: "center",
+                  borderRadius: 8
+                }, haidModalTab === "list" && { backgroundColor: "#FFF" }]}
+              >
+                <Text style={[{
+                  fontSize: moderateScale(11.5),
+                  fontWeight: "600",
+                  color: "#64748B"
+                }, haidModalTab === "list" && { color: "#DB2777", fontWeight: "700" }]}>
+                  📋 Daftar Catatan
+                </Text>
               </Pressable>
             </View>
 
@@ -2288,6 +2673,152 @@ const HomeScreenMember = () => {
                 <ActivityIndicator color={Colors.primary} />{/* */}
                 <Text style={styles.mutedText}>Memuat...</Text>
               </View>
+            ) : haidModalTab === "calendar" ? (
+              <ScrollView showsVerticalScrollIndicator={false} nestedScrollEnabled style={{ maxHeight: verticalScale(500) }}>
+                {/* Month Navigator */}
+                <View style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  paddingVertical: 6,
+                  paddingHorizontal: 8,
+                  marginBottom: 8
+                }}>
+                  <Pressable onPress={handlePrevCalendarMonth} style={{ padding: 6 }}>
+                    <Icon name="chevron-left" size={20} color={Colors.text} />
+                  </Pressable>
+                  <Text style={{ fontSize: moderateScale(13.5), fontWeight: "700", color: Colors.text }}>
+                    {["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][calendarMonth]} {calendarYear}
+                  </Text>
+                  <Pressable onPress={handleNextCalendarMonth} style={{ padding: 6 }}>
+                    <Icon name="chevron-right" size={20} color={Colors.text} />
+                  </Pressable>
+                </View>
+
+                {/* Weekday Labels */}
+                <View style={{ flexDirection: "row", justifyContent: "space-around", marginBottom: 6 }}>
+                  {["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map((dayName, idx) => (
+                    <Text
+                      key={dayName}
+                      style={{
+                        width: (horizontalScale(340) - 40) / 7,
+                        textAlign: "center",
+                        fontSize: moderateScale(10.5),
+                        fontWeight: "700",
+                        color: idx === 0 ? "#EF4444" : "#64748B"
+                      }}
+                    >
+                      {dayName}
+                    </Text>
+                  ))}
+                </View>
+
+                {/* Calendar Grid */}
+                <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+                  {calendarDaysGrid.map((cell) => {
+                    if (!cell.isCurrentMonth) {
+                      return (
+                        <View
+                          key={cell.key}
+                          style={{
+                            width: (horizontalScale(340) - 40) / 7,
+                            height: 38,
+                          }}
+                        />
+                      );
+                    }
+
+                    const { inHaid, isStart, isEnd, isCurrent } = isDateInHaidCycle(cell.dateStr);
+                    const isToday = cell.dateStr === new Date().toISOString().slice(0, 10);
+
+                    return (
+                      <View
+                        key={cell.key}
+                        style={{
+                          width: (horizontalScale(340) - 40) / 7,
+                          height: 38,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginVertical: 1,
+                        }}
+                      >
+                        <View
+                          style={[
+                            {
+                              width: 32,
+                              height: 32,
+                              borderRadius: 16,
+                              alignItems: "center",
+                              justifyContent: "center",
+                            },
+                            inHaid && {
+                              backgroundColor: isCurrent ? "#FCE7F3" : "#FEE2E2",
+                              borderWidth: 1,
+                              borderColor: isCurrent ? "#F472B6" : "#FECDD3",
+                            },
+                            isToday && !inHaid && {
+                              borderWidth: 1.5,
+                              borderColor: "#7C3AED",
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              {
+                                fontSize: moderateScale(11),
+                                color: Colors.text,
+                                fontWeight: "500",
+                              },
+                              inHaid && {
+                                color: "#BE185D",
+                                fontWeight: "700",
+                              },
+                              isToday && !inHaid && {
+                                color: "#7C3AED",
+                                fontWeight: "700",
+                              },
+                            ]}
+                          >
+                            {cell.day}
+                          </Text>
+                          {inHaid && (
+                            <View
+                              style={{
+                                width: 4,
+                                height: 4,
+                                borderRadius: 2,
+                                backgroundColor: "#DB2777",
+                                position: "absolute",
+                                bottom: 3,
+                              }}
+                            />
+                          )}
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+
+                {/* Calendar Legend */}
+                <View style={{
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  gap: 16,
+                  marginTop: 12,
+                  paddingTop: 10,
+                  borderTopWidth: StyleSheet.hairlineWidth,
+                  borderTopColor: "#E2E8F0"
+                }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#FCE7F3", borderColor: "#F472B6", borderWidth: 1 }} />
+                    <Text style={{ fontSize: moderateScale(10), color: "#64748B" }}>Masa Siklus Haid</Text>
+                  </View>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <View style={{ width: 10, height: 10, borderRadius: 5, borderColor: "#7C3AED", borderWidth: 1.5 }} />
+                    <Text style={{ fontSize: moderateScale(10), color: "#64748B" }}>Hari Ini</Text>
+                  </View>
+                </View>
+              </ScrollView>
             ) : haidData.length === 0 ? (
               <View style={styles.emptyState}>
                 <Icon name="calendar" size={40} color={Colors.muted} />{/* */}

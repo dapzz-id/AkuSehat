@@ -17,7 +17,12 @@ import Icon from "react-native-vector-icons/Feather"
 import api from "../../api/axiosConfig"
 import { Colors } from "../../settings/Colors"
 import { moderateScale, horizontalScale, verticalScale } from "../../utils/responsive"
-import { getDivisiTitle } from "../../utils/authHelper"
+import {
+  getDivisiTitle,
+  getMemberGenderTitle,
+  getDivisiCategoryLabel,
+  getUksRoomLabel,
+} from "../../utils/authHelper"
 
 export type DivisionFilterItem = {
   id: string | number
@@ -64,11 +69,13 @@ export type HaidRecordItem = {
 
 export type PeminjamanItem = {
   id: string | number
+  id_user?: string | number
   user: {
     id: string | number
     nama: string
     nomor_induk?: string
     divisi?: string
+    jk?: string
   }
   tanggal_pinjam: string
   jumlah_pita: number
@@ -78,10 +85,13 @@ export type PeminjamanItem = {
   keterangan?: string
   created_at: string
   verified: boolean
+  warning_type?: "haid_selesai" | "terlambat" | string
+  warning_reason?: string
 }
 
 interface Props {
   themeColor?: string
+  jenisInstansi?: string
   onLateCountChange?: (count: number) => void
 }
 
@@ -107,8 +117,26 @@ function formatIndoDate(dateStr: string | null): string {
   }
 }
 
-export default function FemHealthConsultantView({ themeColor, onLateCountChange }: Props) {
+export default function FemHealthConsultantView({
+  themeColor,
+  jenisInstansi,
+  onLateCountChange,
+}: Props) {
   const primaryColor = themeColor || Colors.primary
+
+  // Dynamic naming based on institution type (Siswi / Mahasiswi / Karyawati, Kelas / Jurusan)
+  const memberGenderTitle = useMemo(
+    () => getMemberGenderTitle("P", jenisInstansi),
+    [jenisInstansi]
+  )
+  const divisiCategoryLabel = useMemo(
+    () => getDivisiCategoryLabel(jenisInstansi),
+    [jenisInstansi]
+  )
+  const uksRoomTitle = useMemo(
+    () => getUksRoomLabel(jenisInstansi),
+    [jenisInstansi]
+  )
 
   // Mode: "siklus" (Data Siklus Haid Siswi & Guru) or "pita" (Peminjaman Pita UKS)
   const [mainMode, setMainMode] = useState<"siklus" | "pita">("siklus")
@@ -138,7 +166,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
   const [activePitaSubTab, setActivePitaSubTab] = useState<"aktif" | "verifikasi" | "warning">("aktif")
   const [pitaSearchQuery, setPitaSearchQuery] = useState("")
 
-  // Modal Actions (Pita)
+  // Modal Actions (Pita: Verify / Reject / Return)
   const [selectedPitaItem, setSelectedPitaItem] = useState<PeminjamanItem | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
   const [confirmModalType, setConfirmModalType] = useState<"verify" | "reject" | "return" | null>(null)
@@ -152,6 +180,19 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
   const [catatTanggalPinjam, setCatatTanggalPinjam] = useState(new Date().toISOString().split("T")[0])
   const [catatKeterangan, setCatatKeterangan] = useState("")
   const [catatSubmitting, setCatatSubmitting] = useState(false)
+
+  // Modal Panggil Siswi via FCM Push Notification
+  const [callModalVisible, setCallModalVisible] = useState(false)
+  const [callTargetItem, setCallTargetItem] = useState<any | null>(null)
+  const [callTargetType, setCallTargetType] = useState<"peminjaman" | "haid">("peminjaman")
+  const [callCustomMessage, setCallCustomMessage] = useState("")
+  const [callSending, setCallSending] = useState(false)
+
+  // Modal Force Stop Siklus Haid (Health Consultant Authority)
+  const [forceStopModalVisible, setForceStopModalVisible] = useState(false)
+  const [forceStopItem, setForceStopItem] = useState<HaidRecordItem | null>(null)
+  const [forceStopReason, setForceStopReason] = useState("")
+  const [forceStopSubmitting, setForceStopSubmitting] = useState(false)
 
   const [refreshing, setRefreshing] = useState(false)
 
@@ -173,7 +214,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
       }
 
       const res = await api.get("/health-monitor/haid-records", { params })
-      if (res?.data?.status === "success") {
+      if (res?.data?.status === "success" || res?.data?.status === true) {
         setHaidRecords(res.data.data || [])
         setDivisions(res.data.divisions || [])
         const summaryData = res.data.summary || {
@@ -185,7 +226,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
         setHaidSummary(summaryData)
 
         if (onLateCountChange) {
-          onLateCountChange((warningList.length) + (summaryData.warning || 0))
+          onLateCountChange(warningList.length + (summaryData.warning || 0))
         }
       }
     } catch (e: any) {
@@ -227,7 +268,6 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
     loadAll()
   }, [])
 
-  // Refetch haid records on filters change
   useEffect(() => {
     fetchHaidData(false)
   }, [selectedDivisiId, selectedHaidStatus])
@@ -251,8 +291,8 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
       const list = res?.data?.data || []
       setHaidMembers(list)
     } catch (e: any) {
-      console.warn("Gagal memuat siswi sedang haid:", e)
-      Alert.alert("Perhatian", "Gagal memuat daftar siswi sedang haid.")
+      console.warn("Gagal memuat daftar anggota sedang haid:", e)
+      Alert.alert("Perhatian", `Gagal memuat daftar ${memberGenderTitle} sedang haid.`)
     } finally {
       setLoadingHaidMembers(false)
     }
@@ -260,7 +300,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
 
   const handleSimpanPeminjaman = async () => {
     if (!selectedHaidUserId) {
-      Alert.alert("Validasi", "Pilih siswi yang sedang haid terlebih dahulu.")
+      Alert.alert("Validasi", `Pilih ${memberGenderTitle} yang sedang haid terlebih dahulu.`)
       return
     }
     try {
@@ -336,6 +376,84 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
     }
   }
 
+  // ==========================================
+  // FCM CALL MODAL ACTIONS
+  // ==========================================
+  const handleOpenCallModal = (item: any, type: "peminjaman" | "haid") => {
+    setCallTargetItem(item)
+    setCallTargetType(type)
+    const userName = item?.user?.nama || memberGenderTitle
+    if (type === "haid") {
+      setCallCustomMessage(
+        `Halo ${userName}, Anda dipanggil oleh Petugas ${uksRoomTitle} / Health Consultant untuk konsultasi pemantauan kesehatan siklus menstruasi Anda.`
+      )
+    } else {
+      setCallCustomMessage(
+        `Halo ${userName}, Anda dipanggil oleh Petugas ${uksRoomTitle} untuk segera mengembalikan pita dan konsultasi kesehatan.`
+      )
+    }
+    setCallModalVisible(true)
+  }
+
+  const handleSendCallNotification = async () => {
+    if (!callTargetItem) return
+    try {
+      setCallSending(true)
+      await api.post(`/health-monitor/notify-call/${callTargetItem.id}`, {
+        target_type: callTargetType,
+        pesan: callCustomMessage.trim() || undefined,
+      })
+      Alert.alert(
+        "Panggilan Terkirim",
+        `Notifikasi FCM telah berhasil dikirimkan ke perangkat HP ${callTargetItem.user?.nama || memberGenderTitle}.`
+      )
+      setCallModalVisible(false)
+      setCallTargetItem(null)
+    } catch (e: any) {
+      Alert.alert(
+        "Gagal Mengirim",
+        e?.response?.data?.message || "Gagal mengirim notifikasi panggilan."
+      )
+    } finally {
+      setCallSending(false)
+    }
+  }
+
+  // ==========================================
+  // FORCE STOP SIKLUS HAID (HEALTH CONSULTANT)
+  // ==========================================
+  const handleOpenForceStopModal = (item: HaidRecordItem) => {
+    setForceStopItem(item)
+    setForceStopReason("")
+    setForceStopModalVisible(true)
+  }
+
+  const handleConfirmForceStopHaid = async () => {
+    if (!forceStopItem) return
+    try {
+      setForceStopSubmitting(true)
+      await api.put(`/health-monitor/haid/${forceStopItem.id}/stop`, {
+        alasan:
+          forceStopReason.trim() ||
+          "Dihentikan oleh Health Consultant atas pertimbangan medis/kondisi khusus.",
+      })
+      Alert.alert(
+        "Selesai",
+        `Siklus menstruasi untuk ${forceStopItem.user?.nama || memberGenderTitle} berhasil dihentikan / diselesaikan.`
+      )
+      setForceStopModalVisible(false)
+      setForceStopItem(null)
+      await Promise.all([fetchHaidData(true), fetchPitaData(true)])
+    } catch (e: any) {
+      Alert.alert(
+        "Gagal",
+        e?.response?.data?.message || "Gagal menghentikan siklus haid."
+      )
+    } finally {
+      setForceStopSubmitting(false)
+    }
+  }
+
   // Filtered pita list
   const getFilteredPitaList = () => {
     let base = peminjamanList
@@ -362,12 +480,11 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
   const pitaActiveCount = peminjamanList.filter((p) => p.status === "dipinjam").length
   const displayedPitaList = getFilteredPitaList()
 
-  // Selected Division Name for Siklus view header
   const selectedDivisiName = useMemo(() => {
-    if (selectedDivisiId === "all") return "Semua Divisi"
+    if (selectedDivisiId === "all") return `Semua ${divisiCategoryLabel}`
     const found = divisions.find((d) => String(d.id) === String(selectedDivisiId))
     return found ? found.divisi_name : "Divisi Terpilih"
-  }, [selectedDivisiId, divisions])
+  }, [selectedDivisiId, divisions, divisiCategoryLabel])
 
   return (
     <ScrollView
@@ -385,7 +502,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Siklus Menstruasi & Kesehatan Reproduksi</Text>
           <Text style={styles.headerSubtitle}>
-            Pantau status siklus siswi & guru perempuan per divisi, deteksi keterlambatan haid (&gt; 7 hari), serta kelola peminjaman pita UKS.
+            Pantau status siklus {memberGenderTitle} & guru perempuan per {divisiCategoryLabel.toLowerCase()}, deteksi keterlambatan haid (&gt; 7 hari), serta kelola pengembalian pita {uksRoomTitle}.
           </Text>
         </View>
       </View>
@@ -432,7 +549,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
       </View>
 
       {/* ================================================================= */}
-      {/* SECTION 1: SIKLUS MENSTRUASI SISWI & GURU PER DIVISI              */}
+      {/* SECTION 1: SIKLUS MENSTRUASI PER DIVISI                           */}
       {/* ================================================================= */}
       {mainMode === "siklus" ? (
         <>
@@ -461,7 +578,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
             <View style={styles.filterHeaderRow}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                 <Icon name="layers" size={15} color="#475569" />
-                <Text style={styles.filterSectionTitle}>Filter Divisi / Kelas</Text>
+                <Text style={styles.filterSectionTitle}>Filter {divisiCategoryLabel}</Text>
               </View>
               <Text style={styles.filterSelectedText}>{selectedDivisiName}</Text>
             </View>
@@ -485,7 +602,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
                     selectedDivisiId === "all" && styles.divisiChipTextActive,
                   ]}
                 >
-                  Semua Divisi ({haidSummary.total_wanita})
+                  Semua ({haidSummary.total_wanita})
                 </Text>
               </Pressable>
 
@@ -538,7 +655,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
                   selectedHaidStatus === "semua" && styles.statusChipTextActive,
                 ]}
               >
-                Semua Status
+                Semua
               </Text>
             </Pressable>
             <Pressable
@@ -598,7 +715,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
               value={haidSearchQuery}
               onChangeText={setHaidSearchQuery}
               onSubmitEditing={() => fetchHaidData(false)}
-              placeholder="Cari nama siswi / guru / nomor induk..."
+              placeholder={`Cari nama ${memberGenderTitle.toLowerCase()} / guru / nomor induk...`}
               placeholderTextColor="#94A3B8"
               style={styles.searchInput}
               returnKeyType="search"
@@ -636,7 +753,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
                 <Text style={styles.emptyText}>
                   {selectedDivisiId !== "all" || selectedHaidStatus !== "semua" || haidSearchQuery
                     ? "Tidak ada data yang cocok dengan filter atau pencarian Anda."
-                    : "Belum ada siswi atau guru perempuan yang mencatat siklus menstruasi."}
+                    : `Belum ada ${memberGenderTitle.toLowerCase()} atau guru perempuan yang mencatat siklus menstruasi.`}
                 </Text>
               </View>
             ) : (
@@ -660,7 +777,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
                       <View style={{ flex: 1 }}>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                           <Text style={styles.studentName}>{item.user?.nama || "Member"}</Text>
-                          {/* Role Badge: Siswi vs Guru */}
+                          {/* Role Badge: Member vs Guru */}
                           <View
                             style={[
                               styles.roleBadge,
@@ -675,7 +792,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
                                 isGuru ? { color: "#6D28D9" } : { color: "#0369A1" },
                               ]}
                             >
-                              {isGuru ? "Guru" : "Siswi"}
+                              {isGuru ? "Guru" : memberGenderTitle}
                             </Text>
                           </View>
                         </View>
@@ -684,7 +801,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
                         <View style={styles.metaRow}>
                           {item.user?.nomor_induk ? (
                             <Text style={styles.metaText}>
-                              {isGuru ? "NIP" : "NIS"}: {item.user.nomor_induk}
+                              {isGuru ? "NIP" : "No. Induk"}: {item.user.nomor_induk}
                             </Text>
                           ) : null}
                           <View
@@ -771,7 +888,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
                       <View style={styles.warningBanner}>
                         <Icon name="alert-triangle" size={14} color="#B91C1C" />
                         <Text style={styles.warningBannerText}>
-                          Durasi siklus telah mencapai {item.hari_ke} hari (&gt; 7 hari). Lakukan pemantauan kesehatan atau berikan anjuran konsultasi medis di SafeSpace / UKS.
+                          Durasi siklus telah mencapai {item.hari_ke} hari (&gt; 7 hari). Lakukan pemantauan kesehatan atau panggil {memberGenderTitle.toLowerCase()} untuk konsultasi di {uksRoomTitle}.
                         </Text>
                       </View>
                     )}
@@ -786,6 +903,34 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
                         </Text>
                       </View>
                     ) : null}
+
+                    {/* Action Row for Consultant */}
+                    <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+                      {isOverdue && (
+                        <Pressable
+                          onPress={() => handleOpenCallModal(item, "haid")}
+                          style={[styles.btnAction, { backgroundColor: "#DB2777" }]}
+                        >
+                          <Icon name="bell" size={13} color="#FFF" />
+                          <Text style={styles.btnActionText}>Panggil {memberGenderTitle} (FCM)</Text>
+                        </Pressable>
+                      )}
+
+                      {isBerlangsung && (
+                        <Pressable
+                          onPress={() => handleOpenForceStopModal(item)}
+                          style={[
+                            styles.btnAction,
+                            { backgroundColor: "#FFF", borderWidth: 1, borderColor: "#DB2777" },
+                          ]}
+                        >
+                          <Icon name="stop-circle" size={13} color="#DB2777" />
+                          <Text style={[styles.btnActionText, { color: "#DB2777" }]}>
+                            Hentikan Siklus (Khusus)
+                          </Text>
+                        </Pressable>
+                      )}
+                    </View>
                   </View>
                 )
               })
@@ -794,7 +939,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
         </>
       ) : (
         /* ================================================================= */
-        /* SECTION 2: PEMINJAMAN PITA UKS (EXISTING LOGIC PRESERVED)         */
+        /* SECTION 2: PEMINJAMAN PITA UKS                                    */
         /* ================================================================= */
         <>
           {/* Action Catat Peminjaman Langsung */}
@@ -803,7 +948,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
             style={[styles.catatActionBtn, { backgroundColor: primaryColor }]}
           >
             <Icon name="plus-circle" size={16} color="#FFF" />
-            <Text style={styles.catatActionText}>Catat Peminjaman Pita UKS</Text>
+            <Text style={styles.catatActionText}>Catat Peminjaman Pita {uksRoomTitle}</Text>
           </Pressable>
 
           {/* KPI Cards Pita */}
@@ -856,7 +1001,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
             <TextInput
               value={pitaSearchQuery}
               onChangeText={setPitaSearchQuery}
-              placeholder="Cari nama peminjam / nomor induk..."
+              placeholder={`Cari nama peminjam / nomor induk...`}
               placeholderTextColor="#94A3B8"
               style={styles.searchInput}
             />
@@ -875,20 +1020,28 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
               <View style={styles.emptyCard}>
                 <Icon name="check-circle" size={36} color="#CBD5E1" />
                 <Text style={styles.emptyTitle}>Tidak Ada Data Peminjaman</Text>
-                <Text style={styles.emptyText}>Semua pita UKS tertib dan tidak ada permohonan tertunda.</Text>
+                <Text style={styles.emptyText}>Semua pita tertib dan tidak ada permohonan tertunda.</Text>
               </View>
             ) : (
               displayedPitaList.map((item) => {
-                const isLate = item.status === "terlambat" || activePitaSubTab === "warning"
+                const isHaidFinishedWarning = item.warning_type === "haid_selesai"
+                const isLate = item.status === "terlambat" || activePitaSubTab === "warning" || isHaidFinishedWarning
                 const isPending = item.status === "menunggu" || !item.verified
+
                 return (
-                  <View key={item.id} style={[styles.haidCard, isLate && { borderColor: "#FECDD3" }]}>
+                  <View
+                    key={item.id}
+                    style={[
+                      styles.haidCard,
+                      isLate && { borderColor: "#FECDD3", backgroundColor: "#FFF8F8" },
+                    ]}
+                  >
                     <View style={styles.cardHeaderRow}>
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.studentName}>{item.user?.nama || "Siswi"}</Text>
+                        <Text style={styles.studentName}>{item.user?.nama || memberGenderTitle}</Text>
                         <View style={styles.metaRow}>
                           {item.user?.nomor_induk ? (
-                            <Text style={styles.metaText}>NIS: {item.user.nomor_induk}</Text>
+                            <Text style={styles.metaText}>No. Induk: {item.user.nomor_induk}</Text>
                           ) : null}
                           {getDivisiTitle(item.user?.divisi) ? (
                             <View style={styles.divisiBadge}>
@@ -900,7 +1053,9 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
                       <View
                         style={[
                           styles.statusPill,
-                          isLate
+                          isHaidFinishedWarning
+                            ? { backgroundColor: "#FEE2E2" }
+                            : isLate
                             ? { backgroundColor: "#FEE2E2" }
                             : isPending
                             ? { backgroundColor: "#FEF3C7" }
@@ -910,17 +1065,36 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
                         <Text
                           style={[
                             styles.statusPillText,
-                            isLate
+                            isHaidFinishedWarning
+                              ? { color: "#B91C1C" }
+                              : isLate
                               ? { color: "#B91C1C" }
                               : isPending
                               ? { color: "#D97706" }
                               : { color: "#DB2777" },
                           ]}
                         >
-                          {isLate ? "Terlambat > 7 Hari" : isPending ? "Menunggu Verif" : "Dipinjam"}
+                          {isHaidFinishedWarning
+                            ? "Haid Selesai • Pita Belum Kembali"
+                            : isLate
+                            ? "Terlambat > 7 Hari"
+                            : isPending
+                            ? "Menunggu Verif"
+                            : "Dipinjam"}
                         </Text>
                       </View>
                     </View>
+
+                    {/* Warning Alert Banner jika haid selesai tapi pita belum kembali */}
+                    {isHaidFinishedWarning && (
+                      <View style={styles.warningBanner}>
+                        <Icon name="alert-triangle" size={14} color="#B91C1C" />
+                        <Text style={styles.warningBannerText}>
+                          {item.warning_reason ||
+                            `${memberGenderTitle} telah menyelesaikan siklus haid, namun pita belum dikembalikan ke ${uksRoomTitle}. Segera panggil untuk mengembalikan.`}
+                        </Text>
+                      </View>
+                    )}
 
                     {/* Details */}
                     <View style={styles.detailBox}>
@@ -970,16 +1144,27 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
                           </Pressable>
                         </>
                       ) : item.status === "dipinjam" || isLate ? (
-                        <Pressable
-                          onPress={() => {
-                            setSelectedPitaItem(item)
-                            setConfirmModalType("return")
-                          }}
-                          style={[styles.btnAction, { backgroundColor: "#0284C7" }]}
-                        >
-                          <Icon name="corner-down-left" size={13} color="#FFF" />
-                          <Text style={styles.btnActionText}>Terima Pengembalian</Text>
-                        </Pressable>
+                        <>
+                          <Pressable
+                            onPress={() => {
+                              setSelectedPitaItem(item)
+                              setConfirmModalType("return")
+                            }}
+                            style={[styles.btnAction, { backgroundColor: "#0284C7" }]}
+                          >
+                            <Icon name="corner-down-left" size={13} color="#FFF" />
+                            <Text style={styles.btnActionText}>Terima Kembali</Text>
+                          </Pressable>
+                          {isLate && (
+                            <Pressable
+                              onPress={() => handleOpenCallModal(item, "peminjaman")}
+                              style={[styles.btnAction, { backgroundColor: "#DC2626" }]}
+                            >
+                              <Icon name="bell" size={13} color="#FFF" />
+                              <Text style={styles.btnActionText}>Panggil (FCM)</Text>
+                            </Pressable>
+                          )}
+                        </>
                       ) : null}
                     </View>
                   </View>
@@ -991,6 +1176,114 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
       )}
 
       {/* ================================================================= */}
+      {/* MODAL: PANGGIL MEMBER VIA FCM NOTIFIKASI                          */}
+      {/* ================================================================= */}
+      <Modal visible={callModalVisible} transparent animationType="fade">
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalHeaderRow}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Icon name="bell" size={18} color="#DC2626" />
+                <Text style={styles.modalTitle}>Panggil {memberGenderTitle} via FCM</Text>
+              </View>
+              <Pressable onPress={() => setCallModalVisible(false)}>
+                <Icon name="x" size={18} color="#94A3B8" />
+              </Pressable>
+            </View>
+
+            <Text style={styles.modalSubtitle}>
+              Kirimkan notifikasi panggilan langsung ke HP {callTargetItem?.user?.nama || memberGenderTitle} untuk hadir ke {uksRoomTitle}.
+            </Text>
+
+            <View>
+              <Text style={styles.inputLabel}>Isi Pesan Panggilan</Text>
+              <TextInput
+                multiline
+                numberOfLines={3}
+                value={callCustomMessage}
+                onChangeText={setCallCustomMessage}
+                placeholder="Tulis pesan pengingat / panggilan..."
+                placeholderTextColor="#94A3B8"
+                style={[styles.modalInput, { height: 80, textAlignVertical: "top" }]}
+              />
+            </View>
+
+            <View style={styles.modalBtnRow}>
+              <Pressable onPress={() => setCallModalVisible(false)} style={styles.modalCancelBtn}>
+                <Text style={styles.modalCancelText}>Batal</Text>
+              </Pressable>
+              <Pressable
+                disabled={callSending}
+                onPress={handleSendCallNotification}
+                style={[styles.modalConfirmBtn, { backgroundColor: "#DC2626" }]}
+              >
+                {callSending ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <Text style={styles.modalConfirmText}>Kirim Panggilan</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ================================================================= */}
+      {/* MODAL: HENTIKAN SIKLUS HAID (HEALTH CONSULTANT)                   */}
+      {/* ================================================================= */}
+      <Modal visible={forceStopModalVisible} transparent animationType="fade">
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalHeaderRow}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Icon name="stop-circle" size={18} color="#DB2777" />
+                <Text style={styles.modalTitle}>Hentikan Siklus {memberGenderTitle}</Text>
+              </View>
+              <Pressable onPress={() => setForceStopModalVisible(false)}>
+                <Icon name="x" size={18} color="#94A3B8" />
+              </Pressable>
+            </View>
+
+            <Text style={styles.modalSubtitle}>
+              Fitur khusus Health Consultant untuk menyelesaikan siklus haid {forceStopItem?.user?.nama || memberGenderTitle} jika terdapat keluhan medis atau kondisi darurat.
+            </Text>
+
+            <View>
+              <Text style={styles.inputLabel}>
+                Alasan / Catatan Medis <Text style={{ color: "#EF4444" }}>*</Text>
+              </Text>
+              <TextInput
+                multiline
+                numberOfLines={3}
+                value={forceStopReason}
+                onChangeText={setForceStopReason}
+                placeholder="Contoh: Dihentikan karena pendarahan abnormal atau telah berkonsultasi langsung di UKS..."
+                placeholderTextColor="#94A3B8"
+                style={[styles.modalInput, { height: 80, textAlignVertical: "top" }]}
+              />
+            </View>
+
+            <View style={styles.modalBtnRow}>
+              <Pressable onPress={() => setForceStopModalVisible(false)} style={styles.modalCancelBtn}>
+                <Text style={styles.modalCancelText}>Batal</Text>
+              </Pressable>
+              <Pressable
+                disabled={forceStopSubmitting}
+                onPress={handleConfirmForceStopHaid}
+                style={[styles.modalConfirmBtn, { backgroundColor: "#DB2777" }]}
+              >
+                {forceStopSubmitting ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <Text style={styles.modalConfirmText}>Hentikan Siklus</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ================================================================= */}
       {/* MODAL: CATAT PEMINJAMAN PITA UKS                                  */}
       {/* ================================================================= */}
       <Modal visible={isCatatModalOpen} transparent animationType="fade">
@@ -999,7 +1292,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
             <View style={styles.modalHeaderRow}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <Icon name="bookmark" size={18} color="#DB2777" />
-                <Text style={styles.modalTitle}>Catat Pinjam Pita UKS</Text>
+                <Text style={styles.modalTitle}>Catat Pinjam Pita {uksRoomTitle}</Text>
               </View>
               <Pressable onPress={() => setIsCatatModalOpen(false)}>
                 <Icon name="x" size={18} color="#94A3B8" />
@@ -1010,21 +1303,21 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
               <View style={{ padding: 20, alignItems: "center" }}>
                 <ActivityIndicator size="small" color={primaryColor} />
                 <Text style={{ fontSize: 11, color: "#64748B", marginTop: 8 }}>
-                  Memuat data siswi yang sedang haid...
+                  Memuat data {memberGenderTitle.toLowerCase()} yang sedang haid...
                 </Text>
               </View>
             ) : haidMembers.length === 0 ? (
               <View style={styles.haidEmptyAlert}>
                 <Icon name="alert-circle" size={20} color="#D97706" />
-                <Text style={styles.haidEmptyAlertTitle}>Belum Ada Siswi Sedang Haid</Text>
+                <Text style={styles.haidEmptyAlertTitle}>Belum Ada {memberGenderTitle} Sedang Haid</Text>
                 <Text style={styles.haidEmptyAlertDesc}>
-                  Peminjaman pita hanya dapat dicatat jika siswi telah berstatus Mulai Haid dan belum memiliki pita yang sedang dipinjam.
+                  Peminjaman pita hanya dapat dicatat jika {memberGenderTitle.toLowerCase()} telah berstatus Mulai Haid dan belum memiliki pita yang sedang dipinjam.
                 </Text>
               </View>
             ) : (
               <View style={{ gap: 10, marginTop: 10 }}>
                 <Text style={styles.inputLabel}>
-                  Pilih Siswi (Sedang Haid Aktif) <Text style={{ color: "#EF4444" }}>*</Text>
+                  Pilih {memberGenderTitle} (Sedang Haid Aktif) <Text style={{ color: "#EF4444" }}>*</Text>
                 </Text>
                 <ScrollView style={{ maxHeight: 180 }} nestedScrollEnabled>
                   {haidMembers.map((m: any) => {
@@ -1043,7 +1336,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
                             {m.nama}
                           </Text>
                           <Text style={styles.memberSub}>
-                            {m.divisi?.divisi_name || "Tanpa Kelas"} {m.nomor_induk ? `• NIS: ${m.nomor_induk}` : ""}
+                            {m.divisi?.divisi_name || "Tanpa Kelas"} {m.nomor_induk ? `• No: ${m.nomor_induk}` : ""}
                           </Text>
                         </View>
                         {isSelected && <Icon name="check-circle" size={16} color={primaryColor} />}
@@ -1077,10 +1370,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
             )}
 
             <View style={[styles.modalBtnRow, { marginTop: 16 }]}>
-              <Pressable
-                onPress={() => setIsCatatModalOpen(false)}
-                style={styles.modalCancelBtn}
-              >
+              <Pressable onPress={() => setIsCatatModalOpen(false)} style={styles.modalCancelBtn}>
                 <Text style={styles.modalCancelText}>Batal</Text>
               </Pressable>
               {haidMembers.length > 0 && (
@@ -1123,7 +1413,7 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
                 ? `Verifikasi peminjaman pita untuk ${selectedPitaItem?.user?.nama}?`
                 : confirmModalType === "reject"
                 ? `Alasan penolakan permohonan ${selectedPitaItem?.user?.nama}:`
-                : `Pastikan pita dari ${selectedPitaItem?.user?.nama} sudah diserahkan kembali ke UKS.`}
+                : `Pastikan pita dari ${selectedPitaItem?.user?.nama} sudah diserahkan kembali ke ${uksRoomTitle}.`}
             </Text>
 
             {confirmModalType === "reject" && (

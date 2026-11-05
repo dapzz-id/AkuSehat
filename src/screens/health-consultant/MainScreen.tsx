@@ -79,7 +79,7 @@ type DivisiItem = {
   normal?: number
   data_member?: Member[]
 }
-type Profile = { id: string | number; nama: string; username: string; email?: string; avatar?: string | null; level?: string; nomor_induk?: string; id_divisi?: string | number; divisi?: string; color_cover?: string; tertiary_color?: string; jk?: "L" | "P"; instansi?: { id: string | number; nama_instansi?: string } }
+type Profile = { id: string | number; nama: string; username: string; email?: string; avatar?: string | null; level?: string; nomor_induk?: string; id_divisi?: string | number; divisi?: string; color_cover?: string; tertiary_color?: string; jk?: "L" | "P"; instansi?: { id: string | number; nama_instansi?: string; jenis_instansi?: string } }
 type Notif = {
   id_kesehatan: string | number
   id_user: string | number
@@ -974,6 +974,7 @@ const HomeScreenHealthConsultant = () => {
           {active === "pita" && (
             <FemHealthConsultantView
               themeColor={tertiaryColor}
+              jenisInstansi={profile?.instansi?.jenis_instansi}
               onLateCountChange={setLatePitaCount}
             />
           )}
