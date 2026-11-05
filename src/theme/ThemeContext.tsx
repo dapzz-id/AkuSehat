@@ -14,6 +14,7 @@ import {
   getThemeFilePath,
 } from './themeStorage';
 import { Config } from '../settings/Config';
+import { setAppStatusBarTheme } from '../utils/statusBarHelper';
 
 const MODERN_FILE_NAME = 'theme_atlas_modern.json';
 
@@ -76,6 +77,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [currentThemeDef, mode, themeId]);
 
   const isDark = themeId === 'atlas_modern' && mode === 'dark';
+
+  // Synchronize native Android status bar with current theme background
+  useEffect(() => {
+    setAppStatusBarTheme(theme.bg, isDark);
+  }, [theme.bg, isDark]);
 
   // Switch Theme
   const setTheme = useCallback(

@@ -17,6 +17,7 @@ class MainApplication : Application(), ReactApplication {
           // Custom Native Modules
           add(PlayIntegrityPackage())
           add(GoogleSignInPackage())
+          add(StatusBarColorPackage())
         },
     )
   }

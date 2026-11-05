@@ -13,10 +13,12 @@ class MainActivity : ReactActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(null)
-    // Edge-to-Edge modern Android 12-15 untuk status bar & navigation bar transparan
-    WindowCompat.setDecorFitsSystemWindows(window, false)
-    window.statusBarColor = Color.TRANSPARENT
-    window.navigationBarColor = Color.TRANSPARENT
+    // Menyesuaikan status bar & navigation bar dengan tema aplikasi (default Light #F8FAFC)
+    WindowCompat.setDecorFitsSystemWindows(window, true)
+
+    val defaultBg = Color.parseColor("#F8FAFC")
+    window.statusBarColor = defaultBg
+    window.navigationBarColor = defaultBg
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
       window.isStatusBarContrastEnforced = false
