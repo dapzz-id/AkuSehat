@@ -15,6 +15,7 @@ class RejectPitaRequest extends FormRequest
     {
         return [
             'alasan' => 'nullable|string|max:500',
+            'alasan_penolakan' => 'nullable|string|max:500',
         ];
     }
 }

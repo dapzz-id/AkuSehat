@@ -61,7 +61,8 @@ class HealthMonitorApiController extends Controller
 
     public function tolak(RejectPitaRequest $request, string|int $id): JsonResponse
     {
-        $this->femHealthService->rejectPita($id, $request->validated('alasan'), Auth::user()->instansi_id);
+        $alasan = $request->validated('alasan') ?? $request->validated('alasan_penolakan');
+        $this->femHealthService->rejectPita($id, $alasan, Auth::user()->instansi_id);
 
         return response()->json([
             'status' => true,
