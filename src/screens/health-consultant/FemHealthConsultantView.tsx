@@ -22,6 +22,9 @@ import {
   getMemberGenderTitle,
   getDivisiCategoryLabel,
   getUksRoomLabel,
+  getUniversalMemberLabel,
+  getIdNumberLabel,
+  isStaffOrTeacher,
 } from "../../utils/authHelper"
 
 export type DivisionFilterItem = {
@@ -127,6 +130,10 @@ export default function FemHealthConsultantView({
   // Dynamic naming based on institution type (Siswi / Mahasiswi / Karyawati, Kelas / Jurusan)
   const memberGenderTitle = useMemo(
     () => getMemberGenderTitle("P", jenisInstansi),
+    [jenisInstansi]
+  )
+  const universalMemberLabel = useMemo(
+    () => getUniversalMemberLabel(jenisInstansi),
     [jenisInstansi]
   )
   const divisiCategoryLabel = useMemo(
@@ -502,7 +509,7 @@ export default function FemHealthConsultantView({
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Siklus Menstruasi & Kesehatan Reproduksi</Text>
           <Text style={styles.headerSubtitle}>
-            Pantau status siklus {memberGenderTitle} & guru perempuan per {divisiCategoryLabel.toLowerCase()}, deteksi keterlambatan haid (&gt; 7 hari), serta kelola pengembalian pita {uksRoomTitle}.
+            Pantau status siklus {universalMemberLabel} per {divisiCategoryLabel.toLowerCase()}, deteksi keterlambatan haid (&gt; 7 hari), serta kelola pengembalian pita {uksRoomTitle}.
           </Text>
         </View>
       </View>
@@ -632,7 +639,7 @@ export default function FemHealthConsultantView({
                         isSelected && styles.divisiChipTextActive,
                       ]}
                     >
-                      {d.divisi_name} ({d.total_female})
+                      {d.kategori === 'staf' || d.divisi_name.toLowerCase().includes('guru') || d.divisi_name.toLowerCase().includes('dosen') || d.divisi_name.toLowerCase().includes('tendik') ? "👩‍🏫 " : ""}{d.divisi_name} ({d.total_female})
                     </Text>
                   </Pressable>
                 )
@@ -753,18 +760,21 @@ export default function FemHealthConsultantView({
                 <Text style={styles.emptyText}>
                   {selectedDivisiId !== "all" || selectedHaidStatus !== "semua" || haidSearchQuery
                     ? "Tidak ada data yang cocok dengan filter atau pencarian Anda."
-                    : `Belum ada ${memberGenderTitle.toLowerCase()} atau guru perempuan yang mencatat siklus menstruasi.`}
+                    : `Belum ada ${universalMemberLabel.toLowerCase()} perempuan yang mencatat siklus menstruasi.`}
                 </Text>
               </View>
             ) : (
               haidRecords.map((item) => {
                 const isOverdue = item.is_overdue
                 const isBerlangsung = item.status === "berlangsung"
-                const userLevelLower = (item.user?.level || '').toLowerCase()
-                const isGuru = userLevelLower === "guru" || userLevelLower.includes("guru") || (item.user?.divisi?.divisi_name || '').toLowerCase().includes("guru")
                 const divisiObj = item.user?.divisi
+                const isStafOrGuru = isStaffOrTeacher(item.user) || isStaffOrTeacher(divisiObj)
                 const rawDivisiName = typeof divisiObj === 'object' ? (divisiObj?.divisi_name || (divisiObj as any)?.nama_divisi) : divisiObj
                 const divisiTitle = getDivisiTitle(rawDivisiName) || "Tanpa Divisi"
+                const roleBadgeText = isStafOrGuru
+                  ? (jenisInstansi?.toLowerCase().includes('universitas') ? 'Dosen / Staf' : 'Guru / Staf')
+                  : memberGenderTitle
+                const idLabel = getIdNumberLabel(item.user, jenisInstansi)
 
                 return (
                   <View
@@ -779,11 +789,11 @@ export default function FemHealthConsultantView({
                       <View style={{ flex: 1 }}>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                           <Text style={styles.studentName}>{item.user?.nama || "Member"}</Text>
-                          {/* Role Badge: Member vs Guru */}
+                          {/* Role Badge: Member vs Guru/Staf */}
                           <View
                             style={[
                               styles.roleBadge,
-                              isGuru
+                              isStafOrGuru
                                 ? { backgroundColor: "#EDE9FE", borderColor: "#DDD6FE" }
                                 : { backgroundColor: "#E0F2FE", borderColor: "#BAE6FD" },
                             ]}
@@ -791,10 +801,10 @@ export default function FemHealthConsultantView({
                             <Text
                               style={[
                                 styles.roleBadgeText,
-                                isGuru ? { color: "#6D28D9" } : { color: "#0369A1" },
+                                isStafOrGuru ? { color: "#6D28D9" } : { color: "#0369A1" },
                               ]}
                             >
-                              {isGuru ? "Guru" : memberGenderTitle}
+                              {roleBadgeText}
                             </Text>
                           </View>
                         </View>
@@ -803,7 +813,7 @@ export default function FemHealthConsultantView({
                         <View style={styles.metaRow}>
                           {item.user?.nomor_induk ? (
                             <Text style={styles.metaText}>
-                              {isGuru ? "NIP" : "No. Induk"}: {item.user.nomor_induk}
+                              {idLabel}: {item.user.nomor_induk}
                             </Text>
                           ) : null}
                           <View

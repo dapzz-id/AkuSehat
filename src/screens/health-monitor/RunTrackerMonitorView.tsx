@@ -134,9 +134,9 @@ export default function RunTrackerMonitorView({ themeColor }: Props) {
           <Icon name="trending-up" size={20} color={primaryColor} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Monitoring Run Tracker Siswa</Text>
+          <Text style={styles.headerTitle}>Monitoring Aktivitas Siswa & Guru/Staf</Text>
           <Text style={styles.headerSubtitle}>
-            Pantau hasil aktivitas fisik & lari siswa per kelas / divisi secara realtime
+            Pantau hasil aktivitas fisik & lari siswa, guru, dan staf per divisi/kelas secara realtime
           </Text>
         </View>
       </View>
@@ -174,7 +174,7 @@ export default function RunTrackerMonitorView({ themeColor }: Props) {
         <TextInput
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Cari nama / NIS siswa..."
+          placeholder="Cari nama atau nomor induk (NIS/NIP)..."
           placeholderTextColor="#94A3B8"
           style={styles.searchInput}
           returnKeyType="search"
@@ -274,13 +274,15 @@ export default function RunTrackerMonitorView({ themeColor }: Props) {
             <Icon name="inbox" size={36} color="#CBD5E1" />
             <Text style={styles.emptyTitle}>Belum Ada Aktivitas Olahraga</Text>
             <Text style={styles.emptyText}>
-              Siswa di kelas/divisi yang dipilih belum mencatat log lari atau olahraga hari ini.
+              Anggota di divisi/kelas yang dipilih belum mencatat log lari atau olahraga hari ini.
             </Text>
           </View>
         ) : (
           activities.map((item) => {
             const badge = getActivityBadge(item.activity_type)
             const distKm = (item.distance_meters / 1000).toFixed(2)
+            const isStaf = (item.divisi_name || '').toLowerCase().includes('guru') || (item.divisi_name || '').toLowerCase().includes('staf') || (item.divisi_name || '').toLowerCase().includes('dosen')
+            const idPrefix = isStaf ? 'NIP' : 'No. Induk'
             return (
               <View key={item.id} style={styles.activityCard}>
                 {/* User & Division Row */}
@@ -289,7 +291,7 @@ export default function RunTrackerMonitorView({ themeColor }: Props) {
                     <Text style={styles.userName}>{item.user_nama}</Text>
                     <View style={styles.subUserRow}>
                       {item.nomor_induk ? (
-                        <Text style={styles.userNis}>NIS: {item.nomor_induk}</Text>
+                        <Text style={styles.userNis}>{idPrefix}: {item.nomor_induk}</Text>
                       ) : null}
                       {item.divisi_name ? (
                         <View style={styles.divisiTag}>

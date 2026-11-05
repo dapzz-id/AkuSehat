@@ -24,7 +24,7 @@ import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'reac
 import api from "../../api/axiosConfig"
 import AnimatedBottomTabs, { type TabItem } from "../../components/AnimatedBottomTabs"
 import Icon from "react-native-vector-icons/Feather"
-import { logout, getDivisiTitle } from "../../utils/authHelper"
+import { logout, getDivisiTitle, getUniversalMemberLabel, getIdNumberLabel, isStaffOrTeacher } from "../../utils/authHelper"
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { checkAuthStatus } from '../../utils/authHelper';
 import EditProfileModal from "../../components/EditProfileModal";
@@ -917,7 +917,11 @@ const HomeScreenHealthConsultant = () => {
                       <Icon name="arrow-left" size={20} color={Colors.primary} />
                     </Pressable>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.cardTitle}>Daftar Member</Text>
+                      <Text style={styles.cardTitle}>
+                        {isStaffOrTeacher(selectedDivisionData)
+                          ? (profile?.instansi?.jenis_instansi?.toLowerCase().includes('universitas') ? 'Daftar Dosen & Staf' : 'Daftar Guru & Staf')
+                          : (profile?.instansi?.jenis_instansi?.toLowerCase().includes('sekolah') ? 'Daftar Siswa' : 'Daftar Member')}
+                      </Text>
                       <Text style={styles.mutedText}>
                         {selectedDivisionData?.divisi || (selectedDivisionData as any)?.nama_divisi || (selectedDivisionData as any)?.divisi_name || "Divisi"}
                       </Text>
@@ -932,7 +936,7 @@ const HomeScreenHealthConsultant = () => {
                       <TextInput
                         value={searchMember}
                         onChangeText={setSearchMember}
-                        placeholder="Cari nama atau nomor induk..."
+                        placeholder={isStaffOrTeacher(selectedDivisionData) ? "Cari nama atau NIP guru/staf..." : "Cari nama atau nomor induk (NIS)..."}
                         placeholderTextColor={Colors.muted}
                         style={styles.searchInput}
                       />
@@ -1008,7 +1012,7 @@ const HomeScreenHealthConsultant = () => {
                         >
                           <View style={{ flex: 1 }}>
                             <Text style={styles.listTitle}>{member.nama}</Text>
-                            <Text style={styles.mutedText}>Nomor Induk: {member.nomor_induk}</Text>
+                            <Text style={styles.mutedText}>{isStaffOrTeacher(member) || isStaffOrTeacher(selectedDivisionData) ? 'NIP' : 'Nomor Induk'}: {member.nomor_induk}</Text>
                             <Text style={styles.mutedText}>
                               Jenis Kelamin: {member.jk === "L" ? "Laki-laki" : "Perempuan"}
                             </Text>
@@ -1298,7 +1302,9 @@ const HomeScreenHealthConsultant = () => {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { maxHeight: SCREEN_HEIGHT * 0.85 }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Detail Member</Text>
+              <Text style={styles.modalTitle}>
+                {isStaffOrTeacher(selectedMember) ? 'Detail Guru / Staf' : 'Detail Member'}
+              </Text>
               <Pressable onPress={() => setDetailModalVisible(false)} accessibilityRole="button">
                 <Icon name="x" size={24} color={Colors.text} />
               </Pressable>
@@ -1311,7 +1317,9 @@ const HomeScreenHealthConsultant = () => {
                     <Text style={styles.cardTitle}>{selectedMember.nama}</Text>
                     <View style={{ gap: verticalScale(6), marginTop: verticalScale(8) }}>
                       <View style={styles.rowBetween}>
-                        <Text style={styles.mutedText}>Nomor Induk</Text>
+                        <Text style={styles.mutedText}>
+                          {isStaffOrTeacher(selectedMember) ? 'NIP / ID Staf' : 'Nomor Induk (NIS)'}
+                        </Text>
                         <Text style={styles.listTitle}>{selectedMember.nomor_induk}</Text>
                       </View>
                       <View style={styles.rowBetween}>

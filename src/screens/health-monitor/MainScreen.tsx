@@ -839,7 +839,7 @@ const HomeScreenHealthMonitor = () => {
                     fontWeight: '700',
                     color: olahragaMode === "monitor" ? tertiaryColor : Colors.muted,
                   }}>
-                    Monitoring Siswa
+                    Monitoring Siswa & Guru
                   </Text>
                 </Pressable>
 

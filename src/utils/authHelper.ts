@@ -14,14 +14,43 @@ export const getDivisiTitle = (divisi: any): string => {
   return String(divisi);
 };
 
-export const getMemberGenderTitle = (gender?: string, jenisInstansi?: string): string => {
+export const isStaffOrTeacher = (context?: any): boolean => {
+  if (!context) return false;
+  if (typeof context === 'string') {
+    const c = context.toLowerCase();
+    return c === 'staf' || c === 'guru' || c.includes('guru') || c.includes('dosen') || c.includes('tendik') || c.includes('pengajar') || c.includes('karyawan');
+  }
+  const level = (context.level || '').toLowerCase();
+  const role = (context.role_label || '').toLowerCase();
+  const kat = (context.kategori || context.divisi?.kategori || '').toLowerCase();
+  const divName = (context.divisi_name || (typeof context.divisi === 'string' ? context.divisi : context.divisi?.divisi_name) || '').toLowerCase();
+
+  return (
+    kat === 'staf' ||
+    level.includes('guru') || level.includes('dosen') || level.includes('staf') || level.includes('tendik') ||
+    role.includes('guru') || role.includes('dosen') || role.includes('staf') || role.includes('tendik') ||
+    divName.includes('guru') || divName.includes('dosen') || divName.includes('staf') || divName.includes('tendik') || divName.includes('pengajar')
+  );
+};
+
+export const getMemberGenderTitle = (gender?: string, jenisInstansi?: string, context?: any): string => {
   const jenis = (jenisInstansi || 'Sekolah').toLowerCase();
   const isP = gender === 'P' || gender === 'Perempuan';
   const isL = gender === 'L' || gender === 'Laki-laki';
 
+  // Deteksi Guru / Dosen / Staf Tenaga Kependidikan
+  if (isStaffOrTeacher(context)) {
+    if (jenis.includes('universitas') || jenis.includes('kuliah') || jenis.includes('kampus')) {
+      return isP ? 'Dosen / Staf (P)' : isL ? 'Dosen / Staf (L)' : 'Dosen & Staf';
+    }
+    return isP ? 'Guru / Staf (P)' : isL ? 'Guru / Staf (L)' : 'Guru & Staf';
+  }
+
+  // Jika institusi pendidikan tinggi (Universitas / Institut / Kampus)
   if (jenis.includes('universitas') || jenis.includes('kuliah') || jenis.includes('kampus') || jenis.includes('institut')) {
     return isP ? 'Mahasiswi' : isL ? 'Mahasiswa' : 'Mahasiswa/i';
   }
+  // Jika institusi korporat / perkantoran
   if (jenis.includes('perusahaan') || jenis.includes('industri') || jenis.includes('kantor') || jenis.includes('pt') || jenis.includes('corporate')) {
     return isP ? 'Karyawati' : isL ? 'Karyawan' : 'Karyawan/ti';
   }
@@ -31,8 +60,33 @@ export const getMemberGenderTitle = (gender?: string, jenisInstansi?: string): s
   if (jenis.includes('klinik') || jenis.includes('rumah sakit') || jenis.includes('faskes')) {
     return 'Pasien';
   }
-  // Default: Sekolah
+  // Default: Institusi Sekolah
   return isP ? 'Siswi' : isL ? 'Siswa' : 'Siswa/i';
+};
+
+export const getUniversalMemberLabel = (jenisInstansi?: string): string => {
+  const jenis = (jenisInstansi || 'Sekolah').toLowerCase();
+  if (jenis.includes('universitas') || jenis.includes('kuliah') || jenis.includes('kampus')) {
+    return 'Mahasiswa, Dosen & Staf';
+  }
+  if (jenis.includes('perusahaan') || jenis.includes('kantor')) {
+    return 'Karyawan & Staf';
+  }
+  return 'Siswa, Guru & Staf';
+};
+
+export const getIdNumberLabel = (context?: any, jenisInstansi?: string): string => {
+  if (isStaffOrTeacher(context)) {
+    return 'NIP / ID Staf';
+  }
+  const jenis = (jenisInstansi || 'Sekolah').toLowerCase();
+  if (jenis.includes('universitas') || jenis.includes('kampus')) {
+    return 'NIM';
+  }
+  if (jenis.includes('perusahaan') || jenis.includes('kantor')) {
+    return 'NIK';
+  }
+  return 'NIS';
 };
 
 export const getDivisiCategoryLabel = (jenisInstansi?: string): string => {

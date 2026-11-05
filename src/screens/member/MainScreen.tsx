@@ -25,7 +25,7 @@ import ErgonomicsMemberView from "./ErgonomicsMemberView"
 import BurnoutMemberView from "./BurnoutMemberView"
 import NutritionMemberView from "./NutritionMemberView"
 import VaccineMemberView from "./VaccineMemberView"
-import { logout, getDivisiTitle } from "../../utils/authHelper"
+import { logout, getDivisiTitle, isStaffOrTeacher } from "../../utils/authHelper"
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { checkAuthStatus } from '../../utils/authHelper';
 type Summary = {
@@ -52,6 +52,7 @@ type Profile = {
   can_add_user?: boolean;
   jk?: "L" | "P";
   level?: string;
+  role_label?: string;
   active_modules?: string[];
   instansi?: {
     id: string | number;
@@ -2181,7 +2182,7 @@ const HomeScreenMember = () => {
                     </View>
                     <Text style={[styles.profileStatLabel, { color: theme.textSecondary }]}>PERAN</Text>
                     <Text style={[styles.profileStatValue, { color: theme.text }]} numberOfLines={1}>
-                      {profile.level || 'Member'}
+                      {profile.role_label || profile.level || 'Member'}
                     </Text>
                   </View>
 
@@ -2201,7 +2202,7 @@ const HomeScreenMember = () => {
                     <View style={[styles.profileStatIconBox, { backgroundColor: '#eff6ff' }]}>
                       <Icon name="credit-card" size={15} color="#2563eb" />
                     </View>
-                    <Text style={[styles.profileStatLabel, { color: theme.textSecondary }]}>NO. INDUK</Text>
+                    <Text style={[styles.profileStatLabel, { color: theme.textSecondary }]}>{isStaffOrTeacher(profile) ? 'NIP / ID' : (profile?.instansi?.jenis_instansi?.toLowerCase().includes('sekolah') ? 'NIS' : 'NO. INDUK')}</Text>
                     <Text style={[styles.profileStatValue, { color: theme.text }]} numberOfLines={1}>
                       {profile.nomor_induk || '-'}
                     </Text>
