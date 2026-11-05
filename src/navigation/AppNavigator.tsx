@@ -6,6 +6,9 @@ import { checkAuthStatus } from '../utils/authHelper';
 import { navigationRef } from '../navigation/rootNavigation';
 import { fcmService } from '../services/fcmService';
 import SplashScreen from '../screens/SplashScreen';
+import { DebugModal, FloatingDebugButton } from '../components/DebugModal';
+import { GlobalErrorBoundary } from '../components/GlobalErrorBoundary';
+import debugLogger from '../services/debugLogger';
 
 // Screens untuk Member
 import HomeScreenMember from '../screens/member/MainScreen';
@@ -27,6 +30,18 @@ const AppNavigatorContent = () => {
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [initialRoute, setInitialRoute] = useState('Login');
   const [showSplash, setShowSplash] = useState(true);
+  const [isDebugVisible, setIsDebugVisible] = useState(false);
+
+  useEffect(() => {
+    // Dengarkan auto-open trigger ketika terjadi error 500 atau unhandled exception
+    const unsubscribeAutoOpen = debugLogger.onAutoOpenTrigger(() => {
+      setIsDebugVisible(true);
+    });
+
+    return () => {
+      unsubscribeAutoOpen();
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -114,15 +129,23 @@ const AppNavigatorContent = () => {
           onFinish={() => setShowSplash(false)}
         />
       )}
+
+      {/* Floating Debug Button (Dapat diakses kapan saja untuk memeriksa status jaringan dan error) */}
+      <FloatingDebugButton onPress={() => setIsDebugVisible(true)} />
+
+      {/* Debug Activity Modal (Muncul otomatis saat terjadi status 500 atau unhandled exception) */}
+      <DebugModal visible={isDebugVisible} onClose={() => setIsDebugVisible(false)} />
     </View>
   );
 };
 
 const AppNavigator = () => {
   return (
-    <ThemeProvider>
-      <AppNavigatorContent />
-    </ThemeProvider>
+    <GlobalErrorBoundary>
+      <ThemeProvider>
+        <AppNavigatorContent />
+      </ThemeProvider>
+    </GlobalErrorBoundary>
   );
 };
 

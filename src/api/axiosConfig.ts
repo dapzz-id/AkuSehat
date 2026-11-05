@@ -4,6 +4,7 @@ import { Config } from "../settings/Config"
 import { Alert } from 'react-native';
 import { navigationRef } from '../navigation/rootNavigation';
 import { createS2sHeaders } from './s2sCrypto';
+import { debugLogger } from '../services/debugLogger';
 
 const api = axios.create({
   baseURL: Config.API_URL,
@@ -16,6 +17,7 @@ api.defaults.headers.common['Accept'] = 'application/json';
 
 api.interceptors.request.use(async (config) => {
   try {
+    (config as any).__startTime = Date.now();
     if (config.headers) {
       config.headers['Accept'] = 'application/json';
       if (!config.headers['Content-Type'] && !(config.data instanceof FormData)) {
@@ -63,8 +65,17 @@ api.interceptors.request.use(async (config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    try {
+      debugLogger.logNetwork(response.config, response, undefined, (response.config as any)?.__startTime);
+    } catch (_) {}
+    return response;
+  },
   async (error) => {
+    try {
+      debugLogger.logNetwork(error?.config, error?.response, error, (error?.config as any)?.__startTime);
+    } catch (_) {}
+
     const status = error?.response?.status;
     const data = error?.response?.data;
     const requestUrl = error?.config?.url || '';
@@ -91,6 +102,8 @@ api.interceptors.response.use(
     } else if (status === 403 && !isAuthEndpoint) {
       const forbiddenMessage = data?.message || 'Akses ditolak: Peran Anda tidak memiliki wewenang untuk aksi ini.';
       Alert.alert('Akses Dibatasi', forbiddenMessage);
+    } else if (status >= 500) {
+      console.warn(`[API 500 ERROR] ${error?.config?.method?.toUpperCase()} ${requestUrl}:`, data?.message || error.message);
     } else if (error.code === 'ECONNABORTED' || !error.response) {
       console.warn('Network timeout or connection error:', error.message);
     }
