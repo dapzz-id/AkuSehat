@@ -128,4 +128,106 @@
         left: 0 !important;
         right: 0 !important;
     }
+
+    /* GitHub-Flavored Markdown Renderer */
+    .github-markdown-body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+        color: #1e293b;
+        line-height: 1.6;
+    }
+    .github-markdown-body h1,
+    .github-markdown-body h2,
+    .github-markdown-body h3,
+    .github-markdown-body h4 {
+        color: #0f172a;
+        font-weight: 700;
+        margin-top: 0.85rem;
+        margin-bottom: 0.4rem;
+        line-height: 1.35;
+    }
+    .github-markdown-body h1 {
+        font-size: 1.15rem;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 0.35rem;
+    }
+    .github-markdown-body h2 {
+        font-size: 1.05rem;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 0.3rem;
+    }
+    .github-markdown-body h3 {
+        font-size: 0.95rem;
+    }
+    .github-markdown-body h4 {
+        font-size: 0.875rem;
+    }
+    .github-markdown-body p {
+        margin-bottom: 0.5rem;
+    }
+    .github-markdown-body ul {
+        list-style-type: disc !important;
+        padding-left: 1.35rem !important;
+        margin-top: 0.35rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    .github-markdown-body ol {
+        list-style-type: decimal !important;
+        padding-left: 1.35rem !important;
+        margin-top: 0.35rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    .github-markdown-body li {
+        margin-bottom: 0.25rem;
+        padding-left: 0.15rem;
+    }
+    .github-markdown-body li > ul,
+    .github-markdown-body li > ol {
+        margin-top: 0.2rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+    .github-markdown-body strong {
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .github-markdown-body em {
+        font-style: italic;
+    }
+    .github-markdown-body code {
+        background-color: #f1f5f9;
+        color: #047857;
+        font-size: 0.775rem;
+        padding: 0.15rem 0.4rem;
+        border-radius: 0.375rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        border: 1px solid #e2e8f0;
+    }
+    .github-markdown-body pre {
+        background-color: #0f172a;
+        color: #f8fafc;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .github-markdown-body pre code {
+        background-color: transparent;
+        color: inherit;
+        border: 0;
+        padding: 0;
+    }
+    .github-markdown-body blockquote {
+        border-left: 3px solid #10b981;
+        background-color: #f0fdf4;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0 0.5rem 0.5rem 0;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+    .github-markdown-body hr {
+        border: 0;
+        border-top: 1px solid #e2e8f0;
+        margin: 0.75rem 0;
+    }
 }

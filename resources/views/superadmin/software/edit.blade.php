@@ -194,14 +194,62 @@
                        class="w-full text-sm rounded-xl border border-slate-300 p-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
             </div>
 
-            <!-- Detailed Changelog / Patch Notes -->
-            <div>
-                <label for="changelog" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Catatan Perubahan Lengkap (Patch Notes / Changelog)
-                </label>
-                <textarea name="changelog" id="changelog" rows="5" placeholder="Tuliskan poin-poin perubahan, contoh:&#10;• [Fitur] Penambahan riwayat siklus kesehatan&#10;• [Perbaikan] Resolusi error crash saat sinkronisasi rekam medis"
-                          class="w-full text-sm rounded-xl border border-slate-300 p-3 font-mono text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 leading-relaxed">{{ old('changelog', $update->changelog) }}</textarea>
-                <p class="text-[11px] text-slate-400 mt-1">Catatan ini akan tampil di halaman Riwayat Patch yang dapat dibaca oleh setiap pengguna.</p>
+            <!-- Detailed Changelog / Patch Notes with GitHub Markdown Live Preview -->
+            <div class="space-y-2">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <label for="changelog" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Catatan Perubahan Lengkap (Patch Notes / Changelog)
+                    </label>
+
+                    <!-- Tabs: Tulis & Pratinjau GitHub -->
+                    <div class="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs self-start sm:self-auto">
+                        <button type="button" id="tab-changelog-write" onclick="switchChangelogTab('write')"
+                                class="px-3 py-1 font-semibold rounded-lg transition-all bg-white text-emerald-800 shadow-xs flex items-center gap-1.5">
+                            <i class="fas fa-pen-to-square text-[11px]"></i>
+                            <span>Tulis Markdown</span>
+                        </button>
+                        <button type="button" id="tab-changelog-preview" onclick="switchChangelogTab('preview')"
+                                class="px-3 py-1 font-semibold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+                            <i class="fab fa-markdown text-slate-700 text-sm"></i>
+                            <span>Pratinjau GitHub</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Write Area -->
+                <div id="changelog-write-pane">
+                    <textarea name="changelog" id="changelog" rows="7"
+                              placeholder="### Apa yang Baru di Versi ini:&#10;* **Fitur Utama**:&#10;  - Penambahan visual metrik status kesehatan&#10;* **Perbaikan Bug**:&#10;  - Perbaikan crash saat klik tombol Detail"
+                              class="w-full text-sm rounded-xl border border-slate-300 p-3 font-mono text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 leading-relaxed">{{ old('changelog', $update->changelog) }}</textarea>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-400 mt-1">
+                        <span>Format teks mendukung Markdown standar (<code>### Judul</code>, <code>**tebal**</code>, <code>- List</code>, <code>`kode`</code>).</span>
+                        <button type="button" onclick="insertMarkdownSample()" class="text-emerald-700 hover:text-emerald-800 font-semibold inline-flex items-center gap-1 self-start sm:self-auto">
+                            <i class="fas fa-wand-magic-sparkles text-[10px]"></i>
+                            <span>Isi Contoh Format</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- GitHub Preview Area -->
+                <div id="changelog-preview-pane" class="hidden">
+                    <div class="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-inner">
+                        <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
+                            <span class="font-semibold flex items-center gap-1.5">
+                                <i class="fab fa-github text-slate-800 text-sm"></i>
+                                Tampilan Pratinjau GitHub Flavored Markdown
+                            </span>
+                            <span class="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-medium">
+                                Render Otomatis
+                            </span>
+                        </div>
+                        <div id="changelog-preview-body" class="p-4 min-h-[160px] max-h-[380px] overflow-y-auto github-markdown-body text-xs text-slate-800 leading-relaxed bg-white">
+                            <!-- Live Parsed Markdown rendered here -->
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1">
+                        Tampilan ini identik dengan apa yang akan dibaca pengguna di halaman Riwayat Patch dan aplikasi mobile.
+                    </p>
+                </div>
             </div>
 
             <!-- Action Buttons -->
@@ -294,6 +342,135 @@
             selectPlatform('{{ $update->platform ?? "android" }}');
         }
     });
+
+    // --- Changelog Markdown Preview & Tabs ---
+    function switchChangelogTab(tab) {
+        const writeBtn = document.getElementById('tab-changelog-write');
+        const previewBtn = document.getElementById('tab-changelog-preview');
+        const writePane = document.getElementById('changelog-write-pane');
+        const previewPane = document.getElementById('changelog-preview-pane');
+        const previewBody = document.getElementById('changelog-preview-body');
+        const textarea = document.getElementById('changelog');
+
+        if (tab === 'preview') {
+            writeBtn.className = 'px-3 py-1 font-semibold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5';
+            previewBtn.className = 'px-3 py-1 font-semibold rounded-lg transition-all bg-white text-emerald-800 shadow-xs flex items-center gap-1.5';
+            writePane.classList.add('hidden');
+            previewPane.classList.remove('hidden');
+
+            const content = textarea ? textarea.value : '';
+            previewBody.innerHTML = parseMarkdownToHtml(content);
+        } else {
+            writeBtn.className = 'px-3 py-1 font-semibold rounded-lg transition-all bg-white text-emerald-800 shadow-xs flex items-center gap-1.5';
+            previewBtn.className = 'px-3 py-1 font-semibold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5';
+            previewPane.classList.add('hidden');
+            writePane.classList.remove('hidden');
+            if (textarea) textarea.focus();
+        }
+    }
+
+    function parseMarkdownToHtml(raw) {
+        if (!raw || !raw.trim()) {
+            return '<p class="text-slate-400 italic">Belum ada catatan yang ditulis. Kembali ke tab Tulis Markdown untuk menambahkan catatan.</p>';
+        }
+
+        // Escape HTML to prevent XSS
+        let text = raw
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        // Fenced code blocks ```code```
+        text = text.replace(/```([\s\S]*?)```/g, function(match, code) {
+            return '<pre><code>' + code.trim() + '</code></pre>';
+        });
+
+        // Headers
+        text = text.replace(/^#### (.*?)$/gm, '<h4>$1</h4>');
+        text = text.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+        text = text.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+        text = text.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+
+        // Blockquotes
+        text = text.replace(/^> (.*?)$/gm, '<blockquote>$1</blockquote>');
+
+        // Inline formatting
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        text = text.replace(/__(.*?)__/g, '<strong>$1</strong>');
+        text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+        text = text.replace(/(^|[^*])\*(?!\*)(.*?)\*(?!\*)/g, '$1<em>$2</em>');
+
+        // Lists and Paragraphs
+        const lines = text.split('\n');
+        let html = '';
+        let inList = false;
+        let listType = '';
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmed = line.trim();
+
+            const bulletMatch = line.match(/^(\s*)([-*•])\s+(.*)$/);
+            const numMatch = line.match(/^(\s*)(\d+)\.\s+(.*)$/);
+
+            if (bulletMatch) {
+                if (!inList || listType !== 'ul') {
+                    if (inList) html += '</' + listType + '>';
+                    html += '<ul>';
+                    inList = true;
+                    listType = 'ul';
+                }
+                html += '<li>' + bulletMatch[3] + '</li>';
+            } else if (numMatch) {
+                if (!inList || listType !== 'ol') {
+                    if (inList) html += '</' + listType + '>';
+                    html += '<ol>';
+                    inList = true;
+                    listType = 'ol';
+                }
+                html += '<li>' + numMatch[3] + '</li>';
+            } else {
+                if (inList) {
+                    html += '</' + listType + '>';
+                    inList = false;
+                    listType = '';
+                }
+
+                if (!trimmed) continue;
+
+                if (trimmed.startsWith('<h') || trimmed.startsWith('<blockquote') || trimmed.startsWith('<pre') || trimmed.startsWith('<hr')) {
+                    html += trimmed;
+                } else {
+                    html += '<p>' + trimmed + '</p>';
+                }
+            }
+        }
+
+        if (inList) {
+            html += '</' + listType + '>';
+        }
+
+        return html;
+    }
+
+    function insertMarkdownSample() {
+        const textarea = document.getElementById('changelog');
+        if (!textarea) return;
+        const sample = `### Apa yang Baru di Versi ini:
+* **Fitur Utama**:
+  - Penambahan visual metrik status kesehatan
+  - Peningkatan antarmuka profil dan portal konselor
+* **Perbaikan Bug**:
+  - Resolusi masalah saat klik tombol Detail pada divisi
+  - Peningkatan kestabilan sinkronisasi data rekam medis
+* **Optimalisasi Sistem**:
+  - Peningkatan kecepatan pemuatan halaman dan efisiensi memori`;
+
+        if (!textarea.value.trim() || confirm('Ganti isi catatan saat ini dengan template contoh format Markdown?')) {
+            textarea.value = sample;
+            textarea.focus();
+        }
+    }
 </script>
 @endpush
 @endsection

@@ -197,7 +197,12 @@
                             </div>
                             <p class="text-xs text-slate-500 mt-0.5 line-clamp-1">{{ $update->description ?? 'Tidak ada ringkasan' }}</p>
                             @if($update->changelog)
-                                <button type="button" onclick="showChangelogModal('{{ addslashes($update->name) }}', '{{ $update->version }}', `{{ addslashes($update->changelog) }}`)"
+                                <template id="changelog-html-{{ $update->id }}">
+                                    <div class="github-markdown-body text-xs text-slate-800 leading-relaxed">
+                                        {!! \Illuminate\Support\Str::markdown($update->changelog) !!}
+                                    </div>
+                                </template>
+                                <button type="button" onclick="showChangelogModal('{{ addslashes($update->name) }}', '{{ $update->version }}', '{{ $update->id }}')"
                                         class="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline mt-1 inline-flex items-center gap-1">
                                     <i class="fas fa-list-check text-[10px]"></i>
                                     <span>Lihat Patch Notes Lengkap</span>
@@ -296,6 +301,13 @@
             <div>
                 <h3 class="font-bold text-slate-900 text-sm">{{ $update->name }}</h3>
                 <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">{{ $update->description ?? 'Tidak ada ringkasan' }}</p>
+                @if($update->changelog)
+                    <button type="button" onclick="showChangelogModal('{{ addslashes($update->name) }}', '{{ $update->version }}', '{{ $update->id }}')"
+                            class="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline mt-1.5 inline-flex items-center gap-1">
+                        <i class="fas fa-list-check text-[10px]"></i>
+                        <span>Lihat Patch Notes Lengkap</span>
+                    </button>
+                @endif
             </div>
 
             <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-100">
@@ -350,7 +362,7 @@
         </div>
         <div class="p-6 space-y-3">
             <p class="text-xs font-bold text-slate-500 uppercase">Rincian Perubahan & Pembaruan:</p>
-            <div id="modalContent" class="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs font-mono text-slate-800 leading-relaxed whitespace-pre-line max-h-80 overflow-y-auto">
+            <div id="modalContent" class="p-4 bg-slate-50/90 rounded-xl border border-slate-200 text-xs text-slate-800 leading-relaxed max-h-96 overflow-y-auto github-markdown-body">
             </div>
             <div class="flex justify-end pt-2">
                 <button type="button" onclick="closeChangelogModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">
@@ -363,9 +375,14 @@
 
 @push('scripts')
 <script>
-    function showChangelogModal(name, version, changelog) {
+    function showChangelogModal(name, version, id) {
         document.getElementById('modalTitle').innerText = name + ' (v' + version + ')';
-        document.getElementById('modalContent').innerText = changelog || 'Tidak ada catatan perubahan mendalam.';
+        const tpl = document.getElementById('changelog-html-' + id);
+        if (tpl) {
+            document.getElementById('modalContent').innerHTML = tpl.innerHTML;
+        } else {
+            document.getElementById('modalContent').innerHTML = '<p class="text-slate-500 italic">Tidak ada catatan perubahan mendalam.</p>';
+        }
         document.getElementById('changelogModal').classList.remove('hidden');
     }
 

@@ -130,13 +130,13 @@
                     </div>
 
                     @if($update->changelog)
-                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-                            <p class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <div class="p-4 rounded-xl bg-slate-50/90 border border-slate-200/90 space-y-2">
+                            <p class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-200/70 pb-2">
                                 <i class="fas fa-list-check text-emerald-600"></i>
                                 <span>Rincian Perubahan & Peningkatan:</span>
                             </p>
-                            <div class="text-xs font-mono text-slate-700 leading-relaxed whitespace-pre-line">
-                                {{ $update->changelog }}
+                            <div class="github-markdown-body text-xs text-slate-800 leading-relaxed pt-1">
+                                {!! \Illuminate\Support\Str::markdown($update->changelog) !!}
                             </div>
                         </div>
                     @endif
