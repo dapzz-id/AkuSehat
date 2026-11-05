@@ -25,7 +25,7 @@ import ErgonomicsMemberView from "./ErgonomicsMemberView"
 import BurnoutMemberView from "./BurnoutMemberView"
 import NutritionMemberView from "./NutritionMemberView"
 import VaccineMemberView from "./VaccineMemberView"
-import { logout } from "../../utils/authHelper"
+import { logout, getDivisiTitle } from "../../utils/authHelper"
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { checkAuthStatus } from '../../utils/authHelper';
 type Summary = {
@@ -904,7 +904,7 @@ const HomeScreenMember = () => {
                 {profile?.nama || "Member"}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: horizontalScale(6), flexWrap: 'wrap', marginTop: verticalScale(3) }}>
-                {profile?.divisi ? (
+                {getDivisiTitle(profile?.divisi) ? (
                   <View style={[
                     styles.divisiBadge, 
                     {
@@ -916,7 +916,7 @@ const HomeScreenMember = () => {
                   ]}>
                     <View style={[styles.divisiDot, { backgroundColor: isAtlas ? (isDark ? '#22D3EE' : '#0891B2') : tertiaryColor }]} />
                     <Text style={[styles.divisiBadgeText, { color: isAtlas ? (isDark ? '#22D3EE' : '#0891B2') : tertiaryColor }]} numberOfLines={1}>
-                      {profile.divisi}
+                      {getDivisiTitle(profile?.divisi)}
                     </Text>
                   </View>
                 ) : null}
@@ -1975,7 +1975,7 @@ const HomeScreenMember = () => {
                     </View>
                     <Text style={[styles.profileStatLabel, { color: theme.textSecondary }]}>DIVISI</Text>
                     <Text style={[styles.profileStatValue, { color: effectivePrimary }]} numberOfLines={1}>
-                      {profile.divisi || '-'}
+                      {getDivisiTitle(profile?.divisi) || '-'}
                     </Text>
                   </View>
 

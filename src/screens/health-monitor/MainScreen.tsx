@@ -21,7 +21,7 @@ import Icon from 'react-native-vector-icons/Feather'
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Colors } from "../../settings/Colors"
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'react-native-svg'
-import { logout, checkAuthStatus } from "../../utils/authHelper"
+import { logout, checkAuthStatus, getDivisiTitle } from "../../utils/authHelper"
 import api from "../../api/axiosConfig"
 import AnimatedBottomTabs, { type TabItem } from "../../components/AnimatedBottomTabs"
 import RunTrackerMonitorView from "./RunTrackerMonitorView"
@@ -672,7 +672,7 @@ const HomeScreenHealthMonitor = () => {
                 {profile?.nama || "Health Monitor"}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: horizontalScale(6), flexWrap: 'wrap', marginTop: verticalScale(3) }}>
-                {profile?.divisi ? (
+                {getDivisiTitle(profile?.divisi) ? (
                   <View style={[
                     styles.divisiBadge, 
                     {
@@ -684,7 +684,7 @@ const HomeScreenHealthMonitor = () => {
                   ]}>
                     <View style={[styles.divisiDot, { backgroundColor: tertiaryColor }]} />
                     <Text style={[styles.divisiBadgeText, { color: tertiaryColor }]} numberOfLines={1}>
-                      {profile.divisi}
+                      {getDivisiTitle(profile?.divisi)}
                     </Text>
                   </View>
                 ) : null}
@@ -1106,7 +1106,7 @@ const HomeScreenHealthMonitor = () => {
                     </View>
                     <Text style={styles.profileStatLabel}>DIVISI</Text>
                     <Text style={[styles.profileStatValue, { color: tertiaryColor }]} numberOfLines={1}>
-                      {profile.divisi || '-'}
+                      {getDivisiTitle(profile?.divisi) || '-'}
                     </Text>
                   </View>
 

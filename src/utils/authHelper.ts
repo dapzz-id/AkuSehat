@@ -5,6 +5,15 @@ import { fcmService } from '../services/fcmService';
 const TOKEN_KEY = 'sanctum_token';
 const USER_KEY = 'user';
 
+export const getDivisiTitle = (divisi: any): string => {
+  if (!divisi) return '';
+  if (typeof divisi === 'string') return divisi;
+  if (typeof divisi === 'object') {
+    return divisi.divisi_name || divisi.nama_divisi || divisi.divisi || '';
+  }
+  return String(divisi);
+};
+
 export const checkAuthStatus = async () => {
   try {
     const token = await AsyncStorage.getItem(TOKEN_KEY);

@@ -24,7 +24,7 @@ import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'reac
 import api from "../../api/axiosConfig"
 import AnimatedBottomTabs, { type TabItem } from "../../components/AnimatedBottomTabs"
 import Icon from "react-native-vector-icons/Feather"
-import { logout } from "../../utils/authHelper"
+import { logout, getDivisiTitle } from "../../utils/authHelper"
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { checkAuthStatus } from '../../utils/authHelper';
 import EditProfileModal from "../../components/EditProfileModal";
@@ -628,7 +628,7 @@ const HomeScreenHealthConsultant = () => {
               {profile?.nama || "Health Consultant"}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: horizontalScale(6), flexWrap: 'wrap', marginTop: verticalScale(3) }}>
-              {profile?.divisi ? (
+              {getDivisiTitle(profile?.divisi) ? (
                 <View style={[
                   styles.divisiBadge, 
                   {
@@ -640,7 +640,7 @@ const HomeScreenHealthConsultant = () => {
                 ]}>
                   <View style={[styles.divisiDot, { backgroundColor: tertiaryColor }]} />
                   <Text style={[styles.divisiBadgeText, { color: tertiaryColor }]} numberOfLines={1}>
-                    {profile.divisi}
+                    {getDivisiTitle(profile?.divisi)}
                   </Text>
                 </View>
               ) : null}
@@ -1040,7 +1040,7 @@ const HomeScreenHealthConsultant = () => {
                     </View>
                     <Text style={styles.profileStatLabel}>DIVISI</Text>
                     <Text style={[styles.profileStatValue, { color: tertiaryColor }]} numberOfLines={1}>
-                      {profile.divisi || '-'}
+                      {getDivisiTitle(profile?.divisi) || '-'}
                     </Text>
                   </View>
 

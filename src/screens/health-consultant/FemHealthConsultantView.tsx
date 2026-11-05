@@ -18,6 +18,7 @@ import Icon from "react-native-vector-icons/Feather"
 import api from "../../api/axiosConfig"
 import { Colors } from "../../settings/Colors"
 import { moderateScale, horizontalScale, verticalScale } from "../../utils/responsive"
+import { getDivisiTitle } from "../../utils/authHelper"
 
 export type PeminjamanItem = {
   id: string | number
@@ -326,9 +327,9 @@ export default function FemHealthConsultantView({ themeColor, onLateCountChange 
                       {item.user?.nomor_induk ? (
                         <Text style={styles.metaText}>NIS: {item.user.nomor_induk}</Text>
                       ) : null}
-                      {item.user?.divisi ? (
+                      {getDivisiTitle(item.user?.divisi) ? (
                         <View style={styles.divisiBadge}>
-                          <Text style={styles.divisiText}>{item.user.divisi}</Text>
+                          <Text style={styles.divisiText}>{getDivisiTitle(item.user?.divisi)}</Text>
                         </View>
                       ) : null}
                     </View>
