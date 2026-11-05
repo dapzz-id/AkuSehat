@@ -15,6 +15,7 @@ import { Colors } from '../settings/Colors';
 import { Config } from '../settings/Config';
 import { moderateScale, verticalScale, scale, wp, hp } from '../utils/responsive';
 import { SoftwareReleaseData } from '../api/appUpdateService';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface ForceUpgradeModalProps {
   visible: boolean;
@@ -110,12 +111,15 @@ export const ForceUpgradeModal: React.FC<ForceUpgradeModalProps> = ({
               ) : null}
 
               {updateData?.changelog ? (
-                <Text style={styles.changelogBodyText}>{updateData.changelog}</Text>
+                <MarkdownRenderer
+                  content={updateData.changelog}
+                  textColor="#334155"
+                />
               ) : (
-                <Text style={styles.changelogBodyText}>
-                  • Peningkatan performa dan keamanan sistem{'\n'}
-                  • Penyesuaian fitur terbaru untuk kenyamanan Anda
-                </Text>
+                <MarkdownRenderer
+                  content={`* Peningkatan performa dan stabilitas sistem\n* Penyesuaian fitur terbaru untuk kenyamanan Anda`}
+                  textColor="#334155"
+                />
               )}
             </ScrollView>
           </View>

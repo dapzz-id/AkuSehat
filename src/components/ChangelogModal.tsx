@@ -17,6 +17,7 @@ import { Colors } from '../settings/Colors';
 import { Config } from '../settings/Config';
 import { moderateScale, verticalScale, scale, wp, hp } from '../utils/responsive';
 import { fetchAppChangelogs, SoftwareReleaseData } from '../api/appUpdateService';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface ChangelogModalProps {
   visible: boolean;
@@ -255,9 +256,10 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({
                         {item.changelog ? (
                           <View style={styles.changelogSection}>
                             <Text style={styles.changelogSectionTitle}>Catatan Perubahan:</Text>
-                            <Text style={styles.changelogContentText}>
-                              {item.changelog}
-                            </Text>
+                            <MarkdownRenderer
+                              content={item.changelog}
+                              textColor="#334155"
+                            />
                           </View>
                         ) : null}
 

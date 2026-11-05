@@ -14,6 +14,7 @@ import { Colors } from '../settings/Colors';
 import { Config } from '../settings/Config';
 import { moderateScale, verticalScale, scale, wp, hp } from '../utils/responsive';
 import { SoftwareReleaseData } from '../api/appUpdateService';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 export type CheckUpdateStatus =
   | 'checking'
@@ -115,7 +116,10 @@ export const CheckUpdateModal: React.FC<CheckUpdateModalProps> = ({
                       <Text style={styles.descText}>{updateData.description}</Text>
                     ) : null}
                     {updateData?.changelog ? (
-                      <Text style={styles.changelogText}>{updateData.changelog}</Text>
+                      <MarkdownRenderer
+                        content={updateData.changelog}
+                        textColor="#334155"
+                      />
                     ) : null}
                   </ScrollView>
                 </View>
