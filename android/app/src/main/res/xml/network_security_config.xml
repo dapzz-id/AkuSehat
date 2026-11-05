@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Aturan Utama: Blokir semua lalu lintas HTTP tanpa enkripsi (Cleartext) & hanya percayai CA resmi Sistem -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Proteksi Domain Produksi Backend Utama: Enkripsi HTTPS wajib -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">akusehat.neuracakrawira.asia</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Metro Bundler / Localhost Development (hanya untuk loopback dev environment) -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+    </domain-config>
+
+    <!-- Debug Overrides: Izinkan sertifikat proxy pengguna (Charles/Fiddler) HANYA pada build Debug untuk inspeksi pengembang -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>
