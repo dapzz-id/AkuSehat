@@ -13,6 +13,7 @@ enum AuditCategory: string
     case SYSTEM = 'system';
     case SECURITY = 'security';
     case HEALTH = 'health';
+    case CRASH = 'crash';
 
     public function label(): string
     {
@@ -26,6 +27,7 @@ enum AuditCategory: string
             self::SYSTEM => 'Sistem & Server',
             self::SECURITY => 'Keamanan & Proteksi',
             self::HEALTH => 'Pemeriksaan Kesehatan',
+            self::CRASH => 'Crash & Bug Report',
         };
     }
 

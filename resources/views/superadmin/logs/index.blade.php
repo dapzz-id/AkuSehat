@@ -29,58 +29,74 @@
     </div>
 
     <!-- 1. Stats Counter Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-shadow">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Log Tercatat</p>
-                    <h3 class="text-2xl font-black text-slate-800 mt-1">{{ number_format($totalLogsCount) }}</h3>
-                    <p class="text-[11px] text-slate-500 mt-1">Seluruh riwayat audit sistem</p>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Log</p>
+                    <h3 class="text-xl font-black text-slate-800 mt-1">{{ number_format($totalLogsCount) }}</h3>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Riwayat audit sistem</p>
                 </div>
-                <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-xl">
+                <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-lg">
                     <i class="fas fa-database"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-shadow">
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-blue-500">Aktivitas Otentikasi</p>
-                    <h3 class="text-2xl font-black text-blue-900 mt-1">{{ number_format($authEventsCount) }}</h3>
-                    <p class="text-[11px] text-slate-500 mt-1">Login & Logout sesi pengguna</p>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-blue-500">Otentikasi</p>
+                    <h3 class="text-xl font-black text-blue-900 mt-1">{{ number_format($authEventsCount) }}</h3>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Login & Logout sesi</p>
                 </div>
-                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg">
                     <i class="fas fa-right-to-bracket"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-shadow">
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-emerald-600">Pembayaran & Billing</p>
-                    <h3 class="text-2xl font-black text-emerald-900 mt-1">{{ number_format($billingEventsCount) }}</h3>
-                    <p class="text-[11px] text-slate-500 mt-1">Transaksi & lisensi instansi</p>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Billing</p>
+                    <h3 class="text-xl font-black text-emerald-900 mt-1">{{ number_format($billingEventsCount) }}</h3>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Lisensi instansi</p>
                 </div>
-                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
                     <i class="fas fa-receipt"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-shadow">
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-purple-600">Aksi Administratif</p>
-                    <h3 class="text-2xl font-black text-purple-900 mt-1">{{ number_format($sensitiveActionsCount) }}</h3>
-                    <p class="text-[11px] text-slate-500 mt-1">User, fitur & maintenance</p>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-purple-600">Administratif</p>
+                    <h3 class="text-xl font-black text-purple-900 mt-1">{{ number_format($sensitiveActionsCount) }}</h3>
+                    <p class="text-[10px] text-slate-500 mt-0.5">User, fitur & mode</p>
                 </div>
-                <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg">
                     <i class="fas fa-shield-halved"></i>
                 </div>
             </div>
         </div>
+
+        <a href="{{ route('superadmin.logs.index', ['category' => 'crash']) }}" class="bg-white rounded-2xl border {{ request('category') === 'crash' ? 'border-rose-500 ring-2 ring-rose-400 bg-rose-50/20' : 'border-rose-200' }} p-4 shadow-sm hover:shadow-md hover:border-rose-400 transition-all block">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-rose-600 flex items-center gap-1">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span>Crash Analytics</span>
+                    </p>
+                    <h3 class="text-xl font-black text-rose-900 mt-1">{{ number_format($crashEventsCount ?? 0) }}</h3>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Crash mobile prod</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg">
+                    <i class="fas fa-bug"></i>
+                </div>
+            </div>
+        </a>
     </div>
 
     <!-- 2. Charts Section -->
@@ -155,6 +171,7 @@
                     <option value="maintenance" {{ request('category') === 'maintenance' ? 'selected' : '' }}>Mode Maintenance</option>
                     <option value="module" {{ request('category') === 'module' ? 'selected' : '' }}>Kontrol Fitur & Modul</option>
                     <option value="instansi" {{ request('category') === 'instansi' ? 'selected' : '' }}>Institusi</option>
+                    <option value="crash" {{ request('category') === 'crash' ? 'selected' : '' }}>💥 Crash & Bug Analytics</option>
                     <option value="system" {{ request('category') === 'system' ? 'selected' : '' }}>Sistem</option>
                 </select>
             </div>
@@ -221,6 +238,7 @@
                                         'maintenance' => 'bg-rose-100 text-rose-800 border-rose-200',
                                         'module' => 'bg-cyan-100 text-cyan-800 border-cyan-200',
                                         'instansi' => 'bg-amber-100 text-amber-800 border-amber-200',
+                                        'crash' => 'bg-rose-100 text-rose-800 border-rose-300 font-bold',
                                         'system' => 'bg-slate-200 text-slate-800 border-slate-300',
                                     ][$log->category] ?? 'bg-slate-100 text-slate-700 border-slate-200';
                                 @endphp

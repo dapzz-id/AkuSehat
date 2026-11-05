@@ -53,6 +53,7 @@ class AuditLogService
         $authEventsCount = $counts['auth'];
         $billingEventsCount = $counts['billing'];
         $sensitiveActionsCount = $counts['sensitive'];
+        $crashEventsCount = $counts['crash'];
 
         // Data Line Chart Tren 14 Hari
         $trendData = $this->auditLogRepository->getTimelineData(14);
@@ -60,15 +61,16 @@ class AuditLogService
         $trendCounts = $trendData->pluck('total')->toArray();
 
         // Data Doughnut Chart Distribusi Kategori
-        $pieLabels = ['Autentikasi', 'Billing / Lisensi', 'Pengguna', 'Fitur & Maintenance', 'Sistem & Keamanan'];
+        $pieLabels = ['Autentikasi', 'Billing / Lisensi', 'Pengguna', 'Fitur & Maintenance', 'Crash & Bugs', 'Lainnya'];
         $pieData = [
             $counts['auth'],
             $counts['billing'],
             \App\Models\AuditLog::where('category', 'user')->count(),
             \App\Models\AuditLog::whereIn('category', ['module', 'maintenance'])->count(),
-            \App\Models\AuditLog::whereNotIn('category', ['auth', 'billing', 'user', 'module', 'maintenance'])->count(),
+            $counts['crash'],
+            \App\Models\AuditLog::whereNotIn('category', ['auth', 'billing', 'user', 'module', 'maintenance', 'crash'])->count(),
         ];
-        $pieColors = ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#64748b'];
+        $pieColors = ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#64748b'];
 
         return compact(
             'logs',
@@ -76,6 +78,7 @@ class AuditLogService
             'authEventsCount',
             'billingEventsCount',
             'sensitiveActionsCount',
+            'crashEventsCount',
             'trendLabels',
             'trendCounts',
             'pieLabels',

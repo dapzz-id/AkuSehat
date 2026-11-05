@@ -10,6 +10,9 @@ use App\Modules\Mens\DataHaid\Requests\GetMemberSedangHaidRequest;
 use App\Modules\Mens\DataHaid\Requests\GetOverdueWarningsRequest;
 use App\Modules\Mens\DataHaid\Requests\StorePitaPeminjamanRequest;
 use App\Modules\Mens\DataHaid\Requests\UpdatePitaPeminjamanRequest;
+use App\Modules\Mens\DataHaid\Requests\FilterFemHealthRequest;
+use App\Modules\Mens\DataHaid\Requests\StopMemberHaidRequest;
+use App\Modules\Mens\DataHaid\Requests\NotifyMemberCallRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -179,7 +182,7 @@ class HealthMonitorApiController extends Controller
         return $this->getOverdueWarnings($request);
     }
 
-    public function getHaidRecords(Request $request): JsonResponse
+    public function getHaidRecords(FilterFemHealthRequest $request): JsonResponse
     {
         $user = Auth::user();
         $instansiId = $user?->instansi_id;
@@ -286,7 +289,7 @@ class HealthMonitorApiController extends Controller
     /**
      * Menghentikan siklus haid member oleh Health Consultant (kondisi khusus/medis)
      */
-    public function stopMemberHaid(Request $request, string|int $id): JsonResponse
+    public function stopMemberHaid(StopMemberHaidRequest $request, string|int $id): JsonResponse
     {
         $consultant = Auth::user();
         $instansiId = $consultant?->instansi_id;
@@ -355,7 +358,7 @@ class HealthMonitorApiController extends Controller
     /**
      * Memanggil siswi/member untuk konsultasi UKS dan/atau pengembalian pita via FCM
      */
-    public function notifyMemberCall(Request $request, string|int $id): JsonResponse
+    public function notifyMemberCall(NotifyMemberCallRequest $request, string|int $id): JsonResponse
     {
         $consultant = Auth::user();
         $instansiId = $consultant?->instansi_id;

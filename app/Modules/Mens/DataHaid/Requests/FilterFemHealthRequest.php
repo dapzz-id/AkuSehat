@@ -17,6 +17,7 @@ class FilterFemHealthRequest extends FormRequest
             'month' => 'nullable|integer|min:1|max:12',
             'year' => 'nullable|integer|min:2020|max:2099',
             'divisi_id' => 'nullable|string',
+            'status' => 'nullable|string',
             'search' => 'nullable|string|max:100',
         ];
     }

@@ -23,6 +23,7 @@ class AuditLogger
         'system',
         'security',
         'health',
+        'crash',
     ];
 
     public static function log(

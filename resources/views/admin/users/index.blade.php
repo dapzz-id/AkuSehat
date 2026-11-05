@@ -1633,8 +1633,13 @@
             document.getElementById('userPermTitle').textContent = user.nama + ' (' + (user.nomor_induk || user.username) + ')';
             document.getElementById('userPermForm').action = '/admin/users/' + user.id + '/permissions';
 
-            const staffRoles = ['Health Consultant', 'Health Monitor', 'Admin', 'admin_pmr', 'health_consultant', 'health_monitor'];
-            const isStaff = staffRoles.includes(user.level);
+            const staffRoles = [
+                'health consultant', 'health monitor', 'admin', 'admin pmr', 
+                'admin_pmr', 'health_consultant', 'health_monitor', 
+                'pembina', 'guru bk', 'konselor'
+            ];
+            const userLvl = String(user.level || '').toLowerCase().trim();
+            const isStaff = staffRoles.includes(userLvl) || staffRoles.some(r => userLvl.includes(r));
 
             const headerTitle = document.getElementById('userPermHeaderTitle');
             const rolePill = document.getElementById('userPermRolePill');

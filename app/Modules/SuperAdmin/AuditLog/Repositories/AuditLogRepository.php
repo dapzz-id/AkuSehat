@@ -19,7 +19,8 @@ class AuditLogRepository
             COUNT(*) as total,
             SUM(CASE WHEN category = 'auth' THEN 1 ELSE 0 END) as `auth`,
             SUM(CASE WHEN category = 'billing' THEN 1 ELSE 0 END) as `billing`,
-            SUM(CASE WHEN category IN ('user', 'maintenance', 'module') THEN 1 ELSE 0 END) as `sensitive`
+            SUM(CASE WHEN category IN ('user', 'maintenance', 'module') THEN 1 ELSE 0 END) as `sensitive`,
+            SUM(CASE WHEN category = 'crash' THEN 1 ELSE 0 END) as `crash`
         ")->first();
 
         return [
@@ -27,6 +28,7 @@ class AuditLogRepository
             'auth' => (int) ($stats->auth ?? 0),
             'billing' => (int) ($stats->billing ?? 0),
             'sensitive' => (int) ($stats->sensitive ?? 0),
+            'crash' => (int) ($stats->crash ?? 0),
         ];
     }
 

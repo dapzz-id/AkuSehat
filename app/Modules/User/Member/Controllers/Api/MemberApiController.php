@@ -21,6 +21,8 @@ use App\Modules\User\Member\Requests\UpdateHaidRequest;
 use App\Modules\User\Member\Requests\CheckPitaStatusRequest;
 use App\Modules\User\Member\Requests\GetRiwayatPitaRequest;
 use App\Modules\User\Member\Requests\StorePitaRequest;
+use App\Modules\User\Member\Requests\UpdateFcmTokenRequest;
+use App\Modules\User\Member\Requests\DeleteFcmTokenRequest;
 use App\Modules\Mens\DataHaid\Services\FemHealthService;
 use App\Modules\Mens\DataHaid\Repositories\DataHaidRepository;
 use App\Modules\Mens\DataHaid\Enums\HaidStatus;
@@ -222,14 +224,8 @@ class MemberApiController extends Controller
         ]);
     }
 
-    public function updateFcmToken(Request $req): JsonResponse
+    public function updateFcmToken(UpdateFcmTokenRequest $req): JsonResponse
     {
-        $req->validate([
-            'fcm_token' => 'required|string',
-            'platform' => 'nullable|string|max:20',
-            'device_model' => 'nullable|string|max:100',
-        ]);
-
         $u = $req->user();
         $token = $req->input('fcm_token');
         $platform = $req->input('platform', 'android');
@@ -272,7 +268,7 @@ class MemberApiController extends Controller
         ]);
     }
 
-    public function deleteFcmToken(Request $req): JsonResponse
+    public function deleteFcmToken(DeleteFcmTokenRequest $req): JsonResponse
     {
         $u = $req->user();
         $token = $req->input('fcm_token');

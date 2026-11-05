@@ -56,6 +56,7 @@ class AuditLog extends Model
             'instansi' => 'bg-amber-100 text-amber-800 border-amber-200',
             'maintenance' => 'bg-rose-100 text-rose-700 border-rose-200',
             'module' => 'bg-cyan-100 text-cyan-800 border-cyan-200',
+            'crash' => 'bg-red-100 text-red-800 border-red-300 font-bold',
             default => 'bg-slate-100 text-slate-700 border-slate-200',
         };
     }
@@ -72,7 +73,29 @@ class AuditLog extends Model
             'instansi' => 'Institusi / Instansi',
             'maintenance' => 'Pemeliharaan Sistem',
             'module' => 'Kontrol Fitur & Modul',
+            'crash' => 'Crash & Bug Analytics',
             default => 'Sistem Terpadu',
+        };
+    }
+
+    public function getCategoryLabelAttribute(): string
+    {
+        return $this->getCategoryLabel();
+    }
+
+    public function getCategoryIconAttribute(): string
+    {
+        return match ($this->category) {
+            'auth' => 'fa-right-to-bracket',
+            'billing' => 'fa-receipt',
+            'user' => 'fa-user-gear',
+            'instansi' => 'fa-school',
+            'maintenance' => 'fa-screwdriver-wrench',
+            'module' => 'fa-sliders',
+            'crash' => 'fa-triangle-exclamation',
+            'security' => 'fa-shield-halved',
+            'health' => 'fa-heart-pulse',
+            default => 'fa-circle-info',
         };
     }
 }
