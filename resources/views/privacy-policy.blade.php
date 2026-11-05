@@ -349,7 +349,14 @@
 
     <!-- Footer -->
     <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
-        <div class="max-w-5xl mx-auto px-4">
+        <div class="max-w-5xl mx-auto px-4 space-y-1">
+            <div class="flex items-center justify-center gap-4 mb-2 text-slate-400">
+                <a href="{{ url('/kebijakan-privasi') }}" class="hover:text-emerald-700 font-semibold text-slate-600 transition-colors">Kebijakan Privasi</a>
+                <span>&bull;</span>
+                <a href="{{ url('/syarat-ketentuan') }}" class="hover:text-emerald-700 transition-colors">Persyaratan Layanan</a>
+                <span>&bull;</span>
+                <a href="{{ url('/hapus-akun') }}" class="hover:text-emerald-700 transition-colors">Hapus Akun</a>
+            </div>
             <p>Aku Sehat &copy; 2026 &bull; Dikelola oleh Neura Cakrawira Asia. Seluruh Hak Cipta Dilindungi.</p>
         </div>
     </footer>

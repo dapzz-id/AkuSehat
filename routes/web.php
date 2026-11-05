@@ -16,6 +16,19 @@ Route::get('/privacy-policy', function () {
     return view('privacy-policy');
 });
 
+// Public Terms of Service (Persyaratan Layanan Google Play Compliance)
+Route::get('/syarat-ketentuan', function () {
+    return view('terms-of-service');
+})->name('terms.service');
+
+Route::get('/terms-of-service', function () {
+    return view('terms-of-service');
+});
+
+Route::get('/terms', function () {
+    return view('terms-of-service');
+});
+
 // Public Account & Data Deletion (Google Play Compliance)
 Route::get('/hapus-akun', function () {
     return view('delete-account');
