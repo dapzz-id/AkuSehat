@@ -193,9 +193,12 @@ class CounselingService
         }
 
         return [
+            'total' => $total,
             'total_students' => $total,
             'normal' => $nm,
+            'obesitas' => $ob,
             'obese' => $ob,
+            'kurus' => $kr,
             'underweight' => $kr,
         ];
     }

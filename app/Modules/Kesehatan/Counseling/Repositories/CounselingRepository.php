@@ -231,10 +231,84 @@ class CounselingRepository
 
     public function getDivisionsWithMemberCount(int|string $instansiId): Collection
     {
-        return Divisi::where('instansi_id', $instansiId)
-            ->withCount(['users as total_member' => function($q) {
-                $q->where('level', UserRole::MEMBER->value);
-            }])
+        $divisions = Divisi::where('instansi_id', $instansiId)
+            ->orderBy('divisi_name', 'asc')
             ->get();
+
+        $members = User::where('instansi_id', $instansiId)
+            ->where('level', UserRole::MEMBER->value)
+            ->with(['kesehatan' => function ($q) {
+                $q->orderBy('tgl', 'desc')->orderBy('created_at', 'desc');
+            }])
+            ->get()
+            ->groupBy('id_divisi');
+
+        return $divisions->map(function ($divisi) use ($members) {
+            $divMembers = $members->get($divisi->id, collect());
+            $totalMember = $divMembers->count();
+
+            $obesitas = 0;
+            $kurus = 0;
+            $normal = 0;
+
+            $dataMember = $divMembers->map(function ($member) use ($divisi, &$obesitas, &$kurus, &$normal) {
+                $latest = $member->kesehatan->first();
+                $avgBmi = $member->kesehatan->isNotEmpty() ? round((float) $member->kesehatan->avg('imt'), 1) : 0.0;
+
+                $statusStr = strtolower($latest?->status ?? '');
+                if (str_contains($statusStr, 'obesitas')) {
+                    $obesitas++;
+                } elseif (str_contains($statusStr, 'kurus') || str_contains($statusStr, 'underweight')) {
+                    $kurus++;
+                } else {
+                    $normal++;
+                }
+
+                $riwayatKesehatan = $member->kesehatan->map(function ($k) {
+                    $tglStr = $k->tgl instanceof \Carbon\Carbon ? $k->tgl->format('Y-m-d') : (string) ($k->tgl ?? '');
+                    return [
+                        'tgl' => $tglStr,
+                        'bb' => (string) ($k->bb ?? ''),
+                        'tb' => (string) ($k->tb ?? ''),
+                        'score' => (float) ($k->imt ?? 0),
+                        'status' => (string) ($k->status ?? 'Normal'),
+                        'status_darah' => (string) ($k->status_darah ?? 'Normal'),
+                        'perilaku_beresiko' => (string) ($k->perilaku_beresiko ?? ''),
+                        'gangguan_reproduksi' => (string) ($k->gangguan_reproduksi ?? ''),
+                    ];
+                })->values()->all();
+
+                $pemeriksaanTerakhir = null;
+                if ($latest) {
+                    $pemeriksaanTerakhir = $latest->tgl instanceof \Carbon\Carbon
+                        ? $latest->tgl->format('Y-m-d')
+                        : (string) ($latest->tgl ?? '');
+                }
+
+                return [
+                    'id' => $member->id,
+                    'nama' => (string) $member->nama,
+                    'nomor_induk' => (string) ($member->nomor_induk ?? ''),
+                    'divisi' => (string) $divisi->divisi_name,
+                    'jk' => (string) ($member->jk ?? 'L'),
+                    'username' => (string) ($member->username ?? ''),
+                    'pemeriksaan_terakhir' => $pemeriksaanTerakhir,
+                    'avg_bmi' => $avgBmi,
+                    'riwayat_kesehatan' => $riwayatKesehatan,
+                ];
+            })->values()->all();
+
+            return [
+                'id' => $divisi->id,
+                'divisi' => $divisi->divisi_name,
+                'nama_divisi' => $divisi->divisi_name,
+                'divisi_name' => $divisi->divisi_name,
+                'total_member' => $totalMember,
+                'obesitas' => $obesitas,
+                'kurus' => $kurus,
+                'normal' => $normal,
+                'data_member' => $dataMember,
+            ];
+        });
     }
 }
