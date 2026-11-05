@@ -105,6 +105,155 @@ class GlobalModuleConfig extends Model
         ];
     }
 
+    /**
+     * Label kontekstual hak akses CRUD: Wewenang Tugas (Operasional/Siswa) vs Hak Akses Personal (Diri Sendiri).
+     */
+    public static function getModulePermissionLabels(): array
+    {
+        return [
+            'haid_pita' => [
+                'duty' => [
+                    'r' => ['title' => 'Monitoring Rekap', 'desc' => 'Pantau siklus haid siswi & guru, peringatan pita UKS >7 hari'],
+                    'u' => ['title' => 'Kelola Pita & Medis', 'desc' => 'Verifikasi pita UKS & hentikan siklus siswa karena kondisi medis'],
+                    'c' => ['title' => 'Entri Siklus Anggota', 'desc' => 'Input pencatatan siklus atas nama anggota UKS'],
+                    'd' => ['title' => 'Hapus Rekap', 'desc' => 'Hapus data catatan siklus anggota'],
+                ],
+                'personal' => [
+                    'c' => ['title' => 'Mulai Siklus Pribadi', 'desc' => 'Mulai siklus haid diri sendiri di HP & ajukan pita UKS'],
+                    'r' => ['title' => 'Kalender Haid Saya', 'desc' => 'Buka riwayat siklus & prediksi ovulasi pribadi'],
+                    'u' => ['title' => 'Edit Gejala Pribadi', 'desc' => 'Catat keluhan PMS, kram, dan durasi mandiri'],
+                    'd' => ['title' => 'Hapus Log Pribadi', 'desc' => 'Hapus catatan siklus haid pribadi'],
+                ],
+            ],
+            'olahraga' => [
+                'duty' => [
+                    'r' => ['title' => 'Monitoring Leaderboard', 'desc' => 'Pantau aktivitas & peringkat lari siswa se-sekolah'],
+                    'u' => ['title' => 'Validasi Rekap', 'desc' => 'Koreksi & validasi catatan kebugaran anggota'],
+                    'c' => ['title' => 'Penilaian Manual', 'desc' => 'Input penilaian lari/olahraga siswa secara manual'],
+                    'd' => ['title' => 'Hapus Rekap Siswa', 'desc' => 'Hapus catatan lari anggota'],
+                ],
+                'personal' => [
+                    'c' => ['title' => 'GPS Run Tracker Pribadi', 'desc' => 'Rekam lari, jalan, pace & kalori mandiri di HP'],
+                    'r' => ['title' => 'Statistik Lari Sendiri', 'desc' => 'Lihat jarak tempuh, rute GPS & riwayat sendiri'],
+                    'u' => ['title' => 'Edit Catatan Lari', 'desc' => 'Sesuaikan catatan latihan mandiri'],
+                    'd' => ['title' => 'Hapus Riwayat Pribadi', 'desc' => 'Hapus sesi lari pribadi'],
+                ],
+            ],
+            'kesehatan' => [
+                'duty' => [
+                    'c' => ['title' => 'Input Pemeriksaan Fisik', 'desc' => 'Catat TB, BB, IMT, tensi darah siswa di UKS'],
+                    'r' => ['title' => 'Rekam Medis Sekolah', 'desc' => 'Monitoring riwayat fisik & klinis seluruh siswa'],
+                    'u' => ['title' => 'Perbarui Data Medis', 'desc' => 'Koreksi hasil pemeriksaan fisik siswa'],
+                    'd' => ['title' => 'Hapus Rekap Medis', 'desc' => 'Hapus data pemeriksaan siswa'],
+                ],
+                'personal' => [
+                    'r' => ['title' => 'Riwayat Kesehatan Diri', 'desc' => 'Lihat status gizi IMT & tensi diri sendiri'],
+                    'c' => ['title' => 'Catat Vital Mandiri', 'desc' => 'Input tanda vital mandiri jika diizinkan'],
+                    'u' => ['title' => 'Edit Catatan Sendiri', 'desc' => 'Perbarui catatan fisik mandiri'],
+                    'd' => ['title' => 'Hapus Catatan Sendiri', 'desc' => 'Hapus log fisik mandiri'],
+                ],
+            ],
+            'konsultasi' => [
+                'duty' => [
+                    'r' => ['title' => 'Inbox SafeSpace Siswa', 'desc' => 'Baca pengajuan konseling & pesan privat siswa'],
+                    'u' => ['title' => 'Bimbing Konseling', 'desc' => 'Respons pesan, dampingi & chat sesi SafeSpace siswa'],
+                    'c' => ['title' => 'Buka Sesi Terjadwal', 'desc' => 'Inisiasi sesi konseling terjadwal untuk siswa'],
+                    'd' => ['title' => 'Tutup / Arsipkan Sesi', 'desc' => 'Selesaikan atau arsipkan sesi bimbingan siswa'],
+                ],
+                'personal' => [
+                    'c' => ['title' => 'Booking SafeSpace', 'desc' => 'Buat pengajuan konseling untuk diri sendiri'],
+                    'r' => ['title' => 'Chat Konseling Pribadi', 'desc' => 'Buka riwayat obrolan bimbingan diri sendiri'],
+                    'u' => ['title' => 'Ubah Janji Temu', 'desc' => 'Sesuaikan jadwal konseling pribadi'],
+                    'd' => ['title' => 'Batalkan Pengajuan', 'desc' => 'Batalkan sesi konseling diri sendiri'],
+                ],
+            ],
+            'vitalitas' => [
+                'duty' => [
+                    'r' => ['title' => 'Monitoring Hidrasi Siswa', 'desc' => 'Pantau kepatuhan minum & jam tidur anggota'],
+                    'u' => ['title' => 'Evaluasi Gaya Hidup', 'desc' => 'Beri catatan evaluasi hidrasi anggota'],
+                    'c' => ['title' => 'Input Log Anggota', 'desc' => 'Entri rekap vitalitas atas nama siswa'],
+                    'd' => ['title' => 'Hapus Log Anggota', 'desc' => 'Hapus catatan hidrasi siswa'],
+                ],
+                'personal' => [
+                    'c' => ['title' => 'Catat Minum & Tidur', 'desc' => 'Tombol cepat +250ml air & log durasi tidur di HP'],
+                    'r' => ['title' => 'Statistik Vitalitas Saya', 'desc' => 'Lihat capaian target 2000ml & evaluasi mood'],
+                    'u' => ['title' => 'Ubah Target Mandiri', 'desc' => 'Sesuaikan target air minum & jam tidur harian'],
+                    'd' => ['title' => 'Hapus Log Harian', 'desc' => 'Hapus data hidrasi hari ini'],
+                ],
+            ],
+            'hemoglobin' => [
+                'duty' => [
+                    'c' => ['title' => 'Input Skrining HB', 'desc' => 'Catat kadar HB, deteksi anemia & sebar TTD siswa'],
+                    'r' => ['title' => 'Rekap Anemia Institusi', 'desc' => 'Monitoring status anemia siswi & guru perempuan'],
+                    'u' => ['title' => 'Perbarui Data HB', 'desc' => 'Koreksi kadar HB & status minum TTD siswa'],
+                    'd' => ['title' => 'Hapus Rekap HB', 'desc' => 'Hapus riwayat skrining HB anggota'],
+                ],
+                'personal' => [
+                    'r' => ['title' => 'Lihat Kadar HB Saya', 'desc' => 'Cek status anemia & riwayat HB diri sendiri'],
+                    'c' => ['title' => 'Konfirmasi Minum TTD', 'desc' => 'Catat konsumsi Tablet Tambah Darah di HP'],
+                    'u' => ['title' => 'Edit Log Mandiri', 'desc' => 'Perbarui catatan mandiri konsumsi TTD'],
+                    'd' => ['title' => 'Hapus Log Mandiri', 'desc' => 'Hapus catatan minum TTD pribadi'],
+                ],
+            ],
+            'nutrisi' => [
+                'duty' => [
+                    'r' => ['title' => 'Pantau Gizi Anggota', 'desc' => 'Monitoring pola makan & asupan kalori siswa'],
+                    'u' => ['title' => 'Beri Saran Nutrisi', 'desc' => 'Koreksi atau beri anjuran menu makanan sehat'],
+                    'c' => ['title' => 'Input Panduan Menu', 'desc' => 'Buat rekomendasi menu sehat institusi'],
+                    'd' => ['title' => 'Hapus Panduan Menu', 'desc' => 'Hapus menu rekomendasi'],
+                ],
+                'personal' => [
+                    'c' => ['title' => 'Catat Menu Makanan', 'desc' => 'Input makanan harian, hitung kalori & makronutrisi'],
+                    'r' => ['title' => 'Riwayat Makan Sendiri', 'desc' => 'Lihat grafik kalori harian & nutrisi pribadi'],
+                    'u' => ['title' => 'Edit Catatan Makan', 'desc' => 'Perbarui gramasi / menu yang dicatat'],
+                    'd' => ['title' => 'Hapus Catatan Makan', 'desc' => 'Hapus entri menu makanan pribadi'],
+                ],
+            ],
+            'burnout' => [
+                'duty' => [
+                    'r' => ['title' => 'Pantau Stres Kelas/Siswa', 'desc' => 'Monitoring agregat tingkat stres & risiko burnout'],
+                    'u' => ['title' => 'Tindak Lanjut Pemulihan', 'desc' => 'Berikan catatan intervensi pemulihan beban belajar'],
+                    'c' => ['title' => 'Jadwalkan Kuesioner', 'desc' => 'Rilis evaluasi stres serentak untuk divisi/kelas'],
+                    'd' => ['title' => 'Hapus Data Evaluasi', 'desc' => 'Hapus rekap evaluasi stres'],
+                ],
+                'personal' => [
+                    'c' => ['title' => 'Skrining Stres Mandiri', 'desc' => 'Isi kuesioner evaluasi beban & kejenuhan di HP'],
+                    'r' => ['title' => 'Lihat Tingkat Stres Saya', 'desc' => 'Buka hasil analisis burnout & tips relaksasi diri'],
+                    'u' => ['title' => 'Ubah Jawaban Skrining', 'desc' => 'Perbarui respons kuesioner mandiri'],
+                    'd' => ['title' => 'Hapus Riwayat Skrining', 'desc' => 'Hapus riwayat evaluasi stres diri sendiri'],
+                ],
+            ],
+            'ergonomi' => [
+                'duty' => [
+                    'r' => ['title' => 'Monitoring Duduk Anggota', 'desc' => 'Pantau kepatuhan peregangan postur institusi'],
+                    'u' => ['title' => 'Atur Standar Ergonomi', 'desc' => 'Sesuaikan rekomendasi interval istirahat'],
+                    'c' => ['title' => 'Buat Panduan Gerak', 'desc' => 'Input materi peregangan postur tubuh'],
+                    'd' => ['title' => 'Hapus Panduan', 'desc' => 'Hapus materi gerakan'],
+                ],
+                'personal' => [
+                    'c' => ['title' => 'Pengingat Postur di HP', 'desc' => 'Aktifkan alarm jeda peregangan duduk lama'],
+                    'r' => ['title' => 'Riwayat Duduk Sendiri', 'desc' => 'Lihat durasi duduk vs waktu aktif harian'],
+                    'u' => ['title' => 'Ubah Interval Pengingat', 'desc' => 'Sesuaikan timer pengingat berdiri di HP'],
+                    'd' => ['title' => 'Nonaktifkan Pengingat', 'desc' => 'Matikan alarm postur diri sendiri'],
+                ],
+            ],
+            'vaksinasi' => [
+                'duty' => [
+                    'c' => ['title' => 'Input Imunisasi Siswa', 'desc' => 'Verifikasi & catat vaksin HPV/Hepatitis/TTD anggota'],
+                    'r' => ['title' => 'Monitoring Buku Vaksin', 'desc' => 'Cek cakupan imunisasi seluruh siswa & staf'],
+                    'u' => ['title' => 'Perbarui Jadwal Vaksin', 'desc' => 'Update jadwal dosis lanjutan vaksin siswa'],
+                    'd' => ['title' => 'Hapus Catatan Vaksin', 'desc' => 'Hapus data imunisasi anggota'],
+                ],
+                'personal' => [
+                    'r' => ['title' => 'Buku Vaksin Digital Saya', 'desc' => 'Akses sertifikat & jadwal vaksinasi diri sendiri'],
+                    'c' => ['title' => 'Unggah Bukti Vaksin', 'desc' => 'Kirim foto bukti imunisasi mandiri'],
+                    'u' => ['title' => 'Update Alergi Mandiri', 'desc' => 'Catat alergi obat pribadi di akun sendiri'],
+                    'd' => ['title' => 'Hapus Bukti Unggahan', 'desc' => 'Hapus sertifikat yang diunggah mandiri'],
+                ],
+            ],
+        ];
+    }
+
     protected static ?array $allConfigsCache = null;
 
     protected static function booted(): void

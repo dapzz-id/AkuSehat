@@ -1075,14 +1075,17 @@
 
     <!-- Modal Atur Hak Akses Modul Per Pengguna -->
     <div id="userPermModal" class="fixed inset-0 bg-black/40 hidden z-50 flex items-center justify-center p-4" onclick="closeUserPermModal()">
-        <div class="bg-white rounded-2xl max-w-xl w-full mx-auto shadow-2xl overflow-hidden transform transition-all flex flex-col max-h-[90vh]" onclick="event.stopPropagation()">
+        <div class="bg-white rounded-2xl max-w-3xl w-full mx-auto shadow-2xl overflow-hidden transform transition-all flex flex-col max-h-[90vh]" onclick="event.stopPropagation()">
             <div class="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-700 text-white flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                        <i class="fas fa-user-gear text-lg"></i>
+                        <i class="fas fa-user-shield text-lg"></i>
                     </div>
                     <div>
-                        <h3 class="text-base font-bold">Hak Akses Modul Personal</h3>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-base font-bold" id="userPermHeaderTitle">Hak Akses & Wewenang Akun</h3>
+                            <span id="userPermRolePill" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/20 text-white">-</span>
+                        </div>
                         <p class="text-xs text-indigo-100" id="userPermTitle">-</p>
                     </div>
                 </div>
@@ -1111,71 +1114,206 @@
                                 <input type="radio" name="use_custom_modules" value="1" id="userCustomRadio" onchange="toggleUserCustomView()" class="mt-0.5 text-indigo-600 focus:ring-indigo-500">
                                 <div class="ml-2 text-xs">
                                     <div class="font-bold text-gray-800">Kustomisasi Khusus User</div>
-                                    <div class="text-[11px] text-gray-500 mt-0.5">Override modul khusus akun ini</div>
+                                    <div class="text-[11px] text-gray-500 mt-0.5">Override wewenang & hak akses akun ini</div>
                                 </div>
                             </label>
                         </div>
                     </div>
 
                     <div id="userCustomModulesContainer" class="space-y-4 pt-3 border-t border-gray-100 hidden">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-indigo-50/70 p-3 rounded-xl border border-indigo-100">
-                            <div>
-                                <span class="text-xs font-bold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
-                                    <i class="fas fa-sliders text-indigo-600"></i>
-                                    <span>Matriks Hak Akses CRUD per Modul</span>
-                                </span>
-                                <p class="text-[11px] text-indigo-800/80 mt-0.5">Tentukan perizinan Create, Read, Update, Delete untuk setiap modul secara spesifik.</p>
+                        <!-- Tab Switcher: Wewenang Tugas vs Akses Personal -->
+                        <div id="permScopeTabContainer" class="flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+                            <button type="button" id="permTabDutyBtn" onclick="switchPermTab('duty')"
+                                class="flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 bg-white text-indigo-700 shadow-sm">
+                                <i class="fas fa-id-badge text-indigo-600"></i>
+                                <span>Wewenang Akun Tugas (Operasional & Monitoring Institusi)</span>
+                            </button>
+                            <button type="button" id="permTabPersonalBtn" onclick="switchPermTab('personal')"
+                                class="flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900">
+                                <i class="fas fa-user-heart text-slate-500"></i>
+                                <span>Hak Akses Personal / Mandiri (Kesehatan Diri Sendiri)</span>
+                            </button>
+                        </div>
+
+                        @php
+                            $catalogModules = \App\Models\GlobalModuleConfig::getModuleCatalog();
+                            $permLabels = \App\Models\GlobalModuleConfig::getModulePermissionLabels();
+                        @endphp
+
+                        <!-- PANEL 1: WEWENANG AKUN TUGAS (OPERASIONAL & MONITORING) -->
+                        <div id="permDutyPane" class="space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-indigo-50/80 p-3 rounded-xl border border-indigo-200/80">
+                                <div>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
+                                        <i class="fas fa-stethoscope text-indigo-600"></i>
+                                        <span>Wewenang Operasional terhadap Siswa & Institusi</span>
+                                    </span>
+                                    <p class="text-[11px] text-indigo-900/80 mt-0.5">
+                                        Mengatur izin operasional akun ini saat menjalankan perannya (<span id="userPermDutyRoleName" class="font-semibold text-indigo-950">Petugas</span>) untuk memantau atau mengelola rekam kesehatan siswa/guru se-sekolah.
+                                    </p>
+                                </div>
+                                <div class="flex items-center gap-1.5 flex-wrap text-[11px] font-semibold">
+                                    <button type="button" onclick="setAllScopeModuleCrud('duty', 'read')" class="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200 transition">Semua Read Tugas</button>
+                                    <button type="button" onclick="setAllScopeModuleCrud('duty', 'all')" class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition">Semua Wewenang Lengkap</button>
+                                    <button type="button" onclick="setAllScopeModuleCrud('duty', 'off')" class="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Kosongkan</button>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-1.5 flex-wrap text-[11px] font-semibold">
-                                <button type="button" onclick="setAllUserModuleCrud('read')" class="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200 transition">Semua Read Saja</button>
-                                <button type="button" onclick="setAllUserModuleCrud('all')" class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition">Semua CRUD Lengkap</button>
-                                <button type="button" onclick="setAllUserModuleCrud('off')" class="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Kosongkan</button>
+
+                            <div class="space-y-3 max-h-[460px] overflow-y-auto pr-1">
+                                @foreach($catalogModules as $mKey => $mInfo)
+                                @php
+                                    $labelsDuty = $permLabels[$mKey]['duty'] ?? [];
+                                @endphp
+                                <div class="p-3 rounded-xl border border-gray-200 hover:border-indigo-300 bg-white transition-all shadow-xs">
+                                    <div class="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-gray-100">
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs shrink-0">
+                                                <i class="{{ $mInfo['icon'] }}"></i>
+                                            </div>
+                                            <div class="truncate">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="text-xs font-bold text-gray-800 block truncate">{{ $mInfo['name'] }}</span>
+                                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-100 text-indigo-800">Tugas Institusi</span>
+                                                </div>
+                                                <span class="text-[10px] text-gray-500 font-medium">{{ $mInfo['badge'] }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-1 shrink-0 text-[10px] font-semibold">
+                                            <button type="button" onclick="setSingleScopeModuleCrud('duty', '{{ $mKey }}', 'all')" class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100">Lengkap</button>
+                                            <button type="button" onclick="setSingleScopeModuleCrud('duty', '{{ $mKey }}', 'read')" class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100">Read Saja</button>
+                                            <button type="button" onclick="setSingleScopeModuleCrud('duty', '{{ $mKey }}', 'off')" class="px-2 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200">Off</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- 4 CRUD Action Cards with Contextual Labels for Duty -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <!-- Read (r) - Primary for monitoring -->
+                                        <label class="flex items-start gap-2 p-2 rounded-lg border border-gray-200 hover:bg-blue-50/50 cursor-pointer transition-colors has-[:checked]:border-blue-400 has-[:checked]:bg-blue-50/30">
+                                            <input type="checkbox" name="custom_permissions[duty_modules][{{ $mKey }}][r]" value="1" id="user_duty_{{ $mKey }}_r" class="userDutyCrudCb rounded text-blue-600 focus:ring-blue-500 mt-0.5">
+                                            <div class="text-xs">
+                                                <span class="font-bold text-gray-800 block text-[11px]">{{ $labelsDuty['r']['title'] ?? 'Monitoring (Read)' }}</span>
+                                                <span class="text-[10px] text-gray-500 block leading-tight mt-0.5">{{ $labelsDuty['r']['desc'] ?? 'Pantau data anggota' }}</span>
+                                            </div>
+                                        </label>
+
+                                        <!-- Update (u) - Key for medical stop / actions -->
+                                        <label class="flex items-start gap-2 p-2 rounded-lg border border-gray-200 hover:bg-amber-50/50 cursor-pointer transition-colors has-[:checked]:border-amber-400 has-[:checked]:bg-amber-50/30">
+                                            <input type="checkbox" name="custom_permissions[duty_modules][{{ $mKey }}][u]" value="1" id="user_duty_{{ $mKey }}_u" class="userDutyCrudCb rounded text-amber-600 focus:ring-amber-500 mt-0.5">
+                                            <div class="text-xs">
+                                                <span class="font-bold text-gray-800 block text-[11px]">{{ $labelsDuty['u']['title'] ?? 'Tindakan / Validasi (Update)' }}</span>
+                                                <span class="text-[10px] text-gray-500 block leading-tight mt-0.5">{{ $labelsDuty['u']['desc'] ?? 'Kelola / tindak lanjuti data anggota' }}</span>
+                                            </div>
+                                        </label>
+
+                                        <!-- Create (c) -->
+                                        <label class="flex items-start gap-2 p-2 rounded-lg border border-gray-200 hover:bg-emerald-50/50 cursor-pointer transition-colors has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50/30">
+                                            <input type="checkbox" name="custom_permissions[duty_modules][{{ $mKey }}][c]" value="1" id="user_duty_{{ $mKey }}_c" class="userDutyCrudCb rounded text-emerald-600 focus:ring-emerald-500 mt-0.5">
+                                            <div class="text-xs">
+                                                <span class="font-bold text-gray-800 block text-[11px]">{{ $labelsDuty['c']['title'] ?? 'Entri Data Anggota (Create)' }}</span>
+                                                <span class="text-[10px] text-gray-500 block leading-tight mt-0.5">{{ $labelsDuty['c']['desc'] ?? 'Input rekam / sesi baru untuk anggota' }}</span>
+                                            </div>
+                                        </label>
+
+                                        <!-- Delete (d) -->
+                                        <label class="flex items-start gap-2 p-2 rounded-lg border border-gray-200 hover:bg-rose-50/50 cursor-pointer transition-colors has-[:checked]:border-rose-400 has-[:checked]:bg-rose-50/30">
+                                            <input type="checkbox" name="custom_permissions[duty_modules][{{ $mKey }}][d]" value="1" id="user_duty_{{ $mKey }}_d" class="userDutyCrudCb rounded text-rose-600 focus:ring-rose-500 mt-0.5">
+                                            <div class="text-xs">
+                                                <span class="font-bold text-gray-800 block text-[11px]">{{ $labelsDuty['d']['title'] ?? 'Hapus Rekap (Delete)' }}</span>
+                                                <span class="text-[10px] text-gray-500 block leading-tight mt-0.5">{{ $labelsDuty['d']['desc'] ?? 'Hapus riwayat data anggota' }}</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                @endforeach
                             </div>
                         </div>
 
-                        <!-- Daftar 10 Modul dengan CRUD masing-masing -->
-                        <div class="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
-                            @php
-                                $catalogModules = \App\Models\GlobalModuleConfig::getModuleCatalog();
-                            @endphp
-                            @foreach($catalogModules as $mKey => $mInfo)
-                            <div class="p-3 rounded-xl border border-gray-200 hover:border-indigo-300 bg-white transition-all shadow-xs">
-                                <div class="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-gray-100">
-                                    <div class="flex items-center gap-2.5 min-w-0">
-                                        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs shrink-0">
-                                            <i class="{{ $mInfo['icon'] }}"></i>
-                                        </div>
-                                        <div class="truncate">
-                                            <span class="text-xs font-bold text-gray-800 block truncate">{{ $mInfo['name'] }}</span>
-                                            <span class="text-[10px] text-gray-400 font-medium">{{ $mInfo['badge'] }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-1 shrink-0 text-[10px] font-semibold">
-                                        <button type="button" onclick="setSingleUserModuleCrud('{{ $mKey }}', 'all')" class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100">Lengkap</button>
-                                        <button type="button" onclick="setSingleUserModuleCrud('{{ $mKey }}', 'read')" class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100">Read</button>
-                                        <button type="button" onclick="setSingleUserModuleCrud('{{ $mKey }}', 'off')" class="px-2 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200">Off</button>
-                                    </div>
+                        <!-- PANEL 2: HAK AKSES PERSONAL / MANDIRI (PENGGUNA BIASA) -->
+                        <div id="permPersonalPane" class="space-y-3 hidden">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-emerald-50/80 p-3 rounded-xl border border-emerald-200/80">
+                                <div>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
+                                        <i class="fas fa-user-heart text-emerald-600"></i>
+                                        <span>Hak Akses Penggunaan Mandiri untuk Diri Sendiri</span>
+                                    </span>
+                                    <p class="text-[11px] text-emerald-900/80 mt-0.5">
+                                        Mengatur modul apa saja yang dapat diakses pengguna ini untuk kesehatan dirinya sendiri (seperti merekam GPS lari sendiri, cek hidrasi, atau kalender haid mandiri).
+                                    </p>
                                 </div>
-                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                    <label class="flex items-center gap-1.5 p-1.5 rounded-lg border border-gray-200 hover:bg-emerald-50/50 cursor-pointer text-xs transition-colors">
-                                        <input type="checkbox" name="custom_permissions[modules][{{ $mKey }}][c]" value="1" id="user_mod_{{ $mKey }}_c" class="userModuleCrudCb rounded text-emerald-600 focus:ring-emerald-500">
-                                        <span class="text-[11px] font-semibold text-gray-700">Create</span>
-                                    </label>
-                                    <label class="flex items-center gap-1.5 p-1.5 rounded-lg border border-gray-200 hover:bg-blue-50/50 cursor-pointer text-xs transition-colors">
-                                        <input type="checkbox" name="custom_permissions[modules][{{ $mKey }}][r]" value="1" id="user_mod_{{ $mKey }}_r" class="userModuleCrudCb rounded text-blue-600 focus:ring-blue-500">
-                                        <span class="text-[11px] font-semibold text-gray-700">Read</span>
-                                    </label>
-                                    <label class="flex items-center gap-1.5 p-1.5 rounded-lg border border-gray-200 hover:bg-amber-50/50 cursor-pointer text-xs transition-colors">
-                                        <input type="checkbox" name="custom_permissions[modules][{{ $mKey }}][u]" value="1" id="user_mod_{{ $mKey }}_u" class="userModuleCrudCb rounded text-amber-600 focus:ring-amber-500">
-                                        <span class="text-[11px] font-semibold text-gray-700">Update</span>
-                                    </label>
-                                    <label class="flex items-center gap-1.5 p-1.5 rounded-lg border border-gray-200 hover:bg-rose-50/50 cursor-pointer text-xs transition-colors">
-                                        <input type="checkbox" name="custom_permissions[modules][{{ $mKey }}][d]" value="1" id="user_mod_{{ $mKey }}_d" class="userModuleCrudCb rounded text-rose-600 focus:ring-rose-500">
-                                        <span class="text-[11px] font-semibold text-gray-700">Delete</span>
-                                    </label>
+                                <div class="flex items-center gap-1.5 flex-wrap text-[11px] font-semibold">
+                                    <button type="button" onclick="setAllScopeModuleCrud('personal', 'read')" class="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200 transition">Semua Read Mandiri</button>
+                                    <button type="button" onclick="setAllScopeModuleCrud('personal', 'all')" class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition">Semua Akses Lengkap</button>
+                                    <button type="button" onclick="setAllScopeModuleCrud('personal', 'off')" class="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Kosongkan</button>
                                 </div>
                             </div>
-                            @endforeach
+
+                            <div class="space-y-3 max-h-[460px] overflow-y-auto pr-1">
+                                @foreach($catalogModules as $mKey => $mInfo)
+                                @php
+                                    $labelsPers = $permLabels[$mKey]['personal'] ?? [];
+                                @endphp
+                                <div class="p-3 rounded-xl border border-gray-200 hover:border-emerald-300 bg-white transition-all shadow-xs">
+                                    <div class="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-gray-100">
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs shrink-0">
+                                                <i class="{{ $mInfo['icon'] }}"></i>
+                                            </div>
+                                            <div class="truncate">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="text-xs font-bold text-gray-800 block truncate">{{ $mInfo['name'] }}</span>
+                                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">Akses Mandiri</span>
+                                                </div>
+                                                <span class="text-[10px] text-gray-500 font-medium">{{ $mInfo['badge'] }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-1 shrink-0 text-[10px] font-semibold">
+                                            <button type="button" onclick="setSingleScopeModuleCrud('personal', '{{ $mKey }}', 'all')" class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100">Lengkap</button>
+                                            <button type="button" onclick="setSingleScopeModuleCrud('personal', '{{ $mKey }}', 'read')" class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100">Read Saja</button>
+                                            <button type="button" onclick="setSingleScopeModuleCrud('personal', '{{ $mKey }}', 'off')" class="px-2 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200">Off</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- 4 CRUD Action Cards with Contextual Labels for Personal -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <!-- Create (c) - Primary for self recording -->
+                                        <label class="flex items-start gap-2 p-2 rounded-lg border border-gray-200 hover:bg-emerald-50/50 cursor-pointer transition-colors has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50/30">
+                                            <input type="checkbox" name="custom_permissions[personal_modules][{{ $mKey }}][c]" value="1" id="user_personal_{{ $mKey }}_c" class="userPersonalCrudCb rounded text-emerald-600 focus:ring-emerald-500 mt-0.5">
+                                            <div class="text-xs">
+                                                <span class="font-bold text-gray-800 block text-[11px]">{{ $labelsPers['c']['title'] ?? 'Rekam / Catat Mandiri (Create)' }}</span>
+                                                <span class="text-[10px] text-gray-500 block leading-tight mt-0.5">{{ $labelsPers['c']['desc'] ?? 'Input data kesehatan diri sendiri di HP' }}</span>
+                                            </div>
+                                        </label>
+
+                                        <!-- Read (r) -->
+                                        <label class="flex items-start gap-2 p-2 rounded-lg border border-gray-200 hover:bg-blue-50/50 cursor-pointer transition-colors has-[:checked]:border-blue-400 has-[:checked]:bg-blue-50/30">
+                                            <input type="checkbox" name="custom_permissions[personal_modules][{{ $mKey }}][r]" value="1" id="user_personal_{{ $mKey }}_r" class="userPersonalCrudCb rounded text-blue-600 focus:ring-blue-500 mt-0.5">
+                                            <div class="text-xs">
+                                                <span class="font-bold text-gray-800 block text-[11px]">{{ $labelsPers['r']['title'] ?? 'Lihat Riwayat Sendiri (Read)' }}</span>
+                                                <span class="text-[10px] text-gray-500 block leading-tight mt-0.5">{{ $labelsPers['r']['desc'] ?? 'Buka statistik & riwayat catatan pribadi' }}</span>
+                                            </div>
+                                        </label>
+
+                                        <!-- Update (u) -->
+                                        <label class="flex items-start gap-2 p-2 rounded-lg border border-gray-200 hover:bg-amber-50/50 cursor-pointer transition-colors has-[:checked]:border-amber-400 has-[:checked]:bg-amber-50/30">
+                                            <input type="checkbox" name="custom_permissions[personal_modules][{{ $mKey }}][u]" value="1" id="user_personal_{{ $mKey }}_u" class="userPersonalCrudCb rounded text-amber-600 focus:ring-amber-500 mt-0.5">
+                                            <div class="text-xs">
+                                                <span class="font-bold text-gray-800 block text-[11px]">{{ $labelsPers['u']['title'] ?? 'Edit Catatan Sendiri (Update)' }}</span>
+                                                <span class="text-[10px] text-gray-500 block leading-tight mt-0.5">{{ $labelsPers['u']['desc'] ?? 'Ubah entri catatan mandiri' }}</span>
+                                            </div>
+                                        </label>
+
+                                        <!-- Delete (d) -->
+                                        <label class="flex items-start gap-2 p-2 rounded-lg border border-gray-200 hover:bg-rose-50/50 cursor-pointer transition-colors has-[:checked]:border-rose-400 has-[:checked]:bg-rose-50/30">
+                                            <input type="checkbox" name="custom_permissions[personal_modules][{{ $mKey }}][d]" value="1" id="user_personal_{{ $mKey }}_d" class="userPersonalCrudCb rounded text-rose-600 focus:ring-rose-500 mt-0.5">
+                                            <div class="text-xs">
+                                                <span class="font-bold text-gray-800 block text-[11px]">{{ $labelsPers['d']['title'] ?? 'Hapus Riwayat Sendiri (Delete)' }}</span>
+                                                <span class="text-[10px] text-gray-500 block leading-tight mt-0.5">{{ $labelsPers['d']['desc'] ?? 'Hapus entri riwayat mandiri' }}</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
                         </div>
 
                         <!-- Wewenang Tambah User Terpisah -->
@@ -1201,7 +1339,7 @@
                 </button>
                 <button type="submit" form="userPermForm" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-700/20 transition-colors flex items-center gap-1.5">
                     <i class="fas fa-save"></i>
-                    <span>Simpan Izin Personal</span>
+                    <span>Simpan Hak Akses & Wewenang</span>
                 </button>
             </div>
         </div>
@@ -1438,34 +1576,55 @@
             toggleClearIcon();
         });
 
-        function setSingleUserModuleCrud(modKey, mode) {
-            const cbC = document.getElementById('user_mod_' + modKey + '_c');
-            const cbR = document.getElementById('user_mod_' + modKey + '_r');
-            const cbU = document.getElementById('user_mod_' + modKey + '_u');
-            const cbD = document.getElementById('user_mod_' + modKey + '_d');
-            if (!cbC) return;
+        let currentActivePermTab = 'duty';
 
-            if (mode === 'all') {
-                cbC.checked = true;
-                cbR.checked = true;
-                cbU.checked = true;
-                cbD.checked = true;
-            } else if (mode === 'read') {
-                cbC.checked = false;
-                cbR.checked = true;
-                cbU.checked = false;
-                cbD.checked = false;
-            } else if (mode === 'off') {
-                cbC.checked = false;
-                cbR.checked = false;
-                cbU.checked = false;
-                cbD.checked = false;
+        function switchPermTab(tab) {
+            currentActivePermTab = tab;
+            const dutyTabBtn = document.getElementById('permTabDutyBtn');
+            const persTabBtn = document.getElementById('permTabPersonalBtn');
+            const dutyPane = document.getElementById('permDutyPane');
+            const persPane = document.getElementById('permPersonalPane');
+
+            if (tab === 'duty') {
+                dutyTabBtn.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 bg-white text-indigo-700 shadow-sm';
+                persTabBtn.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900';
+                dutyPane.classList.remove('hidden');
+                persPane.classList.add('hidden');
+            } else {
+                persTabBtn.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 bg-white text-emerald-700 shadow-sm';
+                dutyTabBtn.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900';
+                dutyPane.classList.add('hidden');
+                persPane.classList.remove('hidden');
             }
         }
 
-        function setAllUserModuleCrud(mode) {
+        function setSingleScopeModuleCrud(scope, modKey, mode) {
+            const cbC = document.getElementById(`user_${scope}_${modKey}_c`);
+            const cbR = document.getElementById(`user_${scope}_${modKey}_r`);
+            const cbU = document.getElementById(`user_${scope}_${modKey}_u`);
+            const cbD = document.getElementById(`user_${scope}_${modKey}_d`);
+
+            if (mode === 'all') {
+                if (cbC) cbC.checked = true;
+                if (cbR) cbR.checked = true;
+                if (cbU) cbU.checked = true;
+                if (cbD) cbD.checked = true;
+            } else if (mode === 'read') {
+                if (cbC) cbC.checked = false;
+                if (cbR) cbR.checked = true;
+                if (cbU) cbU.checked = false;
+                if (cbD) cbD.checked = false;
+            } else if (mode === 'off') {
+                if (cbC) cbC.checked = false;
+                if (cbR) cbR.checked = false;
+                if (cbU) cbU.checked = false;
+                if (cbD) cbD.checked = false;
+            }
+        }
+
+        function setAllScopeModuleCrud(scope, mode) {
             const modules = @json(array_keys(\App\Models\GlobalModuleConfig::getModuleCatalog()));
-            modules.forEach(key => setSingleUserModuleCrud(key, mode));
+            modules.forEach(key => setSingleScopeModuleCrud(scope, key, mode));
         }
 
         // User Custom Permissions Logic
@@ -1473,6 +1632,27 @@
             document.getElementById('userPermModal').classList.remove('hidden');
             document.getElementById('userPermTitle').textContent = user.nama + ' (' + (user.nomor_induk || user.username) + ')';
             document.getElementById('userPermForm').action = '/admin/users/' + user.id + '/permissions';
+
+            const staffRoles = ['Health Consultant', 'Health Monitor', 'Admin', 'admin_pmr', 'health_consultant', 'health_monitor'];
+            const isStaff = staffRoles.includes(user.level);
+
+            const headerTitle = document.getElementById('userPermHeaderTitle');
+            const rolePill = document.getElementById('userPermRolePill');
+            const dutyRoleName = document.getElementById('userPermDutyRoleName');
+            const tabContainer = document.getElementById('permScopeTabContainer');
+
+            rolePill.textContent = 'Peran: ' + (user.level || 'Member');
+            if (dutyRoleName) dutyRoleName.textContent = user.level || 'Petugas';
+
+            if (isStaff) {
+                headerTitle.textContent = 'Hak Akses & Wewenang Akun Tugas';
+                tabContainer.classList.remove('hidden');
+                switchPermTab('duty');
+            } else {
+                headerTitle.textContent = 'Hak Akses Modul Personal (Pengguna)';
+                tabContainer.classList.add('hidden');
+                switchPermTab('personal');
+            }
 
             const isCustom = user.custom_modules !== null && Array.isArray(user.custom_modules);
             if (isCustom) {
@@ -1484,22 +1664,39 @@
             }
 
             const effectiveCrud = user.effective_crud || {};
-            const effModules = effectiveCrud.modules || {};
             const customPerms = user.custom_permissions || {};
-            const customModules = customPerms.modules || {};
+
+            const effDutyModules = effectiveCrud.duty_modules || effectiveCrud.modules || {};
+            const effPersonalModules = effectiveCrud.personal_modules || effectiveCrud.modules || {};
+
+            const customDutyModules = customPerms.duty_modules || customPerms.modules || {};
+            const customPersonalModules = customPerms.personal_modules || customPerms.modules || {};
 
             const catalogKeys = @json(array_keys(\App\Models\GlobalModuleConfig::getModuleCatalog()));
             catalogKeys.forEach(key => {
-                const targetMod = customModules[key] !== undefined ? customModules[key] : (effModules[key] || {});
-                const cbC = document.getElementById('user_mod_' + key + '_c');
-                const cbR = document.getElementById('user_mod_' + key + '_r');
-                const cbU = document.getElementById('user_mod_' + key + '_u');
-                const cbD = document.getElementById('user_mod_' + key + '_d');
+                // Populate Duty Checkboxes
+                const targetDuty = customDutyModules[key] !== undefined ? customDutyModules[key] : (effDutyModules[key] || {});
+                const dC = document.getElementById('user_duty_' + key + '_c');
+                const dR = document.getElementById('user_duty_' + key + '_r');
+                const dU = document.getElementById('user_duty_' + key + '_u');
+                const dD = document.getElementById('user_duty_' + key + '_d');
 
-                if (cbC) cbC.checked = !!targetMod.c;
-                if (cbR) cbR.checked = targetMod.r !== undefined ? !!targetMod.r : true;
-                if (cbU) cbU.checked = !!targetMod.u;
-                if (cbD) cbD.checked = !!targetMod.d;
+                if (dC) dC.checked = !!targetDuty.c;
+                if (dR) dR.checked = targetDuty.r !== undefined ? !!targetDuty.r : (isStaff && key === 'haid_pita');
+                if (dU) dU.checked = targetDuty.u !== undefined ? !!targetDuty.u : (isStaff && key === 'haid_pita');
+                if (dD) dD.checked = !!targetDuty.d;
+
+                // Populate Personal Checkboxes
+                const targetPers = customPersonalModules[key] !== undefined ? customPersonalModules[key] : (effPersonalModules[key] || {});
+                const pC = document.getElementById('user_personal_' + key + '_c');
+                const pR = document.getElementById('user_personal_' + key + '_r');
+                const pU = document.getElementById('user_personal_' + key + '_u');
+                const pD = document.getElementById('user_personal_' + key + '_d');
+
+                if (pC) pC.checked = !!targetPers.c;
+                if (pR) pR.checked = targetPers.r !== undefined ? !!targetPers.r : true;
+                if (pU) pU.checked = !!targetPers.u;
+                if (pD) pD.checked = !!targetPers.d;
             });
 
             document.getElementById('userPermCanAddUser').checked = customPerms.can_add_user !== undefined ? !!customPerms.can_add_user : !!effectiveCrud.can_add_user;

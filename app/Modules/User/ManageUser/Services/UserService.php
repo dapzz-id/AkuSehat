@@ -112,8 +112,13 @@ class UserService
         }
 
         $perms = $validated['custom_permissions'] ?? [];
+        $rawDutyModules = $perms['duty_modules'] ?? [];
+        $rawPersonalModules = $perms['personal_modules'] ?? [];
         $rawModules = $perms['modules'] ?? [];
         $catalog = \App\Models\GlobalModuleConfig::getModuleCatalog();
+
+        $normalizedDutyModules = [];
+        $normalizedPersonalModules = [];
         $normalizedModules = [];
 
         $anyCreate = false;
@@ -122,12 +127,50 @@ class UserService
         $anyDelete = false;
         $activeModulesFromCrud = [];
 
+        $hasExplicitDutyOrPersonal = !empty($rawDutyModules) || !empty($rawPersonalModules);
+
         foreach ($catalog as $modKey => $modInfo) {
-            $m = $rawModules[$modKey] ?? [];
-            $c = !empty($m['c']) || !empty($m['create']);
-            $r = !empty($m['r']) || !empty($m['read']);
-            $u = !empty($m['u']) || !empty($m['update']);
-            $d = !empty($m['d']) || !empty($m['delete']);
+            // A. Duty Modules
+            $dM = $rawDutyModules[$modKey] ?? [];
+            $dutyC = !empty($dM['c']) || !empty($dM['create']);
+            $dutyR = !empty($dM['r']) || !empty($dM['read']);
+            $dutyU = !empty($dM['u']) || !empty($dM['update']);
+            $dutyD = !empty($dM['d']) || !empty($dM['delete']);
+
+            $normalizedDutyModules[$modKey] = [
+                'c' => $dutyC,
+                'r' => $dutyR,
+                'u' => $dutyU,
+                'd' => $dutyD,
+            ];
+
+            // B. Personal Modules
+            $pM = $rawPersonalModules[$modKey] ?? [];
+            $persC = !empty($pM['c']) || !empty($pM['create']);
+            $persR = !empty($pM['r']) || !empty($pM['read']);
+            $persU = !empty($pM['u']) || !empty($pM['update']);
+            $persD = !empty($pM['d']) || !empty($pM['delete']);
+
+            $normalizedPersonalModules[$modKey] = [
+                'c' => $persC,
+                'r' => $persR,
+                'u' => $persU,
+                'd' => $persD,
+            ];
+
+            // C. Combined fallback for legacy matrix
+            $mM = $rawModules[$modKey] ?? [];
+            if ($hasExplicitDutyOrPersonal) {
+                $c = $dutyC || $persC;
+                $r = $dutyR || $persR;
+                $u = $dutyU || $persU;
+                $d = $dutyD || $persD;
+            } else {
+                $c = !empty($mM['c']) || !empty($mM['create']);
+                $r = !empty($mM['r']) || !empty($mM['read']);
+                $u = !empty($mM['u']) || !empty($mM['update']);
+                $d = !empty($mM['d']) || !empty($mM['delete']);
+            }
 
             if ($c) $anyCreate = true;
             if ($r) $anyRead = true;
@@ -153,6 +196,8 @@ class UserService
             'can_delete' => !empty($perms['can_delete']) || $anyDelete,
             'can_add_user' => !empty($perms['can_add_user']),
             'modules' => $normalizedModules,
+            'duty_modules' => $normalizedDutyModules,
+            'personal_modules' => $normalizedPersonalModules,
         ];
 
         $customModules = $validated['custom_modules'] ?? $activeModulesFromCrud;

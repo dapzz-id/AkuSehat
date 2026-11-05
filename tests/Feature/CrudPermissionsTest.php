@@ -821,4 +821,79 @@ class CrudPermissionsTest extends TestCase
         $this->assertTrue($user->canDelete('kesehatan'));
         $this->assertTrue($user->canCreate('olahraga'));
     }
+
+    public function test_distinct_duty_and_personal_crud_permissions_for_staff_accounts(): void
+    {
+        $adminInstansi = User::create([
+            'id' => (string) Str::uuid(),
+            'nama' => 'Admin Sekolah',
+            'username' => 'admin_sek',
+            'instansi_id' => $this->instansi->id,
+            'id_divisi' => $this->divisi->id,
+            'level' => UserRole::ADMIN_INSTANSI->value,
+            'status' => UserStatus::AKTIF->value,
+        ]);
+
+        $healthConsultant = User::create([
+            'id' => (string) Str::uuid(),
+            'nama' => 'Konselor BK',
+            'username' => 'konselor_bk',
+            'instansi_id' => $this->instansi->id,
+            'id_divisi' => $this->divisi->id,
+            'level' => UserRole::HEALTH_CONSULTANT->value,
+            'status' => UserStatus::AKTIF->value,
+        ]);
+
+        // Default: Health Consultant
+        // Haid Pita Duty: Read=true (monitoring siswa/guru), Update=true (kelola pita/medis), Create=false
+        $this->assertTrue($healthConsultant->canRead('haid_pita', 'duty'));
+        $this->assertTrue($healthConsultant->canUpdate('haid_pita', 'duty'));
+        $this->assertFalse($healthConsultant->canCreate('haid_pita', 'duty'));
+
+        // Haid Pita Personal: Create=true (catat mandiri jika perempuan), Read=true
+        $this->assertTrue($healthConsultant->canCreate('haid_pita', 'personal'));
+        $this->assertTrue($healthConsultant->canRead('haid_pita', 'personal'));
+
+        // Now test custom override with distinct duty vs personal
+        // Misal: Admin mengizinkan duty: haid_pita Read only (tidak boleh update/stop medis),
+        // dan personal: olahraga GPS run tracker Create & Read.
+        $payload = [
+            'use_custom_modules' => '1',
+            'custom_permissions' => [
+                'duty_modules' => [
+                    'haid_pita' => ['r' => 1, 'u' => 0, 'c' => 0, 'd' => 0],
+                    'olahraga' => ['r' => 1, 'u' => 0, 'c' => 0, 'd' => 0],
+                ],
+                'personal_modules' => [
+                    'haid_pita' => ['c' => 1, 'r' => 1, 'u' => 0, 'd' => 0],
+                    'olahraga' => ['c' => 1, 'r' => 1, 'u' => 1, 'd' => 0],
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($adminInstansi)->post(route('admin.users.permissions', $healthConsultant->id), $payload);
+        $response->assertRedirect();
+
+        $healthConsultant->refresh();
+        $this->assertNotNull($healthConsultant->custom_permissions);
+        $this->assertArrayHasKey('duty_modules', $healthConsultant->custom_permissions);
+        $this->assertArrayHasKey('personal_modules', $healthConsultant->custom_permissions);
+
+        // Verify Duty Scope
+        $this->assertTrue($healthConsultant->canRead('haid_pita', 'duty'));
+        $this->assertFalse($healthConsultant->canUpdate('haid_pita', 'duty'));
+        $this->assertFalse($healthConsultant->canCreate('haid_pita', 'duty'));
+
+        // Verify Personal Scope
+        $this->assertTrue($healthConsultant->canCreate('haid_pita', 'personal'));
+        $this->assertTrue($healthConsultant->canRead('haid_pita', 'personal'));
+        $this->assertTrue($healthConsultant->canCreate('olahraga', 'personal'));
+        $this->assertTrue($healthConsultant->canUpdate('olahraga', 'personal'));
+
+        // Verify Effective Combined
+        $effective = $healthConsultant->getCrudPermissions();
+        $this->assertArrayHasKey('duty_modules', $effective);
+        $this->assertArrayHasKey('personal_modules', $effective);
+        $this->assertArrayHasKey('modules', $effective);
+    }
 }

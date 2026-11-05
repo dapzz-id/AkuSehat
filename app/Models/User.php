@@ -449,7 +449,7 @@ class User extends Authenticatable
      * @param string|null $moduleKey (e.g. 'kesehatan', 'hemoglobin', 'konsultasi', dsb)
      * @return bool
      */
-    public function hasCrudPermission(string $action, ?string $moduleKey = null): bool
+    public function hasCrudPermission(string $action, ?string $moduleKey = null, string $scope = 'any'): bool
     {
         $action = strtolower($action);
         $actionShort = match ($action) {
@@ -479,7 +479,26 @@ class User extends Authenticatable
 
         // 2. Custom Permissions override khusus pada akun user bersangkutan
         if (is_array($this->custom_permissions)) {
-            // A. Cek izin per modul spesifik
+            // A. Scope-specific check if requested ('duty' or 'personal')
+            if ($scope === 'duty' && $moduleKey && isset($this->custom_permissions['duty_modules'][$moduleKey])) {
+                $mod = $this->custom_permissions['duty_modules'][$moduleKey];
+                if (isset($mod[$actionShort])) {
+                    return (bool) $mod[$actionShort];
+                }
+                if (isset($mod[$actionLong])) {
+                    return (bool) $mod[$actionLong];
+                }
+            } elseif ($scope === 'personal' && $moduleKey && isset($this->custom_permissions['personal_modules'][$moduleKey])) {
+                $mod = $this->custom_permissions['personal_modules'][$moduleKey];
+                if (isset($mod[$actionShort])) {
+                    return (bool) $mod[$actionShort];
+                }
+                if (isset($mod[$actionLong])) {
+                    return (bool) $mod[$actionLong];
+                }
+            }
+
+            // B. Cek izin per modul spesifik umum (modules matrix)
             if ($moduleKey && isset($this->custom_permissions['modules'][$moduleKey])) {
                 $mod = $this->custom_permissions['modules'][$moduleKey];
                 if (isset($mod[$actionShort])) {
@@ -490,7 +509,7 @@ class User extends Authenticatable
                 }
             }
 
-            // B. Cek izin fallback global user
+            // C. Cek izin fallback global user
             if (array_key_exists($key, $this->custom_permissions)) {
                 return (bool) $this->custom_permissions[$key];
             }
@@ -533,13 +552,28 @@ class User extends Authenticatable
         }
 
         // 5. Default bawaan sistem berdasarkan role pengguna dan modul
-        return self::getDefaultModulePermission($this->level, $actionLong, $moduleKey);
+        return self::getDefaultModulePermission($this->level, $actionLong, $moduleKey, $scope);
     }
 
     /**
-     * Menghitung nilai default izin per modul sesuai peran (role) pengguna.
+     * Cek apakah akun ini adalah role staf operasional/tugas institusi (Health Monitor, Health Consultant, Admin PMR).
      */
-    public static function getDefaultModulePermission(?string $role, string $action, ?string $moduleKey = null): bool
+    public function isStaffDutyRole(): bool
+    {
+        return in_array($this->level, [
+            UserRole::HEALTH_MONITOR->value,
+            UserRole::HEALTH_CONSULTANT->value,
+            UserRole::ADMIN->value,
+            'Health Monitor',
+            'Health Consultant',
+            'Admin',
+        ], true);
+    }
+
+    /**
+     * Menghitung nilai default izin per modul sesuai peran (role) pengguna dan scope (duty vs personal).
+     */
+    public static function getDefaultModulePermission(?string $role, string $action, ?string $moduleKey = null, string $scope = 'any'): bool
     {
         $action = strtolower($action);
 
@@ -547,6 +581,59 @@ class User extends Authenticatable
             return true;
         }
 
+        // Scope 1: Wewenang Akun Tugas (Operasional & Monitoring Institusi)
+        if ($scope === 'duty') {
+            if ($role === UserRole::MEMBER->value) {
+                // Member tidak memiliki wewenang tugas terhadap anggota lain
+                return false;
+            }
+
+            if ($role === UserRole::HEALTH_MONITOR->value) {
+                if ($moduleKey === null || in_array($moduleKey, ['kesehatan', 'hemoglobin', 'haid_pita', 'olahraga', 'vitalitas', 'nutrisi', 'ergonomi', 'vaksinasi'])) {
+                    return match ($action) {
+                        'create', 'read', 'update' => true,
+                        'delete' => false,
+                        default => false,
+                    };
+                }
+                if (in_array($moduleKey, ['konsultasi', 'burnout'])) {
+                    return $action === 'read';
+                }
+                return false;
+            }
+
+            if ($role === UserRole::HEALTH_CONSULTANT->value) {
+                if ($moduleKey === null || in_array($moduleKey, ['konsultasi', 'burnout'])) {
+                    return match ($action) {
+                        'create', 'read', 'update' => true,
+                        'delete' => false,
+                        default => false,
+                    };
+                }
+                if ($moduleKey === 'haid_pita') {
+                    // Health Consultant monitoring siswi/guru dan verifikasi/hentikan pita haid medis
+                    return in_array($action, ['read', 'update'], true);
+                }
+                return $action === 'read';
+            }
+
+            return false;
+        }
+
+        // Scope 2: Hak Akses Personal / Mandiri (Penggunaan Pribadi Diri Sendiri)
+        if ($scope === 'personal') {
+            if ($moduleKey === null || in_array($moduleKey, ['vitalitas', 'olahraga', 'nutrisi', 'burnout', 'ergonomi', 'haid_pita', 'konsultasi'])) {
+                return match ($action) {
+                    'create', 'read' => true,
+                    'update' => true,
+                    'delete' => false,
+                    default => false,
+                };
+            }
+            return $action === 'read';
+        }
+
+        // Scope 3: Default 'any' (Backward Compatible)
         if ($role === UserRole::HEALTH_MONITOR->value) {
             // Health Monitor (Guru Penjas / Petugas UKS): fokus pada fisik, medis, olahraga & lifestyle
             if ($moduleKey === null || in_array($moduleKey, ['kesehatan', 'hemoglobin', 'haid_pita', 'olahraga', 'vitalitas', 'nutrisi', 'ergonomi', 'vaksinasi'])) {
@@ -572,6 +659,9 @@ class User extends Authenticatable
                     default => false,
                 };
             }
+            if ($moduleKey === 'haid_pita') {
+                return in_array($action, ['read', 'update'], true);
+            }
             // Modul klinis fisik lainnya: Read-only (untuk meninjau kondisi kesehatan siswi yang dikonseling)
             return $action === 'read';
         }
@@ -592,36 +682,53 @@ class User extends Authenticatable
         return false;
     }
 
-    public function canCreate(?string $module = null): bool
+    public function canCreate(?string $module = null, string $scope = 'any'): bool
     {
-        return $this->hasCrudPermission('create', $module);
+        return $this->hasCrudPermission('create', $module, $scope);
     }
 
-    public function canRead(?string $module = null): bool
+    public function canRead(?string $module = null, string $scope = 'any'): bool
     {
-        return $this->hasCrudPermission('read', $module);
+        return $this->hasCrudPermission('read', $module, $scope);
     }
 
-    public function canUpdate(?string $module = null): bool
+    public function canUpdate(?string $module = null, string $scope = 'any'): bool
     {
-        return $this->hasCrudPermission('update', $module);
+        return $this->hasCrudPermission('update', $module, $scope);
     }
 
-    public function canDelete(?string $module = null): bool
+    public function canDelete(?string $module = null, string $scope = 'any'): bool
     {
-        return $this->hasCrudPermission('delete', $module);
+        return $this->hasCrudPermission('delete', $module, $scope);
     }
 
     public function getCrudPermissions(?string $module = null): array
     {
         $catalog = GlobalModuleConfig::getModuleCatalog();
         $modulesCrud = [];
+        $dutyModules = [];
+        $personalModules = [];
+
         foreach ($catalog as $key => $info) {
+            $dutyModules[$key] = [
+                'c' => $this->hasCrudPermission('create', $key, 'duty'),
+                'r' => $this->hasCrudPermission('read', $key, 'duty'),
+                'u' => $this->hasCrudPermission('update', $key, 'duty'),
+                'd' => $this->hasCrudPermission('delete', $key, 'duty'),
+            ];
+
+            $personalModules[$key] = [
+                'c' => $this->hasCrudPermission('create', $key, 'personal'),
+                'r' => $this->hasCrudPermission('read', $key, 'personal'),
+                'u' => $this->hasCrudPermission('update', $key, 'personal'),
+                'd' => $this->hasCrudPermission('delete', $key, 'personal'),
+            ];
+
             $modulesCrud[$key] = [
-                'c' => $this->hasCrudPermission('create', $key),
-                'r' => $this->hasCrudPermission('read', $key),
-                'u' => $this->hasCrudPermission('update', $key),
-                'd' => $this->hasCrudPermission('delete', $key),
+                'c' => $this->hasCrudPermission('create', $key, 'any'),
+                'r' => $this->hasCrudPermission('read', $key, 'any'),
+                'u' => $this->hasCrudPermission('update', $key, 'any'),
+                'd' => $this->hasCrudPermission('delete', $key, 'any'),
             ];
         }
 
@@ -632,6 +739,8 @@ class User extends Authenticatable
             'can_delete' => $this->canDelete($module),
             'can_add_user' => $this->canAddUser(),
             'modules' => $modulesCrud,
+            'duty_modules' => $dutyModules,
+            'personal_modules' => $personalModules,
         ];
     }
 }

@@ -24,6 +24,8 @@ class UpdateUserPermissionsRequest extends FormRequest
             'custom_permissions.can_delete' => 'nullable',
             'custom_permissions.can_add_user' => 'nullable',
             'custom_permissions.modules' => 'nullable|array',
+            'custom_permissions.duty_modules' => 'nullable|array',
+            'custom_permissions.personal_modules' => 'nullable|array',
         ];
     }
 }
