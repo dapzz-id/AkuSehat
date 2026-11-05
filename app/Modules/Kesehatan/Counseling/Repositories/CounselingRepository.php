@@ -12,6 +12,7 @@ use App\Modules\Kesehatan\Pemeriksaan\Enums\BmiStatus;
 use App\Modules\Kesehatan\Pemeriksaan\Enums\BloodPressureStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class CounselingRepository
@@ -136,8 +137,12 @@ class CounselingRepository
         return CounselingSession::findOrFail($id);
     }
 
-    public function getLatestKesehatanForInstansi(int|string $instansiId): Collection
+    public function getLatestKesehatanForInstansi(int|string|null $instansiId): Collection
     {
+        if (empty($instansiId)) {
+            return new Collection();
+        }
+
         return Kesehatan::query()
             ->whereHas('user', function($q) use ($instansiId) {
                 $q->where('level', UserRole::MEMBER->value)
@@ -154,8 +159,12 @@ class CounselingRepository
             ->get();
     }
 
-    public function getSessionsForConsultant(int|string $instansiId, int|string|null $consultantId = null, ?string $status = null, ?string $search = null): Collection
+    public function getSessionsForConsultant(int|string|null $instansiId, int|string|null $consultantId = null, ?string $status = null, ?string $search = null): Collection
     {
+        if (empty($instansiId)) {
+            return new Collection();
+        }
+
         $query = CounselingSession::where('instansi_id', $instansiId)
             ->with(['user.divisi', 'consultant'])
             ->orderBy('created_at', 'desc');
@@ -186,8 +195,12 @@ class CounselingRepository
         return $query->get();
     }
 
-    public function getUserSessions(int|string $userId, int|string $instansiId): Collection
+    public function getUserSessions(int|string $userId, int|string|null $instansiId): Collection
     {
+        if (empty($instansiId)) {
+            return new Collection();
+        }
+
         return CounselingSession::where('user_id', $userId)
             ->where('instansi_id', $instansiId)
             ->with(['consultant:id,nama,level'])
@@ -195,8 +208,12 @@ class CounselingRepository
             ->get();
     }
 
-    public function getPendingCount(int|string $instansiId, int|string|null $consultantId = null): int
+    public function getPendingCount(int|string|null $instansiId, int|string|null $consultantId = null): int
     {
+        if (empty($instansiId)) {
+            return 0;
+        }
+
         $query = CounselingSession::where('instansi_id', $instansiId)
             ->where('status', CounselingSessionStatus::MENUNGGU->value);
 
@@ -210,8 +227,12 @@ class CounselingRepository
         return $query->count();
     }
 
-    public function getHealthNotifications(int|string $instansiId, int $limit = 30): Collection
+    public function getHealthNotifications(int|string|null $instansiId, int $limit = 30): Collection
     {
+        if (empty($instansiId)) {
+            return new Collection();
+        }
+
         return Kesehatan::with('user')
             ->whereHas('user', function ($q) use ($instansiId) {
                 $q->where('instansi_id', $instansiId)->where('level', UserRole::MEMBER->value);
@@ -229,8 +250,12 @@ class CounselingRepository
             ->get();
     }
 
-    public function getDivisionsWithMemberCount(int|string $instansiId): Collection
+    public function getDivisionsWithMemberCount(int|string|null $instansiId): SupportCollection
     {
+        if (empty($instansiId)) {
+            return collect();
+        }
+
         $divisions = Divisi::where('instansi_id', $instansiId)
             ->orderBy('divisi_name', 'asc')
             ->get();

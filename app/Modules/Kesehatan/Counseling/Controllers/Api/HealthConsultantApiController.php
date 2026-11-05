@@ -23,7 +23,20 @@ class HealthConsultantApiController extends Controller
 
     public function healthSummary(ConsultantSummaryRequest $req): JsonResponse
     {
-        $data = $this->counselingService->getHealthSummary($req->user());
+        try {
+            $data = $this->counselingService->getHealthSummary($req->user());
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('healthSummary fallback: ' . $e->getMessage());
+            $data = [
+                'total' => 0,
+                'total_students' => 0,
+                'normal' => 0,
+                'obesitas' => 0,
+                'obese' => 0,
+                'kurus' => 0,
+                'underweight' => 0,
+            ];
+        }
 
         return response()->json([
             'status' => true,
@@ -33,8 +46,13 @@ class HealthConsultantApiController extends Controller
 
     public function healthByDivision(ConsultantDivisionRequest $req): JsonResponse
     {
-        $user = $req->user();
-        $divisi = $this->counselingRepository->getDivisionsWithMemberCount($user->instansi_id);
+        try {
+            $user = $req->user();
+            $divisi = $this->counselingRepository->getDivisionsWithMemberCount($user->instansi_id);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('healthByDivision fallback: ' . $e->getMessage());
+            $divisi = collect();
+        }
 
         return response()->json([
             'status' => true,
@@ -44,10 +62,15 @@ class HealthConsultantApiController extends Controller
 
     public function healthNotification(ConsultantNotificationRequest $req): JsonResponse
     {
-        $instansiId = $req->user()->instansi_id;
-
-        $notifications = $this->counselingRepository->getHealthNotifications($instansiId, 30);
-        $pendingCount = $this->counselingRepository->getPendingCount($instansiId, $req->user()->id);
+        try {
+            $instansiId = $req->user()->instansi_id;
+            $notifications = $this->counselingRepository->getHealthNotifications($instansiId, 30);
+            $pendingCount = $this->counselingRepository->getPendingCount($instansiId, $req->user()->id);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('healthNotification fallback: ' . $e->getMessage());
+            $notifications = collect();
+            $pendingCount = 0;
+        }
 
         return response()->json([
             'status' => true,
