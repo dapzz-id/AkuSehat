@@ -335,7 +335,8 @@ const HomeScreenHealthConsultant = () => {
           api.get("/health-consultant/health-notification"),
         ])
         setSummary(sumRes?.data?.data || sumRes?.data || null)
-        setDivisi(divisiRes?.data?.data || divisiRes?.data || [])
+        const rawDivisi = divisiRes?.data?.data ?? divisiRes?.data
+        setDivisi(Array.isArray(rawDivisi) ? rawDivisi : [])
         setProfile(meRes?.data?.data || meRes?.data || null)
         const rawNotif = notifRes?.data?.data || notifRes?.data
         setNotifications(Array.isArray(rawNotif) ? rawNotif : [])
@@ -440,7 +441,7 @@ const HomeScreenHealthConsultant = () => {
     }
     
     const searchLower = searchDivisi.toLowerCase()
-    return divisi.filter((item) => {
+    return (Array.isArray(divisi) ? divisi : []).filter((item) => {
       const name = item.divisi || (item as any).nama_divisi || (item as any).divisi_name || ""
       return name.toLowerCase().includes(searchLower)
     })

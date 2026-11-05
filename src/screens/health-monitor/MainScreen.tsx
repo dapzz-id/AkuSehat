@@ -292,19 +292,21 @@ const HomeScreenHealthMonitor = () => {
         api.get("/me"),
         api.get("/health-monitor/warning"),
       ]);
-      const peminjamanData = peminjamanRes?.data?.data || peminjamanRes?.data || [];
+      const rawPeminjaman = peminjamanRes?.data?.data ?? peminjamanRes?.data;
+      const peminjamanData = Array.isArray(rawPeminjaman) ? rawPeminjaman : [];
       setPeminjaman(peminjamanData);
       setProfile(meRes?.data?.data || meRes?.data || null);
-      const warningData = warningRes?.data?.data || warningRes?.data || [];
+      const rawWarning = warningRes?.data?.data ?? warningRes?.data;
+      const warningData = Array.isArray(rawWarning) ? rawWarning : [];
       const filteredWarningData = warningData.filter((item: Peminjaman) =>
-        item.status === 'terlambat' && item.verified === true
+        item && item.status === 'terlambat' && item.verified === true
       );
       setWarningList(filteredWarningData);
       // Update dashboard data
-      const menungguVerifikasi = peminjamanData.filter((item: Peminjaman) => item.verified === false).length;
-      const totalMember = peminjamanRes?.data?.total_member || 0;
+      const menungguVerifikasi = peminjamanData.filter((item: Peminjaman) => item && item.verified === false).length;
+      const totalMember = typeof peminjamanRes?.data?.total_member === 'number' ? peminjamanRes.data.total_member : 0;
       const pinjamanAktif = peminjamanData.filter((item: Peminjaman) =>
-        item.verified === true && item.status === 'dipinjam'
+        item && item.verified === true && item.status === 'dipinjam'
       ).length;
       const warningCount = filteredWarningData.length;
       setDashboardData({
@@ -326,7 +328,8 @@ const HomeScreenHealthMonitor = () => {
     try {
       setLoadingMember(true)
       const res = await api.get("/health-monitor/member-haid")
-      setMemberList(res?.data?.data || res?.data || [])
+      const memberRaw = res?.data?.data ?? res?.data
+      setMemberList(Array.isArray(memberRaw) ? memberRaw : [])
     } catch (e: any) {
       console.error("Error fetching member:", e)
       Alert.alert("Error", "Gagal memuat data member")
@@ -347,10 +350,10 @@ const HomeScreenHealthMonitor = () => {
     setFormMode('edit')
     setSelectedItem(item)
     setSelectedMember({
-      id: item.user.id,
-      nama: item.user.nama,
-      nomor_induk: item.user.nomor_induk,
-      divisi_name: item.user.divisi,
+      id: item?.user?.id || 0,
+      nama: item?.user?.nama || '-',
+      nomor_induk: item?.user?.nomor_induk || '-',
+      divisi_name: item?.user?.divisi || '-',
       jk: 'P',
     })
     setFormData({
@@ -462,12 +465,16 @@ const HomeScreenHealthMonitor = () => {
       setRejectLoading(false)
     }
   }
-  const filteredPeminjaman = peminjaman.filter(item => {
+  const filteredPeminjaman = (Array.isArray(peminjaman) ? peminjaman : []).filter(item => {
+    if (!item) return false
     const statusMatch = filterStatus === 'all' || item.status === filterStatus
     const verifiedMatch = showNonActive ? item.verified === false : item.verified === true
-    const searchMatch = searchQuery === '' ||
-      item.user.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.user.nomor_induk.toLowerCase().includes(searchQuery.toLowerCase())
+    const userName = item?.user?.nama ? String(item.user.nama).toLowerCase() : ''
+    const userNoInduk = item?.user?.nomor_induk ? String(item.user.nomor_induk).toLowerCase() : ''
+    const query = searchQuery ? searchQuery.toLowerCase() : ''
+    const searchMatch = query === '' ||
+      userName.includes(query) ||
+      userNoInduk.includes(query)
 
     return statusMatch && verifiedMatch && searchMatch
   })
@@ -488,9 +495,11 @@ const HomeScreenHealthMonitor = () => {
       day: '2-digit'
     })
   }
-  const calculateLatedays = (estimasi: string) => {
+  const calculateLatedays = (estimasi?: string | null) => {
+    if (!estimasi) return 0
     const today = new Date()
     const estimasiDate = new Date(estimasi)
+    if (isNaN(estimasiDate.getTime())) return 0
     const diffTime = today.getTime() - estimasiDate.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     return diffDays > 0 ? diffDays : 0
@@ -1485,8 +1494,8 @@ const PeminjamanCard = ({ item, formatDate, calculateLatedays, onEdit, onReturn,
           <Icon name="user" size={18} color="#ec4899" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.userName}>{item.user.nama}</Text>
-          <Text style={styles.userNoInduk}>Nomor Induk: {item.user.nomor_induk}</Text>
+          <Text style={styles.userName}>{item?.user?.nama || 'Pengguna Tidak Diketahui'}</Text>
+          <Text style={styles.userNoInduk}>Nomor Induk: {item?.user?.nomor_induk || '-'}</Text>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 4 }}>
           <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
@@ -1704,7 +1713,7 @@ const ConfirmModal = ({ visible, type, item, loading, onClose, onConfirm }: any)
         iconColor: '#10b981',
         iconBg: '#dcfce7',
         title: 'Konfirmasi Verifikasi',
-        message: `Apakah Anda yakin ingin memverifikasi peminjaman pita A.N ${item?.user.nama}?`,
+        message: `Apakah Anda yakin ingin memverifikasi peminjaman pita A.N ${item?.user?.nama || 'Pengguna'}?`,
         confirmText: 'Ya, Verifikasi',
         confirmColor: '#10b981'
       }
@@ -1715,7 +1724,7 @@ const ConfirmModal = ({ visible, type, item, loading, onClose, onConfirm }: any)
         iconColor: '#10b981',
         iconBg: '#dcfce7',
         title: 'Konfirmasi Pengembalian',
-        message: `Apakah pita dari ${item?.user.nama} sudah dikembalikan?`,
+        message: `Apakah pita dari ${item?.user?.nama || 'Pengguna'} sudah dikembalikan?`,
         confirmText: 'Ya, Kembalikan',
         confirmColor: '#10b981'
       }
@@ -1725,7 +1734,7 @@ const ConfirmModal = ({ visible, type, item, loading, onClose, onConfirm }: any)
       iconColor: '#ef4444',
       iconBg: '#fee2e2',
       title: 'Konfirmasi Hapus',
-      message: `Apakah Anda yakin ingin menghapus data peminjaman pita A.N ${item?.user.nama}?`,
+      message: `Apakah Anda yakin ingin menghapus data peminjaman pita A.N ${item?.user?.nama || 'Pengguna'}?`,
       confirmText: 'Ya, Hapus',
       confirmColor: '#ef4444'
     }
@@ -1789,7 +1798,7 @@ const RejectModal = ({ visible, item, loading, reason, onReasonChange, onClose, 
             </View>
             <Text style={styles.modalTitle}>Tolak Peminjaman</Text>
             <Text style={styles.modalMessage}>
-              Tolak peminjaman pita dari {item?.user.nama}?
+              Tolak peminjaman pita dari {item?.user?.nama || 'Pengguna'}?
             </Text>
 
             <View style={styles.formGroup}>
