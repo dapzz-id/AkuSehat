@@ -256,6 +256,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(LeaderboardMultiSchoolSeeder::class);
+        $this->call(AndroidAppReleaseSeeder::class);
 
         $this->command->info('Database seeded successfully with UUID and Multi-Tenant Isolation!');
         $this->command->info('Sekolah A: SMK Telesandi Bekasi (admin, admininstansi, gurubudi, kepsek, member1-50)');

@@ -101,6 +101,9 @@ class ProductionSeeder extends Seeder
             'is_mobile_maintenance' => false,
         ]);
 
+        // 4. Seed rilis aplikasi Android versi saat ini
+        $this->call(AndroidAppReleaseSeeder::class);
+
         $this->command->info('=====================================================');
         $this->command->info('✨ Production Seeding selesai (100% tanpa data dummy)!');
         $this->command->info('=====================================================');
