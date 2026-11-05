@@ -218,7 +218,7 @@
 
                 <!-- Write Area -->
                 <div id="changelog-write-pane">
-                    <textarea name="changelog" id="changelog" rows="7"
+                    <textarea name="changelog" id="changelog" rows="7" spellcheck="false" autocomplete="off" autocapitalize="off"
                               placeholder="### Apa yang Baru di Versi ini:&#10;* **Fitur Utama**:&#10;  - Penambahan visual metrik status kesehatan&#10;* **Perbaikan Bug**:&#10;  - Perbaikan crash saat klik tombol Detail"
                               class="w-full text-sm rounded-xl border border-slate-300 p-3 font-mono text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 leading-relaxed">{{ old('changelog', $update->changelog) }}</textarea>
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-400 mt-1">
