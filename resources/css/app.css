@@ -743,17 +743,59 @@ html.dark .view-detail:hover {
     color: #6ee7b7 !important;
 }
 
+/* Pagination Wrappers, Containers & Buttons in Dark Mode */
+html.dark [class*="bg-[#f9fafb]"],
+html.dark .bg-\[\#f9fafb\],
+html.dark [class*="bg-[#f8fafc]"],
+html.dark .bg-\[\#f8fafc\] {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+html.dark [class*="bg-[#f9fafb]"] p,
+html.dark .bg-\[\#f9fafb\] p,
+html.dark [class*="bg-[#f8fafc]"] p,
+html.dark .bg-\[\#f8fafc\] p {
+    color: #cbd5e1 !important;
+}
+
+html.dark [class*="bg-[#f9fafb]"] span.font-medium,
+html.dark .bg-\[\#f9fafb\] span.font-medium,
+html.dark [class*="bg-[#f8fafc]"] span.font-medium,
+html.dark .bg-\[\#f8fafc\] span.font-medium {
+    color: #f8fafc !important;
+}
+
+html.dark nav[aria-label="Pagination"],
+html.dark nav[role="navigation"][aria-label*="Pagination"] {
+    background-color: transparent !important;
+}
+
 html.dark nav[aria-label="Pagination"] a,
-html.dark nav[aria-label="Pagination"] span {
+html.dark nav[aria-label="Pagination"] span,
+html.dark nav[role="navigation"][aria-label*="Pagination"] a,
+html.dark nav[role="navigation"][aria-label*="Pagination"] span {
     border-color: #334155 !important;
 }
-html.dark nav[aria-label="Pagination"] a:not([class*="bg-[#2e7d32]"]) {
+
+html.dark nav[aria-label="Pagination"] a:not([class*="bg-[#2e7d32]"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]),
+html.dark nav[role="navigation"][aria-label*="Pagination"] a:not([class*="bg-[#2e7d32]"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]) {
     background-color: #1e293b !important;
     color: #cbd5e1 !important;
 }
-html.dark nav[aria-label="Pagination"] a:not([class*="bg-[#2e7d32]"]):hover {
+
+html.dark nav[aria-label="Pagination"] a:not([class*="bg-[#2e7d32]"]):hover,
+html.dark nav[role="navigation"][aria-label*="Pagination"] a:hover {
     background-color: #334155 !important;
     color: #f8fafc !important;
+}
+
+html.dark nav[aria-label="Pagination"] span.bg-gray-100,
+html.dark nav[role="navigation"][aria-label*="Pagination"] span.bg-gray-100,
+html.dark nav[aria-label="Pagination"] span:not([class*="bg-[#2e7d32]"]):not([class*="bg-emerald-"]):not([aria-current="page"]) {
+    background-color: #0b1120 !important;
+    color: #64748b !important;
 }
 
 /* Modals in Dark Mode */

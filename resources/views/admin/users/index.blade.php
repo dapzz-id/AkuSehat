@@ -686,12 +686,12 @@
 
             <!-- Custom Pagination -->
             <div
-                class="px-4 py-3 sm:px-6 sm:py-4 bg-[#f9fafb] border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
+                class="px-4 py-3 sm:px-6 sm:py-4 bg-[#f9fafb] dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
                 <div>
-                    <p class="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
-                        Showing <span class="font-medium">{{ $member->firstItem() }}</span>
-                        to <span class="font-medium">{{ $member->lastItem() }}</span>
-                        of <span class="font-medium">{{ $member->total() }}</span> results
+                    <p class="text-xs sm:text-sm text-gray-700 dark:text-slate-300 text-center sm:text-left">
+                        Showing <span class="font-medium text-gray-900 dark:text-white">{{ $member->firstItem() }}</span>
+                        to <span class="font-medium text-gray-900 dark:text-white">{{ $member->lastItem() }}</span>
+                        of <span class="font-medium text-gray-900 dark:text-white">{{ $member->total() }}</span> results
                     </p>
                 </div>
 
