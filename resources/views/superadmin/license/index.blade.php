@@ -74,6 +74,9 @@
                                     $usedQuota = $license->getUsedQuota();
                                     $totalQuota = (int) $license->kuota_pengguna;
                                     $remQuota = max(0, $totalQuota - $usedQuota);
+                                    $deleteInfo = isset($licenseKeyService) 
+                                        ? $licenseKeyService->canDeleteLicense($license) 
+                                        : app(\App\Modules\SuperAdmin\LicenseKey\Services\LicenseKeyService::class)->canDeleteLicense($license);
                                 @endphp
                                 <div class="font-bold text-gray-800">
                                     {{ $usedQuota }}/{{ $totalQuota }} User
@@ -114,17 +117,31 @@
                             <td class="px-4 py-3">
                                 <div class="flex items-center justify-center space-x-2">
                                     @if($license->status == 'expired')
-                                    <button onclick="openRenewModal({{ $license->id }})" class="p-2 text-green-600 hover:bg-green-50 rounded transition-colors duration-150" title="Perpanjang">
+                                    <button type="button" onclick="openRenewModal({{ $license->id }})" class="p-2 text-green-600 hover:bg-green-50 rounded transition-colors duration-150" title="Perpanjang">
                                         <i class="fas fa-sync-alt"></i>
                                     </button>
                                     @endif
                                     <a href="{{ route('superadmin.license.edit', $license->id) }}" class="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors duration-150" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('superadmin.license.destroy', $license->id) }}" method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus license ini?')">
+                                    <form action="{{ route('superadmin.license.destroy', $license->id) }}" 
+                                          method="POST" 
+                                          class="inline form-delete-license"
+                                          data-key="{{ $license->key }}"
+                                          data-school="{{ $license->sekolah->nama_sekolah ?? 'Belum Ditugaskan' }}"
+                                          data-can-delete="{{ $deleteInfo['can_delete'] ? '1' : '0' }}"
+                                          data-action-type="{{ $deleteInfo['action_type'] }}"
+                                          data-reason="{{ $deleteInfo['reason'] ?? '' }}"
+                                          data-used="{{ $deleteInfo['used_quota'] }}"
+                                          data-total-users="{{ $deleteInfo['total_users'] }}"
+                                          data-other-quota="{{ $deleteInfo['other_quota'] }}"
+                                          data-target-key="{{ $deleteInfo['target_license'] ? $deleteInfo['target_license']->key : '' }}">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="p-2 text-red-600 hover:bg-red-50 rounded transition-colors duration-150" title="Hapus">
+                                        <button type="button" 
+                                                onclick="confirmDeleteLicense(this.closest('form'))" 
+                                                class="p-2 text-red-600 hover:bg-red-50 rounded transition-colors duration-150" 
+                                                title="Hapus">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -205,6 +222,9 @@
                         $usedQuota = $license->getUsedQuota();
                         $totalQuota = (int) $license->kuota_pengguna;
                         $remQuota = max(0, $totalQuota - $usedQuota);
+                        $deleteInfo = isset($licenseKeyService) 
+                            ? $licenseKeyService->canDeleteLicense($license) 
+                            : app(\App\Modules\SuperAdmin\LicenseKey\Services\LicenseKeyService::class)->canDeleteLicense($license);
                     @endphp
                     <p class="text-sm font-semibold text-gray-800">{{ $usedQuota }}/{{ $totalQuota }} User</p>
                     <p class="text-[11px] text-gray-500">Terpakai: {{ $usedQuota }} (Sisa {{ $remQuota }})</p>
@@ -230,17 +250,30 @@
             <!-- Action Buttons -->
             <div class="flex items-center justify-end space-x-2 pt-3 border-t border-gray-200">
                 @if($license->status == 'expired')
-                <button onclick="openRenewModal({{ $license->id }})" class="flex-1 sm:flex-none px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-medium">
+                <button type="button" onclick="openRenewModal({{ $license->id }})" class="flex-1 sm:flex-none px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-medium">
                     <i class="fas fa-sync-alt mr-1"></i>Perpanjang
                 </button>
                 @endif
                 <a href="{{ route('superadmin.license.edit', $license->id) }}" class="flex-1 sm:flex-none px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium text-center">
                     <i class="fas fa-edit mr-1"></i>Edit
                 </a>
-                <form action="{{ route('superadmin.license.destroy', $license->id) }}" method="POST" class="flex-1 sm:flex-none inline" onsubmit="return confirm('Yakin ingin menghapus license ini?')">
+                <form action="{{ route('superadmin.license.destroy', $license->id) }}" 
+                      method="POST" 
+                      class="flex-1 sm:flex-none inline form-delete-license"
+                      data-key="{{ $license->key }}"
+                      data-school="{{ $license->sekolah->nama_sekolah ?? 'Belum Ditugaskan' }}"
+                      data-can-delete="{{ $deleteInfo['can_delete'] ? '1' : '0' }}"
+                      data-action-type="{{ $deleteInfo['action_type'] }}"
+                      data-reason="{{ $deleteInfo['reason'] ?? '' }}"
+                      data-used="{{ $deleteInfo['used_quota'] }}"
+                      data-total-users="{{ $deleteInfo['total_users'] }}"
+                      data-other-quota="{{ $deleteInfo['other_quota'] }}"
+                      data-target-key="{{ $deleteInfo['target_license'] ? $deleteInfo['target_license']->key : '' }}">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="w-full px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-sm font-medium">
+                    <button type="button" 
+                            onclick="confirmDeleteLicense(this.closest('form'))"
+                            class="w-full px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-sm font-medium">
                         <i class="fas fa-trash mr-1"></i>Hapus
                     </button>
                 </form>
@@ -310,5 +343,149 @@ document.getElementById('renewModal').addEventListener('click', function(e) {
         closeRenewModal();
     }
 });
+
+function confirmDeleteLicense(form) {
+    if (!form) return;
+    const key = form.dataset.key || 'Lisensi';
+    const school = form.dataset.school || 'Instansi';
+    const canDelete = form.dataset.canDelete === '1';
+    const actionType = form.dataset.actionType || 'direct';
+    const reason = form.dataset.reason || '';
+    const totalUsers = parseInt(form.dataset.totalUsers || '0');
+    const otherQuota = parseInt(form.dataset.otherQuota || '0');
+    const targetKey = form.dataset.targetKey || '';
+
+    // KASUS 1: Lisensi TIDAK BISA DIHAPUS (sedang digunakan atau kuota lisensi lain tidak cukup)
+    if (!canDelete) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Lisensi Tidak Dapat Dihapus',
+                html: `
+                    <div class="text-left text-sm text-slate-600 space-y-3">
+                        <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800">
+                            <div class="flex items-center gap-2 font-bold mb-1">
+                                <i class="fas fa-triangle-exclamation text-rose-600"></i>
+                                <span>Penghapusan Ditolak Sistem</span>
+                            </div>
+                            <p class="text-xs leading-relaxed">${reason}</p>
+                        </div>
+                        <div class="text-xs text-slate-500 space-y-1">
+                            <div><strong>License Key:</strong> <code class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-800 font-mono">${key}</code></div>
+                            <div><strong>Instansi:</strong> ${school}</div>
+                            <div><strong>Pengguna Aktif:</strong> ${totalUsers} pengguna</div>
+                            ${otherQuota > 0 ? `<div><strong>Kapasitas Lisensi Aktif Lain:</strong> ${otherQuota} kuota</div>` : ''}
+                        </div>
+                    </div>
+                `,
+                icon: 'warning',
+                iconColor: '#e11d48',
+                confirmButtonText: '<i class="fas fa-check mr-1.5"></i> Saya Mengerti',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'swal2-akusehat-popup',
+                    title: 'swal2-akusehat-title',
+                    htmlContainer: 'swal2-akusehat-html',
+                    confirmButton: 'swal2-akusehat-btn-emerald',
+                    actions: 'swal2-akusehat-actions'
+                }
+            });
+        } else {
+            alert(reason || `Lisensi [${key}] tidak dapat dihapus.`);
+        }
+        return;
+    }
+
+    // KASUS 2: Lisensi bisa dihapus dan kuota dialihkan ke lisensi lain
+    if (actionType === 'transfer') {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Pengalihan & Hapus Lisensi',
+                html: `
+                    <div class="text-left text-sm text-slate-600 space-y-3">
+                        <p>License Key <code class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-800 font-mono font-bold">${key}</code> sedang digunakan oleh <strong>${totalUsers} pengguna</strong> di <strong>${school}</strong>.</p>
+                        <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-900 text-xs leading-relaxed">
+                            <div class="font-bold flex items-center gap-1.5 mb-1">
+                                <i class="fas fa-arrow-right-arrow-left text-blue-600"></i>
+                                <span>Pengalihan Kuota Otomatis</span>
+                            </div>
+                            Seluruh ${totalUsers} pengguna akan <strong>dialihkan ke lisensi aktif berikutnya:</strong><br>
+                            <code class="px-1.5 py-0.5 bg-white border border-blue-200 rounded font-mono font-bold text-blue-800 mt-1 inline-block">${targetKey}</code>
+                            <span class="block mt-1 text-[11px] text-blue-700 font-medium">(Kapasitas mencukupi: ${otherQuota} kuota).</span>
+                        </div>
+                        <p class="text-xs text-rose-600 font-semibold"><i class="fas fa-triangle-exclamation mr-1"></i> License Key [${key}] akan dihapus permanen.</p>
+                    </div>
+                `,
+                icon: 'question',
+                iconColor: '#0284c7',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-arrow-right-arrow-left mr-1.5"></i> Ya, Alihkan & Hapus',
+                cancelButtonText: '<i class="fas fa-times mr-1.5"></i> Batal',
+                reverseButtons: true,
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'swal2-akusehat-popup',
+                    title: 'swal2-akusehat-title',
+                    htmlContainer: 'swal2-akusehat-html',
+                    confirmButton: 'swal2-akusehat-btn-danger',
+                    cancelButton: 'swal2-akusehat-btn-cancel',
+                    actions: 'swal2-akusehat-actions'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.dataset.swalBypassed = 'true';
+                    form.submit();
+                }
+            });
+        } else {
+            if (confirm(`Lisensi [${key}] akan dihapus dan pengguna dialihkan ke lisensi [${targetKey}]. Lanjutkan?`)) {
+                form.dataset.swalBypassed = 'true';
+                form.submit();
+            }
+        }
+        return;
+    }
+
+    // KASUS 3: Lisensi tidak digunakan atau belum ditugaskan (penghapusan langsung)
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Hapus License Key?',
+            html: `
+                <div class="text-left text-sm text-slate-600 space-y-2">
+                    <p>Apakah Anda yakin ingin menghapus License Key berikut?</p>
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
+                        <div><strong>Key:</strong> <code class="px-1.5 py-0.5 bg-white border rounded text-slate-800 font-mono">${key}</code></div>
+                        <div><strong>Instansi:</strong> ${school}</div>
+                    </div>
+                    <p class="text-xs text-rose-600 font-semibold"><i class="fas fa-triangle-exclamation mr-1"></i> Tindakan ini tidak dapat dibatalkan!</p>
+                </div>
+            `,
+            icon: 'warning',
+            iconColor: '#e11d48',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-trash-can mr-1.5"></i> Ya, Hapus',
+            cancelButtonText: '<i class="fas fa-times mr-1.5"></i> Batal',
+            reverseButtons: true,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'swal2-akusehat-popup',
+                title: 'swal2-akusehat-title',
+                htmlContainer: 'swal2-akusehat-html',
+                confirmButton: 'swal2-akusehat-btn-danger',
+                cancelButton: 'swal2-akusehat-btn-cancel',
+                actions: 'swal2-akusehat-actions'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.dataset.swalBypassed = 'true';
+                form.submit();
+            }
+        });
+    } else {
+        if (confirm(`Yakin ingin menghapus license [${key}]?`)) {
+            form.dataset.swalBypassed = 'true';
+            form.submit();
+        }
+    }
+}
 </script>
 @endpush

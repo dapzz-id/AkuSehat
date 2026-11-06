@@ -66,7 +66,7 @@ class LicenseKey extends Model
     }
 
     /**
-     * Menghitung berapa kuota dari lisensi ini yang telah terpakai oleh anggota/siswa instansi.
+     * Menghitung berapa kuota dari lisensi ini yang telah terpakai oleh anggota/siswa/staf instansi.
      * Admin Instansi dan SuperAdmin tidak memotong kuota.
      */
     public function getUsedQuota(): int
@@ -76,15 +76,8 @@ class LicenseKey extends Model
             return 0;
         }
 
-        // Total anggota aktif di instansi yang memotong kuota
-        $totalMembers = $instansi->users()
-            ->whereNotIn('level', [
-                \App\Modules\User\Enums\UserRole::ADMIN_INSTANSI->value,
-                \App\Modules\User\Enums\UserRole::SUPERADMIN->value,
-                'Admin Instansi',
-                'SuperAdmin',
-            ])
-            ->count();
+        // Total anggota/staf aktif di instansi yang memotong kuota lisensi
+        $totalMembers = $instansi->getCountableUsersCount();
 
         // Ambil semua lisensi aktif instansi terurut berdasarkan tanggal dibuat
         $allLicenses = $instansi->licenseKeys()

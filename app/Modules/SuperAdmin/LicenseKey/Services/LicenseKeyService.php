@@ -111,17 +111,146 @@ class LicenseKeyService
         ];
     }
 
-    public function deleteLicense(int|string $id): void
+    public function canDeleteLicense(LicenseKey $license): array
+    {
+        $instansi = $license->sekolah;
+
+        if (!$instansi) {
+            return [
+                'can_delete' => true,
+                'action_type' => 'direct',
+                'reason' => null,
+                'used_quota' => 0,
+                'total_users' => 0,
+                'other_quota' => 0,
+                'target_license' => null,
+            ];
+        }
+
+        $totalUsers = $instansi->getCountableUsersCount();
+
+        // Cari lisensi aktif lain di instansi ini yang belum expired
+        $otherActiveLicenses = LicenseKey::where('instansi_id', $instansi->id)
+            ->where('id', '!=', $license->id)
+            ->where('status', LicenseKey::STATUS_ACTIVE)
+            ->whereDate('tanggal_berakhir', '>=', now()->toDateString())
+            ->orderBy('tanggal_berakhir', 'desc')
+            ->get();
+
+        $otherQuota = (int) $otherActiveLicenses->sum('kuota_pengguna');
+        $usedQuota = $license->getUsedQuota();
+
+        // Jika lisensi sudah tidak aktif/expired, lisensi dapat dibersihkan/dihapus
+        if (!$license->isActive()) {
+            return [
+                'can_delete' => true,
+                'action_type' => 'direct',
+                'reason' => null,
+                'used_quota' => 0,
+                'total_users' => $totalUsers,
+                'other_quota' => $otherQuota,
+                'target_license' => $otherActiveLicenses->first(),
+            ];
+        }
+
+        // Jika lisensi aktif, tapi tidak ada anggota terdaftar sama sekali
+        if ($totalUsers === 0) {
+            return [
+                'can_delete' => true,
+                'action_type' => 'direct',
+                'reason' => null,
+                'used_quota' => 0,
+                'total_users' => 0,
+                'other_quota' => $otherQuota,
+                'target_license' => $otherActiveLicenses->first(),
+            ];
+        }
+
+        // Lisensi aktif dan sedang menampung pengguna ($totalUsers > 0)
+        // Kasus 1: Tidak ada lisensi aktif cadangan lain
+        if ($otherActiveLicenses->isEmpty()) {
+            return [
+                'can_delete' => false,
+                'action_type' => 'blocked_in_use',
+                'reason' => "Lisensi [{$license->key}] tidak dapat dihapus karena sedang aktif digunakan oleh {$instansi->nama_instansi} ({$totalUsers} pengguna aktif) dan tidak ada lisensi cadangan lain.",
+                'used_quota' => $usedQuota,
+                'total_users' => $totalUsers,
+                'other_quota' => 0,
+                'target_license' => null,
+            ];
+        }
+
+        // Kasus 2: Ada lisensi aktif lain, tapi total kuota lisensi lain tidak mencukupi seluruh pengguna instansi
+        if ($otherQuota < $totalUsers) {
+            $defisit = $totalUsers - $otherQuota;
+            return [
+                'can_delete' => false,
+                'action_type' => 'blocked_overflow',
+                'reason' => "Lisensi [{$license->key}] tidak dapat dihapus. Instansi {$instansi->nama_instansi} memiliki {$totalUsers} pengguna aktif, sedangkan kapasitas lisensi aktif lainnya hanya menampung {$otherQuota} pengguna (kurang {$defisit} kuota).",
+                'used_quota' => $usedQuota,
+                'total_users' => $totalUsers,
+                'other_quota' => $otherQuota,
+                'target_license' => $otherActiveLicenses->first(),
+            ];
+        }
+
+        // Kasus 3: Ada lisensi aktif lain dan kuota lisensi lain mencukupi ($otherQuota >= $totalUsers)
+        $targetLicense = $otherActiveLicenses->first();
+        return [
+            'can_delete' => true,
+            'action_type' => 'transfer',
+            'reason' => null,
+            'used_quota' => $usedQuota,
+            'total_users' => $totalUsers,
+            'other_quota' => $otherQuota,
+            'target_license' => $targetLicense,
+        ];
+    }
+
+    public function deleteLicense(int|string $id): array
     {
         $license = $this->repository->findOrFail($id);
+        $check = $this->canDeleteLicense($license);
+
+        if (!$check['can_delete']) {
+            throw new \Exception($check['reason']);
+        }
+
+        $instansi = $license->sekolah;
+        $transferredTo = null;
+
+        if ($instansi && $check['action_type'] === 'transfer' && $check['target_license']) {
+            $transferredTo = $check['target_license'];
+            $instansi->update(['license_id_active' => $transferredTo->id]);
+        } elseif ($instansi && $instansi->license_id_active === $license->id) {
+            $nextActive = LicenseKey::where('instansi_id', $instansi->id)
+                ->where('id', '!=', $license->id)
+                ->where('status', LicenseKey::STATUS_ACTIVE)
+                ->whereDate('tanggal_berakhir', '>=', now()->toDateString())
+                ->orderBy('tanggal_berakhir', 'desc')
+                ->first();
+            $instansi->update(['license_id_active' => $nextActive?->id]);
+        }
+
+        $key = $license->key;
         $this->repository->delete($license);
+
+        $msg = "License Key [{$key}] berhasil dihapus.";
+        if ($transferredTo) {
+            $msg = "License Key [{$key}] berhasil dihapus. Kuota {$check['total_users']} pengguna otomatis dialihkan ke lisensi aktif [{$transferredTo->key}].";
+        }
 
         AuditLogger::log(
             'license_deleted',
             'system',
-            "SuperAdmin menghapus License Key: {$license->key}",
-            ['license_id' => $id]
+            "SuperAdmin menghapus License Key: {$key}" . ($transferredTo ? " (Dialihkan ke {$transferredTo->key})" : ""),
+            ['license_id' => $id, 'transferred_to' => $transferredTo?->id]
         );
+
+        return [
+            'success' => true,
+            'message' => $msg,
+        ];
     }
 
     public function revokeLicense(LicenseKey $license): void

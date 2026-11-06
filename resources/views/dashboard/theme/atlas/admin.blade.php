@@ -3,7 +3,7 @@
     $memberLabel = $instansi ? $instansi->getRoleLabel('Member') : 'Member';
     $usersMenuLabel = $instansi ? $instansi->label_data_users_menu : 'Data Pengguna';
     $kuotaPengguna = $instansi ? $instansi->getTotalActiveQuota() : 1;
-    $totalMember = $data['total_member'] ?? 0;
+    $totalMember = $instansi ? $instansi->getCountableUsersCount() : ($data['total_member'] ?? 0);
     $persenKuota = min(100, round(($totalMember / max(1, $kuotaPengguna)) * 100));
     $kuotaBarColor = $persenKuota > 90 ? 'bg-rose-500' : ($persenKuota > 75 ? 'bg-amber-500' : 'bg-emerald-500');
     $latestAppRelease = \App\Models\SoftwareApp::where('status', 'active')

@@ -145,6 +145,29 @@ class Instansi extends Model
         return $this->hasMany(User::class, 'instansi_id');
     }
 
+    /**
+     * Relasi pengguna yang dihitung memotong kuota lisensi instansi
+     * (Semua pengguna instansi selain Admin Instansi dan SuperAdmin).
+     */
+    public function countableUsers()
+    {
+        return $this->hasMany(User::class, 'instansi_id')
+            ->whereNotIn('level', [
+                UserRole::ADMIN_INSTANSI->value,
+                UserRole::SUPERADMIN->value,
+                'Admin Instansi',
+                'SuperAdmin',
+            ]);
+    }
+
+    /**
+     * Total pengguna instansi yang memotong kuota lisensi.
+     */
+    public function getCountableUsersCount(): int
+    {
+        return $this->countableUsers()->count();
+    }
+
     public function licenseKey()
     {
         return $this->belongsTo(LicenseKey::class, 'license_id_active');

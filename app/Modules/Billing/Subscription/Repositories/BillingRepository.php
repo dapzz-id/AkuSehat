@@ -107,9 +107,18 @@ class BillingRepository
 
     public function countActiveDivisionalUsers(string $instansiId): int
     {
+        $instansi = Instansi::find($instansiId);
+        if ($instansi) {
+            return $instansi->getCountableUsersCount();
+        }
+
         return User::where('instansi_id', $instansiId)
-            ->where('level', '!=', UserRole::ADMIN_INSTANSI->value)
-            ->whereNotNull('id_divisi')
+            ->whereNotIn('level', [
+                UserRole::ADMIN_INSTANSI->value,
+                UserRole::SUPERADMIN->value,
+                'Admin Instansi',
+                'SuperAdmin',
+            ])
             ->count();
     }
 

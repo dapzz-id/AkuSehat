@@ -20,7 +20,8 @@ class LicenseKeyController extends Controller
     public function index()
     {
         $licenses = $this->licenseKeyRepository->getPaginatedWithSekolah(10);
-        return view('superadmin.license.index', compact('licenses'));
+        $licenseKeyService = $this->licenseKeyService;
+        return view('superadmin.license.index', compact('licenses', 'licenseKeyService'));
     }
 
     public function create()
@@ -68,9 +69,14 @@ class LicenseKeyController extends Controller
 
     public function destroy(int|string $id)
     {
-        $this->licenseKeyService->deleteLicense($id);
+        try {
+            $result = $this->licenseKeyService->deleteLicense($id);
 
-        return redirect()->route('superadmin.license.index')
-            ->with('success', 'License Key berhasil dihapus.');
+            return redirect()->route('superadmin.license.index')
+                ->with('success', $result['message']);
+        } catch (\Exception $e) {
+            return redirect()->route('superadmin.license.index')
+                ->with('error', $e->getMessage());
+        }
     }
 }

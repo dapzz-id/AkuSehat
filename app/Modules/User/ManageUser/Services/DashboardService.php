@@ -57,10 +57,13 @@ class DashboardService
 
     public function getAdminDashboardData(User $user): array
     {
+        $instansi = $user->instansi ?: Instansi::find($user->instansi_id);
         $summary = InstansiHealthSummary::where('instansi_id', $user->instansi_id)->first();
 
+        $totalCountable = $instansi ? $instansi->getCountableUsersCount() : ($summary ? $summary->total_member : 0);
+
         $data = [
-            'total_member' => $summary ? $summary->total_member : 0,
+            'total_member' => $totalCountable,
             'total_divisi' => $summary ? $summary->total_divisi : 0,
             'data_kesehatan_tahun_ini' => $summary ? $summary->total_kesehatan_tahun_ini : 0,
             'data_hb_tahun_ini' => $summary ? $summary->total_hb_tahun_ini : 0,
