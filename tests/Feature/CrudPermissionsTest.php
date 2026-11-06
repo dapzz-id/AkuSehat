@@ -936,4 +936,100 @@ class CrudPermissionsTest extends TestCase
         $this->assertArrayHasKey('personal_modules', $effective);
         $this->assertArrayHasKey('modules', $effective);
     }
+
+    public function test_health_monitor_dashboard_renders_cleanly_without_orphan_sidebar_tags(): void
+    {
+        if (!Schema::hasTable('software_apps')) {
+            Schema::create('software_apps', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->string('name')->default('Aku Sehat');
+                $table->string('version')->default('1.0.0');
+                $table->string('description')->nullable();
+                $table->string('developer')->default('Neura Cakrawira Solusi');
+                $table->text('link')->nullable();
+                $table->string('status')->default('active');
+                $table->text('icon')->nullable();
+                $table->string('platform')->default('web');
+                $table->date('release_date')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        if (!Schema::hasTable('license_keys')) {
+            Schema::create('license_keys', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->string('license_key')->unique();
+                $table->uuid('instansi_id')->nullable()->index();
+                $table->string('status')->default('active');
+                $table->integer('kuota_pengguna')->default(100);
+                $table->date('tanggal_berakhir')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        \Illuminate\Support\Facades\DB::table('license_keys')->insert([
+            'id' => (string) Str::uuid(),
+            'license_key' => 'AKU-TEST-' . Str::random(8),
+            'instansi_id' => $this->instansi->id,
+            'status' => 'active',
+            'kuota_pengguna' => 100,
+            'tanggal_berakhir' => now()->addYear()->toDateString(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        if (!Schema::hasTable('v_instansi_health_summary')) {
+            Schema::create('v_instansi_health_summary', function (Blueprint $table) {
+                $table->uuid('instansi_id')->nullable();
+                $table->integer('total_member')->default(0);
+                $table->integer('total_divisi')->default(0);
+                $table->integer('total_kesehatan_tahun_ini')->default(0);
+                $table->integer('total_hb_tahun_ini')->default(0);
+            });
+        }
+        if (!Schema::hasTable('v_divisi_dashboard_stats')) {
+            Schema::create('v_divisi_dashboard_stats', function (Blueprint $table) {
+                $table->uuid('instansi_id')->nullable();
+                $table->string('divisi_name')->nullable();
+                $table->integer('total_member')->default(0);
+                $table->integer('total_kesehatan')->default(0);
+                $table->integer('total_hb')->default(0);
+            });
+        }
+
+        $healthMonitor = User::create([
+            'id' => (string) Str::uuid(),
+            'nama' => 'Health Monitor Tels',
+            'username' => 'hm_tels_test_' . Str::random(5),
+            'password' => bcrypt('password'),
+            'level' => UserRole::HEALTH_MONITOR->value,
+            'status' => UserStatus::AKTIF->value,
+            'jk' => UserGender::LAKI_LAKI->value,
+            'instansi_id' => $this->instansi->id,
+            'id_divisi' => $this->divisi->id,
+            'is_custom_permissions' => true,
+            'custom_permissions' => [
+                'can_read' => true,
+                'can_create' => true,
+                'can_update' => true,
+                'can_delete' => false,
+                'duty_modules' => [
+                    'kesehatan' => ['c' => 0, 'r' => 1, 'u' => 0, 'd' => 0],
+                    'hemoglobin' => ['c' => 0, 'r' => 1, 'u' => 0, 'd' => 0],
+                    'haid_pita' => ['c' => 0, 'r' => 1, 'u' => 0, 'd' => 0],
+                ],
+            ],
+        ]);
+
+        $response = $this->actingAs($healthMonitor)->get(route('dashboard'));
+        $response->assertStatus(200);
+
+        // Sidebar and main content must be present
+        $response->assertSee('Selamat Datang, Health Monitor Tels');
+        $response->assertSee('Data Kesehatan');
+        $response->assertSee('Data Hemoglobin');
+        $response->assertSee('Siklus & Pita Siswi', false);
+
+        // Ensure no unescaped raw HTML snippet from broken tags is visible
+        $response->assertDontSee('class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200');
+    }
 }

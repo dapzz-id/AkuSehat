@@ -283,16 +283,22 @@ class User extends Authenticatable
 
         // 1. PRIORITAS TERTINGGI: Kustomisasi Khusus Akun Pengguna (User Custom Override)
         // A. Cek per-modul CRUD permission jika dikustomisasi secara spesifik pada user
-        if (is_array($this->custom_permissions) && isset($this->custom_permissions['modules'][$moduleKey])) {
-            $modPerm = $this->custom_permissions['modules'][$moduleKey];
-            $hasAnyCrud = !empty($modPerm['c']) || !empty($modPerm['r']) || !empty($modPerm['u']) || !empty($modPerm['d'])
-                || !empty($modPerm['create']) || !empty($modPerm['read']) || !empty($modPerm['update']) || !empty($modPerm['delete']);
+        if (is_array($this->custom_permissions)) {
+            $modPerm = $this->custom_permissions['modules'][$moduleKey] 
+                ?? $this->custom_permissions['duty_modules'][$moduleKey] 
+                ?? $this->custom_permissions['personal_modules'][$moduleKey] 
+                ?? null;
 
-            if (is_array($this->custom_modules)) {
-                return in_array($moduleKey, $this->custom_modules) || $hasAnyCrud;
+            if (is_array($modPerm)) {
+                $hasAnyCrud = !empty($modPerm['c']) || !empty($modPerm['r']) || !empty($modPerm['u']) || !empty($modPerm['d'])
+                    || !empty($modPerm['create']) || !empty($modPerm['read']) || !empty($modPerm['update']) || !empty($modPerm['delete']);
+
+                if (is_array($this->custom_modules)) {
+                    return in_array($moduleKey, $this->custom_modules) || $hasAnyCrud;
+                }
+
+                return $hasAnyCrud;
             }
-
-            return $hasAnyCrud;
         }
 
         // B. Cek daftar modul custom_modules akun user

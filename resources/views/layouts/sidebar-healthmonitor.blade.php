@@ -14,6 +14,14 @@
                 })
                 ->count();
         });
+
+        // Count late ribbon loans
+        $latePitaCount = \Illuminate\Support\Facades\Cache::remember('late_pita_cnt_' . $userInstansiId, 60, function() use ($userInstansiId) {
+            return \App\Models\PeminjamanPita::where('instansi_id', $userInstansiId)
+                ->whereIn('status', ['terlambat', 'dipinjam'])
+                ->whereDate('estimasi_selesai_haid', '<', now()->toDateString())
+                ->count();
+        });
     @endphp
 
     <!-- Group: MENU UTAMA -->
@@ -114,6 +122,42 @@
     </div>
     @endif
 
+    <!-- Group: FEMALE HEALTH & SIKLUS HAID -->
+    @if(auth()->user()->isModuleActive('haid_pita') && auth()->user()->canRead('haid_pita'))
+    @php
+        $isFemActive = request()->routeIs('admin.femhealth.*');
+    @endphp
+    <div class="sidebar-group space-y-1" data-group-id="hm-femhealth" data-has-active="{{ $isFemActive ? '1' : '0' }}">
+        <button type="button" 
+                onclick="toggleSidebarGroup('hm-femhealth')" 
+                class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-emerald-400/80 hover:text-white hover:bg-white/5 transition-all group/toggle cursor-pointer select-none">
+            <span class="flex items-center gap-2">
+                <i class="fas fa-calendar-alt text-[11px] text-pink-400/80 group-hover/toggle:text-pink-300"></i>
+                <span>Siklus & Pita Haid</span>
+            </span>
+            <i id="hm-femhealth-chevron" class="fas fa-chevron-down text-[9px] text-emerald-400/60 group-hover/toggle:text-emerald-300 transition-transform duration-200"></i>
+        </button>
+        <div id="hm-femhealth-content" class="space-y-1 transition-all duration-200">
+            <a href="{{ route('admin.femhealth.index') }}" 
+               class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.femhealth.*') ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.femhealth.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-pink-400 group-hover:bg-white/10 group-hover:text-pink-300' }}">
+                    <i class="fas fa-clipboard-list text-sm"></i>
+                </div>
+                <div class="flex-1 flex items-center justify-between">
+                    <span>Siklus & Pita Siswi</span>
+                    @if($latePitaCount > 0)
+                        <span class="text-[9px] bg-rose-500 text-white font-bold px-1.5 py-0.5 rounded-full animate-pulse shadow-sm">
+                            {{ $latePitaCount }} Warning
+                        </span>
+                    @else
+                        <span class="text-[10px] bg-pink-500/20 text-pink-300 px-1.5 py-0.5 rounded border border-pink-500/30">Fem</span>
+                    @endif
+                </div>
+            </a>
+        </div>
+    </div>
+    @endif
+
     <!-- Group: PEMANTAUAN KESEHATAN FISIK -->
     @if(auth()->user()->isModuleActive('kesehatan') || auth()->user()->isModuleActive('hemoglobin'))
     @php
@@ -151,15 +195,7 @@
             @endif
         </div>
     </div>
-    @endif 
-               class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.hb.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.hb.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-rose-400 group-hover:bg-white/10 group-hover:text-rose-300' }}">
-                    <i class="fas fa-droplet text-sm"></i>
-                </div>
-                <span>Data Hemoglobin</span>
-            </a>
-        </div>
-    </div>
+    @endif
 
     <!-- Group: DATA ANGGOTA & KELAS -->
     @if(auth()->user()->canRead())
