@@ -20,3 +20,4 @@ class UpdateFcmTokenRequest extends FormRequest
         ];
     }
 }
+

@@ -75,3 +75,4 @@ class CrashReportTest extends TestCase
         $this->assertEquals('Samsung', $log->properties['device_brand']);
     }
 }
+

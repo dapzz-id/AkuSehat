@@ -105,7 +105,11 @@ class KesehatanRepository
     public function getDistinctYears(string $instansiId): array
     {
         $driver = DB::connection()->getDriverName();
-        $yearExpression = $driver === 'pgsql' ? 'EXTRACT(YEAR FROM tgl)' : 'YEAR(tgl)';
+        $yearExpression = match ($driver) {
+            'sqlite' => "strftime('%Y', tgl)",
+            'pgsql' => 'EXTRACT(YEAR FROM tgl)',
+            default => 'YEAR(tgl)',
+        };
 
         $years = Kesehatan::whereHas('user', function ($query) use ($instansiId) {
                 $query->where('level', UserRole::MEMBER->value)

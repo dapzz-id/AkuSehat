@@ -18,3 +18,4 @@ class StopMemberHaidRequest extends FormRequest
         ];
     }
 }
+

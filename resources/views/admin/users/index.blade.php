@@ -275,7 +275,7 @@
                         <span id="bulkRemoveDivisiBtnText">{{ $tabActionInfo['btn_label'] }}</span>
                     </button>
 
-                    @if(auth()->user()->canDelete())
+                    @if((auth()->user()->isAdminInstansi() || auth()->user()->isAdmin()) && auth()->user()->canDelete())
                     <button type="submit" form="bulkDeleteForm" id="bulkDeleteBtn"
                         class="flex-1 sm:flex-none bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-lg text-xs md:text-sm font-semibold transition-colors inline-flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
                         disabled>
@@ -581,13 +581,15 @@
                                                 </button>
                                             @endif
 
+                                            @if(auth()->user()->isAdminInstansi() || auth()->user()->isSuperAdmin())
                                             <button type="button" onclick="openUserPermModal({{ json_encode(array_merge($item->toArray(), ['effective_crud' => $item->getCrudPermissions()])) }})"
                                                 class="text-indigo-600 hover:text-indigo-800 p-1 transition-colors duration-200"
                                                 title="Atur Hak Akses Modul Khusus Pengguna">
                                                 <i class="fas fa-sliders-h text-xs sm:text-sm md:text-base"></i>
                                             </button>
+                                            @endif
 
-                                            @if(auth()->user()->canUpdate())
+                                            @if((auth()->user()->isAdminInstansi() || auth()->user()->isAdmin()) && auth()->user()->canUpdate())
                                             <a href="{{ route('admin.users.edit', $item->id) }}"
                                                 class="text-[#2e7d32] hover:text-[#1b5e20] p-1 transition-colors duration-200"
                                                 title="Edit">
@@ -595,7 +597,7 @@
                                             </a>
                                             @endif
 
-                                            @if(auth()->user()->canDelete())
+                                            @if((auth()->user()->isAdminInstansi() || auth()->user()->isAdmin()) && auth()->user()->canDelete())
                                             <form action="{{ route('admin.users.destroy', $item->id) }}" method="POST"
                                                 class="inline"
                                                 onsubmit="return confirm('Yakin ingin menghapus users ini?')">

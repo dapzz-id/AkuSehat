@@ -522,6 +522,46 @@ class CrudPermissionsTest extends TestCase
         $this->actingAs($consultant)->get(route('admin.divisi.index'))->assertStatus(404);
     }
 
+    public function test_health_consultant_read_only_on_kesehatan_hides_create_edit_delete_buttons(): void
+    {
+        $consultant = User::create([
+            'instansi_id' => $this->instansi->id,
+            'id_divisi' => $this->divisi->id,
+            'nama' => 'Health Consultant Tels',
+            'username' => 'hc_tels_' . Str::random(5),
+            'password' => bcrypt('password123'),
+            'level' => UserRole::HEALTH_CONSULTANT->value,
+            'status' => UserStatus::AKTIF->value,
+            'jk' => UserGender::LAKI_LAKI->value,
+            'custom_permissions' => [
+                'can_create' => true,
+                'can_read' => true,
+                'can_update' => true,
+                'can_delete' => false,
+                'modules' => [
+                    'kesehatan' => ['c' => false, 'r' => true, 'u' => false, 'd' => false],
+                    'konsultasi' => ['c' => true, 'r' => true, 'u' => true, 'd' => false],
+                ],
+                'duty_modules' => [
+                    'kesehatan' => ['c' => false, 'r' => true, 'u' => false, 'd' => false],
+                    'konsultasi' => ['c' => true, 'r' => true, 'u' => true, 'd' => false],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($consultant->canCreate('kesehatan'));
+        $this->assertFalse($consultant->canUpdate('kesehatan'));
+        $this->assertFalse($consultant->canDelete('kesehatan'));
+        $this->assertTrue($consultant->canRead('kesehatan'));
+
+        $res = $this->actingAs($consultant)->get(route('admin.kesehatan.index'));
+        $res->assertStatus(200);
+        $res->assertSee('Mode Pemantauan & Read-Only', false);
+        $res->assertDontSee('+ Tambah');
+        $res->assertDontSee('Hapus Terpilih');
+        $res->assertDontSee('Tambah Data Kesehatan');
+    }
+
     public function test_member_cannot_submit_vitals_if_not_enabled_in_instansi(): void
     {
         $member = User::create([

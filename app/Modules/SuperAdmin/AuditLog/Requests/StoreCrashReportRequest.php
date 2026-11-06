@@ -32,3 +32,4 @@ class StoreCrashReportRequest extends FormRequest
         ];
     }
 }
+

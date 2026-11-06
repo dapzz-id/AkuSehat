@@ -434,7 +434,7 @@
                     </div>
                 </div>
 
-                @if(!auth()->user()->isAdminInstansi())
+                @if(!auth()->user()->isAdminInstansi() && auth()->user()->canUpdate('haid_pita'))
                 <form action="{{ route('admin.femhealth.stop_haid', $ch->id) }}" method="POST"
                       onsubmit="return confirm('Konfirmasi bahwa haid {{ $ch->user->nama }} telah selesai hari ini?')">
                     @csrf
@@ -505,7 +505,7 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-center">
-                                @if(auth()->user()->isAdminInstansi())
+                                @if(auth()->user()->isAdminInstansi() || !auth()->user()->canUpdate('haid_pita'))
                                     <button type="button"
                                             onclick="openPitaDetail(this); return false;"
                                             class="view-pita-detail px-2.5 py-1 bg-pink-50 hover:bg-pink-100 text-pink-700 rounded-lg text-xs font-semibold border border-pink-200/80 transition-colors inline-flex items-center gap-1.5 shadow-sm cursor-pointer"

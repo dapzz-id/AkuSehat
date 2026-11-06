@@ -34,15 +34,20 @@
                                 <i class="fas fa-chart-pie text-emerald-600"></i>
                                 <span>Mode Laporan & Rekapitulasi (Read-Only)</span>
                             </div>
+                        @elseif(!auth()->user()->canCreate('hemoglobin') && !auth()->user()->canDelete('hemoglobin'))
+                            <div class="px-3 md:px-4 py-1.5 md:py-2 bg-slate-100 border border-slate-200 text-slate-700 rounded-md text-xs md:text-sm font-semibold inline-flex items-center gap-1.5">
+                                <i class="fas fa-eye text-slate-500"></i>
+                                <span>Mode Pemantauan & Read-Only</span>
+                            </div>
                         @else
-                            @if(auth()->user()->canCreate())
+                            @if(auth()->user()->canCreate('hemoglobin'))
                             <button onclick="window.location.href='{{ route('admin.hb.create') }}'"
                                 class="w-32 flex-1 sm:flex-none bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center">
                                 <i class="fas fa-plus text-xs md:text-sm mr-1.5 md:mr-2"></i>
                                 <span>Tambah</span>
                             </button>
                             @endif
-                            @if(auth()->user()->canDelete())
+                            @if(auth()->user()->canDelete('hemoglobin'))
                             <button type="submit" form="bulkDeleteForm" id="bulkDeleteBtn"
                                 class="w-40 flex-1 sm:flex-none bg-[#d32f2f] hover:bg-[#b71c1c] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled>
@@ -286,14 +291,14 @@
                                                     title="Lihat Detail">
                                                     <i class="fas fa-eye text-sm md:text-base"></i>
                                                 </button>
-                                                @if(auth()->user()->canUpdate())
+                                                @if(auth()->user()->canUpdate('hemoglobin'))
                                                 <a href="{{ route('admin.hb.edit', $item->id_hb) }}"
                                                     class="text-[#2e7d32] hover:text-[#1b5e20] p-1 transition-colors duration-200"
                                                     title="Edit">
                                                     <i class="fas fa-edit text-sm md:text-base"></i>
                                                 </a>
                                                 @endif
-                                                @if(auth()->user()->canDelete())
+                                                @if(auth()->user()->canDelete('hemoglobin'))
                                                 <form action="{{ route('admin.hb.destroy', $item->id_hb) }}" method="POST"
                                                     class="inline"
                                                     onsubmit="return confirm('Yakin ingin menghapus data HB ini?')">
@@ -319,7 +324,7 @@
                                                 <i class="fas fa-tint text-red-300 text-xl md:text-2xl"></i>
                                             </div>
                                             <p class="text-sm md:text-lg font-medium text-gray-600">Tidak ada data HB</p>
-                                            @if(!auth()->user()->isAdminInstansi())
+                                            @if(!auth()->user()->isAdminInstansi() && auth()->user()->canCreate('hemoglobin'))
                                                 <p class="text-xs md:text-sm mt-1 text-gray-500">Klik "Tambah Data HB" untuk
                                                     menambahkan data baru</p>
                                                 <a href="{{ route('admin.hb.create') }}"

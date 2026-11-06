@@ -170,6 +170,20 @@ class UserService
                 $r = !empty($mM['r']) || !empty($mM['read']);
                 $u = !empty($mM['u']) || !empty($mM['update']);
                 $d = !empty($mM['d']) || !empty($mM['delete']);
+
+                $normalizedDutyModules[$modKey] = [
+                    'c' => $c,
+                    'r' => $r,
+                    'u' => $u,
+                    'd' => $d,
+                ];
+
+                $normalizedPersonalModules[$modKey] = [
+                    'c' => $c,
+                    'r' => $r,
+                    'u' => $u,
+                    'd' => $d,
+                ];
             }
 
             if ($c) $anyCreate = true;

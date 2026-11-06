@@ -18,3 +18,4 @@ class DeleteFcmTokenRequest extends FormRequest
         ];
     }
 }
+

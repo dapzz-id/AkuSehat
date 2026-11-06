@@ -496,6 +496,15 @@ class User extends Authenticatable
                 if (isset($mod[$actionLong])) {
                     return (bool) $mod[$actionLong];
                 }
+            } elseif ($scope === 'any' && $moduleKey && $this->isStaffDutyRole() && isset($this->custom_permissions['duty_modules'][$moduleKey])) {
+                // Pada portal institusi, akun petugas diprioritaskan wewenang operasional institusinya (duty_modules)
+                $mod = $this->custom_permissions['duty_modules'][$moduleKey];
+                if (isset($mod[$actionShort])) {
+                    return (bool) $mod[$actionShort];
+                }
+                if (isset($mod[$actionLong])) {
+                    return (bool) $mod[$actionLong];
+                }
             }
 
             // B. Cek izin per modul spesifik umum (modules matrix)
@@ -509,9 +518,11 @@ class User extends Authenticatable
                 }
             }
 
-            // C. Cek izin fallback global user
+            // C. Cek izin fallback global user (jika moduleKey tidak dispesifikasikan atau modul belum memiliki matriks granular)
             if (array_key_exists($key, $this->custom_permissions)) {
-                return (bool) $this->custom_permissions[$key];
+                if ($moduleKey === null || empty($this->custom_permissions['modules'])) {
+                    return (bool) $this->custom_permissions[$key];
+                }
             }
         }
 
@@ -528,8 +539,8 @@ class User extends Authenticatable
                 }
             }
 
-            // B. Cek izin fallback global divisi
-            if (array_key_exists($key, $this->divisi->module_permissions)) {
+            // B. Cek izin fallback global divisi (hanya jika moduleKey tidak dispesifikasikan)
+            if ($moduleKey === null && array_key_exists($key, $this->divisi->module_permissions)) {
                 return (bool) $this->divisi->module_permissions[$key];
             }
         }
@@ -546,7 +557,7 @@ class User extends Authenticatable
                     return (bool) $mod[$actionLong];
                 }
             }
-            if (array_key_exists($key, $instansi->module_permissions)) {
+            if ($moduleKey === null && array_key_exists($key, $instansi->module_permissions)) {
                 return (bool) $instansi->module_permissions[$key];
             }
         }
