@@ -123,14 +123,14 @@
             <tr>
                 <!-- Logo Kiri -->
                 <td style="width:120px; text-align:center; border:none;">
-                    <img src="{{ $raadeveloperz_cr }}" style="width:90px; height:auto;">
+                    <img src="{{ $ncsLogo ?? $raadeveloperz_cr }}" style="width:90px; height:auto;">
                 </td>
 
                 <!-- Teks Kop -->
                 <td style="text-align:center; border:none; line-height:1.3;">
                     <div style="font-size:22px; font-weight:bold;">NEURA CAKRAWIRA SOLUSI</div>
                     <div style="font-size:14px; font-weight:bold;">
-                        Innovative Digital Solutions for Modern Challenges
+                        Menyediakan Kebutuhan Teknologi dan Solusi
                     </div>
                     <div style="font-size:12px;">
                         Taman Puri Cendana, Grand Mawar, Blok A4 no 10<br>
@@ -155,7 +155,7 @@
 
     <!-- Subjudul PDF -->
     <div style="text-align:center; margin-top: 0px; margin-bottom: 4px;">
-        <h3 style="margin: 0;">DATA KESEHATAN {{ $namaInstansi }}</h3>
+        <h3 style="margin: 0;">DATA PEMERIKSAAN KESEHATAN FISIK {{ strtoupper($namaInstansi) }}</h3>
         <p style="margin: 0; font-size: 11px;">Dicetak pada: {{ date('d/m/Y H:i') }}</p>
     </div>
 

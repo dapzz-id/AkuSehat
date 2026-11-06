@@ -12,7 +12,7 @@ class StoreDataHaidRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        return auth()->check() && (auth()->user()->isAdminInstansi() || auth()->user()->canCreate('haid_pita', 'duty'));
     }
 
     public function rules(): array

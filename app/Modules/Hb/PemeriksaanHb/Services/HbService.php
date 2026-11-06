@@ -241,11 +241,12 @@ class HbService
         $instansiId = (string) $actor->instansi_id;
         $hb = $this->hbRepository->getExportRecords($instansiId, $filters);
 
-        $namaInstansi = $actor->instansi->nama_instansi ?? 'Instansi Tidak Diketahui';
+        $namaInstansi = $actor->instansi->nama_instansi ?? ($actor->sekolah->nama_instansi ?? 'Instansi Tidak Diketahui');
         $ikonPath = public_path('src/aku_sehat_icon.png');
-        $raadeveloperz_cr = public_path('src/raadeveloperz_crc.png');
+        $ncsLogo = public_path('src/ncs_logo.png');
+        $raadeveloperz_cr = $ncsLogo;
 
-        $pdf = Pdf::loadView('admin.hb.export-pdf', compact('hb', 'namaInstansi', 'ikonPath', 'raadeveloperz_cr'));
+        $pdf = Pdf::loadView('admin.hb.export-pdf', compact('hb', 'namaInstansi', 'ikonPath', 'ncsLogo', 'raadeveloperz_cr'));
         $pdf->setPaper('A4', 'portrait');
 
         return $pdf->download('data-hemoglobin-' . date('Y-m-d') . '.pdf');

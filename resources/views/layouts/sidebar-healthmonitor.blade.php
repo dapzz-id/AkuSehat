@@ -50,7 +50,7 @@
     </div>
 
     <!-- Group: KEBUGARAN & RUN TRACKER -->
-    @if(auth()->user()->isModuleActive('olahraga') || auth()->user()->isModuleActive('vitalitas'))
+    @if((auth()->user()->isModuleActive('olahraga', 'duty') && auth()->user()->canRead('olahraga', 'duty')) || (auth()->user()->isModuleActive('vitalitas', 'duty') && auth()->user()->canRead('vitalitas', 'duty')))
     @php
         $isKebugaranActive = request()->routeIs('admin.activities.*') || request()->routeIs('admin.vital-logs.*');
     @endphp
@@ -65,7 +65,7 @@
             <i id="hm-kebugaran-chevron" class="fas fa-chevron-down text-[9px] text-emerald-400/60 group-hover/toggle:text-emerald-300 transition-transform duration-200"></i>
         </button>
         <div id="hm-kebugaran-content" class="space-y-1 transition-all duration-200">
-            @if(auth()->user()->isModuleActive('olahraga') && auth()->user()->canRead('olahraga'))
+            @if(auth()->user()->isModuleActive('olahraga', 'duty') && auth()->user()->canRead('olahraga', 'duty'))
             <a href="{{ route('admin.activities.index') }}" 
                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.activities.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.activities.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-emerald-400 group-hover:bg-white/10 group-hover:text-emerald-300' }}">
@@ -75,7 +75,7 @@
             </a>
             @endif
 
-            @if(auth()->user()->isModuleActive('vitalitas') && auth()->user()->canRead('vitalitas'))
+            @if(auth()->user()->isModuleActive('vitalitas', 'duty') && auth()->user()->canRead('vitalitas', 'duty'))
             <a href="{{ route('admin.vital-logs.index') }}" 
                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.vital-logs.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.vital-logs.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-sky-400 group-hover:bg-white/10 group-hover:text-sky-300' }}">
@@ -89,7 +89,7 @@
     @endif
 
     <!-- Group: KONSELING & SAFESPACE KEBUGARAN -->
-    @if(auth()->user()->isModuleActive('konsultasi') && auth()->user()->canRead('konsultasi'))
+    @if(auth()->user()->isModuleActive('konsultasi', 'duty') && auth()->user()->canRead('konsultasi', 'duty'))
     @php
         $isKonselingActive = request()->routeIs('admin.counseling.*');
     @endphp
@@ -123,7 +123,7 @@
     @endif
 
     <!-- Group: FEMALE HEALTH & SIKLUS HAID -->
-    @if(auth()->user()->isModuleActive('haid_pita') && auth()->user()->canRead('haid_pita'))
+    @if(auth()->user()->isModuleActive('haid_pita', 'duty') && auth()->user()->canRead('haid_pita', 'duty'))
     @php
         $isFemActive = request()->routeIs('admin.femhealth.*');
     @endphp
@@ -159,7 +159,7 @@
     @endif
 
     <!-- Group: PEMANTAUAN KESEHATAN FISIK -->
-    @if(auth()->user()->isModuleActive('kesehatan') || auth()->user()->isModuleActive('hemoglobin'))
+    @if((auth()->user()->isModuleActive('kesehatan', 'duty') && auth()->user()->canRead('kesehatan', 'duty')) || (auth()->user()->isModuleActive('hemoglobin', 'duty') && auth()->user()->canRead('hemoglobin', 'duty')))
     @php
         $isHealthActive = request()->routeIs('admin.kesehatan.*') || request()->routeIs('admin.hb.*');
     @endphp
@@ -174,7 +174,7 @@
             <i id="hm-pemantauan-chevron" class="fas fa-chevron-down text-[9px] text-emerald-400/60 group-hover/toggle:text-emerald-300 transition-transform duration-200"></i>
         </button>
         <div id="hm-pemantauan-content" class="space-y-1 transition-all duration-200">
-            @if(auth()->user()->isModuleActive('kesehatan') && auth()->user()->canRead('kesehatan'))
+            @if(auth()->user()->isModuleActive('kesehatan', 'duty') && auth()->user()->canRead('kesehatan', 'duty'))
             <a href="{{ route('admin.kesehatan.index') }}" 
                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.kesehatan.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.kesehatan.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-emerald-400 group-hover:bg-white/10 group-hover:text-emerald-300' }}">
@@ -184,7 +184,7 @@
             </a>
             @endif
 
-            @if(auth()->user()->isModuleActive('hemoglobin') && auth()->user()->canRead('hemoglobin'))
+            @if(auth()->user()->isModuleActive('hemoglobin', 'duty') && auth()->user()->canRead('hemoglobin', 'duty'))
             <a href="{{ route('admin.hb.index') }}" 
                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('admin.hb.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-900/30 font-semibold' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ request()->routeIs('admin.hb.*') ? 'bg-white/20 text-white' : 'bg-white/5 text-rose-400 group-hover:bg-white/10 group-hover:text-rose-300' }}">

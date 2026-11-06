@@ -274,7 +274,7 @@ class User extends Authenticatable
         return (bool) $this->is_tester;
     }
 
-    public function isModuleActive($moduleKey)
+    public function isModuleActive($moduleKey, string $scope = 'any')
     {
         // 0. SuperAdmin Master Feature Flag (Global Override)
         if (!\App\Models\GlobalModuleConfig::isUserAllowedToAccess($moduleKey, $this)) {
@@ -282,38 +282,76 @@ class User extends Authenticatable
         }
 
         // 1. PRIORITAS TERTINGGI: Kustomisasi Khusus Akun Pengguna (User Custom Override)
-        // A. Cek per-modul CRUD permission jika dikustomisasi secara spesifik pada user
         if (is_array($this->custom_permissions)) {
-            $modPerm = $this->custom_permissions['modules'][$moduleKey] 
-                ?? $this->custom_permissions['duty_modules'][$moduleKey] 
-                ?? $this->custom_permissions['personal_modules'][$moduleKey] 
-                ?? null;
-
-            if (is_array($modPerm)) {
-                $hasAnyCrud = !empty($modPerm['c']) || !empty($modPerm['r']) || !empty($modPerm['u']) || !empty($modPerm['d'])
-                    || !empty($modPerm['create']) || !empty($modPerm['read']) || !empty($modPerm['update']) || !empty($modPerm['delete']);
-
-                if (is_array($this->custom_modules)) {
-                    return in_array($moduleKey, $this->custom_modules) || $hasAnyCrud;
+            // A. Scope-specific check: DUTY
+            if ($scope === 'duty') {
+                if (isset($this->custom_permissions['duty_modules'][$moduleKey])) {
+                    $modPerm = $this->custom_permissions['duty_modules'][$moduleKey];
+                    if (is_array($modPerm)) {
+                        return !empty($modPerm['c']) || !empty($modPerm['r']) || !empty($modPerm['u']) || !empty($modPerm['d'])
+                            || !empty($modPerm['create']) || !empty($modPerm['read']) || !empty($modPerm['update']) || !empty($modPerm['delete']);
+                    }
                 }
+            }
+            // B. Scope-specific check: PERSONAL
+            elseif ($scope === 'personal') {
+                if (isset($this->custom_permissions['personal_modules'][$moduleKey])) {
+                    $modPerm = $this->custom_permissions['personal_modules'][$moduleKey];
+                    if (is_array($modPerm)) {
+                        return !empty($modPerm['c']) || !empty($modPerm['r']) || !empty($modPerm['u']) || !empty($modPerm['d'])
+                            || !empty($modPerm['create']) || !empty($modPerm['read']) || !empty($modPerm['update']) || !empty($modPerm['delete']);
+                    }
+                }
+            }
+            // C. Scope ANY: jika peran staf institusi, dahulukan wewenang operasional duty_modules jika ada
+            elseif ($this->isStaffDutyRole() && isset($this->custom_permissions['duty_modules'][$moduleKey])) {
+                $modPerm = $this->custom_permissions['duty_modules'][$moduleKey];
+                if (is_array($modPerm)) {
+                    $hasAny = !empty($modPerm['c']) || !empty($modPerm['r']) || !empty($modPerm['u']) || !empty($modPerm['d'])
+                        || !empty($modPerm['create']) || !empty($modPerm['read']) || !empty($modPerm['update']) || !empty($modPerm['delete']);
+                    if ($hasAny) {
+                        return true;
+                    }
+                    if (!isset($this->custom_permissions['modules'][$moduleKey])) {
+                        return false;
+                    }
+                }
+            }
 
-                return $hasAnyCrud;
+            // D. Fallback per-modul CRUD matriks umum jika ada
+            if (isset($this->custom_permissions['modules'][$moduleKey])) {
+                $modPerm = $this->custom_permissions['modules'][$moduleKey];
+                if (is_array($modPerm)) {
+                    $hasAnyCrud = !empty($modPerm['c']) || !empty($modPerm['r']) || !empty($modPerm['u']) || !empty($modPerm['d'])
+                        || !empty($modPerm['create']) || !empty($modPerm['read']) || !empty($modPerm['update']) || !empty($modPerm['delete']);
+
+                    if (is_array($this->custom_modules)) {
+                        return in_array($moduleKey, $this->custom_modules) || $hasAnyCrud;
+                    }
+
+                    return $hasAnyCrud;
+                }
             }
         }
 
-        // B. Cek daftar modul custom_modules akun user
+        // 2. Cek daftar modul custom_modules akun user
         if (is_array($this->custom_modules)) {
             return in_array($moduleKey, $this->custom_modules);
         }
 
-        // 2. Division level settings (Hanya berlaku jika user TIDAK memiliki kustom khusus)
+        // 3. Division level settings (Hanya berlaku jika user TIDAK memiliki kustom khusus)
         if ($this->divisi) {
             return $this->divisi->isModuleActive($moduleKey);
         }
 
-        // 3. Institution global default (Fallback terakhir jika divisi & user tidak dikustom)
+        // 4. Institution global default (Fallback terakhir jika divisi & user tidak dikustom)
         if ($this->instansi) {
             return $this->instansi->isModuleActive($moduleKey);
+        }
+
+        // 5. Jika scope duty diminta tanpa override, cek apakah role memiliki hak default untuk modul ini
+        if ($scope === 'duty' && $this->isStaffDutyRole()) {
+            return self::getDefaultModulePermission($this->level, 'read', $moduleKey, 'duty');
         }
 
         return true;
@@ -479,7 +517,7 @@ class User extends Authenticatable
         }
 
         // Modul nonaktif? Jika $moduleKey diberikan dan modul nonaktif untuk pengguna ini, akses CRUD ditolak
-        if ($moduleKey && !$this->isModuleActive($moduleKey)) {
+        if ($moduleKey && !$this->isModuleActive($moduleKey, $scope)) {
             return false;
         }
 
@@ -631,7 +669,10 @@ class User extends Authenticatable
                     // Health Consultant monitoring siswi/guru dan verifikasi/hentikan pita haid medis
                     return in_array($action, ['read', 'update'], true);
                 }
-                return $action === 'read';
+                if (in_array($moduleKey, ['kesehatan', 'hemoglobin'])) {
+                    return $action === 'read';
+                }
+                return false;
             }
 
             return false;

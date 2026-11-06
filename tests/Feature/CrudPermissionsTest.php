@@ -937,7 +937,7 @@ class CrudPermissionsTest extends TestCase
         $this->assertArrayHasKey('modules', $effective);
     }
 
-    public function test_health_monitor_dashboard_renders_cleanly_without_orphan_sidebar_tags(): void
+    protected function ensureDashboardViewsExist(): void
     {
         if (!Schema::hasTable('software_apps')) {
             Schema::create('software_apps', function (Blueprint $table) {
@@ -967,6 +967,31 @@ class CrudPermissionsTest extends TestCase
             });
         }
 
+        if (!Schema::hasTable('v_instansi_health_summary')) {
+            Schema::create('v_instansi_health_summary', function (Blueprint $table) {
+                $table->uuid('instansi_id')->nullable();
+                $table->integer('total_member')->default(0);
+                $table->integer('total_divisi')->default(0);
+                $table->integer('total_kesehatan_tahun_ini')->default(0);
+                $table->integer('total_hb_tahun_ini')->default(0);
+            });
+        }
+
+        if (!Schema::hasTable('v_divisi_dashboard_stats')) {
+            Schema::create('v_divisi_dashboard_stats', function (Blueprint $table) {
+                $table->uuid('instansi_id')->nullable();
+                $table->string('divisi_name')->nullable();
+                $table->integer('total_member')->default(0);
+                $table->integer('total_kesehatan')->default(0);
+                $table->integer('total_hb')->default(0);
+            });
+        }
+    }
+
+    public function test_health_monitor_dashboard_renders_cleanly_without_orphan_sidebar_tags(): void
+    {
+        $this->ensureDashboardViewsExist();
+
         \Illuminate\Support\Facades\DB::table('license_keys')->insert([
             'id' => (string) Str::uuid(),
             'license_key' => 'AKU-TEST-' . Str::random(8),
@@ -977,24 +1002,6 @@ class CrudPermissionsTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        if (!Schema::hasTable('v_instansi_health_summary')) {
-            Schema::create('v_instansi_health_summary', function (Blueprint $table) {
-                $table->uuid('instansi_id')->nullable();
-                $table->integer('total_member')->default(0);
-                $table->integer('total_divisi')->default(0);
-                $table->integer('total_kesehatan_tahun_ini')->default(0);
-                $table->integer('total_hb_tahun_ini')->default(0);
-            });
-        }
-        if (!Schema::hasTable('v_divisi_dashboard_stats')) {
-            Schema::create('v_divisi_dashboard_stats', function (Blueprint $table) {
-                $table->uuid('instansi_id')->nullable();
-                $table->string('divisi_name')->nullable();
-                $table->integer('total_member')->default(0);
-                $table->integer('total_kesehatan')->default(0);
-                $table->integer('total_hb')->default(0);
-            });
-        }
 
         $healthMonitor = User::create([
             'id' => (string) Str::uuid(),
@@ -1031,5 +1038,151 @@ class CrudPermissionsTest extends TestCase
 
         // Ensure no unescaped raw HTML snippet from broken tags is visible
         $response->assertDontSee('class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200');
+    }
+
+    public function test_health_monitor_with_read_only_duty_on_femhealth_sees_read_only_badge_and_no_action_buttons(): void
+    {
+        if (!Schema::hasTable('data_haid')) {
+            Schema::create('data_haid', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->uuid('id_user');
+                $table->uuid('instansi_id')->nullable();
+                $table->date('tanggal_mulai');
+                $table->date('tanggal_selesai')->nullable();
+                $table->integer('durasi_hari')->nullable();
+                $table->string('status', 30)->default('berlangsung');
+                $table->text('catatan')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        if (!Schema::hasTable('peminjaman_pita')) {
+            Schema::create('peminjaman_pita', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->uuid('id_user');
+                $table->uuid('instansi_id')->nullable();
+                $table->date('tanggal_pinjam');
+                $table->date('tanggal_kembali')->nullable();
+                $table->integer('jumlah_pita')->default(1);
+                $table->boolean('verified')->default(0);
+                $table->string('status', 30)->default('menunggu');
+                $table->date('estimasi_selesai_haid')->nullable();
+                $table->text('keterangan')->nullable();
+                $table->integer('denda_nominal')->default(0);
+                $table->string('denda_status')->nullable();
+                $table->text('sanksi_catatan')->nullable();
+                $table->string('health_flag')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        $hmUser = User::create([
+            'id' => (string) Str::uuid(),
+            'nama' => 'Petugas Haid Read Only',
+            'username' => 'hm_readonly_' . Str::random(5),
+            'password' => bcrypt('password'),
+            'level' => UserRole::HEALTH_MONITOR->value,
+            'status' => UserStatus::AKTIF->value,
+            'jk' => UserGender::PEREMPUAN->value,
+            'instansi_id' => $this->instansi->id,
+            'id_divisi' => $this->divisi->id,
+            'is_custom_permissions' => true,
+            'custom_permissions' => [
+                'can_read' => true,
+                'can_create' => true,
+                'can_update' => true,
+                'can_delete' => false,
+                'duty_modules' => [
+                    'haid_pita' => ['c' => 0, 'r' => 1, 'u' => 0, 'd' => 0],
+                ],
+                'personal_modules' => [
+                    'haid_pita' => ['c' => 1, 'r' => 1, 'u' => 1, 'd' => 1],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($hmUser->canCreate('haid_pita', 'duty'));
+        $this->assertTrue($hmUser->canRead('haid_pita', 'duty'));
+        $this->assertFalse($hmUser->canUpdate('haid_pita', 'duty'));
+        $this->assertTrue($hmUser->canCreate('haid_pita', 'personal'));
+
+        $response = $this->actingAs($hmUser)->get(route('admin.femhealth.index'));
+        $response->assertStatus(200);
+
+        // Harus menampilkan badge mode monitoring & read-only
+        $response->assertSee('Mode Monitoring & Read-Only', false);
+
+        // Dilarang menampilkan tombol pembuatan operasional siswi
+        $response->assertDontSee('+ Catat Pinjam Pita UKS');
+        $response->assertDontSee('+ Mulai Haid Siswi');
+        $response->assertDontSee('id="catatPitaModal"', false);
+        $response->assertDontSee('id="catatHaidModal"', false);
+
+        // Jika mencoba mengirim request POST tambah data haid siswa, ditolak 403
+        $postResponse = $this->actingAs($hmUser)->post(route('admin.femhealth.store_haid'), [
+            'id_user' => (string) Str::uuid(),
+            'tanggal_mulai' => now()->toDateString(),
+        ]);
+        $postResponse->assertStatus(403);
+    }
+
+    public function test_sidebar_duty_scope_hides_modules_turned_off_in_duty(): void
+    {
+        $hcUser = User::create([
+            'id' => (string) Str::uuid(),
+            'nama' => 'Guru BK SafeSpace',
+            'username' => 'hc_bk_' . Str::random(5),
+            'password' => bcrypt('password'),
+            'level' => UserRole::HEALTH_CONSULTANT->value,
+            'status' => UserStatus::AKTIF->value,
+            'jk' => UserGender::PEREMPUAN->value,
+            'instansi_id' => $this->instansi->id,
+            'id_divisi' => $this->divisi->id,
+            'is_custom_permissions' => true,
+            'custom_permissions' => [
+                'can_read' => true,
+                'can_create' => true,
+                'can_update' => true,
+                'can_delete' => false,
+                'duty_modules' => [
+                    'olahraga' => ['c' => 0, 'r' => 0, 'u' => 0, 'd' => 0],
+                    'vitalitas' => ['c' => 0, 'r' => 0, 'u' => 0, 'd' => 0],
+                    'konsultasi' => ['c' => 1, 'r' => 1, 'u' => 1, 'd' => 1],
+                    'haid_pita' => ['c' => 0, 'r' => 1, 'u' => 0, 'd' => 0],
+                ],
+                'personal_modules' => [
+                    'olahraga' => ['c' => 1, 'r' => 1, 'u' => 1, 'd' => 0],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($hcUser->isModuleActive('olahraga', 'duty'));
+        $this->assertFalse($hcUser->canRead('olahraga', 'duty'));
+        $this->assertTrue($hcUser->isModuleActive('olahraga', 'personal'));
+        $this->assertTrue($hcUser->isModuleActive('konsultasi', 'duty'));
+
+        $this->ensureDashboardViewsExist();
+
+        \Illuminate\Support\Facades\DB::table('license_keys')->insert([
+            'id' => (string) Str::uuid(),
+            'license_key' => 'AKU-TEST-' . Str::random(8),
+            'instansi_id' => $this->instansi->id,
+            'status' => 'active',
+            'kuota_pengguna' => 100,
+            'tanggal_berakhir' => now()->addYear()->toDateString(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs($hcUser)->get(route('dashboard'));
+        $response->assertStatus(200);
+
+        // Sidebar tugas institusi tidak boleh menampilkan modul yang dimatikan di duty_modules
+        $response->assertDontSee('Hasil Run Tracker & Olahraga');
+        $response->assertDontSee('Vitalitas & Tidur');
+
+        // Modul tugas yang aktif harus tampil di sidebar
+        $response->assertSee('Konseling SafeSpace');
+        $response->assertSee('Siklus & Pita Siswi', false);
     }
 }

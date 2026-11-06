@@ -34,20 +34,20 @@
                                 <i class="fas fa-chart-pie text-emerald-600"></i>
                                 <span>Mode Laporan & Rekapitulasi (Read-Only)</span>
                             </div>
-                        @elseif(!auth()->user()->canCreate('kesehatan') && !auth()->user()->canDelete('kesehatan'))
+                        @elseif(!auth()->user()->canCreate('kesehatan', 'duty') && !auth()->user()->canDelete('kesehatan', 'duty'))
                             <div class="px-3 md:px-4 py-1.5 md:py-2 bg-slate-100 border border-slate-200 text-slate-700 rounded-md text-xs md:text-sm font-semibold inline-flex items-center gap-1.5">
                                 <i class="fas fa-eye text-slate-500"></i>
                                 <span>Mode Pemantauan & Read-Only</span>
                             </div>
                         @else
-                            @if(auth()->user()->canCreate('kesehatan'))
+                            @if(auth()->user()->canCreate('kesehatan', 'duty'))
                             <button onclick="window.location.href='{{ route('admin.kesehatan.create') }}'"
                                 class="w-32 flex-1 sm:flex-none bg-[#2e7d32] hover:bg-[#1b5e20] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center">
                                 <i class="fas fa-plus text-xs md:text-sm mr-1.5 md:mr-2"></i>
                                 <span>Tambah</span>
                             </button>
                             @endif
-                            @if(auth()->user()->canDelete('kesehatan'))
+                            @if(auth()->user()->canDelete('kesehatan', 'duty'))
                             <button type="submit" form="bulkDeleteForm" id="bulkDeleteBtn"
                                 class="w-40 flex-1 sm:flex-none bg-[#d32f2f] hover:bg-[#b71c1c] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled>
@@ -184,7 +184,7 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-[#e8f5e9]">
                             <tr>
-                                @if(!auth()->user()->isAdminInstansi())
+                                @if(!auth()->user()->isAdminInstansi() && auth()->user()->canDelete('kesehatan', 'duty'))
                                 <th class="w-10 px-2 sm:px-3 md:px-6 py-2 md:py-3 text-center">
                                     <input type="checkbox" id="selectAll"
                                         class="rounded border-gray-300 text-[#2e7d32] focus:ring-[#2e7d32]">
@@ -227,7 +227,7 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             @forelse($kesehatan as $item)
                                 <tr class="hover:bg-[#f1f8e9] transition-colors duration-150">
-                                    @if(!auth()->user()->isAdminInstansi())
+                                    @if(!auth()->user()->isAdminInstansi() && auth()->user()->canDelete('kesehatan', 'duty'))
                                     <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4 text-center">
                                         <input type="checkbox" name="ids[]" value="{{ $item->id_kesehatan }}"
                                             class="rowCheckbox rounded border-gray-300 text-[#2e7d32] focus:ring-[#2e7d32]">
@@ -347,14 +347,14 @@
                                                     title="Lihat Detail">
                                                     <i class="fas fa-eye text-sm md:text-base"></i>
                                                 </button>
-                                                @if(auth()->user()->canUpdate('kesehatan'))
+                                                @if(auth()->user()->canUpdate('kesehatan', 'duty'))
                                                 <a href="{{ route('admin.kesehatan.edit', $item->id_kesehatan) }}"
                                                     class="text-[#2e7d32] hover:text-[#1b5e20] p-1 transition-colors duration-200"
                                                     title="Edit">
                                                     <i class="fas fa-edit text-sm md:text-base"></i>
                                                 </a>
                                                 @endif
-                                                @if(auth()->user()->canDelete('kesehatan'))
+                                                @if(auth()->user()->canDelete('kesehatan', 'duty'))
                                                 <form action="{{ route('admin.kesehatan.destroy', $item->id_kesehatan) }}"
                                                     method="POST" class="inline"
                                                     onsubmit="return confirm('Yakin ingin menghapus data kesehatan ini?')">

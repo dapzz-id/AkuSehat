@@ -20,10 +20,10 @@
 
         <!-- Action Buttons -->
         <div class="flex flex-wrap items-center gap-2">
-            @if(auth()->user()->isAdminInstansi())
+            @if(auth()->user()->isAdminInstansi() || !auth()->user()->canCreate('haid_pita', 'duty'))
                 <div class="px-3.5 py-2 rounded-xl text-xs font-bold bg-pink-50 border border-pink-200 text-pink-700 flex items-center gap-1.5 shadow-sm">
                     <i class="fas fa-chart-pie text-pink-600"></i>
-                    <span>Mode Laporan & Monitoring (Read-Only)</span>
+                    <span>Mode Monitoring & Read-Only</span>
                 </div>
             @else
                 <button type="button" onclick="openCatatPitaModal()"
@@ -126,7 +126,7 @@
                             @endif
                         </td>
                         <td class="px-4 py-3 text-center">
-                            @if(auth()->user()->isAdminInstansi())
+                            @if(auth()->user()->isAdminInstansi() || !auth()->user()->canUpdate('haid_pita', 'duty'))
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
                                     <i class="fas fa-circle-exclamation text-rose-500"></i>
                                     <span>Monitoring UKS</span>
@@ -434,7 +434,7 @@
                     </div>
                 </div>
 
-                @if(!auth()->user()->isAdminInstansi() && auth()->user()->canUpdate('haid_pita'))
+                @if(!auth()->user()->isAdminInstansi() && auth()->user()->canUpdate('haid_pita', 'duty'))
                 <form action="{{ route('admin.femhealth.stop_haid', $ch->id) }}" method="POST"
                       onsubmit="return confirm('Konfirmasi bahwa haid {{ $ch->user->nama }} telah selesai hari ini?')">
                     @csrf
@@ -505,7 +505,7 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-center">
-                                @if(auth()->user()->isAdminInstansi() || !auth()->user()->canUpdate('haid_pita'))
+                                @if(auth()->user()->isAdminInstansi() || !auth()->user()->canUpdate('haid_pita', 'duty'))
                                     <button type="button"
                                             onclick="openPitaDetail(this); return false;"
                                             class="view-pita-detail px-2.5 py-1 bg-pink-50 hover:bg-pink-100 text-pink-700 rounded-lg text-xs font-semibold border border-pink-200/80 transition-colors inline-flex items-center gap-1.5 shadow-sm cursor-pointer"
@@ -656,6 +656,7 @@
     </div>
 </div>
 
+@if(!auth()->user()->isAdminInstansi() && auth()->user()->canCreate('haid_pita', 'duty'))
 <!-- MODAL: CATAT PINJAM PITA UKS -->
 <div id="catatPitaModal" class="fixed inset-0 bg-black/40 hidden z-50 flex items-center justify-center p-4" onclick="closeCatatPitaModal()">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4" onclick="event.stopPropagation()">
@@ -784,7 +785,9 @@
         </form>
     </div>
 </div>
+@endif
 
+@if(!auth()->user()->isAdminInstansi() && auth()->user()->canUpdate('haid_pita', 'duty'))
 <!-- MODAL: KELOLA SANKSI, DENDA & RUJUK KONSELING -->
 <div id="sanksiModal" class="fixed inset-0 bg-black/40 hidden z-50 flex items-center justify-center p-4" onclick="closeSanksiModal()">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4" onclick="event.stopPropagation()">
@@ -851,6 +854,8 @@
             </div>
         </form>
     </div>
+</div>
+@endif
 <!-- MODAL: DETAIL PEMINJAMAN PITA UKS (READ-ONLY) -->
 <div id="pitaDetailModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden z-[999999] flex items-center justify-center p-3 sm:p-4 overflow-y-auto" onclick="if(event.target === this) closePitaDetailModal()">
     <div class="relative bg-white rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto my-auto" onclick="event.stopPropagation()">
