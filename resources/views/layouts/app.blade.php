@@ -2,10 +2,30 @@
     $appThemeCookie = request()->cookie('app_portal_theme', 'atlas');
     $isEmeraldInitial = $appThemeCookie === 'emerald';
     $themeClassInitial = $isEmeraldInitial ? 'theme-emerald' : 'theme-atlas theme-portal';
+    $darkModeCookie = request()->cookie('app_dark_mode', 'light');
+    $isDarkModeInitial = $darkModeCookie === 'dark';
+    if ($isDarkModeInitial) {
+        $themeClassInitial .= ' dark';
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="id" class="h-full {{ $themeClassInitial }}">
 <head>
+    <!-- Anti-FOUC Instant Theme Initializer -->
+    <script>
+        (function() {
+            try {
+                const saved = localStorage.getItem('app_dark_mode');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (saved === 'dark' || (!saved && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                } else if (saved === 'light') {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
     <!-- Required Meta Tags -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
@@ -651,14 +671,25 @@
                     </div>
 
                     <!-- Right: Live Date & Profile Pill -->
-                    <div class="flex items-center gap-2.5 sm:gap-3">
-                        <!-- Theme Switcher Pill -->
+                    <div class="flex items-center gap-2 sm:gap-2.5">
+                        <!-- Dark / Light Theme Mode Toggle Button -->
+                        <button type="button" 
+                                onclick="toggleDarkMode()" 
+                                id="dark-mode-toggle-btn"
+                                title="Beralih Mode Gelap / Terang"
+                                aria-label="Toggle Dark / Light Theme Mode"
+                                class="btn-press flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200/90 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all duration-200 shadow-xs">
+                            <i id="dark-mode-icon" class="fas fa-moon text-indigo-500"></i>
+                            <span id="dark-mode-label" class="hidden sm:inline">Mode Gelap</span>
+                        </button>
+
+                        <!-- Theme Switcher Pill (Atlas vs Emerald Layout) -->
                         <button type="button" 
                                 onclick="toggleAppTheme()" 
                                 id="theme-switch-btn"
                                 title="Switch Theme (Atlas Theme / Emerald Theme)"
-                                class="btn-press flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-slate-100 hover:bg-emerald-50 border border-slate-200/90 hover:border-emerald-300 text-xs font-semibold text-slate-700 hover:text-emerald-700 transition-all duration-200">
-                            <i id="theme-switch-icon" class="fas fa-paint-roller text-emerald-600"></i>
+                                class="btn-press flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-slate-100 hover:bg-emerald-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200/90 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all duration-200">
+                            <i id="theme-switch-icon" class="fas fa-paint-roller text-emerald-600 dark:text-emerald-400"></i>
                             <span id="theme-switch-label" class="hidden sm:inline">Switch to Emerald Theme</span>
                         </button>
 
@@ -978,6 +1009,72 @@
         }
 
         // ==========================================================================
+        // Dark / Light Theme Mode Switcher (Global Web Portal)
+        // ==========================================================================
+        function updateDarkModeUI(isDark) {
+            const btn = document.getElementById('dark-mode-toggle-btn');
+            const icon = document.getElementById('dark-mode-icon');
+            const label = document.getElementById('dark-mode-label');
+            if (!btn) return;
+
+            if (isDark) {
+                if (icon) icon.className = 'fas fa-sun text-amber-400';
+                if (label) label.textContent = 'Mode Terang';
+                btn.setAttribute('title', 'Beralih ke Mode Terang (Light Mode)');
+            } else {
+                if (icon) icon.className = 'fas fa-moon text-indigo-500';
+                if (label) label.textContent = 'Mode Gelap';
+                btn.setAttribute('title', 'Beralih ke Mode Gelap (Dark Mode)');
+            }
+        }
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const willBeDark = !html.classList.contains('dark');
+
+            if (willBeDark) {
+                html.classList.add('dark');
+                if (document.body) document.body.classList.add('dark');
+                try {
+                    localStorage.setItem('app_dark_mode', 'dark');
+                    document.cookie = "app_dark_mode=dark;path=/;max-age=31536000;SameSite=Lax";
+                } catch (e) {}
+                updateDarkModeUI(true);
+            } else {
+                html.classList.remove('dark');
+                if (document.body) document.body.classList.remove('dark');
+                try {
+                    localStorage.setItem('app_dark_mode', 'light');
+                    document.cookie = "app_dark_mode=light;path=/;max-age=31536000;SameSite=Lax";
+                } catch (e) {}
+                updateDarkModeUI(false);
+            }
+
+            // Notifikasi toast singkat
+            if (typeof Swal !== 'undefined' && Swal.mixin) {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1600,
+                    timerProgressBar: false,
+                    customClass: {
+                        popup: willBeDark ? 'bg-slate-800 text-slate-100 border border-slate-700' : 'bg-white text-slate-800'
+                    }
+                });
+                Toast.fire({
+                    icon: willBeDark ? 'info' : 'success',
+                    title: willBeDark ? 'Mode Gelap diaktifkan' : 'Mode Terang diaktifkan'
+                });
+            }
+
+            // Dispatch event untuk charts atau elemen custom lainnya
+            window.dispatchEvent(new CustomEvent('app-theme-mode-changed', {
+                detail: { mode: willBeDark ? 'dark' : 'light' }
+            }));
+        }
+
+        // ==========================================================================
         // App Theme Switcher (Atlas Theme [Default] vs Emerald Theme)
         // ==========================================================================
         function updateThemeToggleUI(theme) {
@@ -1123,6 +1220,10 @@
         // Initialize theme button UI & sidebar state on DOMContentLoaded
         document.addEventListener('DOMContentLoaded', function() {
             try {
+                // Dark mode initialization
+                const isDarkInitial = document.documentElement.classList.contains('dark');
+                updateDarkModeUI(isDarkInitial);
+
                 const savedTheme = localStorage.getItem('app_portal_theme') || (document.documentElement.classList.contains('theme-emerald') ? 'emerald' : 'atlas');
                 if (savedTheme === 'emerald') {
                     document.documentElement.classList.add('theme-emerald');

@@ -290,3 +290,192 @@
         color: #0f172a;
     }
 }
+
+/* ==========================================================================
+   Comprehensive Dark Mode System (Aku Sehat Dark Theme)
+   ========================================================================== */
+html.dark {
+    color-scheme: dark;
+}
+
+html.dark body {
+    background-color: #0b1120 !important;
+    color: #e2e8f0 !important;
+}
+
+/* Base Dark Containers, Cards & Panels */
+html.dark .bg-white {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-slate-50\/80,
+html.dark .bg-gray-50 {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+html.dark .bg-slate-100,
+html.dark .bg-gray-100 {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+/* Header & Top Navbar in Dark Mode */
+html.dark header,
+html.dark .app-header {
+    background-color: rgba(15, 23, 42, 0.95) !important;
+    border-color: #334155 !important;
+}
+
+/* Sidebar in Dark Mode */
+html.dark aside,
+html.dark .app-sidebar {
+    background-color: #0b1120 !important;
+    border-color: #1e293b !important;
+}
+
+/* Dark Mode Typography */
+html.dark .text-gray-800,
+html.dark .text-slate-800,
+html.dark .text-slate-900,
+html.dark .text-gray-900 {
+    color: #f8fafc !important;
+}
+
+html.dark .text-gray-700,
+html.dark .text-slate-700 {
+    color: #e2e8f0 !important;
+}
+
+html.dark .text-gray-600,
+html.dark .text-slate-600 {
+    color: #cbd5e1 !important;
+}
+
+html.dark .text-gray-500,
+html.dark .text-slate-500,
+html.dark .text-gray-400,
+html.dark .text-slate-400 {
+    color: #94a3b8 !important;
+}
+
+/* Borders & Dividers */
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-slate-200\/70,
+html.dark .border-slate-200\/80,
+html.dark .border-slate-200\/90,
+html.dark .divide-gray-200,
+html.dark .divide-slate-200 {
+    border-color: #334155 !important;
+}
+
+/* Form Controls in Dark Mode */
+html.dark input[type="text"],
+html.dark input[type="email"],
+html.dark input[type="password"],
+html.dark input[type="number"],
+html.dark input[type="date"],
+html.dark input[type="search"],
+html.dark select,
+html.dark textarea {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+    color: #64748b !important;
+}
+
+/* Tables in Dark Mode */
+html.dark thead tr {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+html.dark thead th {
+    color: #94a3b8 !important;
+}
+
+html.dark tbody tr:hover {
+    background-color: rgba(15, 23, 42, 0.7) !important;
+}
+
+/* Atlas Sections & Cards in Dark Mode */
+html.dark .atlas-section,
+html.dark .cpanel-section {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+html.dark .atlas-tool-card,
+html.dark .cpanel-tool-card {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+html.dark .atlas-tool-card:hover,
+html.dark .cpanel-tool-card:hover {
+    background-color: #1e293b !important;
+    border-color: #10b981 !important;
+}
+
+/* Code styling in Dark Mode */
+html.dark code {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #34d399 !important;
+}
+
+/* Glass Card in Dark Mode */
+html.dark .glass-card {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(51, 65, 85, 0.8) !important;
+}
+
+/* SweetAlert2 Popup in Dark Mode */
+html.dark .swal2-akusehat-popup {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+html.dark .swal2-akusehat-title {
+    color: #f8fafc !important;
+}
+html.dark .swal2-akusehat-html {
+    color: #cbd5e1 !important;
+}
+
+/* GitHub Markdown Body in Dark Mode */
+html.dark .github-markdown-body {
+    color: #e2e8f0 !important;
+}
+html.dark .github-markdown-body h1,
+html.dark .github-markdown-body h2,
+html.dark .github-markdown-body h3,
+html.dark .github-markdown-body h4,
+html.dark .github-markdown-body strong {
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+html.dark .github-markdown-body blockquote {
+    background-color: rgba(16, 185, 129, 0.1) !important;
+    color: #e2e8f0 !important;
+}
+html.dark .github-markdown-body table th,
+html.dark .github-markdown-body table td {
+    border-color: #334155 !important;
+}
+html.dark .github-markdown-body table th {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+}
