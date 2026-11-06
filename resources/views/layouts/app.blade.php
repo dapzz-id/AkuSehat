@@ -670,59 +670,58 @@
                         </a>
                     </div>
 
-                    <!-- Right: Live Date & Profile Pill -->
-                    <div class="flex items-center gap-2 sm:gap-2.5">
-                        <!-- Dark / Light Theme Mode Toggle Button -->
+                    <!-- Right: Actions, Theme & Profile Pill -->
+                    <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 ml-auto">
+                        <!-- Dark / Light Theme Mode Toggle (Compact Circular Button) -->
                         <button type="button" 
                                 onclick="toggleDarkMode()" 
                                 id="dark-mode-toggle-btn"
                                 title="Beralih Mode Gelap / Terang"
                                 aria-label="Toggle Dark / Light Theme Mode"
-                                class="btn-press flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200/90 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all duration-200 shadow-xs">
-                            <i id="dark-mode-icon" class="fas fa-moon text-indigo-500"></i>
-                            <span id="dark-mode-label" class="hidden sm:inline">Mode Gelap</span>
+                                class="btn-press flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200/90 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 shadow-xs shrink-0">
+                            <i id="dark-mode-icon" class="fas fa-moon text-indigo-500 dark:text-amber-400 text-xs sm:text-sm"></i>
                         </button>
 
                         <!-- Theme Switcher Pill (Atlas vs Emerald Layout) -->
                         <button type="button" 
                                 onclick="toggleAppTheme()" 
                                 id="theme-switch-btn"
-                                title="Switch Theme (Atlas Theme / Emerald Theme)"
-                                class="btn-press flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-slate-100 hover:bg-emerald-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200/90 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all duration-200">
-                            <i id="theme-switch-icon" class="fas fa-paint-roller text-emerald-600 dark:text-emerald-400"></i>
-                            <span id="theme-switch-label" class="hidden sm:inline">Switch to Emerald Theme</span>
+                                title="Beralih Tata Letak (Tema Atlas / Tema Emerald)"
+                                class="btn-press flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-slate-100 hover:bg-emerald-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200/90 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all duration-200 shrink-0">
+                            <i id="theme-switch-icon" class="fas fa-paint-roller text-emerald-600 dark:text-emerald-400 text-xs"></i>
+                            <span id="theme-switch-label" class="hidden xl:inline">Tema Emerald</span>
                         </button>
 
-                        <!-- Date Chip (hidden on small mobile) -->
-                        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200/80 text-xs font-medium text-slate-600">
-                            <i class="far fa-calendar-alt text-emerald-600"></i>
+                        <!-- Date Chip (hidden on small-to-medium screens to prevent navbar overcrowding) -->
+                        <div class="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 shrink-0">
+                            <i class="far fa-calendar-alt text-emerald-600 dark:text-emerald-400 text-xs"></i>
                             <span>{{ now()->locale('id')->isoFormat('dddd, D MMMM Y') }}</span>
                         </div>
 
-                        <!-- User Profile Pill -->
+                        <!-- User Profile Pill (dengan max-w dan truncate agar tidak pernah menabrak logout) -->
                         <a href="{{ route('profile.edit') }}" 
                            title="Kelola Profil Saya"
-                           class="flex items-center gap-2.5 pl-2.5 pr-3 py-1 rounded-full bg-emerald-50/80 hover:bg-emerald-100/80 border border-emerald-200/60 hover:border-emerald-300 transition-all duration-200 group">
-                            <div class="w-7 h-7 rounded-full overflow-hidden bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                           class="flex items-center gap-2 pl-2 pr-3 py-1 rounded-full bg-emerald-50/80 hover:bg-emerald-100/80 dark:bg-slate-800 dark:hover:bg-slate-700 border border-emerald-200/60 dark:border-slate-700 hover:border-emerald-300 transition-all duration-200 group shrink-0 max-w-[170px] sm:max-w-[210px] md:max-w-[250px]">
+                            <div class="w-7 h-7 rounded-full overflow-hidden bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-bold shadow-sm shrink-0">
                                 @if(auth()->user()->avatar_url)
                                     <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->nama }}" class="w-full h-full object-cover">
                                 @else
                                     {{ strtoupper(substr(auth()->user()->nama, 0, 1)) }}
                                 @endif
                             </div>
-                            <div class="hidden sm:block text-left">
-                                <p class="text-xs font-bold text-slate-800 group-hover:text-emerald-700 leading-tight transition-colors">{{ auth()->user()->nama }}</p>
-                                <p class="text-[10px] text-emerald-700 font-medium leading-none">{{ auth()->user()->role_label }}</p>
+                            <div class="hidden sm:block text-left min-w-0 flex-1">
+                                <p class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 leading-tight transition-colors truncate">{{ auth()->user()->nama }}</p>
+                                <p class="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium leading-none truncate mt-0.5">{{ auth()->user()->role_label }}</p>
                             </div>
-                            <i class="fas fa-angle-right text-[10px] text-slate-400 group-hover:text-emerald-600 transition-colors hidden sm:inline ml-0.5"></i>
+                            <i class="fas fa-angle-right text-[10px] text-slate-400 group-hover:text-emerald-600 transition-colors hidden sm:inline ml-auto shrink-0"></i>
                         </a>
 
-                        <!-- Logout Quick Action Button in Header (Atlas & Emerald Theme) -->
+                        <!-- Logout Quick Action Button -->
                         <button type="button" 
                                 onclick="confirmLogout(event)"
                                 title="Keluar Sistem (Logout)"
                                 aria-label="Keluar dari akun sistem"
-                                class="btn-press flex items-center justify-center w-8 h-8 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 border border-rose-200/80 hover:border-rose-300 transition-all duration-200">
+                                class="btn-press flex items-center justify-center w-8 h-8 rounded-full bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-600 hover:text-rose-700 dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/60 hover:border-rose-300 transition-all duration-200 shrink-0">
                             <i class="fas fa-arrow-right-from-bracket text-xs"></i>
                         </button>
                     </div>
@@ -1014,16 +1013,13 @@
         function updateDarkModeUI(isDark) {
             const btn = document.getElementById('dark-mode-toggle-btn');
             const icon = document.getElementById('dark-mode-icon');
-            const label = document.getElementById('dark-mode-label');
             if (!btn) return;
 
             if (isDark) {
-                if (icon) icon.className = 'fas fa-sun text-amber-400';
-                if (label) label.textContent = 'Mode Terang';
+                if (icon) icon.className = 'fas fa-sun text-amber-400 text-xs sm:text-sm';
                 btn.setAttribute('title', 'Beralih ke Mode Terang (Light Mode)');
             } else {
-                if (icon) icon.className = 'fas fa-moon text-indigo-500';
-                if (label) label.textContent = 'Mode Gelap';
+                if (icon) icon.className = 'fas fa-moon text-indigo-500 text-xs sm:text-sm';
                 btn.setAttribute('title', 'Beralih ke Mode Gelap (Dark Mode)');
             }
         }
@@ -1050,24 +1046,6 @@
                 updateDarkModeUI(false);
             }
 
-            // Notifikasi toast singkat
-            if (typeof Swal !== 'undefined' && Swal.mixin) {
-                const Toast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 1600,
-                    timerProgressBar: false,
-                    customClass: {
-                        popup: willBeDark ? 'bg-slate-800 text-slate-100 border border-slate-700' : 'bg-white text-slate-800'
-                    }
-                });
-                Toast.fire({
-                    icon: willBeDark ? 'info' : 'success',
-                    title: willBeDark ? 'Mode Gelap diaktifkan' : 'Mode Terang diaktifkan'
-                });
-            }
-
             // Dispatch event untuk charts atau elemen custom lainnya
             window.dispatchEvent(new CustomEvent('app-theme-mode-changed', {
                 detail: { mode: willBeDark ? 'dark' : 'light' }
@@ -1083,14 +1061,14 @@
             const label = document.getElementById('theme-switch-label');
             if (!btn) return;
 
-            if (icon) icon.className = 'fas fa-paint-roller text-emerald-600';
+            if (icon) icon.className = 'fas fa-paint-roller text-emerald-600 dark:text-emerald-400 text-xs';
 
             if (theme === 'emerald') {
-                if (label) label.textContent = 'Switch to Atlas Theme';
-                btn.setAttribute('title', 'Switch to Atlas Theme');
+                if (label) label.textContent = 'Tema Atlas';
+                btn.setAttribute('title', 'Beralih ke Tema Atlas');
             } else {
-                if (label) label.textContent = 'Switch to Emerald Theme';
-                btn.setAttribute('title', 'Switch to Emerald Theme');
+                if (label) label.textContent = 'Tema Emerald';
+                btn.setAttribute('title', 'Beralih ke Tema Emerald');
             }
         }
 
