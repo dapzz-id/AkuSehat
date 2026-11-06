@@ -123,7 +123,7 @@ export const ThemeHubModal: React.FC<ThemeHubModalProps> = ({ visible, onClose }
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
-            {/* Section 1: Mode Pencahayaan (Khusus Atlas Neo) */}
+            {/* Section 1: Mode Pencahayaan (Light / Dark) */}
             <View style={styles.section}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: verticalScale(6) }}>
                 <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 0 }]}>
@@ -131,22 +131,22 @@ export const ThemeHubModal: React.FC<ThemeHubModalProps> = ({ visible, onClose }
                 </Text>
                 <View
                   style={{
-                    backgroundColor: themeId === 'atlas_modern' ? `${theme.primary}20` : '#f1f5f9',
+                    backgroundColor: `${theme.primary}20`,
                     paddingHorizontal: scale(8),
                     paddingVertical: verticalScale(2),
                     borderRadius: moderateScale(6),
                     borderWidth: 1,
-                    borderColor: themeId === 'atlas_modern' ? `${theme.primary}40` : '#e2e8f0',
+                    borderColor: `${theme.primary}40`,
                   }}
                 >
                   <Text
                     style={{
                       fontSize: moderateScale(10),
                       fontWeight: '700',
-                      color: themeId === 'atlas_modern' ? theme.primary : '#64748b',
+                      color: theme.primary,
                     }}
                   >
-                    {themeId === 'atlas_modern' ? 'Eksklusif Atlas' : 'Hanya untuk Atlas'}
+                    Universal
                   </Text>
                 </View>
               </View>
@@ -155,7 +155,7 @@ export const ThemeHubModal: React.FC<ThemeHubModalProps> = ({ visible, onClose }
                 <TouchableOpacity
                   style={[
                     styles.modeOption,
-                    (!isDark || themeId !== 'atlas_modern') && [
+                    !isDark && [
                       styles.modeOptionActive,
                       { backgroundColor: theme.card, shadowColor: theme.glow },
                     ],
@@ -166,13 +166,13 @@ export const ThemeHubModal: React.FC<ThemeHubModalProps> = ({ visible, onClose }
                   <Feather
                     name="sun"
                     size={moderateScale(16)}
-                    color={!isDark || themeId !== 'atlas_modern' ? theme.primary : theme.muted}
+                    color={!isDark ? theme.primary : theme.muted}
                   />
                   <Text
                     style={[
                       styles.modeOptionText,
-                      { color: !isDark || themeId !== 'atlas_modern' ? theme.primary : theme.muted },
-                      (!isDark || themeId !== 'atlas_modern') && styles.modeOptionTextActive,
+                      { color: !isDark ? theme.primary : theme.muted },
+                      !isDark && styles.modeOptionTextActive,
                     ]}
                   >
                     Terang (Light)
@@ -182,46 +182,30 @@ export const ThemeHubModal: React.FC<ThemeHubModalProps> = ({ visible, onClose }
                 <TouchableOpacity
                   style={[
                     styles.modeOption,
-                    isDark && themeId === 'atlas_modern' && [
+                    isDark && [
                       styles.modeOptionActive,
                       { backgroundColor: theme.card, shadowColor: theme.glow },
                     ],
-                    themeId !== 'atlas_modern' && { opacity: 0.5 },
                   ]}
-                  onPress={() => {
-                    if (themeId !== 'atlas_modern') {
-                      Alert.alert(
-                        'Mode Gelap Eksklusif',
-                        'Fitur Mode Gelap (Dark Mode) eksklusif untuk tema Atlas Neo Modern. Silakan terapkan tema Atlas Neo Modern terlebih dahulu.',
-                        [{ text: 'Mengerti' }]
-                      );
-                      return;
-                    }
-                    setMode('dark');
-                  }}
+                  onPress={() => setMode('dark')}
                   activeOpacity={0.8}
                 >
                   <Feather
-                    name={themeId === 'atlas_modern' ? 'moon' : 'lock'}
+                    name="moon"
                     size={moderateScale(15)}
-                    color={isDark && themeId === 'atlas_modern' ? theme.primary : theme.muted}
+                    color={isDark ? theme.primary : theme.muted}
                   />
                   <Text
                     style={[
                       styles.modeOptionText,
-                      { color: isDark && themeId === 'atlas_modern' ? theme.primary : theme.muted },
-                      isDark && themeId === 'atlas_modern' && styles.modeOptionTextActive,
+                      { color: isDark ? theme.primary : theme.muted },
+                      isDark && styles.modeOptionTextActive,
                     ]}
                   >
                     Gelap (Dark)
                   </Text>
                 </TouchableOpacity>
               </View>
-              {themeId !== 'atlas_modern' && (
-                <Text style={{ fontSize: moderateScale(11), color: theme.muted, marginTop: verticalScale(4), textAlign: 'center' }}>
-                  Tema Emerald Classic berjalan dalam Mode Terang bawaan medis
-                </Text>
-              )}
             </View>
 
             {/* Section 2: Katalog Tema */}

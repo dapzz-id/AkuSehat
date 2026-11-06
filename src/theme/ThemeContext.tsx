@@ -70,13 +70,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return emeraldTheme;
   }, [themeId, modernThemeDef]);
 
-  // Current active color palette: Emerald is strictly Light Mode; Dark Mode is exclusive to Atlas Neo Modern
+  // Current active color palette: Mendukung Mode Gelap (Dark) dan Terang (Light) di semua tema
   const theme: ThemeColorPalette = useMemo(() => {
-    const effectiveMode = themeId === 'atlas_modern' ? mode : 'light';
-    return effectiveMode === 'dark' ? currentThemeDef.dark : currentThemeDef.light;
-  }, [currentThemeDef, mode, themeId]);
+    return mode === 'dark' ? currentThemeDef.dark : currentThemeDef.light;
+  }, [currentThemeDef, mode]);
 
-  const isDark = themeId === 'atlas_modern' && mode === 'dark';
+  const isDark = mode === 'dark';
 
   // Synchronize native Android status bar with current theme background
   useEffect(() => {
