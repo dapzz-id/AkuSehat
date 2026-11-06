@@ -13,8 +13,8 @@
                         <i class="fas fa-stethoscope text-[#1b5e20] text-lg md:text-xl"></i>
                     </div>
                     <div>
-                        <h2 class="text-xl md:text-2xl font-bold text-[#1a472a]">Data Kesehatan</h2>
-                        <p class="text-xs md:text-sm text-[#388e3c]">Manajemen data kesehatan member</p>
+                        <h2 class="text-xl md:text-2xl font-bold text-[#1a472a] dark:text-white">Data Kesehatan</h2>
+                        <p class="text-xs md:text-sm text-[#388e3c] dark:text-emerald-400">Manajemen data kesehatan member</p>
                     </div>
                 </div>
                 <div class="flex flex-col gap-2 w-full lg:w-auto">
@@ -103,11 +103,11 @@
                             <i class="fas fa-weight-scale"></i>
                         </div>
                         <div>
-                            <h3 class="text-xs font-bold text-gray-800">Distribusi Status IMT / Gizi</h3>
-                            <p class="text-[11px] text-gray-400">Klasifikasi Indeks Massa Tubuh WHO</p>
+                            <h3 class="text-xs font-bold text-gray-800 dark:text-white">Distribusi Status IMT / Gizi</h3>
+                            <p class="text-[11px] text-gray-400 dark:text-slate-400">Klasifikasi Indeks Massa Tubuh WHO</p>
                         </div>
                     </div>
-                    <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                    <span class="text-[11px] font-bold text-emerald-800 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-800/60">
                         {{ $totalKesehatan }} Data
                     </span>
                 </div>
@@ -154,11 +154,11 @@
                             <i class="fas fa-heart-pulse"></i>
                         </div>
                         <div>
-                            <h3 class="text-xs font-bold text-gray-800">Distribusi Kategori Tekanan Darah</h3>
-                            <p class="text-[11px] text-gray-400">Pola sistol & diastol member instansi</p>
+                            <h3 class="text-xs font-bold text-gray-800 dark:text-white">Distribusi Kategori Tekanan Darah</h3>
+                            <p class="text-[11px] text-gray-400 dark:text-slate-400">Pola sistol & diastol member instansi</p>
                         </div>
                     </div>
-                    <span class="text-[10px] font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200">
+                    <span class="text-[10px] font-bold text-sky-800 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 px-2 py-0.5 rounded-md border border-sky-200 dark:border-sky-800/60">
                         Profil Vital
                     </span>
                 </div>
@@ -167,7 +167,7 @@
                     <canvas id="kesehatanDarahChart"></canvas>
                 </div>
 
-                <p class="text-[11px] text-gray-400 pt-3 border-t border-gray-100 flex items-center gap-1.5">
+                <p class="text-[11px] text-gray-400 dark:text-slate-300 pt-3 border-t border-gray-100 dark:border-slate-800 flex items-center gap-1.5">
                     <i class="fas fa-circle-info text-emerald-600"></i>
                     Data tekanan darah diukur pada saat pemeriksaan fisik berkala di instansi Anda.
                 </p>
@@ -922,13 +922,11 @@
                                 ticks: {
                                     precision: 0,
                                     font: { size: 10 }
-                                },
-                                grid: { color: '#f1f5f9' }
+                                }
                             },
                             x: {
                                 ticks: {
-                                    font: { size: 11, weight: '600' },
-                                    color: '#334155'
+                                    font: { size: 11, weight: '600' }
                                 },
                                 grid: { display: false }
                             }

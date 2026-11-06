@@ -82,6 +82,74 @@
 
     <!-- Chart.js for Interactive Health & Reporting Analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        (function() {
+            if (typeof Chart === 'undefined') return;
+
+            function isDarkModeActive() {
+                return document.documentElement.classList.contains('dark');
+            }
+
+            function getChartThemeColors(isDark) {
+                return {
+                    text: isDark ? '#cbd5e1' : '#64748b',
+                    grid: isDark ? 'rgba(148, 163, 184, 0.15)' : 'rgba(0, 0, 0, 0.06)'
+                };
+            }
+
+            const initialDark = isDarkModeActive();
+            const initialColors = getChartThemeColors(initialDark);
+            Chart.defaults.color = initialColors.text;
+            Chart.defaults.borderColor = initialColors.grid;
+
+            Chart.register({
+                id: 'akusehatDarkThemePlugin',
+                beforeLayout: function(chart) {
+                    const dark = isDarkModeActive();
+                    const colors = getChartThemeColors(dark);
+
+                    if (chart.options?.plugins?.legend?.labels) {
+                        chart.options.plugins.legend.labels.color = colors.text;
+                    }
+
+                    if (chart.config?.type === 'doughnut' || chart.config?.type === 'pie') {
+                        chart.data?.datasets?.forEach(function(ds) {
+                            if (ds.borderColor === '#ffffff' || ds.borderColor === '#1e293b') {
+                                ds.borderColor = dark ? '#1e293b' : '#ffffff';
+                            }
+                        });
+                    }
+
+                    if (chart.options?.scales) {
+                        Object.keys(chart.options.scales).forEach(function(scaleKey) {
+                            const scale = chart.options.scales[scaleKey];
+                            if (!scale) return;
+                            if (!scale.ticks) scale.ticks = {};
+                            scale.ticks.color = colors.text;
+
+                            if (!scale.grid) scale.grid = {};
+                            scale.grid.color = colors.grid;
+                        });
+                    }
+                }
+            });
+
+            window.addEventListener('app-theme-mode-changed', function(e) {
+                const isDark = e.detail && e.detail.mode === 'dark';
+                const colors = getChartThemeColors(isDark);
+                Chart.defaults.color = colors.text;
+                Chart.defaults.borderColor = colors.grid;
+
+                if (Chart.instances) {
+                    Object.values(Chart.instances).forEach(function(inst) {
+                        if (inst && typeof inst.update === 'function') {
+                            inst.update();
+                        }
+                    });
+                }
+            });
+        })();
+    </script>
 
     <!-- SweetAlert2 for Elegant Confirmation Popups & Modern Alerts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

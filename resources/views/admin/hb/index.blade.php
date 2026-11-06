@@ -13,8 +13,8 @@
                         <i class="fas fa-tint text-[#1b5e20] text-lg md:text-xl"></i>
                     </div>
                     <div>
-                        <h2 class="text-xl md:text-2xl font-bold text-[#1a472a]">Data Hemoglobin (HB)</h2>
-                        <p class="text-xs md:text-sm text-[#388e3c]">Manajemen data hemoglobin member</p>
+                        <h2 class="text-xl md:text-2xl font-bold text-[#1a472a] dark:text-white">Data Hemoglobin (HB)</h2>
+                        <p class="text-xs md:text-sm text-[#388e3c] dark:text-emerald-400">Manajemen data hemoglobin member</p>
                     </div>
                 </div>
                 <div class="flex flex-col gap-2 w-full lg:w-auto">
@@ -103,11 +103,11 @@
                             <i class="fas fa-tint"></i>
                         </div>
                         <div>
-                            <h3 class="text-xs font-bold text-gray-800">Distribusi Status Hemoglobin</h3>
-                            <p class="text-[11px] text-gray-400">Proporsi normal vs anemia member</p>
+                            <h3 class="text-xs font-bold text-gray-800 dark:text-white">Distribusi Status Hemoglobin</h3>
+                            <p class="text-[11px] text-gray-400 dark:text-slate-400">Proporsi normal vs anemia member</p>
                         </div>
                     </div>
-                    <span class="text-[11px] font-bold text-red-800 bg-red-50 px-2.5 py-1 rounded-md border border-red-200">
+                    <span class="text-[11px] font-bold text-red-800 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2.5 py-1 rounded-md border border-red-200 dark:border-red-800/60">
                         {{ $totalHb }} Sampel
                     </span>
                 </div>
@@ -148,11 +148,11 @@
                             <i class="fas fa-chart-bar"></i>
                         </div>
                         <div>
-                            <h3 class="text-xs font-bold text-gray-800">Rata-rata Kadar Hb per Divisi / Kelas</h3>
-                            <p class="text-[11px] text-gray-400">Deteksi kelompok yang rentan mengalami anemia (g/dL)</p>
+                            <h3 class="text-xs font-bold text-gray-800 dark:text-white">Rata-rata Kadar Hb per Divisi / Kelas</h3>
+                            <p class="text-[11px] text-gray-400 dark:text-slate-400">Deteksi kelompok yang rentan mengalami anemia (g/dL)</p>
                         </div>
                     </div>
-                    <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    <span class="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/60">
                         Tren Divisi
                     </span>
                 </div>
@@ -161,7 +161,7 @@
                     <canvas id="divisionHbChart"></canvas>
                 </div>
 
-                <p class="text-[11px] text-gray-400 pt-3 border-t border-gray-100 flex items-center gap-1.5">
+                <p class="text-[11px] text-gray-400 dark:text-slate-300 pt-3 border-t border-gray-100 dark:border-slate-800 flex items-center gap-1.5">
                     <i class="fas fa-circle-info text-red-500"></i>
                     Batas acuan normal Hb: &ge; 12.0 g/dL untuk perempuan, dan &ge; 13.0 g/dL untuk laki-laki.
                 </p>
@@ -807,9 +807,6 @@
                                 beginAtZero: false,
                                 min: 8,
                                 max: 18,
-                                grid: {
-                                    color: 'rgba(0, 0, 0, 0.05)'
-                                },
                                 ticks: {
                                     font: { size: 11 },
                                     callback: function(val) { return val + ' g/dL'; }

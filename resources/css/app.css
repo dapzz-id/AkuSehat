@@ -303,6 +303,16 @@ html.dark body {
     color: #e2e8f0 !important;
 }
 
+/* Global Headings: Always pure crisp white in dark mode */
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+    color: #f8fafc !important;
+}
+
 /* Base Dark Containers, Cards & Panels */
 html.dark .bg-white {
     background-color: #1e293b !important;
@@ -339,11 +349,142 @@ html.dark .app-sidebar {
     border-color: #1e293b !important;
 }
 
-/* Dark Mode Typography */
-html.dark .text-gray-800,
-html.dark .text-slate-800,
+/* ==========================================================================
+   Dark Mode Typography & Color Contrast High-Definition Fixes
+   ========================================================================== */
+
+/* Dark Hex Typography Classes Overrides */
+html.dark [class*="text-[#1a472a]"],
+html.dark .text-\[\#1a472a\] {
+    color: #f8fafc !important; /* Module Title -> Crisp White */
+}
+
+html.dark [class*="text-[#388e3c]"],
+html.dark .text-\[\#388e3c\] {
+    color: #34d399 !important; /* Module Subtitle -> Vivid Emerald */
+}
+
+html.dark [class*="text-[#1b5e20]"],
+html.dark [class*="text-[#1B5E20]"],
+html.dark .text-\[\#1b5e20\],
+html.dark .text-\[\#1B5E20\] {
+    color: #6ee7b7 !important; /* Deep Green -> Light Mint */
+}
+
+html.dark [class*="text-[#2e7d32]"],
+html.dark .text-\[\#2e7d32\] {
+    color: #4ade80 !important; /* Forest Green -> Vivid Green */
+}
+
+html.dark [class*="text-[#004d40]"],
+html.dark .text-\[\#004d40\] {
+    color: #2dd4bf !important;
+}
+
+/* Red / Anemia Hex Classes */
+html.dark [class*="text-[#b71c1c]"],
+html.dark [class*="text-[#c62828]"],
+html.dark [class*="text-[#d32f2f]"],
+html.dark [class*="text-[#f44336]"],
+html.dark .text-\[\#b71c1c\],
+html.dark .text-\[\#c62828\],
+html.dark .text-\[\#d32f2f\] {
+    color: #f87171 !important; /* Vivid Coral Red */
+}
+
+/* Amber / Orange / Warning Hex Classes */
+html.dark [class*="text-[#ef6c00]"],
+html.dark [class*="text-[#f57f17]"],
+html.dark [class*="text-[#e65100]"],
+html.dark .text-\[\#ef6c00\],
+html.dark .text-\[\#f57f17\],
+html.dark .text-\[\#e65100\] {
+    color: #fbbf24 !important; /* Vivid Amber */
+}
+
+/* Blue Hex Classes */
+html.dark [class*="text-[#0d47a1]"],
+html.dark [class*="text-[#0288d1]"],
+html.dark [class*="text-[#01579b]"],
+html.dark [class*="text-[#0c2e68]"],
+html.dark .text-\[\#0d47a1\],
+html.dark .text-\[\#0288d1\],
+html.dark .text-\[\#01579b\] {
+    color: #60a5fa !important; /* Vivid Sky Blue */
+}
+
+/* Standard Tailwind Dark Colors to High Contrast */
+html.dark .text-emerald-700,
+html.dark .text-emerald-800,
+html.dark .text-emerald-900 {
+    color: #34d399 !important;
+}
+
+html.dark .text-green-700,
+html.dark .text-green-800,
+html.dark .text-green-900 {
+    color: #4ade80 !important;
+}
+
+html.dark .text-teal-700,
+html.dark .text-teal-800,
+html.dark .text-teal-900 {
+    color: #2dd4bf !important;
+}
+
+html.dark .text-red-700,
+html.dark .text-red-800,
+html.dark .text-red-900,
+html.dark .text-rose-700,
+html.dark .text-rose-800,
+html.dark .text-rose-900 {
+    color: #f87171 !important;
+}
+
+html.dark .text-pink-700,
+html.dark .text-pink-800,
+html.dark .text-pink-900 {
+    color: #f472b6 !important;
+}
+
+html.dark .text-amber-700,
+html.dark .text-amber-800,
+html.dark .text-amber-900,
+html.dark .text-orange-700,
+html.dark .text-orange-800,
+html.dark .text-orange-900,
+html.dark .text-yellow-700,
+html.dark .text-yellow-800,
+html.dark .text-yellow-900 {
+    color: #fbbf24 !important;
+}
+
+html.dark .text-blue-700,
+html.dark .text-blue-800,
+html.dark .text-blue-900,
+html.dark .text-sky-700,
+html.dark .text-sky-800,
+html.dark .text-sky-900 {
+    color: #60a5fa !important;
+}
+
+html.dark .text-indigo-700,
+html.dark .text-indigo-800,
+html.dark .text-indigo-900 {
+    color: #818cf8 !important;
+}
+
+html.dark .text-purple-700,
+html.dark .text-purple-800,
+html.dark .text-purple-900 {
+    color: #c084fc !important;
+}
+
+/* Neutral Slate & Gray Text Classes */
+html.dark .text-gray-900,
 html.dark .text-slate-900,
-html.dark .text-gray-900 {
+html.dark .text-gray-800,
+html.dark .text-slate-800 {
     color: #f8fafc !important;
 }
 
@@ -358,23 +499,213 @@ html.dark .text-slate-600 {
 }
 
 html.dark .text-gray-500,
-html.dark .text-slate-500,
+html.dark .text-slate-500 {
+    color: #94a3b8 !important;
+}
+
 html.dark .text-gray-400,
 html.dark .text-slate-400 {
     color: #94a3b8 !important;
 }
 
+html.dark p.text-gray-400,
+html.dark p.text-slate-400,
+html.dark [class*="text-[11px]"].text-gray-400,
+html.dark [class*="text-[11px]"].text-slate-400 {
+    color: #cbd5e1 !important;
+}
+
+/* ==========================================================================
+   Tables, Thead, Rows & Cells in Dark Mode
+   ========================================================================== */
+html.dark table {
+    border-color: #334155 !important;
+}
+
+html.dark thead,
+html.dark thead tr,
+html.dark thead.bg-\[\#e8f5e9\],
+html.dark thead[class*="bg-[#e8f5e9]"],
+html.dark thead[class*="bg-emerald-50"],
+html.dark thead[class*="bg-gray-50"],
+html.dark thead[class*="bg-slate-50"],
+html.dark [class*="bg-[#e8f5e9]"] {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+html.dark thead th,
+html.dark th {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+html.dark thead th[class*="text-"],
+html.dark thead th span,
+html.dark th[class*="text-"] {
+    color: #f8fafc !important;
+}
+
+html.dark tbody {
+    background-color: #1e293b !important;
+}
+
+html.dark tbody tr {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+html.dark tbody tr:hover,
+html.dark tr.hover\:bg-\[\#f1f8e9\]:hover,
+html.dark [class*="hover:bg-[#f1f8e9]"]:hover,
+html.dark tbody tr:hover td {
+    background-color: rgba(30, 41, 59, 0.95) !important;
+}
+
+html.dark tbody td {
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+}
+
+html.dark tbody td strong,
+html.dark tbody td b,
+html.dark tbody td .font-bold,
+html.dark tbody td .font-semibold,
+html.dark tbody td .font-medium {
+    color: #f8fafc !important;
+}
+
+/* ==========================================================================
+   Status Badges, Metric Cards & Indicator Dots
+   ========================================================================== */
+html.dark [class*="bg-[#c8e6c9]"],
+html.dark .bg-\[\#c8e6c9\],
+html.dark .bg-emerald-50,
+html.dark .bg-green-50,
+html.dark .bg-emerald-100,
+html.dark .bg-green-100 {
+    background-color: rgba(16, 185, 129, 0.18) !important;
+    border-color: rgba(16, 185, 129, 0.35) !important;
+}
+html.dark [class*="bg-[#c8e6c9]"] .font-bold,
+html.dark .bg-\[\#c8e6c9\] .font-bold {
+    color: #f8fafc !important;
+}
+
+html.dark [class*="bg-[#ffcdd2]"],
+html.dark .bg-\[\#ffcdd2\],
+html.dark .bg-red-50,
+html.dark .bg-rose-50,
+html.dark .bg-red-100,
+html.dark .bg-rose-100 {
+    background-color: rgba(239, 68, 68, 0.18) !important;
+    border-color: rgba(239, 68, 68, 0.35) !important;
+}
+html.dark [class*="bg-[#ffcdd2]"] .font-bold,
+html.dark .bg-\[\#ffcdd2\] .font-bold {
+    color: #f8fafc !important;
+}
+
+html.dark [class*="bg-[#ffe0b2]"],
+html.dark [class*="bg-[#fff9c4]"],
+html.dark .bg-\[\#ffe0b2\],
+html.dark .bg-\[\#fff9c4\],
+html.dark .bg-amber-50,
+html.dark .bg-yellow-50,
+html.dark .bg-orange-50,
+html.dark .bg-amber-100,
+html.dark .bg-yellow-100,
+html.dark .bg-orange-100 {
+    background-color: rgba(245, 158, 11, 0.18) !important;
+    border-color: rgba(245, 158, 11, 0.35) !important;
+}
+html.dark [class*="bg-[#ffe0b2]"] .font-bold,
+html.dark [class*="bg-[#fff9c4]"] .font-bold {
+    color: #f8fafc !important;
+}
+
+html.dark [class*="bg-[#bbdefb]"],
+html.dark .bg-\[\#bbdefb\],
+html.dark .bg-blue-50,
+html.dark .bg-sky-50,
+html.dark .bg-blue-100,
+html.dark .bg-sky-100 {
+    background-color: rgba(59, 130, 246, 0.18) !important;
+    border-color: rgba(59, 130, 246, 0.35) !important;
+}
+html.dark [class*="bg-[#bbdefb]"] .font-bold {
+    color: #f8fafc !important;
+}
+
+html.dark .bg-purple-50,
+html.dark .bg-purple-100,
+html.dark .bg-indigo-50,
+html.dark .bg-indigo-100 {
+    background-color: rgba(168, 85, 247, 0.18) !important;
+    border-color: rgba(168, 85, 247, 0.35) !important;
+}
+
+html.dark .bg-pink-50,
+html.dark .bg-pink-100 {
+    background-color: rgba(236, 72, 153, 0.18) !important;
+    border-color: rgba(236, 72, 153, 0.35) !important;
+}
+
+/* Status Indicator Dots */
+html.dark .rounded-full[class*="bg-[#1b5e20]"],
+html.dark .rounded-full[class*="bg-[#1B5E20]"],
+html.dark .rounded-full.bg-\[\#1b5e20\] {
+    background-color: #34d399 !important;
+}
+html.dark .rounded-full[class*="bg-[#c62828]"],
+html.dark .rounded-full[class*="bg-[#b71c1c]"],
+html.dark .rounded-full.bg-\[\#c62828\] {
+    background-color: #f87171 !important;
+}
+html.dark .rounded-full[class*="bg-[#ef6c00]"],
+html.dark .rounded-full[class*="bg-[#f57f17]"],
+html.dark .rounded-full.bg-\[\#ef6c00\] {
+    background-color: #fbbf24 !important;
+}
+
 /* Borders & Dividers */
 html.dark .border-gray-100,
 html.dark .border-gray-200,
+html.dark .border-gray-300,
 html.dark .border-slate-100,
 html.dark .border-slate-200,
+html.dark .border-slate-300,
 html.dark .border-slate-200\/70,
 html.dark .border-slate-200\/80,
 html.dark .border-slate-200\/90,
 html.dark .divide-gray-200,
 html.dark .divide-slate-200 {
     border-color: #334155 !important;
+}
+
+html.dark .border-emerald-200,
+html.dark .border-emerald-300 {
+    border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+html.dark .border-red-200,
+html.dark .border-red-300,
+html.dark .border-rose-200,
+html.dark .border-rose-300 {
+    border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+html.dark .border-amber-200,
+html.dark .border-amber-300,
+html.dark .border-yellow-200,
+html.dark .border-yellow-300 {
+    border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+html.dark .border-blue-200,
+html.dark .border-blue-300 {
+    border-color: rgba(59, 130, 246, 0.35) !important;
 }
 
 /* Form Controls in Dark Mode */
@@ -391,23 +722,53 @@ html.dark textarea {
     color: #f8fafc !important;
 }
 
+html.dark select option {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+}
+
 html.dark input::placeholder,
 html.dark textarea::placeholder {
     color: #64748b !important;
 }
 
-/* Tables in Dark Mode */
-html.dark thead tr {
-    background-color: #0f172a !important;
+/* Action Buttons & Pagination */
+html.dark .view-detail {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+html.dark .view-detail:hover {
+    background-color: rgba(16, 185, 129, 0.25) !important;
+    color: #6ee7b7 !important;
+}
+
+html.dark nav[aria-label="Pagination"] a,
+html.dark nav[aria-label="Pagination"] span {
     border-color: #334155 !important;
 }
-
-html.dark thead th {
-    color: #94a3b8 !important;
+html.dark nav[aria-label="Pagination"] a:not([class*="bg-[#2e7d32]"]) {
+    background-color: #1e293b !important;
+    color: #cbd5e1 !important;
+}
+html.dark nav[aria-label="Pagination"] a:not([class*="bg-[#2e7d32]"]):hover {
+    background-color: #334155 !important;
+    color: #f8fafc !important;
 }
 
-html.dark tbody tr:hover {
-    background-color: rgba(15, 23, 42, 0.7) !important;
+/* Modals in Dark Mode */
+html.dark div[id$="Modal"] > div.bg-white,
+html.dark div[id$="Modal"] .bg-white {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #334155 !important;
+}
+html.dark div[id$="Modal"] .bg-gray-50 {
+    background-color: #0f172a !important;
+    border-top: 1px solid #334155 !important;
+}
+html.dark div[id$="Modal"] label {
+    color: #cbd5e1 !important;
 }
 
 /* Atlas Sections & Cards in Dark Mode */
