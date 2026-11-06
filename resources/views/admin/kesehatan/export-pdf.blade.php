@@ -138,8 +138,8 @@
                     </div>
                     <div style="font-size:12px; margin-top:3px;">
                         WhatsApp: +62895383107479 |
-                        Email: neuracakrawirasolusi@gmail.com<br>
-                        Website: www.neuracakrawirasolusi.com
+                        Email: neuracakrawira@yahoo.com<br>
+                        Website: www.neuracakrawira.asia
                     </div>
                 </td>
 
